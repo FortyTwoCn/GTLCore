@@ -4,9 +4,7 @@ import org.gtlcore.gtlcore.client.gui.EncodePatternErrorModify;
 import org.gtlcore.gtlcore.client.gui.PatterEncodingTermMenuModify;
 import org.gtlcore.gtlcore.integration.ae2.pattern.VirtualIngredientEncoding;
 
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.integration.jei.multipage.MultiblockInfoWrapper;
-import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeWrapper;
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,9 +13,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.core.component.DataComponents;
 
 import appeng.api.stacks.GenericStack;
-import appeng.integration.modules.jei.transfer.EncodePatternTransferHandler;
+import tamaized.ae2jeiintegration.integration.modules.jei.transfer.EncodePatternTransferHandler;
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -85,7 +85,7 @@ public class EncodePatternTransferHandlerMixin {
      */
     @ModifyArg(method = "transferRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/lang/Object;Lmezz/jei/api/gui/ingredient/IRecipeSlotsView;Lnet/minecraft/world/entity/player/Player;ZZ)Lmezz/jei/api/recipe/transfer/IRecipeTransferError;",
                at = @At(value = "INVOKE",
-                        target = "Lappeng/integration/modules/jeirei/EncodingHelper;encodeProcessingRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/util/List;Ljava/util/List;)V"),
+                        target = "Lappeng/integration/modules/itemlists/EncodingHelper;encodeProcessingRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/util/List;Ljava/util/List;)V"),
                index = 1,
                remap = false)
     public List<List<GenericStack>> gtlcore$virtualiseNotConsumedInputs(List<List<GenericStack>> genericIngredients,
@@ -108,37 +108,36 @@ public class EncodePatternTransferHandlerMixin {
 
     @ModifyArg(method = "transferRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/lang/Object;Lmezz/jei/api/gui/ingredient/IRecipeSlotsView;Lnet/minecraft/world/entity/player/Player;ZZ)Lmezz/jei/api/recipe/transfer/IRecipeTransferError;",
                at = @At(value = "INVOKE",
-                        target = "Lappeng/integration/modules/jeirei/EncodingHelper;encodeProcessingRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/util/List;Ljava/util/List;)V"),
+                        target = "Lappeng/integration/modules/itemlists/EncodingHelper;encodeProcessingRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/util/List;Ljava/util/List;)V"),
                index = 1,
                remap = false)
     public List<List<GenericStack>> multiBlockInputFilter(List<List<GenericStack>> genericIngredients, @Local(name = "recipeBase") Object recipeBase) {
-        if (!(recipeBase instanceof MultiblockInfoWrapper) || INSTANCE.filterHatch.length == 0) return genericIngredients;
+        if (!(recipeBase instanceof MultiblockMachineDefinition) || INSTANCE.filterHatch.length == 0) return genericIngredients;
         var newList = new ObjectArrayList<List<GenericStack>>();
         for (var l : genericIngredients) {
             var list = l.stream().filter(g -> Arrays.stream(INSTANCE.filterHatch).noneMatch(s -> g.what().getId().toString().contains(s))).toList();
-            if (!list.isEmpty()) newList.add(l);
+            if (!list.isEmpty()) newList.add(list);
         }
         return newList;
     }
 
     @ModifyArg(method = "transferRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/lang/Object;Lmezz/jei/api/gui/ingredient/IRecipeSlotsView;Lnet/minecraft/world/entity/player/Player;ZZ)Lmezz/jei/api/recipe/transfer/IRecipeTransferError;",
                at = @At(value = "INVOKE",
-                        target = "Lappeng/integration/modules/jeirei/EncodingHelper;encodeProcessingRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/util/List;Ljava/util/List;)V"),
+                        target = "Lappeng/integration/modules/itemlists/EncodingHelper;encodeProcessingRecipe(Lappeng/menu/me/items/PatternEncodingTermMenu;Ljava/util/List;Ljava/util/List;)V"),
                index = 2,
                remap = false)
     public List<GenericStack> multiBlockOutputImport(List<GenericStack> genericIngredients, @Local(name = "recipeBase") Object recipeBase) {
-        if (!(recipeBase instanceof MultiblockInfoWrapper miw)) return genericIngredients;
-        var g = GenericStack.fromItemStack(Items.WRITTEN_BOOK.getDefaultInstance().kjs$withName(Component.translatable(miw.definition.getId().toLanguageKey("block")).withStyle(style -> style.withColor(16536828))));
+        if (!(recipeBase instanceof MultiblockMachineDefinition definition)) return genericIngredients;
+        var book = Items.WRITTEN_BOOK.getDefaultInstance();
+        book.set(DataComponents.CUSTOM_NAME, Component.translatable(definition.getId().toLanguageKey("block"))
+                .withStyle(style -> style.withColor(16536828)));
+        var g = GenericStack.fromItemStack(book);
         return g == null ? List.of() : List.of(g);
     }
 
     private static ResourceLocation gtlcore$getRecipeTypeId(Object recipeBase) {
-        if (recipeBase instanceof GTRecipe gtRecipe) {
-            return gtRecipe.recipeType == null ? null : gtRecipe.recipeType.registryName;
-        } else if (recipeBase instanceof GTRecipeWrapper wrapper) {
-            GTRecipe recipe = wrapper.recipe;
-            return recipe == null || recipe.recipeType == null ? null : recipe.recipeType.registryName;
-        } else if (recipeBase instanceof Recipe<?> recipe) {
+        if (recipeBase instanceof RecipeHolder<?> holder) recipeBase = holder.value();
+        if (recipeBase instanceof Recipe<?> recipe) {
             return BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType());
         }
         return null;

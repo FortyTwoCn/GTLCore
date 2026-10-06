@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.mixin.ae2;
 import org.gtlcore.gtlcore.api.machine.trait.LongStorageAdapterRegistry;
 
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;

@@ -225,7 +225,7 @@ public abstract class CraftingTreeNodeMixin implements ICraftingTreeNode {
                     }
                 } else {
                     var pattern = pro.getDetails().getDefinition();
-                    String outputs = Stream.of(pro.getDetails().getOutputs())
+                    String outputs = pro.getDetails().getOutputs().stream()
                             .map(GenericStack::toString)
                             .collect(Collectors.joining(", "));
                     String errorMessage = """
@@ -236,7 +236,7 @@ public abstract class CraftingTreeNodeMixin implements ICraftingTreeNode {
                             - Tried crafting %d times the pattern %s with tag %s.
                             - Pattern outputs: %s.
                             """.formatted(what, totalRequestedItems, requestedAmount, amount, times, pattern,
-                            pattern.getTag(), outputs);
+                            pattern.getReadOnlyStack().getComponentsPatch(), outputs);
                     throw new UnsupportedOperationException(errorMessage);
                 }
             }
@@ -1058,7 +1058,7 @@ public abstract class CraftingTreeNodeMixin implements ICraftingTreeNode {
                                                   long requestedAmount, long times) {
         ICraftingTreeProcess processBridge = (ICraftingTreeProcess) process;
         var pattern = processBridge.getDetails().getDefinition();
-        String outputs = Stream.of(processBridge.getDetails().getOutputs())
+        String outputs = processBridge.getDetails().getOutputs().stream()
                 .map(GenericStack::toString)
                 .collect(Collectors.joining(", "));
         String errorMessage = """
@@ -1069,7 +1069,7 @@ public abstract class CraftingTreeNodeMixin implements ICraftingTreeNode {
                 - Tried crafting %d times the pattern %s with tag %s.
                 - Pattern outputs: %s.
                 """.formatted(what, totalRequestedItems, requestedAmount, amount, times, pattern,
-                pattern.getTag(), outputs);
+                pattern.getReadOnlyStack().getComponentsPatch(), outputs);
         throw new UnsupportedOperationException(errorMessage);
     }
 

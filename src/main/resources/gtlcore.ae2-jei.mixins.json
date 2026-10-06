@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.gtlcore.gtlcore.mixin.ae2.integration",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "EncodePatternErrorRendererMixin",
+    "EncodePatternTransferHandlerMixin",
+    "ItemIngredientConverterMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

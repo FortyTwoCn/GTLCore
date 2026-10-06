@@ -1,0 +1,14 @@
+{
+  "weight": 15,
+  "yield": {
+    "min": 60,
+    "max": 160
+  },
+  "depletion_amount": 1,
+  "depletion_chance": 100,
+  "depleted_yield": 40,
+  "fluid": "gtceu:benzene",
+  "dimension_filter": [
+    "kubejs:titan"
+  ]
+}

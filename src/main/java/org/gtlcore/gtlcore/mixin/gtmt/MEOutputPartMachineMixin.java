@@ -1,151 +1,105 @@
 package org.gtlcore.gtlcore.mixin.gtmt;
 
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEOutputPart;
-
+import org.gtlcore.gtlcore.api.machine.trait.MEPart.IModifiableSyncOffset;
+import org.gtlcore.gtlcore.api.gui.AdvancedMEConfigurator;
+import org.gtlcore.gtlcore.integration.ae2.*;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.common.machine.multiblock.part.DualHatchPartMachine;
-import com.gregtechceu.gtceu.integration.ae2.machine.feature.IGridConnectedMachine;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.integration.ae2.utils.KeyStorage;
-
-import com.lowdragmc.lowdraglib.misc.FluidStorage;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.crafting.Ingredient;
-
-import appeng.api.networking.IGrid;
-import appeng.api.networking.IManagedGridNode;
-import appeng.api.networking.security.IActionSource;
+import com.gregtechceu.gtceu.integration.ae2.machine.feature.IGridConnectedMachine;
 import com.hepdd.gtmthings.common.block.machine.multiblock.part.appeng.MEOutputPartMachine;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.hepdd.gtmthings.api.machine.trait.InaccessibleInfiniteHandler;
+import com.hepdd.gtmthings.api.machine.trait.InaccessibleInfiniteTank;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEFluidKey;
 import org.spongepowered.asm.mixin.*;
-
-import java.util.EnumSet;
+import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
-import java.util.function.Function;
 
-@SuppressWarnings("all")
 @Mixin(MEOutputPartMachine.class)
-public abstract class MEOutputPartMachineMixin extends DualHatchPartMachine implements IMEOutputPart, IGridConnectedMachine {
+public abstract class MEOutputPartMachineMixin extends TieredIOPartMachine implements IMEOutputPart, IModifiableSyncOffset, IMuiMachine, IGridConnectedMachine {
+    @Unique @SaveField private int gtlcore$returnTime;
+    @Unique @SaveField private int gtlcore$syncOffset;
+    protected MEOutputPartMachineMixin(BlockEntityCreationInfo info, int tier, IO io) { super(info, tier, io); }
 
-    @Unique
-    private byte gTLCore$time;
-
-    @Shadow(remap = false)
-    private KeyStorage internalBuffer;
-    @Shadow(remap = false)
-    private KeyStorage internalTankBuffer;
-    @Mutable
-    @Final
-    @Shadow(remap = false)
-    protected final IActionSource actionSource;
-
-    @Shadow(remap = false)
-    public abstract IManagedGridNode getMainNode();
-
-    public MEOutputPartMachineMixin(IMachineBlockEntity holder, int tier, IO io, IActionSource actionSource, Object... args) {
-        super(holder, tier, io, args);
-        this.actionSource = actionSource;
+    @WrapMethod(method = "autoIO", remap = false)
+    private void gtlcore$returnOnCycle(Operation<Void> original) {
+        if (!isWorkingEnabled()) return;
+        try { if (isReturn()) original.call(); }
+        finally { advanceReturnCycle(); }
     }
-
-    /**
-     * @author .
-     * @reason .
-     */
+    @WrapOperation(method = "autoIO", at = @At(value = "INVOKE", target = "Lcom/hepdd/gtmthings/common/block/machine/multiblock/part/appeng/MEOutputPartMachine;shouldSyncME()Z"), remap = false, require = 1)
+    private boolean gtlcore$requestedReturn(MEOutputPartMachine instance, Operation<Boolean> original) { return isReturn(); }
+    @Override public boolean shouldSyncME() { return getOffsetTimer() % returnInterval() == 0; }
+    @Override public void returnStorage() { setTime(0); }
+    @Override public int getTime() { return gtlcore$returnTime; }
+    @Override public void setTime(int time) { gtlcore$returnTime = time; markAsChanged(); }
+    @Override public int getMEUpdateInterval() { return gtlcore$syncOffset; }
+    @Override public void setMEUpdateInterval(int interval) {
+        if (interval < 0) throw new IllegalArgumentException("ME refresh interval must not be negative");
+        gtlcore$syncOffset = interval; markAsChanged();
+    }
+    public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var builder = new AdvancedMEConfigurator(this::setMEUpdateInterval, this::getMEUpdateInterval)
+                .attachTo(IMuiMachine.super.getPanelBuilder(data, sync, settings).addTitleBar(false), sync);
+        return IMEOutputPart.attachRecipeLockable(builder, sync, this);
+    }
+    /** @author GTLCore @reason Retain both native ledgers in a bounded component-aware output menu. */
     @Overwrite(remap = false)
-    protected void autoIO() {
-        if (this.isReturn()) {
-            this.gTLCore$time++;
-            if (this.updateMEStatus()) {
-                IGrid grid = this.getMainNode().getGrid();
-                if (grid != null) {
-                    if (!this.internalBuffer.isEmpty()) {
-                        this.internalBuffer.insertInventory(grid.getStorageService().getInventory(), this.actionSource);
-                    }
-                    if (!this.internalTankBuffer.isEmpty()) {
-                        this.internalTankBuffer.insertInventory(grid.getStorageService().getInventory(), this.actionSource);
-                    }
-                }
-                this.updateInventorySubscription();
-            }
-        } else this.gTLCore$time++;
+    public void buildMainUI(brachy.modularui.widget.ParentWidget<?> parent, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var buffers = (MEOutputPartMachineAccessor) (Object) this;
+        org.gtlcore.gtlcore.integration.ae2.gui.NativeMEOutputUI.build(parent, this, sync, buffers.gtlcore$getInternalBuffer(), buffers.gtlcore$getInternalTankBuffer());
     }
+    @Inject(method = "onLoad", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$nativeSides(CallbackInfo ci) { AEGridMachineSettings.applyExposedSides(this, getFrontFacing()); }
+    @Inject(method = "onRotated", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$nativeRotatedSides(Direction oldFacing, Direction newFacing, CallbackInfo ci) { AEGridMachineSettings.applyExposedSides(this, newFacing); }
+    @Inject(method = "collectImplicitComponents", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$saveNativeCycle(DataComponentMap.Builder components, CallbackInfo ci) { NativeMEOutputPersistence.writeSettings(components, this, getMEUpdateInterval()); }
+    @Inject(method = "applyImplicitComponents", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$restoreNativeCycle(DataComponentInput input, CallbackInfo ci) { NativeMEOutputPersistence.readSettings(input.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY), this); }
 
-    @Override
-    public void attachConfigurators(@NotNull ConfiguratorPanel configuratorPanel) {
-        IMEOutputPart.attachRecipeLockable(configuratorPanel, this);
-    }
-
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        if (tag.getCompound("ForgeData").getBoolean("isAllFacing")) {
-            getMainNode().setExposedOnSides(EnumSet.allOf(Direction.class));
-        }
-    }
-
-    @Override
-    public void returnStorage() {
-        this.gTLCore$time = 0;
-    }
-
-    @Override
-    public byte getTime() {
-        return gTLCore$time;
-    }
-
-    @Override
-    public void setTime(byte time) {
-        gTLCore$time = time;
-    }
-
-    @Mixin(targets = "com.hepdd.gtmthings.common.block.machine.multiblock.part.appeng.MEOutputPartMachine$InaccessibleInfiniteTank", remap = false)
-    public static class InaccessibleInfiniteTankMixin extends NotifiableFluidTank {
-
-        @Shadow(remap = false)
-        FluidStorage storage;
-
-        public InaccessibleInfiniteTankMixin(MetaMachine machine, int slots, long capacity, IO io, IO capabilityIO) {
-            super(machine, slots, capacity, io, capabilityIO);
-        }
-
-        @Override
-        public List<FluidIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<FluidIngredient> left, @Nullable String slotName, boolean simulate) {
+    @Mixin(InaccessibleInfiniteHandler.class)
+    public static abstract class InaccessibleInfiniteHandlerMixin {
+        @Shadow(remap = false) @Final private KeyStorage buffer;
+        /** @author GTLCore @reason Preserve long output quantities and reserve repeated component keys. */
+        @Overwrite(remap = false)
+        public List<SizedIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<SizedIngredient> left, boolean simulate) {
             if (io != IO.OUT) return left;
-            for (var fluid : left) {
-                if (fluid.isEmpty()) continue;
-                for (var f : fluid.getStacks()) {
-                    if (f != null) this.storage.fill(f, simulate);
-                }
-            }
-            return null;
+            return NativeMEOutputRecipeTransfer.accept(buffer, left, simulate,
+                    ingredient -> AEOutputIngredients.item(ingredient, simulate),
+                    stack -> LongIngredient.create(((AEItemKey) stack.what()).toStack(1), stack.amount()));
         }
     }
-
-    @Mixin(targets = "com.hepdd.gtmthings.common.block.machine.multiblock.part.appeng.MEOutputPartMachine$InaccessibleInfiniteHandler", remap = false)
-    private static class InaccessibleInfiniteHandlerMixin extends NotifiableItemStackHandler {
-
-        public InaccessibleInfiniteHandlerMixin(MetaMachine machine, int slots, @NotNull IO handlerIO, @NotNull IO capabilityIO, Function<Integer, ItemStackTransfer> transferFactory) {
-            super(machine, slots, handlerIO, capabilityIO, transferFactory);
-        }
-
-        @Override
-        public List<Ingredient> handleRecipeInner(IO io, GTRecipe recipe, List<Ingredient> left, @Nullable String slotName, boolean simulate) {
+    @Mixin(InaccessibleInfiniteTank.class)
+    public static abstract class InaccessibleInfiniteTankMixin {
+        @Shadow(remap = false) @Final private KeyStorage buffer;
+        /** @author GTLCore @reason Preserve long output quantities and reserve repeated component keys. */
+        @Overwrite(remap = false)
+        public List<SizedFluidIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<SizedFluidIngredient> left, boolean simulate) {
             if (io != IO.OUT) return left;
-            for (var item : left) {
-                if (item.isEmpty()) continue;
-                for (var i : item.getItems()) if (i != null) storage.insertItem(0, i, simulate);
-            }
-            return null;
+            return NativeMEOutputRecipeTransfer.accept(buffer, left, simulate,
+                    ingredient -> AEOutputIngredients.fluid(ingredient, simulate),
+                    stack -> LongFluidIngredient.create(((AEFluidKey) stack.what()).toStack(1), stack.amount()));
         }
     }
 }

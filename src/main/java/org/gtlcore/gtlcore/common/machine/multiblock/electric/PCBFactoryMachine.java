@@ -1,75 +1,54 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 
 import org.gtlcore.gtlcore.common.data.GTLRecipeModifiers;
-import org.gtlcore.gtlcore.utils.Registries;
-
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
-import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.DoubleSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
-import java.util.Objects;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import static java.lang.Math.max;
-
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
+/** Native catalyst storage, selected-input parallel modifier, overclocking and synced multiplier display. */
 public class PCBFactoryMachine extends StorageMachine {
-
-    public PCBFactoryMachine(IMachineBlockEntity holder) {
-        super(holder, 64);
-    }
-
+    public PCBFactoryMachine(BlockEntityCreationInfo info) { super(info, 64); }
+    public PCBFactoryMachine(BlockEntityCreationInfo info, RecipeLogic logic) { super(info, 64, logic); }
     private double reductionEUt = 1, reductionDuration = 1;
 
     private void getPCBReduction() {
-        ItemStack itemStack = getMachineStorageItem();
-        String item = Registries.getItemId(itemStack);
-        if (Objects.equals(item, "gtceu:vibranium_nanoswarm")) {
-            reductionDuration = Math.max(((double) (100 - itemStack.getCount()) / 100), 0.36);
-            reductionEUt = 0.25;
-        } else if (Objects.equals(item, "gtceu:gold_nanoswarm")) {
-            reductionDuration = Math.max(((100 - (itemStack.getCount() * 0.5)) / 100), 0.68);
+        var stack = getMachineStorageItem();
+        reductionEUt = 1; reductionDuration = 1;
+        var id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        if (id.equals("gtceu:vibranium_nanoswarm")) {
+            reductionDuration = Math.max((100.0 - stack.getCount()) / 100, .36);
+            reductionEUt = .25;
+        } else if (id.equals("gtceu:gold_nanoswarm")) {
+            reductionDuration = Math.max((100.0 - stack.getCount() * .5) / 100, .68);
         }
     }
-
-    @Nullable
-    public static GTRecipe recipeModifier(MetaMachine machine, @NotNull GTRecipe recipe, @NotNull OCParams params,
-                                          @NotNull OCResult result) {
-        if (machine instanceof PCBFactoryMachine pcbFactoryMachine) {
-            pcbFactoryMachine.getPCBReduction();
-            GTRecipe recipe1 = GTLRecipeModifiers.reduction(pcbFactoryMachine, recipe, pcbFactoryMachine.reductionEUt, pcbFactoryMachine.reductionDuration);
-            if (recipe1 != null) {
-                recipe1 = GTRecipeModifiers.hatchParallel(machine, recipe1, false, params, result);
-                if (recipe1 != null) return RecipeHelper.applyOverclock(OverclockingLogic.PERFECT_OVERCLOCK_SUBTICK, recipe1, pcbFactoryMachine.getOverclockVoltage(), params, result);
-            }
-        }
-        return null;
+    public static ModifierFunction recipeModifier(MetaMachine machine, GTRecipe recipe) {
+        if (!(machine instanceof PCBFactoryMachine pcb)) return ModifierFunction.NULL;
+        return source -> {
+            pcb.getPCBReduction();
+            var reduced = GTLRecipeModifiers.reduction(pcb, source, pcb.reductionEUt, pcb.reductionDuration);
+            var parallel = GTRecipeModifiers.hatchParallel(pcb, reduced).apply(reduced);
+            return parallel == null ? null : OverclockingLogic.PERFECT_OVERCLOCK_SUBTICK.getModifier(pcb, parallel, pcb.getOverclockVoltage(), true).apply(parallel);
+        };
     }
-
-    @Override
-    public void addDisplayText(List<Component> textList) {
-        super.addDisplayText(textList);
-        if (this.isFormed()) {
-            if (getOffsetTimer() % 10 == 0) {
-                getPCBReduction();
-            }
-            textList.add(Component.translatable("gtceu.machine.eut_multiplier.tooltip", this.reductionEUt));
-            textList.add(Component.translatable("gtceu.machine.duration_multiplier.tooltip", this.reductionDuration));
-        }
+    @Override public List<IWidget> getWidgetsForDisplay(PanelSyncManager sync) {
+        var widgets = super.getWidgetsForDisplay(sync);
+        var energy = new DoubleSyncValue(() -> { getPCBReduction(); return reductionEUt; });
+        var duration = new DoubleSyncValue(() -> { getPCBReduction(); return reductionDuration; });
+        sync.syncValue("pcbEnergyMultiplier", energy); sync.syncValue("pcbDurationMultiplier", duration);
+        widgets.add(Text.dynamic(() -> Component.translatable("gtceu.machine.eut_multiplier.tooltip", energy.getDoubleValue())).asWidget().setEnabledIf(widget -> isFormed()));
+        widgets.add(Text.dynamic(() -> Component.translatable("gtceu.machine.duration_multiplier.tooltip", duration.getDoubleValue())).asWidget().setEnabledIf(widget -> isFormed()));
+        return widgets;
     }
 }

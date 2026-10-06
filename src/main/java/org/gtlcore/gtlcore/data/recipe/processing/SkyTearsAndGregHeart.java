@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.data.recipe.processing;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.common.data.GTLMachines;
 import org.gtlcore.gtlcore.config.ConfigHolder;
@@ -7,14 +8,14 @@ import org.gtlcore.gtlcore.utils.Registries;
 
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
-import com.gregtechceu.gtceu.api.data.chemical.material.stack.UnificationEntry;
+import com.gregtechceu.gtceu.api.data.chemical.material.stack.MaterialEntry;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import com.gregtechceu.gtceu.data.recipe.VanillaRecipeHelper;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -180,10 +181,10 @@ public class SkyTearsAndGregHeart {
     // sky_fluid(m)
     static final Material[] skyFluid = {
             SaltWater,// 盐水矿藏 0
-            OilHeavy,// 重油矿藏
+            HeavyOil,// 重油矿藏
             RawOil,// 原油矿藏
             Oil,// 石油矿藏
-            OilLight,// 轻油矿藏
+            LightOil,// 轻油矿藏
             NaturalGas,// 天然气矿藏
             Lava,// 熔岩矿藏
             NaturalGas,// 下界天然气矿藏
@@ -306,12 +307,12 @@ public class SkyTearsAndGregHeart {
             1024
     };
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         if (ConfigHolder.INSTANCE.enableSkyBlokeMode) {
             VanillaRecipeHelper.addShapedRecipe(provider,
                     GTLCore.id("make_fragment_world_collection_machine"), GTLMachines.FRAGMENT_WORLD_COLLECTION_MACHINE[ULV].asStack(),
                     "WNW", "PCQ", "XNX",
-                    'W', new UnificationEntry(cableGtSingle, Lead),
+                    'W', new MaterialEntry(cableGtSingle, Lead),
                     'N', GTBlocks.RUBBER_LOG,
                     'P', TREASURES_CRYSTAL,
                     'Q', MINING_CRYSTAL,
@@ -332,16 +333,19 @@ public class SkyTearsAndGregHeart {
                     int circuit = (i == 0 ? (k + 2) : (k + 1));
                     for (int m = 0; m < 5; m++) {
                         int fluid_output = (m == 4 ? Integer.MAX_VALUE : skyFluid_n[skyDMap[i][k]] * skyDrill_n[m]);
-                        FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_" + (i + 1) + "_" + (k + 1) + "_" + (m + 1))
-                                .notConsumable(skyFragments[i])
-                                .chancedInput(skyDrill[m], 100 - (m * 10), 0)
-                                .chancedOutput(skyFragments[i], 50, 0)
-                                .chancedOutput(MINING_CRYSTAL.asStack(1), 5, 5)
-                                .outputFluids(skyFluid[skyDMap[i][k]].getFluid(fluid_output))
+                        {
+                            var gtlRecipeBuilder335 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_" + (i + 1) + "_" + (k + 1) + "_" + (m + 1))
+                                .notConsumable(skyFragments[i]);
+                            GTLRecipeContents.chancedInput(gtlRecipeBuilder335, skyDrill[m], 100 - (m * 10), 0);
+                            GTLRecipeContents.chancedOutput(gtlRecipeBuilder335, skyFragments[i], 50, 0);
+                            GTLRecipeContents.chancedOutput(gtlRecipeBuilder335, MINING_CRYSTAL.asStack(1), 5, 5);
+                            gtlRecipeBuilder335
+                                .outputFluids(GTLRecipeContents.fluid(skyFluid[skyDMap[i][k]], fluid_output))
                                 .circuitMeta(circuit)
                                 .duration(200)
                                 .EUt(8)
                                 .save(provider);
+                        }
                     }
                 }
             }
@@ -350,10 +354,12 @@ public class SkyTearsAndGregHeart {
                 for (int j = 0; j < skyDNumber[i][0]; j++) {
                     var build = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_" + (i + 1) + "_" + (j + 1));
                     // base append
-                    build
-                            .notConsumable(skyFragments[i])
-                            .chancedOutput(skyFragments[i], 50, 0)
-                            .chancedOutput(MINING_CRYSTAL.asStack(1), 5, 5)
+                    {
+                        var gtlRecipeBuilder353 = build
+                            .notConsumable(skyFragments[i]);
+                        GTLRecipeContents.chancedOutput(gtlRecipeBuilder353, skyFragments[i], 50, 0);
+                        GTLRecipeContents.chancedOutput(gtlRecipeBuilder353, MINING_CRYSTAL.asStack(1), 5, 5);
+                        gtlRecipeBuilder353
                             .outputItems(rawOre, skyOres[skyDMap[i][j]][0], skyOres_n[skyDMap[i][j]][0])
                             .outputItems(rawOre, skyOres[skyDMap[i][j]][1], skyOres_n[skyDMap[i][j]][1])
                             .outputItems(rawOre, skyOres[skyDMap[i][j]][2], skyOres_n[skyDMap[i][j]][2])
@@ -361,6 +367,7 @@ public class SkyTearsAndGregHeart {
                             .EUt(8)
                             .duration(24000 / skyOres_n[skyDMap[i][j]][4])
                             .circuitMeta(i == 0 ? j + 2 : j + 1);
+                    }
                     // o
                     switch (i) {
                         case 0 -> build
@@ -397,119 +404,140 @@ public class SkyTearsAndGregHeart {
             }
 
             {
-                FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_1")
-                        .notConsumable(WORLD_FRAGMENTS_OVERWORLD.asStack(1))
-                        .chancedOutput(WORLD_FRAGMENTS_OVERWORLD.asStack(1), 50, 0)
-                        .chancedOutput(TREASURES_CRYSTAL.asStack(), 5, 5)
-                        .chancedOutput(new ItemStack(Blocks.DIRT, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Blocks.GRAVEL, 16), 4000, 0)
-                        .chancedOutput(new ItemStack(Blocks.SAND, 16), 3000, 0)
-                        .chancedOutput(new ItemStack(Items.CLAY_BALL, 64), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.OAK_SAPLING, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.BIRCH_SAPLING, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.SPRUCE_SAPLING, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.JUNGLE_SAPLING, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.CHERRY_SAPLING, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.MANGROVE_PROPAGULE, 8), 2000, 0)
-                        .chancedOutput(Lava.getFluid(1000), 500, 0)
+                {
+                    var gtlRecipeBuilder400 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_1")
+                        .notConsumable(WORLD_FRAGMENTS_OVERWORLD.asStack(1));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, WORLD_FRAGMENTS_OVERWORLD.asStack(1), 50, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, TREASURES_CRYSTAL.asStack(), 5, 5);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Blocks.DIRT, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Blocks.GRAVEL, 16), 4000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Blocks.SAND, 16), 3000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Items.CLAY_BALL, 64), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Items.OAK_SAPLING, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Items.BIRCH_SAPLING, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Items.SPRUCE_SAPLING, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Items.JUNGLE_SAPLING, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Items.CHERRY_SAPLING, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, new ItemStack(Items.MANGROVE_PROPAGULE, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder400, Lava.getFluid(1000), 500, 0);
+                    gtlRecipeBuilder400
                         .circuitMeta(0)
                         .duration(200)
                         .EUt(8)
                         .save(provider);
+                }
 
-                FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_2")
-                        .notConsumable(WORLD_FRAGMENTS_OVERWORLD.asStack(1))
-                        .chancedOutput(WORLD_FRAGMENTS_OVERWORLD.asStack(1), 50, 0)
-                        .chancedOutput(TREASURES_CRYSTAL.asStack(), 5, 5)
-                        .chancedOutput(new ItemStack(Items.SUGAR_CANE, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(GTBlocks.RUBBER_SAPLING, 4), 1000, 0)
-                        .chancedOutput(new ItemStack(Items.LEATHER, 4), 500, 0)
-                        .chancedOutput(new ItemStack(Items.STRING, 8), 500, 0)
-                        .chancedOutput(new ItemStack(Items.HONEYCOMB, 1), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.KELP, 1), 2000, 0)
-                        .chancedOutput(new ItemStack(Blocks.SCULK_SHRIEKER, 2), 100, 0)
-                        .chancedOutput(new ItemStack(Blocks.SCULK_SENSOR, 2), 100, 0)
-                        .chancedOutput(new ItemStack(Blocks.SOUL_SAND, 4), 5, 0)
-                        .chancedOutput(new ItemStack(Items.TOTEM_OF_UNDYING, 1), 10, 0)
-                        .chancedOutput(RawOil.getFluid(1000), 2000, 0)
+                {
+                    var gtlRecipeBuilder420 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_2")
+                        .notConsumable(WORLD_FRAGMENTS_OVERWORLD.asStack(1));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, WORLD_FRAGMENTS_OVERWORLD.asStack(1), 50, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, TREASURES_CRYSTAL.asStack(), 5, 5);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Items.SUGAR_CANE, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(GTBlocks.RUBBER_SAPLING, 4), 1000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Items.LEATHER, 4), 500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Items.STRING, 8), 500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Items.HONEYCOMB, 1), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Items.KELP, 1), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Blocks.SCULK_SHRIEKER, 2), 100, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Blocks.SCULK_SENSOR, 2), 100, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Blocks.SOUL_SAND, 4), 5, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, new ItemStack(Items.TOTEM_OF_UNDYING, 1), 10, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder420, RawOil.getFluid(1000), 2000, 0);
+                    gtlRecipeBuilder420
                         .circuitMeta(1)
                         .duration(200)
                         .EUt(8)
                         .save(provider);
+                }
 
-                FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_3")
-                        .notConsumable(WORLD_FRAGMENTS_REACTOR.asStack(1))
-                        .chancedOutput(WORLD_FRAGMENTS_REACTOR.asStack(1), 50, 0)
-                        .chancedOutput(TREASURES_CRYSTAL.asStack(), 5, 5)
-                        .chancedOutput(new ItemStack(Blocks.DIRT, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Blocks.DIORITE, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Blocks.ANDESITE, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Blocks.GRANITE, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(GTBlocks.RED_GRANITE, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(GTBlocks.MARBLE, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Blocks.SUSPICIOUS_SAND, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Blocks.SUSPICIOUS_GRAVEL, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Registries.getItem("ae2:mysterious_cube"), 1), 100, 0)
-                        .chancedOutput(new ItemStack(Registries.getItem("ae2:sky_stone_block"), 16), 500, 0)
+                {
+                    var gtlRecipeBuilder440 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_3")
+                        .notConsumable(WORLD_FRAGMENTS_REACTOR.asStack(1));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, WORLD_FRAGMENTS_REACTOR.asStack(1), 50, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, TREASURES_CRYSTAL.asStack(), 5, 5);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Blocks.DIRT, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Blocks.DIORITE, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Blocks.ANDESITE, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Blocks.GRANITE, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(GTBlocks.RED_GRANITE, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(GTBlocks.MARBLE, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Blocks.SUSPICIOUS_SAND, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Blocks.SUSPICIOUS_GRAVEL, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Registries.getItem("ae2:mysterious_cube"), 1), 100, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder440, new ItemStack(Registries.getItem("ae2:sky_stone_block"), 16), 500, 0);
+                    gtlRecipeBuilder440
                         .circuitMeta(0)
                         .duration(200)
                         .EUt(8)
                         .save(provider);
+                }
 
-                FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_4")
-                        .notConsumable(WORLD_FRAGMENTS_NETHER.asStack(1))
-                        .chancedOutput(WORLD_FRAGMENTS_NETHER.asStack(1), 50, 0)
-                        .chancedOutput(TREASURES_CRYSTAL.asStack(), 5, 5)
-                        .chancedOutput(new ItemStack(Blocks.SOUL_SAND, 16), 6000, 0)
-                        .chancedOutput(new ItemStack(Blocks.SOUL_SOIL, 16), 3000, 0)
-                        .chancedOutput(new ItemStack(Blocks.ANCIENT_DEBRIS, 4), 500, 0)
-                        .chancedOutput(new ItemStack(Items.NETHER_WART, 12), 200, 0)
-                        .chancedOutput(new ItemStack(Items.CRIMSON_FUNGUS, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.WARPED_FUNGUS, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.BLAZE_ROD, 8), 500, 0)
-                        .chancedOutput(Lava.getFluid(8000), 5000, 0)
+                {
+                    var gtlRecipeBuilder459 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_4")
+                        .notConsumable(WORLD_FRAGMENTS_NETHER.asStack(1));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, WORLD_FRAGMENTS_NETHER.asStack(1), 50, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, TREASURES_CRYSTAL.asStack(), 5, 5);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, new ItemStack(Blocks.SOUL_SAND, 16), 6000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, new ItemStack(Blocks.SOUL_SOIL, 16), 3000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, new ItemStack(Blocks.ANCIENT_DEBRIS, 4), 500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, new ItemStack(Items.NETHER_WART, 12), 200, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, new ItemStack(Items.CRIMSON_FUNGUS, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, new ItemStack(Items.WARPED_FUNGUS, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, new ItemStack(Items.BLAZE_ROD, 8), 500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder459, Lava.getFluid(8000), 5000, 0);
+                    gtlRecipeBuilder459
                         .circuitMeta(0)
                         .duration(200)
                         .EUt(8)
                         .save(provider);
+                }
 
-                FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_5")
-                        .notConsumable(WORLD_FRAGMENTS_END.asStack(1))
-                        .chancedOutput(WORLD_FRAGMENTS_END.asStack(1), 50, 0)
-                        .chancedOutput(TREASURES_CRYSTAL.asStack(), 5, 5)
-                        .chancedOutput(new ItemStack(Blocks.DRAGON_EGG, 1), 5, 0)
-                        .chancedOutput(new ItemStack(Blocks.DRAGON_HEAD, 1), 5, 0)
-                        .chancedOutput(new ItemStack(Items.DRAGON_BREATH, 1), 500, 0)
-                        .chancedOutput(new ItemStack(Items.SHULKER_SHELL, 8), 2000, 0)
-                        .chancedOutput(new ItemStack(Items.CHORUS_FRUIT, 16), 4000, 0)
-                        .chancedOutput(new ItemStack(Items.CHORUS_FLOWER, 1), 500, 0)
+                {
+                    var gtlRecipeBuilder476 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_5")
+                        .notConsumable(WORLD_FRAGMENTS_END.asStack(1));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, WORLD_FRAGMENTS_END.asStack(1), 50, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, TREASURES_CRYSTAL.asStack(), 5, 5);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, new ItemStack(Blocks.DRAGON_EGG, 1), 5, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, new ItemStack(Blocks.DRAGON_HEAD, 1), 5, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, new ItemStack(Items.DRAGON_BREATH, 1), 500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, new ItemStack(Items.SHULKER_SHELL, 8), 2000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, new ItemStack(Items.CHORUS_FRUIT, 16), 4000, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder476, new ItemStack(Items.CHORUS_FLOWER, 1), 500, 0);
+                    gtlRecipeBuilder476
                         .circuitMeta(0)
                         .duration(200)
                         .EUt(8)
                         .save(provider);
+                }
 
-                FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_6")
-                        .notConsumable(WORLD_FRAGMENTS_GLACIO.asStack(1))
-                        .chancedOutput(WORLD_FRAGMENTS_GLACIO.asStack(1), 50, 0)
-                        .chancedOutput(TREASURES_CRYSTAL.asStack(), 5, 5)
-                        .chancedOutput(new ItemStack(Registries.getItem("kubejs:glacio_spirit"), 1), 500, 0)
-                        .chancedOutput(new ItemStack(ModItems.ICE_SHARD.get(), 1), 9500, 0)
+                {
+                    var gtlRecipeBuilder491 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_6")
+                        .notConsumable(WORLD_FRAGMENTS_GLACIO.asStack(1));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder491, WORLD_FRAGMENTS_GLACIO.asStack(1), 50, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder491, TREASURES_CRYSTAL.asStack(), 5, 5);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder491, new ItemStack(Registries.getItem("kubejs:glacio_spirit"), 1), 500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder491, new ItemStack(ModItems.ICE_SHARD.get(), 1), 9500, 0);
+                    gtlRecipeBuilder491
                         .circuitMeta(0)
                         .duration(200)
                         .EUt(8)
                         .save(provider);
+                }
 
-                FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_7")
-                        .notConsumable(WORLD_FRAGMENTS_BARNARDA.asStack(1))
-                        .chancedOutput(WORLD_FRAGMENTS_BARNARDA.asStack(1), 50, 0)
-                        .chancedOutput(TREASURES_CRYSTAL.asStack(), 5, 5)
-                        .chancedOutput(new ItemStack(Registries.getBlock("kubejs:barnarda_log"), 1), 500, 0)
-                        .chancedOutput(new ItemStack(Registries.getBlock("kubejs:barnarda_leaves"), 1), 9500, 0)
-                        .chancedOutput(BarnardaAir.getFluid(16000), 2000, 0)
+                {
+                    var gtlRecipeBuilder502 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("sky_block_digging_special_7")
+                        .notConsumable(WORLD_FRAGMENTS_BARNARDA.asStack(1));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder502, WORLD_FRAGMENTS_BARNARDA.asStack(1), 50, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder502, TREASURES_CRYSTAL.asStack(), 5, 5);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder502, new ItemStack(Registries.getBlock("kubejs:barnarda_log"), 1), 500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder502, new ItemStack(Registries.getBlock("kubejs:barnarda_leaves"), 1), 9500, 0);
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder502, BarnardaAir.getFluid(16000), 2000, 0);
+                    gtlRecipeBuilder502
                         .circuitMeta(0)
                         .duration(200)
                         .EUt(8)
                         .save(provider);
+                }
             }
 
             WORLD_DATA_SCANNER_RECIPES.recipeBuilder("sky_block_make_overworld_data")
@@ -555,7 +583,8 @@ public class SkyTearsAndGregHeart {
                     .EUt(8)
                     .save(provider);
 
-            QFT_RECIPES.recipeBuilder("make_miracle_crystal")
+            {
+                var gtlRecipeBuilder558 = QFT_RECIPES.recipeBuilder("make_miracle_crystal")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .inputItems(WORLD_FRAGMENTS_NETHER, 1)
                     .inputItems(WORLD_FRAGMENTS_END, 1)
@@ -576,11 +605,13 @@ public class SkyTearsAndGregHeart {
                     .inputItems(TREASURES_CRYSTAL, 1)
                     .inputFluids(UUMatter.getFluid(100000000))
                     .inputFluids(Eternity.getFluid(100000))
-                    .inputFluids(Magmatter.getFluid(100000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 3000, 0)
+                    .inputFluids(Magmatter.getFluid(100000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder558, MIRACLE_CRYSTAL.asStack(), 3000, 0);
+                gtlRecipeBuilder558
                     .duration(2000)
                     .EUt(VEX[19])
                     .save(provider);
+            }
 
             QFT_RECIPES.recipeBuilder("make_miracle_crystal2")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
@@ -611,134 +642,170 @@ public class SkyTearsAndGregHeart {
         }
 
         {
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_1")
+            {
+                var gtlRecipeBuilder614 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_1")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(Registries.getItem("kubejs:reactor_core"))
-                    .inputItems(block, Steel, 4)
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputItems(block, Steel, 4);
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder614, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder614
                     .outputItems(WORLD_FRAGMENTS_REACTOR, 1)
-                    .dimension(new ResourceLocation("overworld"))
+                    .dimension(ResourceLocation.parse("overworld"))
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_2")
+            {
+                var gtlRecipeBuilder625 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_2")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(ModItems.TIER_1_ROCKET)
-                    .inputFluids(RocketFuel.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(RocketFuel.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder625, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder625
                     .outputItems(WORLD_FRAGMENTS_MOON, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_3")
+            {
+                var gtlRecipeBuilder636 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_3")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(ModItems.TIER_2_ROCKET)
-                    .inputFluids(RocketFuelRp1.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(RocketFuelRp1.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder636, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder636
                     .outputItems(WORLD_FRAGMENTS_MARS, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_4")
+            {
+                var gtlRecipeBuilder647 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_4")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(ModItems.TIER_3_ROCKET)
-                    .inputFluids(DenseHydrazineFuelMixture.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(DenseHydrazineFuelMixture.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder647, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder647
                     .outputItems(WORLD_FRAGMENTS_VENUS, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_5")
+            {
+                var gtlRecipeBuilder658 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_5")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(ModItems.TIER_3_ROCKET)
-                    .inputFluids(DenseHydrazineFuelMixture.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(DenseHydrazineFuelMixture.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder658, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder658
                     .outputItems(WORLD_FRAGMENTS_MERCURY, 1)
                     .circuitMeta(31)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_6")
+            {
+                var gtlRecipeBuilder669 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_6")
                     .inputItems(WORLD_FRAGMENTS_VENUS, 1)
-                    .notConsumable(Registries.getItem("kubejs:nether_data"))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .notConsumable(Registries.getItem("kubejs:nether_data"));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder669, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder669
                     .outputItems(WORLD_FRAGMENTS_NETHER, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_7")
+            {
+                var gtlRecipeBuilder679 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_7")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(ModItems.TIER_4_ROCKET)
-                    .inputFluids(RocketFuelCn3h7o3.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(RocketFuelCn3h7o3.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder679, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder679
                     .outputItems(WORLD_FRAGMENTS_CERES, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_8")
+            {
+                var gtlRecipeBuilder690 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_8")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(Registries.getItem("ad_astra_rocketed:tier_5_rocket"))
-                    .inputFluids(RocketFuelH8n4c2o4.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(RocketFuelH8n4c2o4.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder690, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder690
                     .outputItems(WORLD_FRAGMENTS_IO, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_9")
+            {
+                var gtlRecipeBuilder701 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_9")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(Registries.getItem("ad_astra_rocketed:tier_5_rocket"))
-                    .inputFluids(RocketFuelH8n4c2o4.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(RocketFuelH8n4c2o4.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder701, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder701
                     .outputItems(WORLD_FRAGMENTS_GANYMEDE, 1)
                     .circuitMeta(31)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_13")
+            {
+                var gtlRecipeBuilder712 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_13")
                     .inputItems(WORLD_FRAGMENTS_PLUTO, 1)
-                    .notConsumable(new ItemStack(Registries.getItem("kubejs:end_data"), 16))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .notConsumable(new ItemStack(Registries.getItem("kubejs:end_data"), 16));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder712, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder712
                     .outputItems(WORLD_FRAGMENTS_END, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_14")
+            {
+                var gtlRecipeBuilder722 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_14")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .notConsumable(Registries.getItem("ad_astra_rocketed:tier_7_rocket"))
-                    .inputFluids(StellarEnergyRocketFuel.getFluid(16000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .inputFluids(StellarEnergyRocketFuel.getFluid(16000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder722, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder722
                     .outputItems(WORLD_FRAGMENTS_GLACIO, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
-            FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_15")
+            {
+                var gtlRecipeBuilder733 = FRAGMENT_WORLD_COLLECTION.recipeBuilder("make_world_fragments_15")
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
-                    .notConsumable(SPACE_ELEVATOR.getItem())
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 1, 0)
+                    .notConsumable(SPACE_ELEVATOR.asItem());
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder733, MIRACLE_CRYSTAL.asStack(), 1, 0);
+                gtlRecipeBuilder733
                     .outputItems(WORLD_FRAGMENTS_BARNARDA, 1)
                     .circuitMeta(32)
                     .duration(200)
                     .EUt(8)
                     .save(provider);
+            }
 
             for (int i = 0; i < 16; i++) {
                 ELEMENT_COPYING_RECIPES.recipeBuilder("copy_world_fragments_" + (i))
@@ -799,31 +866,37 @@ public class SkyTearsAndGregHeart {
             VanillaRecipeHelper.addShapedRecipe(provider,
                     GTLCore.id("make_fragment_world_collection_machine"), GTLMachines.FRAGMENT_WORLD_COLLECTION_MACHINE[ULV].asStack(),
                     "WNW", "PCP", "XNX",
-                    'X', new UnificationEntry(cableGtSingle, CosmicNeutronium),
+                    'X', new MaterialEntry(cableGtSingle, CosmicNeutronium),
                     'N', CustomTags.MAX_CIRCUITS,
                     'P', SENSOR_MAX,
                     'C', GTMachines.HULL[14].asStack(),
                     'W', FIELD_GENERATOR_MAX);
 
-            QFT_RECIPES.recipeBuilder("make_miracle_crystal")
-                    .notConsumable(new ItemStack(Registries.getItem("kubejs:giga_chad"), 64))
-                    .chancedInput(ChemicalHelper.get(nanoswarm, CosmicNeutronium, 4), 1000, 0)
-                    .chancedInput(ChemicalHelper.get(nanoswarm, SpaceTime, 4), 1000, 0)
-                    .chancedInput(ChemicalHelper.get(nanoswarm, TranscendentMetal, 4), 1000, 0)
-                    .chancedInput(ChemicalHelper.get(nanoswarm, Eternity, 4), 1000, 0)
+            {
+                var gtlRecipeBuilder808 = QFT_RECIPES.recipeBuilder("make_miracle_crystal")
+                    .notConsumable(new ItemStack(Registries.getItem("kubejs:giga_chad"), 64));
+                GTLRecipeContents.chancedInput(gtlRecipeBuilder808, ChemicalHelper.get(nanoswarm, CosmicNeutronium, 4), 1000, 0);
+                GTLRecipeContents.chancedInput(gtlRecipeBuilder808, ChemicalHelper.get(nanoswarm, SpaceTime, 4), 1000, 0);
+                GTLRecipeContents.chancedInput(gtlRecipeBuilder808, ChemicalHelper.get(nanoswarm, TranscendentMetal, 4), 1000, 0);
+                GTLRecipeContents.chancedInput(gtlRecipeBuilder808, ChemicalHelper.get(nanoswarm, Eternity, 4), 1000, 0);
+                gtlRecipeBuilder808
                     .inputItems(new ItemStack(Registries.getItem("kubejs:chaotic_core"), 16))
                     .inputItems(new ItemStack(Registries.getItem("kubejs:quantum_anomaly"), 16))
                     .inputFluids(ExcitedDtec.getFluid(1000000))
                     .inputFluids(TranscendentMetal.getFluid(100000))
-                    .inputFluids(Shirabon.getFluid(100000))
-                    .chancedOutput(MIRACLE_CRYSTAL.asStack(), 6000, 0)
+                    .inputFluids(Shirabon.getFluid(100000));
+                GTLRecipeContents.chancedOutput(gtlRecipeBuilder808, MIRACLE_CRYSTAL.asStack(), 6000, 0);
+                gtlRecipeBuilder808
                     .duration(1000)
                     .EUt(VEX[18])
                     .save(provider);
+            }
 
-            QFT_RECIPES.recipeBuilder("make_miracle_crystal2")
-                    .chancedInput(new ItemStack(Registries.getItem("kubejs:chaotic_core"), 16), 1000, 0)
-                    .chancedInput(new ItemStack(Registries.getItem("kubejs:quantum_anomaly"), 16), 1000, 0)
+            {
+                var gtlRecipeBuilder824 = QFT_RECIPES.recipeBuilder("make_miracle_crystal2");
+                GTLRecipeContents.chancedInput(gtlRecipeBuilder824, new ItemStack(Registries.getItem("kubejs:chaotic_core"), 16), 1000, 0);
+                GTLRecipeContents.chancedInput(gtlRecipeBuilder824, new ItemStack(Registries.getItem("kubejs:quantum_anomaly"), 16), 1000, 0);
+                gtlRecipeBuilder824
                     .inputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .inputItems(WORLD_FRAGMENTS_NETHER, 1)
                     .inputItems(WORLD_FRAGMENTS_END, 1)
@@ -847,6 +920,7 @@ public class SkyTearsAndGregHeart {
                     .duration(1000)
                     .EUt(VEX[19])
                     .save(provider);
+            }
 
             GRAVITATION_SHOCKBURST_RECIPES.recipeBuilder("make_world_fragments_0")
                     .inputItems(Blocks.GRASS_BLOCK.asItem(), 64)
@@ -854,7 +928,7 @@ public class SkyTearsAndGregHeart {
                     .outputItems(WORLD_FRAGMENTS_OVERWORLD, 1)
                     .duration(200)
                     .EUt(VEX[17])
-                    .dimension(new ResourceLocation("overworld"))
+                    .dimension(ResourceLocation.parse("overworld"))
                     .save(provider);
 
         }

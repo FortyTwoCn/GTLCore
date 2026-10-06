@@ -1,19 +1,10 @@
 package org.gtlcore.gtlcore.mixin.gtm.client;
-
-import com.gregtechceu.gtceu.client.renderer.MultiblockInWorldPreviewRenderer;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.Rotation;
-
+import com.gregtechceu.gtceu.client.mui.schema.MutableSchema;
+import com.gregtechceu.gtceu.client.renderer.PatternPreviewRenderer;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(value = MultiblockInWorldPreviewRenderer.class, remap = false)
+@Mixin(value = PatternPreviewRenderer.class, remap = false)
 public interface WorldPreviewAccessor {
-
-    @Invoker("rotateByFrontAxis")
-    static BlockPos gtlcore$rotate(BlockPos pos, Direction front, Rotation rotation) {
-        throw new AssertionError();
-    }
+    @Accessor("schema") MutableSchema gtlcore$getNativeSchema();
 }

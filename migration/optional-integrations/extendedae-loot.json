@@ -1,0 +1,18 @@
+{
+  "source": "maven.modrinth:extended-ae:bC302UUP",
+  "jar_sha256": "14a2860fa2c747e9dda2279b8933fac6311fecfee166c765171022b902591c65",
+  "resource": "data/extendedae/loot_table/blocks/ex_emc_interface.json",
+  "original_resource_sha256": "f5ba401c63dbb113bc5cbe2fce5b82d7eb057b4be920ca589d18934cdea6a4e0",
+  "native_resource_sha256": "b289a02e3bc954d20f8edf1bd3796b6b123cf6524ae3d07e04fbc5f5ae3684ff",
+  "change": "Use native neoforge:item_exists for extendedae:ex_emc_interface. Native ExtendedAE registers this content only with AppliedE; ProjectE alone does not provide the integration. Preserve the original loot when the actual interface is available.",
+  "source_repository": "https://github.com/GlodBlock/ExtendedAE",
+  "authors": [
+    "GlodBlock"
+  ],
+  "license": "LGPL-3.0",
+  "license_source": "https://raw.githubusercontent.com/GlodBlock/ExtendedAE/1.21.1-neoforge/LICENSE.txt",
+  "license_git_blob": "0a041280bd00a9d068f503b8ee7ce35214bd24a1",
+  "license_sha256": "e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118",
+  "license_resource": "META-INF/licenses/ExtendedAE-LGPL-3.0.txt",
+  "native_registration_gate": "appliede"
+}

@@ -1,0 +1,2229 @@
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/WildcardCreativeTab.java b/src/main/java/org/leodreamer/wildcard_pattern/WildcardCreativeTab.java
+index cf8c5f5..5fbeb0e 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/WildcardCreativeTab.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/WildcardCreativeTab.java
+@@ -15,7 +15,7 @@ public class WildcardCreativeTab {
+     @RegisterLanguage("Wildcard Pattern")
+     private static final String NAME = "sftcore.creative_tab";
+ 
+-    public static final RegistryEntry<CreativeModeTab> WILDCARD_TAB = REGISTRATE
++    public static final RegistryEntry<CreativeModeTab, CreativeModeTab> WILDCARD_TAB = REGISTRATE
+         .defaultCreativeTab(
+             MOD_ID,
+             builder -> builder
+@@ -29,6 +29,7 @@ public class WildcardCreativeTab {
+         .register();
+ 
+     public static void init() {
++        REGISTRATE.defaultCreativeTab((net.minecraft.resources.ResourceKey<CreativeModeTab>) null);
+         REGISTRATE.creativeModeTab(() -> WILDCARD_TAB);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/WildcardGTAddon.java b/src/main/java/org/leodreamer/wildcard_pattern/WildcardGTAddon.java
+index 849ee8f..c0d27ef 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/WildcardGTAddon.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/WildcardGTAddon.java
+@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.api.addon.GTAddon;
+ import com.gregtechceu.gtceu.api.addon.IGTAddon;
+ import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
+ import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
+-import net.minecraft.data.recipes.FinishedRecipe;
++import net.minecraft.data.recipes.RecipeOutput;
+ 
+ import java.util.function.Consumer;
+ 
+@@ -15,7 +15,7 @@ import static com.gregtechceu.gtceu.api.data.tag.TagPrefix.plate;
+ import static com.gregtechceu.gtceu.common.data.GTMaterials.Polyethylene;
+ import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.ASSEMBLER_RECIPES;
+ 
+-@GTAddon
++@GTAddon(WildcardPattern.MOD_ID)
+ public class WildcardGTAddon implements IGTAddon {
+     @Override
+     public GTRegistrate getRegistrate() {
+@@ -23,16 +23,7 @@ public class WildcardGTAddon implements IGTAddon {
+     }
+ 
+     @Override
+-    public void initializeAddon() {
+-    }
+-
+-    @Override
+-    public String addonModId() {
+-        return WildcardPattern.MOD_ID;
+-    }
+-
+-    @Override
+-    public void addRecipes(Consumer<FinishedRecipe> provider) {
++    public void addRecipes(RecipeOutput provider) {
+         ASSEMBLER_RECIPES.recipeBuilder("wildcard_pattern")
+             .inputItems(AEItems.BLANK_PATTERN.asItem(), 16)
+             .inputItems(ChemicalHelper.get(plate, Polyethylene, 4))
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/WildcardItems.java b/src/main/java/org/leodreamer/wildcard_pattern/WildcardItems.java
+index ca7773a..ef6ffba 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/WildcardItems.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/WildcardItems.java
+@@ -1,6 +1,6 @@
+ package org.leodreamer.wildcard_pattern;
+ 
+-import com.gregtechceu.gtceu.api.item.ComponentItem;
++import org.leodreamer.wildcard_pattern.gui.WildcardPatternItem;
+ import com.tterrag.registrate.util.entry.ItemEntry;
+ import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
+ 
+@@ -9,8 +9,8 @@ import static org.leodreamer.wildcard_pattern.WildcardPattern.REGISTRATE;
+ 
+ public class WildcardItems {
+ 
+-    public static final ItemEntry<ComponentItem> WILDCARD_PATTERN = REGISTRATE
+-        .item("wildcard_pattern", ComponentItem::create)
++    public static final ItemEntry<WildcardPatternItem> WILDCARD_PATTERN = REGISTRATE
++        .item("wildcard_pattern", WildcardPatternItem::new)
+         .lang("Wildcard Pattern")
+         .model(NonNullBiConsumer.noop())
+         .properties(p -> p.stacksTo(1))
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/WildcardPattern.java b/src/main/java/org/leodreamer/wildcard_pattern/WildcardPattern.java
+index 5eda09a..d9c1468 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/WildcardPattern.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/WildcardPattern.java
+@@ -1,36 +1,22 @@
+ package org.leodreamer.wildcard_pattern;
+ 
+-import com.gregtechceu.gtceu.api.GTCEuAPI;
+-import com.gregtechceu.gtceu.api.cover.CoverDefinition;
+ import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
+ import com.tterrag.registrate.providers.ProviderType;
+-import net.minecraft.resources.ResourceLocation;
+-import net.minecraftforge.data.event.GatherDataEvent;
+-import net.minecraftforge.eventbus.api.EventPriority;
+-import net.minecraftforge.eventbus.api.SubscribeEvent;
+-import net.minecraftforge.fml.common.Mod;
+-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.fml.common.Mod;
++import org.leodreamer.wildcard_pattern.gui.WildcardUIFactory;
+ import org.leodreamer.wildcard_pattern.lang.WildcardLangHandler;
+ 
+ @Mod(WildcardPattern.MOD_ID)
+ public class WildcardPattern {
+-
+     public static final String MOD_ID = "wildcard_pattern";
+     public static final GTRegistrate REGISTRATE = GTRegistrate.create(MOD_ID);
+ 
+-    public WildcardPattern() {
+-        REGISTRATE.registerRegistrate();
+-        var bus = FMLJavaModLoadingContext.get().getModEventBus();
+-        bus.addGenericListener(CoverDefinition.class, this::register);
+-        bus.addListener(EventPriority.LOWEST, (GatherDataEvent event) -> {
+-            REGISTRATE.addDataGenerator(ProviderType.LANG, WildcardLangHandler::init);
+-        });
+-        bus.register(this);
+-    }
+-
+-    @SubscribeEvent
+-    public void register(GTCEuAPI.RegisterEvent<ResourceLocation, CoverDefinition> event) {
++    public WildcardPattern(IEventBus bus) {
++        REGISTRATE.registerEventListeners(bus);
+         WildcardCreativeTab.init();
+         WildcardItems.init();
++        REGISTRATE.addDataGenerator(ProviderType.LANG, WildcardLangHandler::init);
++        com.lowdragmc.lowdraglib.gui.factory.UIFactory.register(WildcardUIFactory.INSTANCE);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/WildcardPatternBehavior.java b/src/main/java/org/leodreamer/wildcard_pattern/WildcardPatternBehavior.java
+index d380150..93e932f 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/WildcardPatternBehavior.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/WildcardPatternBehavior.java
+@@ -1,80 +1,20 @@
+ package org.leodreamer.wildcard_pattern;
+ 
+-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
+-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
+-import com.gregtechceu.gtceu.api.gui.fancy.TabsWidget;
+-import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
+-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
+-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
+-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
+-import com.lowdragmc.lowdraglib.gui.widget.Widget;
+-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+-import net.minecraft.network.chat.Component;
++import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.InteractionResultHolder;
+ import net.minecraft.world.entity.player.Player;
+-import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.level.Level;
+-import org.leodreamer.wildcard_pattern.lang.DataGenScanned;
+-import org.leodreamer.wildcard_pattern.lang.RegisterLanguage;
+-import org.leodreamer.wildcard_pattern.wildcard.WildcardPatternLogic;
+-import org.leodreamer.wildcard_pattern.wildcard.gui.WildcardFilterFancyConfigurator;
+-import org.leodreamer.wildcard_pattern.wildcard.gui.WildcardIOFancyConfigurator;
+-import org.leodreamer.wildcard_pattern.wildcard.gui.WildcardIndexPage;
+-
+-import java.util.function.Consumer;
+-
+-@DataGenScanned
+-public class WildcardPatternBehavior implements IItemUIFactory, IFancyUIProvider {
+-
+-    private InteractionHand hand;
+-    private Player player;
+-    private WildcardPatternLogic logic;
+-
+-    @Override
+-    public InteractionResultHolder<ItemStack> use(Item item, Level level, Player player, InteractionHand usedHand) {
+-        this.hand = usedHand;
+-        this.player = player;
+-        logic = WildcardPatternLogic.on(player.getItemInHand(hand));
+-        return IItemUIFactory.super.use(item, level, player, usedHand);
+-    }
+-
+-    @RegisterLanguage("Wildcard Pattern Config")
+-    private static final String TITLE_CONFIG = "sftcore.item.wildcard_pattern.config";
+-
+-    @Override
+-    public Component getTitle() {
+-        return Component.translatable(TITLE_CONFIG);
+-    }
+-
+-    @Override
+-    public Widget createMainPage(FancyMachineUIWidget ui) {
+-        return new WildcardIndexPage(logic, player.level(), 0, 0, 158, 80);
+-    }
+-
+-    @Override
+-    public IGuiTexture getTabIcon() {
+-        return new ItemStackTexture(WildcardItems.WILDCARD_PATTERN.get());
+-    }
+-
+-    @Override
+-    public void attachSideTabs(TabsWidget sideTabs) {
+-        sideTabs.setMainTab(this);
+-        Consumer<ItemStack> save = (stack) -> player.setItemInHand(hand, stack);
+-        var inConfig = new WildcardIOFancyConfigurator(logic, WildcardPatternLogic.IO.IN, save);
+-        var outConfig = new WildcardIOFancyConfigurator(logic, WildcardPatternLogic.IO.OUT, save);
+-        var filterConfig = new WildcardFilterFancyConfigurator(logic, save);
+-        sideTabs.attachSubTab(inConfig);
+-        sideTabs.attachSubTab(outConfig);
+-        sideTabs.attachSubTab(filterConfig);
+-    }
++import org.leodreamer.wildcard_pattern.gui.WildcardUIFactory;
+ 
++/** Opens a native editor with state owned by this player's menu. */
++public final class WildcardPatternBehavior implements IInteractionItem {
+     @Override
+-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder heldItemHolder, Player player) {
+-        return new ModularUI(176, 166, heldItemHolder, player)
+-            .widget(new FancyMachineUIWidget(this, 176, 166));
++    public InteractionResultHolder<ItemStack> use(ItemStack stack, Level level, Player player, InteractionHand hand) {
++        if (player instanceof ServerPlayer serverPlayer)
++            WildcardUIFactory.INSTANCE.openUI(new WildcardUIFactory.Holder(player, hand), serverPlayer);
++        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/api/ICustomSerializable.java b/src/main/java/org/leodreamer/wildcard_pattern/api/ICustomSerializable.java
+index 2e34db2..853ddea 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/api/ICustomSerializable.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/api/ICustomSerializable.java
+@@ -1,5 +1,7 @@
+ package org.leodreamer.wildcard_pattern.api;
+ 
++import net.minecraft.core.HolderLookup;
++
+ /**
+  * An interface for objects that can be serialized and deserialized using a custom serializer.
+  */
+@@ -10,12 +12,12 @@ public interface ICustomSerializable<SELF extends ICustomSerializable<SELF, DATA
+ 
+     @Override
+     @SuppressWarnings("unchecked")
+-    default DATA encode() {
+-        return getSerializer().serialize((SELF) this);
++    default DATA encode(HolderLookup.Provider registries) {
++        return getSerializer().serialize((SELF) this, registries);
+     }
+ 
+     interface ISerializer<SELF, DATA> extends IDeserializer<SELF, DATA> {
+ 
+-        DATA serialize(SELF obj);
++        DATA serialize(SELF obj, HolderLookup.Provider registries);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/api/ISerializable.java b/src/main/java/org/leodreamer/wildcard_pattern/api/ISerializable.java
+index 2645ff6..bd842a4 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/api/ISerializable.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/api/ISerializable.java
+@@ -1,5 +1,7 @@
+ package org.leodreamer.wildcard_pattern.api;
+ 
++import net.minecraft.core.HolderLookup;
++
+ /**
+  * Generic serialization interface.
+  *
+@@ -13,7 +15,7 @@ public interface ISerializable<SELF extends ISerializable<SELF, DATA, DE>, DATA,
+     /**
+      * Encodes the object into the specified data format.
+      */
+-    DATA encode();
++    DATA encode(HolderLookup.Provider registries);
+ 
+     /**
+      * Decodes the object from the specified data using the provided deserializer.
+@@ -22,13 +24,13 @@ public interface ISerializable<SELF extends ISerializable<SELF, DATA, DE>, DATA,
+      * so this method cannot be abstract like <code>static decode(DATA data)</code>.
+      * </p>
+      */
+-    static <SELF, DATA, DE extends IDeserializer<SELF, DATA>> SELF decodeBy(DE deserializer, DATA data) {
+-        return deserializer.deserialize(data);
++    static <SELF, DATA, DE extends IDeserializer<SELF, DATA>> SELF decodeBy(DE deserializer, DATA data, HolderLookup.Provider registries) {
++        return deserializer.deserialize(data, registries);
+     }
+ 
+     @FunctionalInterface
+     interface IDeserializer<SELF, DATA> {
+ 
+-        SELF deserialize(DATA data);
++        SELF deserialize(DATA data, HolderLookup.Provider registries);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/GenericGTTag.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/GenericGTTag.java
+index 88f5db9..0887404 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/gui/GenericGTTag.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/GenericGTTag.java
+@@ -1,27 +1,29 @@
+ package org.leodreamer.wildcard_pattern.gui;
+ 
+ import appeng.api.stacks.GenericStack;
++import appeng.api.stacks.AEItemKey;
++import appeng.api.stacks.AEFluidKey;
+ import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
+ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+ import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
+ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
+ import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKey;
+ import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKeys;
+-import com.gregtechceu.gtceu.api.item.GTBucketItem;
++import com.gregtechceu.gtceu.common.item.GTBucketItem;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.resources.ResourceLocation;
+ import net.minecraft.world.item.BucketItem;
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.level.material.Fluid;
+-import net.minecraftforge.fluids.FluidStack;
++import net.neoforged.neoforge.fluids.FluidStack;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ import org.leodreamer.wildcard_pattern.util.ReflectUtils;
+ 
+ public class GenericGTTag {
+ 
+-    private final TagPrefix itemTag;
++    private final @Nullable TagPrefix itemTag;
+     @Nullable
+     private final FluidStorageKey fluidTag;
+     private final GenericType type;
+@@ -38,11 +40,9 @@ public class GenericGTTag {
+         }
+     }
+ 
+-    // I Hate U GTM! Why you do not introduce an empty object until GTM1.6+?
+-    public static final TagPrefix ITEM_NULL = new TagPrefix("null");
+-    // What is even worse that I cannot create an empty fluid storage key,
+-    // as the constructor is private. So use null anyway...
+-    public static final GenericGTTag EMPTY = item(ITEM_NULL);
++    // Native tag prefixes are frozen after registration; an empty editor never registers a synthetic prefix.
++    public static final @Nullable TagPrefix ITEM_NULL = null;
++    public static final GenericGTTag EMPTY = new GenericGTTag(GenericType.ITEM, null, null);
+ 
+     private GenericGTTag(GenericType type, TagPrefix itemTag, @Nullable FluidStorageKey fluidTag) {
+         this.type = type;
+@@ -50,8 +50,8 @@ public class GenericGTTag {
+         this.fluidTag = fluidTag;
+     }
+ 
+-    public static GenericGTTag item(@NotNull TagPrefix itemTag) {
+-        return new GenericGTTag(GenericType.ITEM, itemTag, null);
++    public static GenericGTTag item(@Nullable TagPrefix itemTag) {
++        return itemTag == null ? EMPTY : new GenericGTTag(GenericType.ITEM, itemTag, null);
+     }
+ 
+     public static GenericGTTag fluid(@Nullable FluidStorageKey fluidTag) {
+@@ -60,7 +60,7 @@ public class GenericGTTag {
+ 
+     public String name() {
+         if (type == GenericType.ITEM) {
+-            return itemTag.name;
++            return itemTag == null ? "null" : itemTag.name;
+         } else if (fluidTag != null) {
+             return fluidTag.getResourceLocation().getPath();
+         } else {
+@@ -68,21 +68,23 @@ public class GenericGTTag {
+         }
+     }
+ 
+-    public GenericStack toGenericStack(Material material, int amount) {
++    public GenericStack toGenericStack(Material material, long amount) {
++        if (amount <= 0) return null;
+         if (type == GenericType.ITEM) {
+-            var item = ChemicalHelper.get(itemTag, material, amount);
+-            return GenericStack.fromItemStack(item);
++            if (itemTag == null) return null;
++            var key = AEItemKey.of(ChemicalHelper.get(itemTag, material));
++            return key == null ? null : new GenericStack(key, amount);
+         } else {
+             var fluid = getFluidByKey(material, fluidTag);
+-            var stack = fluid == null ? FluidStack.EMPTY : new FluidStack(fluid, amount);
+-            return GenericStack.fromFluidStack(stack);
++            var key = fluid == null ? null : AEFluidKey.of(fluid);
++            return key == null ? null : new GenericStack(key, amount);
+         }
+     }
+ 
+     public CompoundTag toNBT() {
+         CompoundTag tag = new CompoundTag();
+         if (type == GenericType.ITEM) {
+-            tag.putString(GenericType.ITEM.key, itemTag.name);
++            tag.putString(GenericType.ITEM.key, itemTag == null ? "null" : itemTag.name);
+         } else if (fluidTag != null) {
+             tag.putString(GenericType.FLUID.key, fluidTag.getResourceLocation().toString());
+         }
+@@ -92,9 +94,10 @@ public class GenericGTTag {
+     public static GenericGTTag fromNBT(CompoundTag tag) {
+         if (tag.contains(GenericType.ITEM.key)) {
+             var item = TagPrefix.get(tag.getString(GenericType.ITEM.key));
+-            return item(item);
++            return item == null || item == ITEM_NULL ? EMPTY : item(item);
+         } else if (tag.contains(GenericType.FLUID.key)) {
+-            var rl = new ResourceLocation(tag.getString(GenericType.FLUID.key));
++            var rl = ResourceLocation.tryParse(tag.getString(GenericType.FLUID.key));
++            if (rl == null) return EMPTY;
+             var fluid = FluidStorageKey.getByName(rl);
+             return fluid(fluid);
+         }
+@@ -104,6 +107,7 @@ public class GenericGTTag {
+     @NotNull
+     public ItemStack createItemOrBucket(Material material) {
+         if (type == GenericType.ITEM) {
++            if (itemTag == null) return ItemStack.EMPTY;
+             return ChemicalHelper.get(itemTag, material);
+         } else {
+             var fluid = getFluidByKey(material, fluidTag);
+@@ -114,9 +118,10 @@ public class GenericGTTag {
+ 
+     public static GenericGTTag fromItemOrBucket(Item item) {
+         if (item instanceof BucketItem bucket) {
+-            var fluid = bucket.getFluid();
++            var fluid = bucket.content;
+             if (bucket instanceof GTBucketItem gtBucket) {
+-                var material = ReflectUtils.getFieldValue(gtBucket, "material", Material.class);
++                var material = ChemicalHelper.getMaterial(fluid);
++                if (material == null) return fluid(FluidStorageKeys.LIQUID);
+                 for (var key : FluidStorageKey.allKeys()) {
+                     // test all fluid storage keys for a match
+                     if (fluid == getFluidByKey(material, key)) {
+@@ -126,7 +131,8 @@ public class GenericGTTag {
+             }
+             return fluid(FluidStorageKeys.LIQUID);
+         }
+-        var tag = ChemicalHelper.getPrefix(item);
++        var entry = ChemicalHelper.getMaterialEntry(item);
++        var tag = entry == null ? null : entry.tagPrefix();
+         return item(tag == null ? ITEM_NULL : tag);
+     }
+ 
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveFluidStorage.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveFluidStorage.java
+index aa98dc2..9a6564a 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveFluidStorage.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveFluidStorage.java
+@@ -1,71 +1,8 @@
+ package org.leodreamer.wildcard_pattern.gui;
+ 
+-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+-import com.lowdragmc.lowdraglib.side.fluid.IFluidStorage;
+-import org.jetbrains.annotations.NotNull;
++import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+ 
+-public class NaiveFluidStorage implements IFluidStorage {
+-
+-    @NotNull
+-    private FluidStack stack = FluidStack.empty();
+-
+-    public NaiveFluidStorage() {
+-    }
+-
+-    @Override
+-    @SuppressWarnings("all")
+-    public long fill(int i, FluidStack fluidStack, boolean b, boolean b1) {
+-        stack = fluidStack;
+-        return 1;
+-    }
+-
+-    @Override
+-    public boolean supportsFill(int i) {
+-        return false;
+-    }
+-
+-    @Override
+-    @SuppressWarnings("all")
+-    public @NotNull FluidStack drain(int i, FluidStack fluidStack, boolean b, boolean b1) {
+-        return null;
+-    }
+-
+-    @Override
+-    public boolean supportsDrain(int i) {
+-        return false;
+-    }
+-
+-    @Override
+-    @SuppressWarnings("all")
+-    public @NotNull Object createSnapshot() {
+-        return stack;
+-    }
+-
+-    @Override
+-    @SuppressWarnings("all")
+-    public void restoreFromSnapshot(Object snapshot) {
+-        if (snapshot instanceof FluidStack fluidStack) {
+-            stack = fluidStack;
+-        }
+-    }
+-
+-    @Override
+-    public @NotNull FluidStack getFluid() {
+-        return stack;
+-    }
+-
+-    @Override
+-    public void setFluid(FluidStack fluidStack) {
+-        stack = fluidStack;
+-    }
+-
+-    @Override
+-    public long getCapacity() {
+-        return Integer.MAX_VALUE;
+-    }
+-
+-    @Override
+-    public boolean isFluidValid(FluidStack fluidStack) {
+-        return true;
+-    }
++/** Native storage used for read-only fluid previews. */
++public class NaiveFluidStorage extends FluidTank {
++    public NaiveFluidStorage() { super(Integer.MAX_VALUE); }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveItemTransfer.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveItemTransfer.java
+index 11312ce..21073bf 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveItemTransfer.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/NaiveItemTransfer.java
+@@ -1,57 +1,8 @@
+ package org.leodreamer.wildcard_pattern.gui;
+ 
+-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
+-import net.minecraft.world.item.ItemStack;
+-import org.jetbrains.annotations.NotNull;
++import net.neoforged.neoforge.items.ItemStackHandler;
+ 
+-public class NaiveItemTransfer implements IItemTransfer {
+-
+-    @NotNull
+-    private ItemStack stack = ItemStack.EMPTY;
+-
+-    @Override
+-    public int getSlots() {
+-        return 1;
+-    }
+-
+-    @Override
+-    public @NotNull ItemStack getStackInSlot(int slot) {
+-        return stack;
+-    }
+-
+-    @Override
+-    public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate, boolean notifyChanges) {
+-        this.stack = stack;
+-        return stack;
+-    }
+-
+-    @Override
+-    public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate, boolean notifyChanges) {
+-        this.stack = ItemStack.EMPTY;
+-        return stack;
+-    }
+-
+-    @Override
+-    public int getSlotLimit(int slot) {
+-        return 1;
+-    }
+-
+-    @Override
+-    public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+-        return stack.getItem() == this.stack.getItem();
+-    }
+-
+-    @Override
+-    @SuppressWarnings("all")
+-    public @NotNull Object createSnapshot() {
+-        return stack;
+-    }
+-
+-    @Override
+-    @SuppressWarnings("all")
+-    public void restoreFromSnapshot(Object snapshot) {
+-        if (snapshot instanceof ItemStack itemStack) {
+-            stack = itemStack;
+-        }
+-    }
++/** A native ghost-slot inventory; the normal phantom widget owns all interaction semantics. */
++public class NaiveItemTransfer extends ItemStackHandler {
++    public NaiveItemTransfer() { super(1); }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTMaterialSlot.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTMaterialSlot.java
+index 6e001ee..1fc6643 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTMaterialSlot.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTMaterialSlot.java
+@@ -7,7 +7,7 @@ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
+ import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKey;
+ import com.gregtechceu.gtceu.common.data.GTMaterials;
+ import com.lowdragmc.lowdraglib.gui.widget.PhantomSlotWidget;
+-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
++import net.neoforged.neoforge.items.IItemHandlerModifiable;
+ import net.minecraft.world.item.ItemStack;
+ 
+ import java.util.function.Predicate;
+@@ -17,7 +17,7 @@ public class PhantomGTMaterialSlot extends PhantomSlotWidget {
+     private final Predicate<Material> validator;
+ 
+     public PhantomGTMaterialSlot(
+-        IItemTransfer itemHandler,
++        IItemHandlerModifiable itemHandler,
+         int slotIndex,
+         int xPosition,
+         int yPosition,
+@@ -35,13 +35,18 @@ public class PhantomGTMaterialSlot extends PhantomSlotWidget {
+ 
+     public Material getMaterial() {
+         var handler = getHandler();
+-        if (handler == null) return GTMaterials.NULL;
++        if (handler == null) return null;
+         return getItemMaterial(handler.getItem());
+     }
+ 
+     private static Material getItemMaterial(ItemStack stack) {
+-        var entry = ChemicalHelper.getMaterial(stack.getItem());
+-        return entry == null ? GTMaterials.NULL : entry.material();
++        var entry = ChemicalHelper.getMaterialEntry(stack.getItem());
++        if (entry != null && entry.material() != null) return entry.material();
++        if (stack.getItem() instanceof net.minecraft.world.item.BucketItem bucket) {
++            var material = ChemicalHelper.getMaterial(bucket.content);
++            if (material != null) return material;
++        }
++        return null;
+     }
+ 
+     @Override
+@@ -51,7 +56,7 @@ public class PhantomGTMaterialSlot extends PhantomSlotWidget {
+     }
+ 
+     private static ItemStack findExampleForMaterial(Material material) {
+-        if (material == GTMaterials.NULL) return ItemStack.EMPTY;
++        if (material == null) return ItemStack.EMPTY;
+ 
+         // dust & fluid first
+         var dust = ChemicalHelper.get(TagPrefix.dust, material);
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTTagSlot.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTTagSlot.java
+index 78159c1..d3d97d4 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTTagSlot.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/PhantomGTTagSlot.java
+@@ -2,7 +2,7 @@ package org.leodreamer.wildcard_pattern.gui;
+ 
+ import com.gregtechceu.gtceu.api.GTCEuAPI;
+ import com.lowdragmc.lowdraglib.gui.widget.PhantomSlotWidget;
+-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
++import net.neoforged.neoforge.items.IItemHandlerModifiable;
+ import net.minecraft.world.item.ItemStack;
+ 
+ import java.util.function.Predicate;
+@@ -11,7 +11,7 @@ public class PhantomGTTagSlot extends PhantomSlotWidget {
+     private final Predicate<GenericGTTag> validator;
+ 
+     public PhantomGTTagSlot(
+-        IItemTransfer itemHandler,
++        IItemHandlerModifiable itemHandler,
+         int slotIndex,
+         int xPosition,
+         int yPosition,
+@@ -40,7 +40,7 @@ public class PhantomGTTagSlot extends PhantomSlotWidget {
+     }
+ 
+     private static ItemStack findExampleForTag(GenericGTTag tag) {
+-        for (var mat : GTCEuAPI.materialManager.getRegisteredMaterials()) {
++        for (var mat : com.gregtechceu.gtceu.api.registry.GTRegistries.MATERIALS) {
+             var stack = tag.createItemOrBucket(mat);
+             if (!stack.isEmpty()) return stack;
+         }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardEditorPage.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardEditorPage.java
+new file mode 100644
+index 0000000..e9f2b92
+--- /dev/null
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardEditorPage.java
+@@ -0,0 +1,12 @@
++package org.leodreamer.wildcard_pattern.gui;
++
++import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
++import com.lowdragmc.lowdraglib.gui.widget.Widget;
++import net.minecraft.network.chat.Component;
++
++/** Editor pages use native LDLib widgets directly. */
++public interface WildcardEditorPage {
++    Widget createMainPage(WildcardEditorWidget editor);
++    IGuiTexture getTabIcon();
++    Component getTitle();
++}
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardEditorWidget.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardEditorWidget.java
+new file mode 100644
+index 0000000..5f6383c
+--- /dev/null
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardEditorWidget.java
+@@ -0,0 +1,49 @@
++package org.leodreamer.wildcard_pattern.gui;
++
++import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
++import com.lowdragmc.lowdraglib.gui.widget.TabButton;
++import com.lowdragmc.lowdraglib.gui.widget.TabContainer;
++import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
++import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
++import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
++import net.minecraft.network.chat.Component;
++import net.minecraft.world.entity.player.Player;
++import org.leodreamer.wildcard_pattern.WildcardItems;
++import org.leodreamer.wildcard_pattern.wildcard.WildcardPatternLogic;
++import org.leodreamer.wildcard_pattern.wildcard.gui.*;
++
++/** The original preview, input, output and three filter editors with native tabs and inventory slots. */
++public final class WildcardEditorWidget extends WidgetGroup {
++    private final WildcardUIFactory.Holder holder;
++    public WildcardEditorWidget(WildcardPatternLogic logic, Player player, WildcardUIFactory.Holder holder) {
++        super(0, 0, 198, 234);
++        this.holder = holder;
++        addWidget(new LabelWidget(9, 5, Component.translatable("sftcore.item.wildcard_pattern.config").getString()));
++        var tabs = new TabContainer(8, 20, 182, 128);
++        var preview = new WildcardIndexPage(holder::currentStack, player.level(), 0, 0, 158, 80);
++        var input = new WildcardIOFancyConfigurator(logic, WildcardPatternLogic.IO.IN, stack -> holder.markAsDirty());
++        var output = new WildcardIOFancyConfigurator(logic, WildcardPatternLogic.IO.OUT, stack -> holder.markAsDirty());
++        var filter = new WildcardFilterFancyConfigurator(logic, stack -> holder.markAsDirty());
++        addTab(tabs, 0, new com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture(WildcardItems.WILDCARD_PATTERN.get()), preview, "preview");
++        addTab(tabs, 1, input.getTabIcon(), (WidgetGroup) input.createMainPage(this), "input");
++        addTab(tabs, 2, output.getTabIcon(), (WidgetGroup) output.createMainPage(this), "output");
++        addTab(tabs, 3, filter.getTabIcon(), (WidgetGroup) filter.createMainPage(this), "filter");
++        addWidget(tabs);
++        for (int row = 0; row < 3; row++) for (int column = 0; column < 9; column++)
++            addWidget(new SlotWidget(player.getInventory(), 9 + row * 9 + column, 18 + 18 * column, 154 + 18 * row, true, true)
++                    .setBackground(WildcardGuiTextures.SLOT));
++        for (int column = 0; column < 9; column++)
++            addWidget(new SlotWidget(player.getInventory(), column, 18 + 18 * column, 212, true, true)
++                    .setBackground(WildcardGuiTextures.SLOT));
++    }
++    public boolean isValidEditingItem() { return !holder.isInvalid(); }
++    private void addTab(TabContainer tabs, int index, com.lowdragmc.lowdraglib.gui.texture.IGuiTexture icon,
++                        WidgetGroup contents, String name) {
++        contents.setSelfPosition(com.lowdragmc.lowdraglib.math.Position.of(22, 0));
++        contents.setId("wildcard_" + name);
++        var button = new TabButton(0, index * 25, 20, 23).setBaseTexture(ResourceBorderTexture.BUTTON_COMMON, icon)
++                .setPressedTexture(ResourceBorderTexture.BUTTON_COMMON.copy().setColor(0xFF80BFFF), icon);
++        button.setId("wildcard_tab_" + name);
++        tabs.addTab(button, contents);
++    }
++}
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardGuiTextures.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardGuiTextures.java
+new file mode 100644
+index 0000000..50643ac
+--- /dev/null
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardGuiTextures.java
+@@ -0,0 +1,15 @@
++package org.leodreamer.wildcard_pattern.gui;
++
++import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
++import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
++import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
++import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
++
++/** Existing textures rendered by the published native LDLib API. */
++public final class WildcardGuiTextures {
++    public static final IGuiTexture BUTTON = ResourceBorderTexture.BUTTON_COMMON;
++    public static final IGuiTexture CLOSE_ICON = new TextTexture("×");
++    public static final IGuiTexture SLOT = new ResourceTexture("gtceu:textures/gui/base/slot.png");
++    public static final ResourceTexture PROGRESS_BAR_ARROW = new ResourceTexture("gtceu:textures/gui/progress_bar/progress_bar_arrow.png");
++    private WildcardGuiTextures() {}
++}
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardLongAmountField.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardLongAmountField.java
+new file mode 100644
+index 0000000..f50bd46
+--- /dev/null
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardLongAmountField.java
+@@ -0,0 +1,26 @@
++package org.leodreamer.wildcard_pattern.gui;
++
++import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
++import java.util.function.Consumer;
++import java.util.function.Supplier;
++
++/** Native text packets with exact long arithmetic; LDLib's generic numeric wheel/drag uses float. */
++public final class WildcardLongAmountField extends TextFieldWidget {
++    public WildcardLongAmountField(int x, int y, int width, int height, Supplier<String> source, Consumer<String> change) {
++        super(x, y, width, height, source, change);
++        setNumbersOnly(1L, Long.MAX_VALUE);
++        setMaxStringLength(19);
++    }
++    @Override public boolean mouseWheelMove(double x, double y, double horizontal, double vertical) {
++        if (!isMouseOverElement(x, y) || !isFocus() || vertical == 0) return false;
++        long value = Long.parseLong(getCurrentString());
++        if (vertical > 0) { if (value < Long.MAX_VALUE) value++; }
++        else if (value > 1) value--;
++        onTextChanged(Long.toString(value));
++        return true;
++    }
++    @Override public boolean mouseDragged(double x, double y, int button, double deltaX, double deltaY) {
++        // Numeric dragging in the library parses through float and can change an untouched large amount.
++        return false;
++    }
++}
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardPatternItem.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardPatternItem.java
+new file mode 100644
+index 0000000..aafc5aa
+--- /dev/null
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardPatternItem.java
+@@ -0,0 +1,8 @@
++package org.leodreamer.wildcard_pattern.gui;
++
++import com.gregtechceu.gtceu.api.item.ComponentItem;
++
++/** Keeps the original component item ID and native interaction behavior. */
++public final class WildcardPatternItem extends ComponentItem {
++    public WildcardPatternItem(Properties properties) { super(properties); }
++}
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardUIFactory.java b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardUIFactory.java
+new file mode 100644
+index 0000000..4d07604
+--- /dev/null
++++ b/src/main/java/org/leodreamer/wildcard_pattern/gui/WildcardUIFactory.java
+@@ -0,0 +1,49 @@
++package org.leodreamer.wildcard_pattern.gui;
++
++import com.lowdragmc.lowdraglib.gui.factory.UIFactory;
++import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
++import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
++import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
++import net.minecraft.network.RegistryFriendlyByteBuf;
++import net.minecraft.resources.ResourceLocation;
++import net.minecraft.world.InteractionHand;
++import net.minecraft.world.entity.player.Player;
++import net.minecraft.world.item.ItemStack;
++import net.neoforged.api.distmarker.Dist;
++import net.neoforged.api.distmarker.OnlyIn;
++import org.leodreamer.wildcard_pattern.WildcardItems;
++import org.leodreamer.wildcard_pattern.wildcard.WildcardPatternLogic;
++
++/** Registry-aware native menu factory. Mutating the edited item's components does not invalidate the holder. */
++public final class WildcardUIFactory extends UIFactory<WildcardUIFactory.Holder> {
++    public static final WildcardUIFactory INSTANCE = new WildcardUIFactory();
++    private WildcardUIFactory() { super(ResourceLocation.fromNamespaceAndPath("wildcard_pattern", "editor")); }
++    @Override protected ModularUI createUITemplate(Holder holder, Player player) { return holder.createUI(player); }
++    @Override @OnlyIn(Dist.CLIENT) protected Holder readHolderFromSyncData(RegistryFriendlyByteBuf buffer) {
++        return new Holder(net.minecraft.client.Minecraft.getInstance().player, buffer.readEnum(InteractionHand.class));
++    }
++    @Override protected void writeHolderToSyncData(RegistryFriendlyByteBuf buffer, Holder holder) { buffer.writeEnum(holder.hand); }
++
++    public static final class Holder implements IUIHolder {
++        private final Player player;
++        private final InteractionHand hand;
++        private final ItemStack edited;
++        public Holder(Player player, InteractionHand hand) {
++            this.player = player;
++            this.hand = hand;
++            this.edited = player.getItemInHand(hand);
++        }
++        @Override public boolean isRemote() { return player.level().isClientSide; }
++        @Override public boolean isInvalid() {
++            var current = player.getItemInHand(hand);
++            return !current.is(WildcardItems.WILDCARD_PATTERN.get()) || (!isRemote() && current != edited);
++        }
++        @Override public void markAsDirty() { player.getInventory().setChanged(); }
++        public ItemStack currentStack() { return isRemote() ? player.getItemInHand(hand) : edited; }
++        @Override public ModularUI createUI(Player player) {
++            var logic = WildcardPatternLogic.on(edited, player.level().registryAccess());
++            return new ModularUI(198, 234, this, player).background(ResourceBorderTexture.BORDERED_BACKGROUND)
++                    .widget(new WildcardEditorWidget(logic, player, this));
++        }
++    }
++}
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/lang/WildcardLangHandler.java b/src/main/java/org/leodreamer/wildcard_pattern/lang/WildcardLangHandler.java
+index 50236d8..b597a1c 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/lang/WildcardLangHandler.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/lang/WildcardLangHandler.java
+@@ -1,10 +1,9 @@
+ package org.leodreamer.wildcard_pattern.lang;
+ 
+-import com.gregtechceu.gtceu.data.lang.LangHandler;
+ import com.tterrag.registrate.providers.RegistrateLangProvider;
+ import org.leodreamer.wildcard_pattern.util.ReflectUtils;
+ 
+-public class WildcardLangHandler extends LangHandler {
++public class WildcardLangHandler {
+ 
+     public static void init(RegistrateLangProvider provider) {
+         for (var clazz : ReflectUtils.getClassesWithAnnotation(DataGenScanned.class)) {
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/mixin/MaterialPropertiesMixin.java b/src/main/java/org/leodreamer/wildcard_pattern/mixin/MaterialPropertiesMixin.java
+index f6f4f2f..688e44b 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/mixin/MaterialPropertiesMixin.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/mixin/MaterialPropertiesMixin.java
+@@ -16,7 +16,7 @@ public class MaterialPropertiesMixin implements IMaterialProperties {
+ 
+     @Shadow(remap = false)
+     @Final
+-    private Map<PropertyKey<? extends IMaterialProperty<?>>, IMaterialProperty<?>> propertyMap;
++    private Map<PropertyKey<? extends IMaterialProperty>, IMaterialProperty> propertyMap;
+ 
+     @Override
+     public Set<PropertyKey<?>> wildcard$getProperties() {
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/mixin/PatternProviderLogicMixin.java b/src/main/java/org/leodreamer/wildcard_pattern/mixin/PatternProviderLogicMixin.java
+index 5f61aac..df396fc 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/mixin/PatternProviderLogicMixin.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/mixin/PatternProviderLogicMixin.java
+@@ -1,7 +1,6 @@
+ package org.leodreamer.wildcard_pattern.mixin;
+ 
+ import appeng.api.crafting.IPatternDetails;
+-import appeng.api.crafting.PatternDetailsHelper;
+ import appeng.api.networking.IManagedGridNode;
+ import appeng.api.networking.crafting.ICraftingProvider;
+ import appeng.api.stacks.AEKey;
+@@ -11,66 +10,34 @@ import appeng.util.inv.AppEngInternalInventory;
+ import org.leodreamer.wildcard_pattern.WildcardItems;
+ import org.leodreamer.wildcard_pattern.wildcard.WildcardPatternLogic;
+ import org.spongepowered.asm.mixin.*;
+-
++import org.spongepowered.asm.mixin.injection.At;
++import org.spongepowered.asm.mixin.injection.Inject;
++import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+ import java.util.List;
+ import java.util.Set;
+ 
++/** Extend the native AE provider after its normal cache/locking update, preserving its own implementation. */
+ @Mixin(PatternProviderLogic.class)
+ public abstract class PatternProviderLogicMixin {
+-
+-    @Shadow(remap = false)
+-    @Final
+-    private List<IPatternDetails> patterns;
+-
+-    @Shadow(remap = false)
+-    @Final
+-    private Set<AEKey> patternInputs;
+-
+-    @Shadow(remap = false)
+-    @Final
+-    private AppEngInternalInventory patternInventory;
+-
+-    @Shadow(remap = false)
+-    @Final
+-    private PatternProviderLogicHost host;
+-
+-    @Shadow(remap = false)
+-    @Final
+-    private IManagedGridNode mainNode;
+-
+-    /**
+-     * @author LeoDreamer
+-     * @reason Let the pattern support wildcard patterns
+-     */
+-    @Overwrite(remap = false)
+-    public void updatePatterns() {
+-        patterns.clear();
+-        patternInputs.clear();
++    @Shadow(remap = false) @Final private List<IPatternDetails> patterns;
++    @Shadow(remap = false) @Final private Set<AEKey> patternInputs;
++    @Shadow(remap = false) @Final private AppEngInternalInventory patternInventory;
++    @Shadow(remap = false) @Final private PatternProviderLogicHost host;
++    @Shadow(remap = false) @Final private IManagedGridNode mainNode;
++    @Inject(method = "updatePatterns", at = @At("RETURN"), remap = false, require = 1)
++    private void wildcard$expandPatterns(CallbackInfo ci) {
+         var level = host.getBlockEntity().getLevel();
+-
++        if (level == null) return;
++        boolean changed = false;
+         for (var stack : patternInventory) {
+-            // injected by Wildcard
+-            if (stack.is(WildcardItems.WILDCARD_PATTERN.asItem())) {
+-                WildcardPatternLogic.decodePatterns(stack, level)
+-                    .forEach(this::wildcard$updatePattern);
+-                continue;
+-            }
+-            var details = PatternDetailsHelper.decodePattern(stack, level);
+-            wildcard$updatePattern(details);
+-        }
+-
+-        ICraftingProvider.requestUpdate(mainNode);
+-    }
+-
+-    @Unique
+-    private void wildcard$updatePattern(IPatternDetails details) {
+-        if (details != null) {
+-            patterns.add(details);
+-            for (var input : details.getInputs()) {
+-                for (var inputCandidate : input.getPossibleInputs()) {
+-                    patternInputs.add(inputCandidate.what().dropSecondary());
+-                }
+-            }
++            if (!stack.is(WildcardItems.WILDCARD_PATTERN.get())) continue;
++            changed = true;
++            WildcardPatternLogic.decodePatterns(stack, level).forEach(details -> {
++                patterns.add(details);
++                for (var input : details.getInputs()) for (var candidate : input.getPossibleInputs())
++                    patternInputs.add(candidate.what().dropSecondary());
++            });
+         }
++        if (changed) ICraftingProvider.requestUpdate(mainNode);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/util/ReflectUtils.java b/src/main/java/org/leodreamer/wildcard_pattern/util/ReflectUtils.java
+index b2270ba..46ab7d5 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/util/ReflectUtils.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/util/ReflectUtils.java
+@@ -1,6 +1,6 @@
+ package org.leodreamer.wildcard_pattern.util;
+ 
+-import net.minecraftforge.fml.ModList;
++import net.neoforged.fml.ModList;
+ import org.objectweb.asm.Type;
+ 
+ import java.lang.annotation.Annotation;
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardPatternLogic.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardPatternLogic.java
+index 2957f89..f607d58 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardPatternLogic.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardPatternLogic.java
+@@ -6,6 +6,9 @@ import appeng.api.stacks.GenericStack;
+ import com.gregtechceu.gtceu.api.GTCEuAPI;
+ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+ import net.minecraft.world.item.ItemStack;
++import net.minecraft.core.HolderLookup;
++import net.minecraft.core.component.DataComponents;
++import net.minecraft.world.item.component.CustomData;
+ import net.minecraft.world.level.Level;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+@@ -20,6 +23,7 @@ import java.util.stream.Stream;
+ public class WildcardPatternLogic {
+ 
+     private final ItemStack stack;
++    private final HolderLookup.Provider registries;
+ 
+     public enum IO {
+ 
+@@ -33,29 +37,30 @@ public class WildcardPatternLogic {
+         }
+     }
+ 
+-    private WildcardPatternLogic(ItemStack stack) {
++    private WildcardPatternLogic(ItemStack stack, HolderLookup.Provider registries) {
+         this.stack = stack;
++        this.registries = registries;
+     }
+ 
+-    public static WildcardPatternLogic on(ItemStack stack) {
+-        return new WildcardPatternLogic(stack);
++    public static WildcardPatternLogic on(ItemStack stack, HolderLookup.Provider registries) {
++        return new WildcardPatternLogic(stack, registries);
+     }
+ 
+     public @NotNull List<IWildcardIOComponent> getIOComponents(IO io) {
+-        return WildcardSerializers.fromNbtIO(io, stack.getOrCreateTag());
++        return WildcardSerializers.fromNbtIO(io, stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag(), registries);
+     }
+ 
+     public ItemStack setIOComponents(IO io, @NotNull List<IWildcardIOComponent> components) {
+-        WildcardSerializers.toNbtIO(components, io, stack.getOrCreateTag());
++        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> WildcardSerializers.toNbtIO(components, io, tag, registries));
+         return stack;
+     }
+ 
+     public @NotNull List<IWildcardFilterComponent> getFilterComponents() {
+-        return WildcardSerializers.fromNbtFilter(stack.getOrCreateTag());
++        return WildcardSerializers.fromNbtFilter(stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag(), registries);
+     }
+ 
+     public ItemStack setFilterComponents(@NotNull List<IWildcardFilterComponent> components) {
+-        WildcardSerializers.toNbtFilter(components, stack.getOrCreateTag());
++        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> WildcardSerializers.toNbtFilter(components, tag, registries));
+         return stack;
+     }
+ 
+@@ -82,7 +87,7 @@ public class WildcardPatternLogic {
+     }
+ 
+     public Stream<IPatternDetails> generateAllPatterns(Level level) {
+-        return GTCEuAPI.materialManager.getRegisteredMaterials().stream()
++        return com.gregtechceu.gtceu.api.registry.GTRegistries.MATERIALS.stream()
+             .filter(this::test)
+             .map(material -> {
+                 var input = getIOStacks(IO.IN, material);
+@@ -90,13 +95,13 @@ public class WildcardPatternLogic {
+                 if (input == null || output == null || input.length == 0 || output.length == 0)
+                     return null;
+                 // FIXME: a little silly here
+-                var item = PatternDetailsHelper.encodeProcessingPattern(input, output);
++                var item = PatternDetailsHelper.encodeProcessingPattern(List.of(input), List.of(output));
+                 return PatternDetailsHelper.decodePattern(item, level);
+             })
+             .filter(Objects::nonNull);
+     }
+ 
+     public static Stream<IPatternDetails> decodePatterns(ItemStack stack, Level level) {
+-        return on(stack).generateAllPatterns(level);
++        return on(stack, level.registryAccess()).generateAllPatterns(level);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardSerializers.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardSerializers.java
+index bad79d3..d4c7351 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardSerializers.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/WildcardSerializers.java
+@@ -3,6 +3,7 @@ package org.leodreamer.wildcard_pattern.wildcard;
+ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+ import net.minecraft.MethodsReturnNonnullByDefault;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.nbt.ListTag;
+ import org.leodreamer.wildcard_pattern.wildcard.feature.IWildcardFilterComponent;
+ import org.leodreamer.wildcard_pattern.wildcard.feature.IWildcardIOComponent;
+@@ -43,7 +44,7 @@ public class WildcardSerializers {
+         return serializer;
+     }
+ 
+-    public static <T> List<T> fromNbt(Map<String, IWildcardSerializer<T>> serializerMap, CompoundTag tag, String key) {
++    public static <T> List<T> fromNbt(Map<String, IWildcardSerializer<T>> serializerMap, CompoundTag tag, String key, HolderLookup.Provider registries) {
+         if (tag.get(key) instanceof ListTag listTag) {
+             return listTag.stream().map(nbt -> {
+                 if (nbt instanceof CompoundTag compound) {
+@@ -52,7 +53,7 @@ public class WildcardSerializers {
+                     if (serializer == null) {
+                         throw new IllegalStateException("Unknown wildcard component type: " + type);
+                     }
+-                    return serializer.deserialize(compound.getCompound("data"));
++                    return serializer.deserialize(compound.getCompound("data"), registries);
+                 }
+                 return null;
+             }).filter(Objects::nonNull).toList();
+@@ -60,31 +61,31 @@ public class WildcardSerializers {
+         return List.of();
+     }
+ 
+-    public static <T extends IWildcardSerializable<T>> void toNbt(List<T> components, CompoundTag tag, String key) {
++    public static <T extends IWildcardSerializable<T>> void toNbt(List<T> components, CompoundTag tag, String key, HolderLookup.Provider registries) {
+         var listTag = new ListTag();
+         for (var component : components) {
+             var serializer = component.getSerializer();
+             var compound = new CompoundTag();
+             compound.putString("type", serializer.key());
+-            compound.put("data", serializer.serialize(component));
++            compound.put("data", serializer.serialize(component, registries));
+             listTag.add(compound);
+         }
+         tag.put(key, listTag);
+     }
+ 
+-    public static List<IWildcardIOComponent> fromNbtIO(WildcardPatternLogic.IO io, CompoundTag tag) {
+-        return fromNbt(IO_SERIALIZERS, tag, io.key);
++    public static List<IWildcardIOComponent> fromNbtIO(WildcardPatternLogic.IO io, CompoundTag tag, HolderLookup.Provider registries) {
++        return fromNbt(IO_SERIALIZERS, tag, io.key, registries);
+     }
+ 
+-    public static void toNbtIO(List<IWildcardIOComponent> components, WildcardPatternLogic.IO io, CompoundTag tag) {
+-        toNbt(components, tag, io.key);
++    public static void toNbtIO(List<IWildcardIOComponent> components, WildcardPatternLogic.IO io, CompoundTag tag, HolderLookup.Provider registries) {
++        toNbt(components, tag, io.key, registries);
+     }
+ 
+-    public static List<IWildcardFilterComponent> fromNbtFilter(CompoundTag tag) {
+-        return fromNbt(FILTER_SERIALIZERS, tag, "filter");
++    public static List<IWildcardFilterComponent> fromNbtFilter(CompoundTag tag, HolderLookup.Provider registries) {
++        return fromNbt(FILTER_SERIALIZERS, tag, "filter", registries);
+     }
+ 
+-    public static void toNbtFilter(List<IWildcardFilterComponent> components, CompoundTag tag) {
+-        toNbt(components, tag, "filter");
++    public static void toNbtFilter(List<IWildcardFilterComponent> components, CompoundTag tag, HolderLookup.Provider registries) {
++        toNbt(components, tag, "filter", registries);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardComponentListGroup.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardComponentListGroup.java
+index eae6e9b..86dd304 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardComponentListGroup.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardComponentListGroup.java
+@@ -28,6 +28,7 @@ public class WildcardComponentListGroup<L extends IWildcardComponentUI> extends
+     }
+ 
+     public void setLineStyle(BiConsumer<Integer, WidgetGroup> lineStyle) {
++        commitCurrentEditors();
+         this.lineStyle = lineStyle;
+         onComponentsChanged();
+     }
+@@ -36,6 +37,7 @@ public class WildcardComponentListGroup<L extends IWildcardComponentUI> extends
+         if (components.size() >= MAX_COMPONENTS) {
+             return;
+         }
++        commitCurrentEditors();
+         components.add(component);
+         onComponentsChanged();
+     }
+@@ -44,6 +46,7 @@ public class WildcardComponentListGroup<L extends IWildcardComponentUI> extends
+         if (index < 0 || index >= components.size()) {
+             return;
+         }
++        commitCurrentEditors();
+         components.remove(index);
+         onComponentsChanged();
+     }
+@@ -63,4 +66,8 @@ public class WildcardComponentListGroup<L extends IWildcardComponentUI> extends
+             addWidget(lineGroup);
+         }
+     }
++
++    private void commitCurrentEditors() {
++        components.forEach(IWildcardComponentUI::onSave);
++    }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardFilterFancyConfigurator.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardFilterFancyConfigurator.java
+index c24beb3..c29d631 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardFilterFancyConfigurator.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardFilterFancyConfigurator.java
+@@ -2,16 +2,17 @@ package org.leodreamer.wildcard_pattern.wildcard.gui;
+ 
+ import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
+ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
+-import com.gregtechceu.gtceu.api.gui.GuiTextures;
+-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
+-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
++import org.leodreamer.wildcard_pattern.gui.WildcardGuiTextures;
++import org.leodreamer.wildcard_pattern.gui.WildcardEditorWidget;
++import org.leodreamer.wildcard_pattern.gui.WildcardEditorPage;
+ import com.gregtechceu.gtceu.common.data.GTMaterials;
+-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
++import com.lowdragmc.lowdraglib.editor.ColorPattern;
+ import com.lowdragmc.lowdraglib.gui.texture.*;
+ import com.lowdragmc.lowdraglib.gui.util.ClickData;
+ import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
+ import com.lowdragmc.lowdraglib.gui.widget.Widget;
+ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
++import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.world.item.ItemStack;
+ import org.leodreamer.wildcard_pattern.lang.DataGenScanned;
+@@ -25,12 +26,13 @@ import org.leodreamer.wildcard_pattern.wildcard.impl.SimpleFilterComponent;
+ import java.util.function.Consumer;
+ 
+ @DataGenScanned
+-public class WildcardFilterFancyConfigurator implements IFancyUIProvider {
++public class WildcardFilterFancyConfigurator implements WildcardEditorPage {
+ 
+     private final WildcardPatternLogic logic;
+     private final Consumer<ItemStack> onSave;
+ 
+     private WildcardComponentListGroup<IWildcardFilterComponent> componentList;
++    private WildcardEditorWidget editor;
+ 
+     public WildcardFilterFancyConfigurator(
+         WildcardPatternLogic logic,
+@@ -74,8 +76,9 @@ public class WildcardFilterFancyConfigurator implements IFancyUIProvider {
+     private static final String TO_BLACKLIST = "sftcore.item.wildcard_pattern.filter.to_blacklist";
+ 
+     @Override
+-    public Widget createMainPage(FancyMachineUIWidget ui) {
+-        var global = new WidgetGroup(0, 0, 158, 180);
++    public Widget createMainPage(WildcardEditorWidget ui) {
++        editor = ui;
++        var global = new WidgetGroup(0, 0, 158, 128);
+ 
+         componentList = new WildcardComponentListGroup<>(
+             logic.getFilterComponents(), 0, 0, 158
+@@ -85,15 +88,16 @@ public class WildcardFilterFancyConfigurator implements IFancyUIProvider {
+             (i, group) -> {
+                 group.addWidget(
+                     new ButtonWidget(138, 5, 14, 14, cd -> componentList.removeComponent(i))
+-                        .setBackground(GuiTextures.BUTTON, GuiTextures.CLOSE_ICON)
++                        .setBackground(WildcardGuiTextures.BUTTON, WildcardGuiTextures.CLOSE_ICON)
+                         .setHoverTooltips(Component.translatable(DELETE_TOOLTIP))
+                 );
+                 var component = componentList.getComponents().get(i);
+-                group.addWidget(createWhitelistButton(component));
++                group.addWidget(createWhitelistButton(component).setId("wildcard_toggle_filter_" + i));
+             }
+         );
+ 
+         var saveBtn = createBottomBtn(Component.translatable(SAVE), 126, cd -> save());
++        saveBtn.setId("wildcard_save_filter");
+         var createSimple = createBottomBtn(Component.translatable(CREATE_SINGLE), 2, (cd) -> {
+             componentList.addComponent(SimpleFilterComponent.empty());
+         }).setHoverTooltips(Component.translatable(CREATE_SINGLE_TOOLTIP));
+@@ -103,8 +107,13 @@ public class WildcardFilterFancyConfigurator implements IFancyUIProvider {
+         var createFlag = createBottomBtn(Component.translatable(CREATE_FLAG), 72, (cd) -> {
+             componentList.addComponent(FlagFilterComponent.empty());
+         }).setHoverTooltips(Component.translatable(CREATE_FLAGS_TOOLTIP));
++        createFlag.setId("wildcard_add_flag_filter");
+ 
+-        global.addWidget(componentList);
++        var scroll = new DraggableScrollableWidgetGroup(0, 0, 158, 104)
++                .setDraggable(false).setScrollable(true).setUseScissor(true);
++        scroll.setId("wildcard_scroll_filter");
++        scroll.addWidget(componentList);
++        global.addWidget(scroll);
+         global.addWidget(saveBtn);
+         global.addWidget(createSimple);
+         global.addWidget(createProperty);
+@@ -124,7 +133,7 @@ public class WildcardFilterFancyConfigurator implements IFancyUIProvider {
+ 
+     private ButtonWidget createBottomBtn(Component label, int x, Consumer<ClickData> onPressed) {
+         return new ButtonWidget(
+-            x, 155, 30, 20, new GuiTextureGroup(
++            x, 108, 30, 20, new GuiTextureGroup(
+                 ResourceBorderTexture.BUTTON_COMMON.copy(), new TextTexture(label.getString())
+             ), onPressed
+         );
+@@ -143,7 +152,7 @@ public class WildcardFilterFancyConfigurator implements IFancyUIProvider {
+ 
+     private void setButtonWhitelist(ButtonWidget button, boolean whitelist) {
+         button.setBackground(
+-            GuiTextures.BUTTON, new TextTexture(whitelist ? "W" : "B")
++            WildcardGuiTextures.BUTTON, new TextTexture(whitelist ? "W" : "B")
+                 .setColor(ColorPattern.DARK_GRAY.color).setDropShadow(false)
+         );
+         button
+@@ -151,9 +160,10 @@ public class WildcardFilterFancyConfigurator implements IFancyUIProvider {
+     }
+ 
+     private void save() {
++        if (!editor.isValidEditingItem()) return;
+         var components = componentList.getComponents();
+-        var stack = logic.setFilterComponents(components);
+         components.forEach(IWildcardFilterComponent::onSave);
++        var stack = logic.setFilterComponents(components);
+         onSave.accept(stack);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIOFancyConfigurator.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIOFancyConfigurator.java
+index 38cd696..83a8a56 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIOFancyConfigurator.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIOFancyConfigurator.java
+@@ -1,8 +1,8 @@
+ package org.leodreamer.wildcard_pattern.wildcard.gui;
+ 
+-import com.gregtechceu.gtceu.api.gui.GuiTextures;
+-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
+-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
++import org.leodreamer.wildcard_pattern.gui.WildcardGuiTextures;
++import org.leodreamer.wildcard_pattern.gui.WildcardEditorWidget;
++import org.leodreamer.wildcard_pattern.gui.WildcardEditorPage;
+ import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
+ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+ import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
+@@ -11,6 +11,7 @@ import com.lowdragmc.lowdraglib.gui.util.ClickData;
+ import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
+ import com.lowdragmc.lowdraglib.gui.widget.Widget;
+ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
++import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.world.item.ItemStack;
+ import org.leodreamer.wildcard_pattern.lang.DataGenScanned;
+@@ -23,13 +24,14 @@ import org.leodreamer.wildcard_pattern.wildcard.impl.TagIOComponent;
+ import java.util.function.Consumer;
+ 
+ @DataGenScanned
+-public class WildcardIOFancyConfigurator implements IFancyUIProvider {
++public class WildcardIOFancyConfigurator implements WildcardEditorPage {
+ 
+     private final WildcardPatternLogic logic;
+     private final WildcardPatternLogic.IO io;
+     private final Consumer<ItemStack> onSave;
+ 
+     private WildcardComponentListGroup<IWildcardIOComponent> componentList;
++    private WildcardEditorWidget editor;
+ 
+     public WildcardIOFancyConfigurator(
+         WildcardPatternLogic logic,
+@@ -66,29 +68,37 @@ public class WildcardIOFancyConfigurator implements IFancyUIProvider {
+     private static final String DELETE_TOOLTIP = "sftcore.item.wildcard_pattern.io.delete.tooltip";
+ 
+     @Override
+-    public Widget createMainPage(FancyMachineUIWidget ui) {
+-        var global = new WidgetGroup(0, 0, 158, 180);
++    public Widget createMainPage(WildcardEditorWidget ui) {
++        editor = ui;
++        var global = new WidgetGroup(0, 0, 158, 128);
+ 
+         componentList = new WildcardComponentListGroup<>(logic.getIOComponents(io), 0, 0, 158);
+         componentList.setLineStyle(
+             (i, group) -> {
+                 group.addWidget(
+                     new ButtonWidget(138, 5, 14, 14, cd -> componentList.removeComponent(i))
+-                        .setBackground(GuiTextures.BUTTON, GuiTextures.CLOSE_ICON)
++                        .setBackground(WildcardGuiTextures.BUTTON, WildcardGuiTextures.CLOSE_ICON)
+                         .setHoverTooltips(Component.translatable(DELETE_TOOLTIP))
+                 );
+             }
+         );
+ 
+         var saveBtn = createBottomBtn(Component.translatable(SAVE), 126, cd -> save());
++        saveBtn.setId("wildcard_save_" + io.name().toLowerCase(java.util.Locale.ROOT));
+         var createSimple = createBottomBtn(Component.translatable(CREATE_SINGLE), 2, (cd) -> {
+             componentList.addComponent(SimpleIOComponent.empty());
+         }).setHoverTooltips(Component.translatable(CREATE_SINGLE_TOOLTIP));
++        createSimple.setId("wildcard_add_simple_" + io.name().toLowerCase(java.util.Locale.ROOT));
+         var createTagPrefix = createBottomBtn(Component.translatable(CREATE_TAG), 37, (cd) -> {
+             componentList.addComponent(TagIOComponent.empty());
+         }).setHoverTooltips(Component.translatable(CREATE_TAG_TOOLTIP));
++        createTagPrefix.setId("wildcard_add_tag_" + io.name().toLowerCase(java.util.Locale.ROOT));
+ 
+-        global.addWidget(componentList);
++        var scroll = new DraggableScrollableWidgetGroup(0, 0, 158, 104)
++                .setDraggable(false).setScrollable(true).setUseScissor(true);
++        scroll.setId("wildcard_scroll_" + io.name().toLowerCase(java.util.Locale.ROOT));
++        scroll.addWidget(componentList);
++        global.addWidget(scroll);
+         global.addWidget(saveBtn);
+         global.addWidget(createSimple);
+         global.addWidget(createTagPrefix);
+@@ -107,16 +117,17 @@ public class WildcardIOFancyConfigurator implements IFancyUIProvider {
+ 
+     private ButtonWidget createBottomBtn(Component label, int x, Consumer<ClickData> onPressed) {
+         return new ButtonWidget(
+-            x, 155, 30, 20, new GuiTextureGroup(
++            x, 108, 30, 20, new GuiTextureGroup(
+                 ResourceBorderTexture.BUTTON_COMMON.copy(), new TextTexture(label.getString())
+             ), onPressed
+         );
+     }
+ 
+     private void save() {
++        if (!editor.isValidEditingItem()) return;
+         var components = componentList.getComponents();
+-        var stack = logic.setIOComponents(io, components);
+         components.forEach(IWildcardIOComponent::onSave);
++        var stack = logic.setIOComponents(io, components);
+         onSave.accept(stack);
+     }
+ }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIndexPage.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIndexPage.java
+index 359b966..6a8b926 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIndexPage.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/gui/WildcardIndexPage.java
+@@ -4,15 +4,17 @@ import appeng.api.crafting.IPatternDetails;
+ import appeng.api.stacks.AEFluidKey;
+ import appeng.api.stacks.AEItemKey;
+ import appeng.api.stacks.GenericStack;
+-import com.gregtechceu.gtceu.api.gui.GuiTextures;
++import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
+ import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
+ import com.lowdragmc.lowdraglib.gui.widget.*;
+-import com.lowdragmc.lowdraglib.misc.FluidStorage;
+-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
++import net.minecraft.core.component.DataComponents;
+ import net.minecraft.network.chat.Component;
++import net.minecraft.world.item.ItemStack;
++import net.minecraft.world.item.component.CustomData;
+ import net.minecraft.world.level.Level;
++import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+ import org.jetbrains.annotations.Nullable;
+-import org.leodreamer.wildcard_pattern.gui.NaiveItemTransfer;
++import org.leodreamer.wildcard_pattern.gui.WildcardGuiTextures;
+ import org.leodreamer.wildcard_pattern.lang.DataGenScanned;
+ import org.leodreamer.wildcard_pattern.lang.RegisterLanguage;
+ import org.leodreamer.wildcard_pattern.util.MathUtils;
+@@ -20,98 +22,80 @@ import org.leodreamer.wildcard_pattern.wildcard.WildcardPatternLogic;
+ 
+ import java.util.Arrays;
+ import java.util.List;
++import java.util.function.Supplier;
+ import java.util.stream.Stream;
+ 
++/** Read-only previews never add menu slots while cycling or replacing a pattern. */
+ @DataGenScanned
+ public class WildcardIndexPage extends WidgetGroup {
+-
+-    private WidgetGroup inputGroup, outputGroup;
+-    private final List<IPatternDetails> patterns;
+-    int tick = 0;
++    private final Supplier<ItemStack> edited;
++    private final Level level;
++    private final WidgetGroup inputGroup, outputGroup;
++    private List<IPatternDetails> patterns = List.of();
++    private CustomData previousData;
++    private int tick;
+     private static final int PATTERN_CYCLE = 20;
+ 
+     @RegisterLanguage("%d Patterns Available")
+     static final String PATTERNS_AVAILABLE = "sftcore.item.wildcard_pattern.patterns_available";
+ 
+-    public WildcardIndexPage(WildcardPatternLogic logic, Level level, int x, int y, int width, int height) {
++    public WildcardIndexPage(Supplier<ItemStack> edited, Level level, int x, int y, int width, int height) {
+         super(x, y, width, height);
+-
+-        patterns = logic.generateAllPatterns(level).toList();
+-        var component = Component.translatable(PATTERNS_AVAILABLE, patterns.size());
+-        // Use TextTextureWidget here will cause weird bugs on LabelWidget in other pages.
+-        // IDK why... LDLib what are u doing???
+-        addWidget(new ImageWidget(x + 2, y + 2, width - 4, 15,
+-            () -> new TextTexture(component.getString())));
+-
+-        initPatternDisplay();
+-        displayPattern(patterns.isEmpty() ? null : patterns.get(0));
+-    }
+-
+-    private void initPatternDisplay() {
+-        int w = getSizeWidth(), h = getSizeHeight();
+-
+-        inputGroup = new WidgetGroup(10, 18, (w - 10) / 2, h - 20);
+-        outputGroup = new WidgetGroup((w + 30) / 2, 18, (w - 10) / 2, h - 20);
+-
+-        var bar = new Widget((w - 10) / 2, 32, 15, 10).setBackground(
+-            GuiTextures.PROGRESS_BAR_ARROW.getSubTexture(0, 0, 1, 0.5)
+-        );
+-
++        this.edited = edited;
++        this.level = level;
++        addWidget(new ImageWidget(2, 2, width - 4, 15,
++                () -> new TextTexture(Component.translatable(PATTERNS_AVAILABLE, patterns.size()).getString())));
++        inputGroup = new WidgetGroup(4, 20, 54, 36);
++        outputGroup = new WidgetGroup(width - 58, 20, 54, 36);
+         addWidget(inputGroup);
+-        addWidget(bar);
++        addWidget(new Widget(width / 2 - 8, 32, 15, 10)
++                .setBackground(WildcardGuiTextures.PROGRESS_BAR_ARROW.getSubTexture(0, 0, 1, 0.5)));
+         addWidget(outputGroup);
++        refreshPatterns();
++    }
++
++    private void refreshPatterns() {
++        var stack = edited.get();
++        var data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
++        if (data.equals(previousData)) return;
++        previousData = data;
++        patterns = WildcardPatternLogic.on(stack, level.registryAccess()).generateAllPatterns(level).toList();
++        tick = 0;
++        displayPattern(patterns.isEmpty() ? null : patterns.getFirst());
+     }
+ 
+-    @Override
+-    public void updateScreen() {
++    @Override public void updateScreen() {
+         super.updateScreen();
+         if (++tick % PATTERN_CYCLE == 0) {
+-            if (patterns.isEmpty()) {
+-                displayPattern(null);
+-            } else {
+-                displayPattern(patterns.get((tick / PATTERN_CYCLE) % patterns.size()));
+-            }
++            refreshPatterns();
++            displayPattern(patterns.isEmpty() ? null : patterns.get((tick / PATTERN_CYCLE) % patterns.size()));
+         }
+     }
+ 
+     private void displayPattern(@Nullable IPatternDetails pattern) {
+-        if (pattern == null) {
+-            displayPatternSlots(inputGroup, Stream.of());
+-            displayPatternSlots(outputGroup, Stream.of());
+-        } else {
+-            displayPatternSlots(
+-                inputGroup, Arrays.stream(pattern.getInputs())
+-                    .map(i -> new GenericStack(i.getPossibleInputs()[0].what(), i.getMultiplier()))
+-            );
+-            displayPatternSlots(outputGroup, Arrays.stream(pattern.getOutputs()));
+-        }
++        displayPatternSlots(inputGroup, pattern == null ? Stream.empty() : Arrays.stream(pattern.getInputs())
++                .map(input -> new GenericStack(input.getPossibleInputs()[0].what(),
++                        Math.multiplyExact(input.getPossibleInputs()[0].amount(), input.getMultiplier()))));
++        displayPatternSlots(outputGroup, pattern == null ? Stream.empty() : pattern.getOutputs().stream());
+     }
+ 
+     private void displayPatternSlots(WidgetGroup group, Stream<GenericStack> stacks) {
+         group.clearAllWidgets();
+         var iterator = stacks.iterator();
+-        for (int r = 0; r < 2; r++) {
+-            for (int c = 0; c < 3; c++) {
+-                if (!iterator.hasNext()) {
+-                    var slot = new SlotWidget(new NaiveItemTransfer(), 0, 18 * c, 18 * r, false, false);
+-                    group.addWidget(slot);
+-                    continue;
+-                }
+-
+-                var next = iterator.next();
+-                if (next.what() instanceof AEItemKey item) {
+-                    var slot = new SlotWidget(new NaiveItemTransfer(), 0, 18 * c, 18 * r, false, false);
+-                    var handler = slot.getHandler();
+-                    if (handler == null) continue;
+-                    handler.set(item.toStack(MathUtils.saturatedCast(next.amount())));
+-                    group.addWidget(slot);
+-                } else if (next.what() instanceof AEFluidKey fluid) {
+-                    var storage = new FluidStorage(Integer.MAX_VALUE);
+-                    storage.setFluid(FluidStack.create(fluid.getFluid(), MathUtils.saturatedCast(next.amount())));
+-                    var slot = new TankWidget(storage, 18 * c, 18 * r, false, false)
+-                        .setBackground(GuiTextures.SLOT).setClientSideWidget();
+-                    group.addWidget(slot);
+-                }
++        for (int slot = 0; slot < 6; slot++) {
++            int x = slot % 3 * 18, y = slot / 3 * 18;
++            group.addWidget(new Widget(x, y, 18, 18).setBackground(WildcardGuiTextures.SLOT));
++            if (!iterator.hasNext()) continue;
++            var next = iterator.next();
++            if (next.what() instanceof AEItemKey item) {
++                group.addWidget(new ImageWidget(x + 1, y + 1, 16, 16,
++                        new ItemStackTexture(item.toStack(MathUtils.saturatedCast(next.amount()))))
++                        .setHoverTooltips(item.getDisplayName(), Component.literal(Long.toString(next.amount()))));
++            } else if (next.what() instanceof AEFluidKey fluid) {
++                var storage = new FluidTank(Integer.MAX_VALUE);
++                storage.setFluid(fluid.toStack(MathUtils.saturatedCast(next.amount())));
++                group.addWidget(new TankWidget(storage, x, y, false, false).setClientSideWidget()
++                        .setHoverTooltips(fluid.getDisplayName(), Component.literal(Long.toString(next.amount()))));
+             }
+         }
+     }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/FlagFilterComponent.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/FlagFilterComponent.java
+index 8f56a9e..4c6ddb3 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/FlagFilterComponent.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/FlagFilterComponent.java
+@@ -3,15 +3,16 @@ package org.leodreamer.wildcard_pattern.wildcard.impl;
+ import com.gregtechceu.gtceu.api.GTCEuAPI;
+ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+ import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialFlag;
+-import com.gregtechceu.gtceu.api.gui.GuiTextures;
++import org.leodreamer.wildcard_pattern.gui.WildcardGuiTextures;
+ import com.gregtechceu.gtceu.common.data.GTMaterials;
+-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
++import com.lowdragmc.lowdraglib.editor.ColorPattern;
+ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+ import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
+ import com.lowdragmc.lowdraglib.gui.widget.SelectorWidget;
+ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+ import lombok.Getter;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.network.chat.Component;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+@@ -44,7 +45,7 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+         .setColor(ColorPattern.PURPLE.color);
+ 
+     public static FlagFilterComponent empty() {
+-        return new FlagFilterComponent(null, GTMaterials.NULL, false);
++        return new FlagFilterComponent(null, null, false);
+     }
+ 
+     public FlagFilterComponent(@Nullable MaterialFlag flag, Material example, boolean whitelist) {
+@@ -76,7 +77,7 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+         flagSelector.setOnChanged(this::updateFlag);
+         exampleSlot = new PhantomGTMaterialSlot(new NaiveItemTransfer(), 0, 3, 3, this::changeExample);
+ 
+-        if (example != GTMaterials.NULL) {
++        if (example != null) {
+             exampleSlot.setMaterial(example);
+         }
+         if (flag != null) {
+@@ -93,7 +94,7 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+     }
+ 
+     private boolean changeExample(Material material) {
+-        var ok = material != GTMaterials.NULL;
++        var ok = material != null;
+         if (ok) {
+             this.example = material;
+             var flags = getMaterialFlagNames(material);
+@@ -122,7 +123,7 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+     private static final String NO_FLAG = "sftcore.item.wildcard_pattern.filter.flag.no_flag";
+ 
+     private static List<String> getMaterialFlagNames(Material material) {
+-        var flags = ((IMaterial) material).wildcard$getFlags();
++        var flags = material == null ? java.util.Set.<MaterialFlag>of() : ((IMaterial) (Object) material).wildcard$getFlags();
+ 
+         if (flags.isEmpty()) {
+             return List.of(Component.translatable(NO_FLAG).getString());
+@@ -138,11 +139,11 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+         }
+ 
+         @Override
+-        public @NotNull CompoundTag serialize(IWildcardFilterComponent component) {
++        public @NotNull CompoundTag serialize(IWildcardFilterComponent component, HolderLookup.Provider registries) {
+             var tag = new CompoundTag();
+             var simple = (FlagFilterComponent) component;
+             tag.putBoolean("whitelist", simple.whitelist);
+-            tag.putString("example", simple.example.getResourceLocation().toString());
++            tag.putString("example", simple.example == null ? "" : simple.example.getResourceLocation().toString());
+             if (simple.flag != null) {
+                 tag.putString("flag", simple.flag.toString());
+             }
+@@ -150,7 +151,7 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+         }
+ 
+         @Override
+-        public @NotNull IWildcardFilterComponent deserialize(CompoundTag nbt) {
++        public @NotNull IWildcardFilterComponent deserialize(CompoundTag nbt, HolderLookup.Provider registries) {
+             var whitelist = nbt.getBoolean("whitelist");
+             var materialId = nbt.getString("example");
+             var flagName = nbt.getString("flag");
+@@ -158,8 +159,8 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+             if (!flagName.isEmpty()) {
+                 flag = MaterialFlag.getByName(flagName);
+             }
+-            var material = GTCEuAPI.materialManager.getMaterial(materialId);
+-            if (material == null) material = GTMaterials.NULL;
++            var material = com.gregtechceu.gtceu.api.registry.GTRegistries.MATERIALS.get(net.minecraft.resources.ResourceLocation.tryParse(materialId));
++            
+             return new FlagFilterComponent(flag, material, whitelist);
+         }
+     }
+@@ -168,7 +169,7 @@ public class FlagFilterComponent implements IWildcardFilterComponent {
+ 
+         public MySelectorWidget(int x, int y, int width, int height, List<String> candidates) {
+             super(x, y, width, height, candidates, ColorPattern.WHITE.color);
+-            button.setBackground(GuiTextures.BUTTON);
++            button.setBackground(WildcardGuiTextures.BUTTON);
+             textTexture.setColor(ColorPattern.DARK_GRAY.color);
+         }
+     }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/PropertyFilterComponent.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/PropertyFilterComponent.java
+index 24f2c76..1ccfb94 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/PropertyFilterComponent.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/PropertyFilterComponent.java
+@@ -3,15 +3,16 @@ package org.leodreamer.wildcard_pattern.wildcard.impl;
+ import com.gregtechceu.gtceu.api.GTCEuAPI;
+ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+ import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
+-import com.gregtechceu.gtceu.api.gui.GuiTextures;
++import org.leodreamer.wildcard_pattern.gui.WildcardGuiTextures;
+ import com.gregtechceu.gtceu.common.data.GTMaterials;
+-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
++import com.lowdragmc.lowdraglib.editor.ColorPattern;
+ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+ import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
+ import com.lowdragmc.lowdraglib.gui.widget.SelectorWidget;
+ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+ import lombok.Getter;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.network.chat.Component;
+ import org.jetbrains.annotations.NotNull;
+ import org.leodreamer.wildcard_pattern.api.IMaterialProperties;
+@@ -48,7 +49,7 @@ public class PropertyFilterComponent implements IWildcardFilterComponent {
+         FLUID_PIPE, FLUID, GEM, INGOT, POLYMER, ITEM_PIPE, ORE, TOOL, ROTOR, WIRE, WOOD, HAZARD };
+ 
+     public static PropertyFilterComponent empty() {
+-        return new PropertyFilterComponent(EMPTY, GTMaterials.NULL, false);
++        return new PropertyFilterComponent(EMPTY, null, false);
+     }
+ 
+     public PropertyFilterComponent(@NotNull PropertyKey<?> property, Material example, boolean whitelist) {
+@@ -79,7 +80,7 @@ public class PropertyFilterComponent implements IWildcardFilterComponent {
+         propertySelector.setOnChanged(this::updateProperty);
+         exampleSlot = new PhantomGTMaterialSlot(new NaiveItemTransfer(), 0, 3, 3, this::changeExample);
+ 
+-        if (example != GTMaterials.NULL) {
++        if (example != null) {
+             exampleSlot.setMaterial(example);
+         }
+         propertySelector.setValue(property.toString());
+@@ -94,7 +95,7 @@ public class PropertyFilterComponent implements IWildcardFilterComponent {
+     }
+ 
+     private boolean changeExample(Material material) {
+-        var ok = material != GTMaterials.NULL;
++        var ok = material != null;
+         if (ok) {
+             this.example = material;
+             var flags = getMaterialPropertyNames(material);
+@@ -132,7 +133,7 @@ public class PropertyFilterComponent implements IWildcardFilterComponent {
+     private static final String NO_PROPERTY = "sftcore.item.wildcard_pattern.filter.property.no_property";
+ 
+     private static List<String> getMaterialPropertyNames(Material material) {
+-        var flags = ((IMaterialProperties) material.getProperties()).wildcard$getProperties();
++        var flags = material == null ? java.util.Set.<PropertyKey<?>>of() : ((IMaterialProperties) material.getProperties()).wildcard$getProperties();
+         if (flags.isEmpty()) {
+             return List.of(Component.translatable(NO_PROPERTY).getString());
+         }
+@@ -147,22 +148,22 @@ public class PropertyFilterComponent implements IWildcardFilterComponent {
+         }
+ 
+         @Override
+-        public @NotNull CompoundTag serialize(IWildcardFilterComponent component) {
++        public @NotNull CompoundTag serialize(IWildcardFilterComponent component, HolderLookup.Provider registries) {
+             var tag = new CompoundTag();
+             var simple = (PropertyFilterComponent) component;
+             tag.putBoolean("whitelist", simple.whitelist);
+-            tag.putString("example", simple.example.getResourceLocation().toString());
++            tag.putString("example", simple.example == null ? "" : simple.example.getResourceLocation().toString());
+             tag.putString("flag", simple.property.toString());
+             return tag;
+         }
+ 
+         @Override
+-        public @NotNull IWildcardFilterComponent deserialize(CompoundTag nbt) {
++        public @NotNull IWildcardFilterComponent deserialize(CompoundTag nbt, HolderLookup.Provider registries) {
+             var whitelist = nbt.getBoolean("whitelist");
+             var materialId = nbt.getString("example");
+             var flag = getPropertyByName(nbt.getString("flag"));
+-            var material = GTCEuAPI.materialManager.getMaterial(materialId);
+-            if (material == null) material = GTMaterials.NULL;
++            var material = com.gregtechceu.gtceu.api.registry.GTRegistries.MATERIALS.get(net.minecraft.resources.ResourceLocation.tryParse(materialId));
++            
+             return new PropertyFilterComponent(flag, material, whitelist);
+         }
+     }
+@@ -171,7 +172,7 @@ public class PropertyFilterComponent implements IWildcardFilterComponent {
+ 
+         public MySelectorWidget(int x, int y, int width, int height, List<String> candidates) {
+             super(x, y, width, height, candidates, ColorPattern.WHITE.color);
+-            button.setBackground(GuiTextures.BUTTON);
++            button.setBackground(WildcardGuiTextures.BUTTON);
+             textTexture.setColor(ColorPattern.DARK_GRAY.color);
+         }
+     }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleFilterComponent.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleFilterComponent.java
+index a4e4c24..cd5d10b 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleFilterComponent.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleFilterComponent.java
+@@ -3,13 +3,14 @@ package org.leodreamer.wildcard_pattern.wildcard.impl;
+ import com.gregtechceu.gtceu.api.GTCEuAPI;
+ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+ import com.gregtechceu.gtceu.common.data.GTMaterials;
+-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
++import com.lowdragmc.lowdraglib.editor.ColorPattern;
+ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+ import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
+ import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
+ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+ import lombok.Getter;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.network.chat.Component;
+ import org.jetbrains.annotations.NotNull;
+ import org.leodreamer.wildcard_pattern.gui.NaiveItemTransfer;
+@@ -35,7 +36,7 @@ public class SimpleFilterComponent implements IWildcardFilterComponent {
+         .setColor(ColorPattern.BLUE.color);
+ 
+     public static SimpleFilterComponent empty() {
+-        return new SimpleFilterComponent(GTMaterials.NULL, false);
++        return new SimpleFilterComponent(null, false);
+     }
+ 
+     public SimpleFilterComponent(Material material, boolean whitelist) {
+@@ -64,7 +65,7 @@ public class SimpleFilterComponent implements IWildcardFilterComponent {
+ 
+         materialSlot = new PhantomGTMaterialSlot(new NaiveItemTransfer(), 0, 3, 3, this::updateMaterial);
+ 
+-        if (material != GTMaterials.NULL) {
++        if (material != null) {
+             materialSlot.setMaterial(material);
+         }
+ 
+@@ -78,7 +79,7 @@ public class SimpleFilterComponent implements IWildcardFilterComponent {
+     }
+ 
+     private boolean updateMaterial(Material material) {
+-        var ok = material != GTMaterials.NULL;
++        var ok = material != null;
+         if (ok) {
+             this.material = material;
+             materialLabel.setText(getMaterialString(material));
+@@ -95,7 +96,7 @@ public class SimpleFilterComponent implements IWildcardFilterComponent {
+     private static final String NO_MATERIAL = "sftcore.item.wildcard_pattern.filter.simple.no_material";
+ 
+     private static String getMaterialString(Material material) {
+-        if (material == GTMaterials.NULL) {
++        if (material == null) {
+             return Component.translatable(NO_MATERIAL).getString();
+         } else {
+             return material.getLocalizedName().getString();
+@@ -110,20 +111,20 @@ public class SimpleFilterComponent implements IWildcardFilterComponent {
+         }
+ 
+         @Override
+-        public @NotNull CompoundTag serialize(IWildcardFilterComponent component) {
++        public @NotNull CompoundTag serialize(IWildcardFilterComponent component, HolderLookup.Provider registries) {
+             var tag = new CompoundTag();
+             var simple = (SimpleFilterComponent) component;
+             tag.putBoolean("whitelist", simple.whitelist);
+-            tag.putString("material", simple.material.getResourceLocation().toString());
++            tag.putString("material", simple.material == null ? "" : simple.material.getResourceLocation().toString());
+             return tag;
+         }
+ 
+         @Override
+-        public @NotNull IWildcardFilterComponent deserialize(CompoundTag nbt) {
++        public @NotNull IWildcardFilterComponent deserialize(CompoundTag nbt, HolderLookup.Provider registries) {
+             var whitelist = nbt.getBoolean("whitelist");
+             var materialId = nbt.getString("material");
+-            var material = GTCEuAPI.materialManager.getMaterial(materialId);
+-            if (material == null) material = GTMaterials.NULL;
++            var material = com.gregtechceu.gtceu.api.registry.GTRegistries.MATERIALS.get(net.minecraft.resources.ResourceLocation.tryParse(materialId));
++            
+             return new SimpleFilterComponent(material, whitelist);
+         }
+     }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleIOComponent.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleIOComponent.java
+index 1667b8d..a509510 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleIOComponent.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/SimpleIOComponent.java
+@@ -1,43 +1,51 @@
+ package org.leodreamer.wildcard_pattern.wildcard.impl;
+ 
+ import appeng.api.stacks.AEItemKey;
++import appeng.api.stacks.AEFluidKey;
+ import appeng.api.stacks.GenericStack;
+ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
++import com.lowdragmc.lowdraglib.editor.ColorPattern;
+ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+ import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
+ import com.lowdragmc.lowdraglib.gui.widget.*;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.world.item.BucketItem;
+ import net.minecraft.world.item.Items;
+-import net.minecraftforge.fluids.FluidStack;
++import net.neoforged.neoforge.fluids.FluidStack;
+ import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
+ import org.leodreamer.wildcard_pattern.gui.NaiveItemTransfer;
++import org.leodreamer.wildcard_pattern.gui.WildcardLongAmountField;
+ import org.leodreamer.wildcard_pattern.util.MathUtils;
+ import org.leodreamer.wildcard_pattern.wildcard.WildcardSerializers;
+ import org.leodreamer.wildcard_pattern.wildcard.feature.IWildcardIOComponent;
+ 
+ public class SimpleIOComponent implements IWildcardIOComponent {
+ 
+-    @NotNull
++    @Nullable
+     private GenericStack stack;
++    private long amount;
+     private SlotWidget itemSlot;
+     private TextFieldWidget amountEdit;
+     private static final IGuiTexture GROUP_BG = ResourceBorderTexture.BUTTON_COMMON.copy()
+         .setColor(ColorPattern.CYAN.color);
+ 
+     public static SimpleIOComponent empty() {
+-        return new SimpleIOComponent(new GenericStack(AEItemKey.of(Items.AIR), 1));
++        return new SimpleIOComponent(null);
+     }
+ 
+-    public SimpleIOComponent(@NotNull GenericStack stack) {
++    public SimpleIOComponent(@Nullable GenericStack stack) {
+         this.stack = stack;
++        this.amount = stack == null ? 1 : Math.max(1, stack.amount());
+     }
+ 
+     @Override
+     public GenericStack apply(Material material) {
++        if (stack == null) return null;
+         if (stack.what() instanceof AEItemKey item && item.getItem() instanceof BucketItem bucket) {
+-            return GenericStack.fromFluidStack(new FluidStack(bucket.getFluid(), MathUtils.saturatedCast(stack.amount())));
++            var key = AEFluidKey.of(bucket.content);
++            return key == null ? null : new GenericStack(key, stack.amount());
+         }
+         return stack;
+     }
+@@ -52,14 +60,15 @@ public class SimpleIOComponent implements IWildcardIOComponent {
+         line.setBackground(GROUP_BG);
+ 
+         itemSlot = new PhantomSlotWidget(new NaiveItemTransfer(), 0, 3, 3);
+-        if (stack.what() instanceof AEItemKey item) {
++        itemSlot.setId("wildcard_simple_item");
++        if (stack != null) {
+             var handler = itemSlot.getHandler();
+             if (handler != null) {
+-                handler.set(item.toStack());
++                handler.set(stack.what() instanceof AEItemKey item ? item.toStack(1) : GenericStack.wrapInItemStack(stack));
+             }
+         }
+-        amountEdit = new TextFieldWidget(80, 5, 50, 15, this::getAmount, this::setAmount);
+-        amountEdit.setNumbersOnly(0, Integer.MAX_VALUE);
++        amountEdit = new WildcardLongAmountField(80, 5, 50, 15, this::getAmount, this::setAmount);
++        amountEdit.setCurrentString(amount).setId("wildcard_simple_quantity");
+ 
+         line.addWidget(itemSlot);
+         line.addWidget(new LabelWidget(70, 7, "x"));
+@@ -67,11 +76,12 @@ public class SimpleIOComponent implements IWildcardIOComponent {
+     }
+ 
+     private String getAmount() {
+-        return Integer.toString(MathUtils.saturatedCast(stack.amount()));
++        return Long.toString(amount);
+     }
+ 
+     private void setAmount(String str) {
+-        stack = new GenericStack(stack.what(), Integer.parseInt(str));
++        amount = Long.parseLong(str);
++        if (stack != null) stack = new GenericStack(stack.what(), amount);
+     }
+ 
+     @Override
+@@ -80,10 +90,9 @@ public class SimpleIOComponent implements IWildcardIOComponent {
+         if (handler == null) return;
+ 
+         var itemStack = handler.getItem().copy();
+-        int count = Integer.parseInt(amountEdit.getCurrentString());
+-        itemStack.setCount(count);
++        amount = Long.parseLong(amountEdit.getCurrentString());
+         var genericStack = GenericStack.fromItemStack(itemStack);
+-        stack = genericStack == null ? empty().stack : genericStack;
++        stack = genericStack == null ? null : new GenericStack(genericStack.what(), amount);
+     }
+ 
+     @Override
+@@ -99,13 +108,13 @@ public class SimpleIOComponent implements IWildcardIOComponent {
+         }
+ 
+         @Override
+-        public @NotNull CompoundTag serialize(IWildcardIOComponent component) {
+-            return GenericStack.writeTag(((SimpleIOComponent) component).stack);
++        public @NotNull CompoundTag serialize(IWildcardIOComponent component, HolderLookup.Provider registries) {
++            return GenericStack.writeTag(registries, ((SimpleIOComponent) component).stack);
+         }
+ 
+         @Override
+-        public @NotNull SimpleIOComponent deserialize(CompoundTag nbt) {
+-            var stack = GenericStack.readTag(nbt);
++        public @NotNull SimpleIOComponent deserialize(CompoundTag nbt, HolderLookup.Provider registries) {
++            var stack = GenericStack.readTag(registries, nbt);
+             return stack == null ? empty() : new SimpleIOComponent(stack);
+         }
+     }
+diff --git a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/TagIOComponent.java b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/TagIOComponent.java
+index 6ffe851..037fee0 100644
+--- a/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/TagIOComponent.java
++++ b/src/main/java/org/leodreamer/wildcard_pattern/wildcard/impl/TagIOComponent.java
+@@ -2,24 +2,26 @@ package org.leodreamer.wildcard_pattern.wildcard.impl;
+ 
+ import appeng.api.stacks.GenericStack;
+ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
++import com.lowdragmc.lowdraglib.editor.ColorPattern;
+ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+ import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
+ import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
+ import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
+ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import org.jetbrains.annotations.NotNull;
+ import org.leodreamer.wildcard_pattern.gui.NaiveItemTransfer;
+ import org.leodreamer.wildcard_pattern.gui.GenericGTTag;
+ import org.leodreamer.wildcard_pattern.gui.PhantomGTTagSlot;
++import org.leodreamer.wildcard_pattern.gui.WildcardLongAmountField;
+ import org.leodreamer.wildcard_pattern.wildcard.WildcardSerializers;
+ import org.leodreamer.wildcard_pattern.wildcard.feature.IWildcardIOComponent;
+ 
+ public class TagIOComponent implements IWildcardIOComponent {
+ 
+     private GenericGTTag tag;
+-    private int amount;
++    private long amount;
+ 
+     private PhantomGTTagSlot tagSlot;
+     private LabelWidget tagLabel;
+@@ -31,7 +33,7 @@ public class TagIOComponent implements IWildcardIOComponent {
+         return new TagIOComponent(GenericGTTag.EMPTY, 1);
+     }
+ 
+-    public TagIOComponent(GenericGTTag tag, int amount) {
++    public TagIOComponent(GenericGTTag tag, long amount) {
+         this.tag = tag;
+         this.amount = amount;
+     }
+@@ -52,14 +54,14 @@ public class TagIOComponent implements IWildcardIOComponent {
+         tagLabel = new LabelWidget(25, 7, tag.name());
+ 
+         tagSlot = new PhantomGTTagSlot(new NaiveItemTransfer(), 0, 3, 3, this::updateTag);
++        tagSlot.setId("wildcard_tag_item");
+ 
+         if (tag != GenericGTTag.EMPTY) {
+             tagSlot.setTag(tag);
+         }
+ 
+-        amountEdit = new TextFieldWidget(80, 5, 50, 15, this::getAmount, this::setAmount);
+-        amountEdit.setNumbersOnly(0, Integer.MAX_VALUE);
+-        amountEdit.setCurrentString(amount);
++        amountEdit = new WildcardLongAmountField(80, 5, 50, 15, this::getAmount, this::setAmount);
++        amountEdit.setCurrentString(amount).setId("wildcard_tag_quantity");
+ 
+         line.addWidget(tagSlot);
+         line.addWidget(tagLabel);
+@@ -77,17 +79,17 @@ public class TagIOComponent implements IWildcardIOComponent {
+     }
+ 
+     private String getAmount() {
+-        return Integer.toString(amount);
++        return Long.toString(amount);
+     }
+ 
+     private void setAmount(String str) {
+-        amount = Integer.parseInt(str);
++        amount = Long.parseLong(str);
+     }
+ 
+     @Override
+     public void onSave() {
+         updateTag(tagSlot.getTag());
+-        amount = Integer.parseInt(amountEdit.getCurrentString());
++        amount = Long.parseLong(amountEdit.getCurrentString());
+     }
+ 
+     @Override
+@@ -103,17 +105,17 @@ public class TagIOComponent implements IWildcardIOComponent {
+         }
+ 
+         @Override
+-        public @NotNull CompoundTag serialize(IWildcardIOComponent component) {
++        public @NotNull CompoundTag serialize(IWildcardIOComponent component, HolderLookup.Provider registries) {
+             var tagComponent = (TagIOComponent) component;
+             var nbt = new CompoundTag();
+             nbt.put("tag", tagComponent.tag.toNBT());
+-            nbt.putInt("amount", tagComponent.amount);
++            nbt.putLong("amount", tagComponent.amount);
+             return nbt;
+         }
+ 
+         @Override
+-        public @NotNull IWildcardIOComponent deserialize(CompoundTag nbt) {
+-            var amount = nbt.getInt("amount");
++        public @NotNull IWildcardIOComponent deserialize(CompoundTag nbt, HolderLookup.Provider registries) {
++            var amount = Math.max(1, nbt.getLong("amount"));
+             if (nbt.get("tag") instanceof CompoundTag tagNBT) {
+                 var tag = GenericGTTag.fromNBT(tagNBT);
+                 return new TagIOComponent(tag, amount);
+diff --git a/src/main/resources/META-INF/mods.toml b/src/main/resources/META-INF/mods.toml
+deleted file mode 100644
+index 7bd62da..0000000
+--- a/src/main/resources/META-INF/mods.toml
++++ /dev/null
+@@ -1,39 +0,0 @@
+-modLoader = "javafml"
+-loaderVersion = "${loader_version_range}"
+-license = "${mod_license}"
+-
+-[[mods]]
+-modId = "${mod_id}" #mandatory
+-version = "${mod_version}" #mandatory
+-displayName = "${mod_name}" #mandatory
+-authors = "${mod_authors}" #optional
+-description = '''${mod_description}'''
+-
+-[[dependencies."${mod_id}"]]
+-modId = "forge"
+-mandatory = true
+-versionRange = "${forge_version_range}"
+-ordering = "NONE"
+-side = "BOTH"
+-
+-[[dependencies."${mod_id}"]]
+-modId = "minecraft"
+-mandatory = true
+-versionRange = "${minecraft_version_range}"
+-ordering = "NONE"
+-side = "BOTH"
+-
+-[[dependencies."${mod_id}"]]
+-modId = "gtceu"
+-mandatory = true
+-versionRange = "[1.4.4,1.4.5)"
+-ordering = "AFTER"
+-side = "BOTH"
+-
+-[[dependencies."${mod_id}"]]
+-modId = "ae2"
+-mandatory = true
+-versionRange = "[15.0.0,)"
+-ordering = "AFTER"
+-side = "BOTH"
+-
+diff --git a/src/main/resources/META-INF/neoforge.mods.toml b/src/main/resources/META-INF/neoforge.mods.toml
+new file mode 100644
+index 0000000..0337e78
+--- /dev/null
++++ b/src/main/resources/META-INF/neoforge.mods.toml
+@@ -0,0 +1,41 @@
++modLoader="javafml"
++loaderVersion="[4,)"
++license="MIT"
++[[mods]]
++modId="wildcard_pattern"
++version="${version}"
++displayName="Wildcard Pattern"
++authors="LeoDreamer"
++description="Material-driven AE processing patterns, native NeoForge port for GTL."
++[[mixins]]
++config="wildcard_pattern.mixins.json"
++[[dependencies.wildcard_pattern]]
++modId="neoforge"
++type="required"
++versionRange="[21.1.248,21.2)"
++ordering="NONE"
++side="BOTH"
++[[dependencies.wildcard_pattern]]
++modId="minecraft"
++type="required"
++versionRange="[1.21.1,1.21.2)"
++ordering="NONE"
++side="BOTH"
++[[dependencies.wildcard_pattern]]
++modId="gtceu"
++type="required"
++versionRange="[8.0.0,8.1)"
++ordering="AFTER"
++side="BOTH"
++[[dependencies.wildcard_pattern]]
++modId="ae2"
++type="required"
++versionRange="[19.2.8,20)"
++ordering="AFTER"
++side="BOTH"
++[[dependencies.wildcard_pattern]]
++modId="ldlib"
++type="required"
++versionRange="[1.0.41,)"
++ordering="AFTER"
++side="BOTH"
+diff --git a/src/main/resources/pack.mcmeta b/src/main/resources/pack.mcmeta
+index 214d8be..40b5e6a 100644
+--- a/src/main/resources/pack.mcmeta
++++ b/src/main/resources/pack.mcmeta
+@@ -1,6 +1,6 @@
+ {
+   "pack": {
+     "description": "wildcard_pattern resources",
+-    "pack_format": 15
++    "pack_format": 34
+   }
+ }
+diff --git a/src/main/resources/wildcard_pattern.mixins.json b/src/main/resources/wildcard_pattern.mixins.json
+index f14abfe..7470a32 100644
+--- a/src/main/resources/wildcard_pattern.mixins.json
++++ b/src/main/resources/wildcard_pattern.mixins.json
+@@ -2,8 +2,7 @@
+   "required": true,
+   "minVersion": "0.8",
+   "package": "org.leodreamer.wildcard_pattern.mixin",
+-  "compatibilityLevel": "JAVA_8",
+-  "refmap": "wildcard_pattern.refmap.json",
++  "compatibilityLevel": "JAVA_21",
+   "mixins": [
+     "MaterialFlagsMixin",
+     "MaterialMixin",
+@@ -11,8 +10,7 @@
+     "PatternDetailsHelperMixin",
+     "PatternProviderLogicMixin"
+   ],
+-  "client": [
+-  ],
++  "client": [],
+   "injectors": {
+     "defaultRequire": 1
+   },

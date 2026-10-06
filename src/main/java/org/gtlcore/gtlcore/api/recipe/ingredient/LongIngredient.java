@@ -1,203 +1,132 @@
 package org.gtlcore.gtlcore.api.recipe.ingredient;
 
-import org.gtlcore.gtlcore.mixin.gtm.recipe.Ingredient.IntProviderIngredientAccessor;
-
-import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.recipe.ingredient.*;
-import com.gregtechceu.gtceu.core.mixins.*;
-
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraftforge.common.crafting.IIngredientSerializer;
+import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
+import net.neoforged.neoforge.common.crafting.ICustomIngredient;
+import net.neoforged.neoforge.common.crafting.IngredientType;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
-import com.google.common.primitives.Ints;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Objects;
+import java.util.stream.Stream;
 
-public class LongIngredient extends SizedIngredient {
+/** Immutable long quantity carried inside NeoForge's final, int-sized recipe wrapper. */
+public final class LongIngredient implements ICustomIngredient {
 
-    public static final ResourceLocation TYPE = GTCEu.id("Long");
+    // The old GTCEu.id("Long") normalized its argument to this same registry ID.
+    public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("gtceu", "long");
+    public static final MapCodec<LongIngredient> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(LongIngredient::getInner),
+            Codec.LONG.validate(value -> value > 0 ? DataResult.success(value) :
+                    DataResult.error(() -> "Recipe quantity must be positive"))
+                    .fieldOf("actualAmount").forGetter(LongIngredient::getActualAmount)
+    ).apply(instance, LongIngredient::new));
+    public static final StreamCodec<RegistryFriendlyByteBuf, LongIngredient> STREAM_CODEC = StreamCodec.composite(
+            Ingredient.CONTENTS_STREAM_CODEC, LongIngredient::getInner,
+            ByteBufCodecs.VAR_LONG, LongIngredient::getActualAmount,
+            LongIngredient::new);
+    public static final IngredientType<LongIngredient> INGREDIENT_TYPE = new IngredientType<>(CODEC, STREAM_CODEC);
 
-    @Getter
-    protected long actualAmount;
-    private int hashCode = 0;
-    private int innerHashCode = 0;
-    private boolean changed = true;
-    @Getter
-    private final boolean isEmpty;
-    private final Value value;
+    private final Ingredient inner;
+    private final long actualAmount;
 
-    protected LongIngredient(Ingredient inner, long actualAmount) {
-        super(inner, Ints.saturatedCast(actualAmount));
+    private LongIngredient(Ingredient inner, long actualAmount) {
+        this.inner = Objects.requireNonNull(inner, "inner");
+        if (actualAmount <= 0) throw new IllegalArgumentException("Recipe quantity must be positive");
         this.actualAmount = actualAmount;
-        this.isEmpty = inner.isEmpty();
-        if (isEmpty || inner.getClass() != Ingredient.class) {
-            this.value = null;
-        } else {
-            var values = ((IngredientAccessor) inner).getValues();
-            this.value = values.length == 1 ? values[0] : null;
+    }
+
+    public Ingredient getInner() { return inner; }
+    public long getActualAmount() { return actualAmount; }
+
+    public static SizedIngredient create(Ingredient inner, long amount) {
+        var nested = get(inner);
+        if (nested != null) inner = nested.inner;
+        return new SizedIngredient(new LongIngredient(inner, amount).toVanilla(), displayCount(amount));
+    }
+
+    public static SizedIngredient create(Ingredient inner) { return create(inner, 1); }
+    public static SizedIngredient create(TagKey<Item> tag, long amount) { return create(Ingredient.of(tag), amount); }
+    public static SizedIngredient create(ItemStack stack) { return create(stack, 1); }
+
+    public static SizedIngredient create(ItemStack stack, long amount) {
+        Ingredient ingredient = stack.getComponentsPatch().isEmpty() ? Ingredient.of(stack) :
+                DataComponentIngredient.of(true, stack);
+        return create(ingredient, amount);
+    }
+
+    public static @Nullable LongIngredient get(SizedIngredient ingredient) {
+        return get(ingredient.ingredient());
+    }
+
+    public static @Nullable LongIngredient get(Ingredient ingredient) {
+        return ingredient.getCustomIngredient() instanceof LongIngredient value ? value : null;
+    }
+
+    public static long amount(SizedIngredient ingredient) {
+        var value = get(ingredient);
+        return value == null ? ingredient.count() : value.actualAmount;
+    }
+
+    public static Ingredient matchingIngredient(SizedIngredient ingredient) {
+        var value = get(ingredient);
+        return value == null ? ingredient.ingredient() : value.inner;
+    }
+
+    public static SizedIngredient withAmount(SizedIngredient ingredient, long amount) {
+        return get(ingredient) != null || amount > Integer.MAX_VALUE ?
+                create(matchingIngredient(ingredient), amount) : new SizedIngredient(ingredient.ingredient(), (int) amount);
+    }
+
+    public static SizedIngredient copy(SizedIngredient ingredient) {
+        return withAmount(ingredient, amount(ingredient));
+    }
+
+    /** Preserve integer precision above 2^53 and saturate overflow rather than wrapping. */
+    public static SizedIngredient modify(SizedIngredient ingredient, double multiplier, double addition) {
+        if (!Double.isFinite(multiplier) || !Double.isFinite(addition)) {
+            throw new IllegalArgumentException("Recipe quantity modifiers must be finite");
         }
+        BigInteger result = BigDecimal.valueOf(amount(ingredient)).multiply(BigDecimal.valueOf(multiplier))
+                .add(BigDecimal.valueOf(addition)).toBigInteger();
+        long amount = result.signum() <= 0 ? 1 : result.min(BigInteger.valueOf(Long.MAX_VALUE)).longValueExact();
+        return withAmount(ingredient, amount);
     }
 
-    protected LongIngredient(@NotNull TagKey<Item> tag, long actualAmount) {
-        this(Ingredient.of(tag), actualAmount);
-    }
+    private static int displayCount(long amount) { return (int) Math.min(Integer.MAX_VALUE, amount); }
 
-    protected LongIngredient(ItemStack itemStack, long actualAmount) {
-        this(itemStack.hasTag() ? NBTIngredient.createNBTIngredient(itemStack) : Ingredient.of(itemStack), actualAmount);
-    }
+    @Override
+    public boolean test(ItemStack stack) { return inner.test(stack); }
 
-    public static LongIngredient create(Ingredient inner, long amount) {
-        return new LongIngredient(inner, amount);
-    }
+    @Override
+    public Stream<ItemStack> getItems() { return Stream.of(inner.getItems()).map(ItemStack::copy); }
 
-    public static LongIngredient create(Ingredient inner) {
-        return new LongIngredient(inner, 1);
-    }
+    @Override
+    public boolean isSimple() { return false; }
 
-    public static LongIngredient create(ItemStack inner) {
-        return new LongIngredient(inner, 1);
-    }
+    @Override
+    public IngredientType<?> getType() { return INGREDIENT_TYPE; }
 
-    public static LongIngredient create(TagKey<Item> tag, long amount) {
-        return new LongIngredient(tag, amount);
-    }
-
-    public static Ingredient copy(Ingredient ingredient) {
-        if (ingredient instanceof LongIngredient longIngredient) {
-            var copy = LongIngredient.create(longIngredient.inner, longIngredient.actualAmount);
-            copy.hashCode = longIngredient.hashCode;
-            return copy;
-        } else if (ingredient instanceof SizedIngredient sizedIngredient) {
-            if (sizedIngredient.getInner() instanceof IntProviderIngredient intProviderIngredient) {
-                return copy(intProviderIngredient);
-            }
-            return LongIngredient.create(sizedIngredient.getInner(), (long) sizedIngredient.getAmount());
-        } else if (ingredient instanceof IntCircuitIngredient circuit) {
-            return circuit.copy();
-        } else if (ingredient instanceof IntProviderIngredient intProviderIngredient) {
-            IntProviderIngredient copied = new IntProviderIngredient(intProviderIngredient.getInner(), intProviderIngredient.getCountProvider());
-            final var accessor = (IntProviderIngredientAccessor) intProviderIngredient;
-            if (accessor.getItemStack() != null) {
-                copied.setItemStacks(Arrays.stream(accessor.getItemStack()).map(ItemStack::copy)
-                        .toArray(ItemStack[]::new));
-            }
-            if (accessor.getSampledCount() != -1) {
-                copied.setSampledCount(accessor.getSampledCount());
-            }
-            return copied;
-        } else {
-            return create(ingredient);
-        }
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof LongIngredient ingredient && actualAmount == ingredient.actualAmount &&
+                inner.equals(ingredient.inner);
     }
 
     @Override
-    @NotNull
-    public IIngredientSerializer<? extends Ingredient> getSerializer() {
-        return SERIALIZER;
-    }
-
-    public static SizedIngredient fromJson(JsonObject json) {
-        return SERIALIZER.parse(json);
-    }
-
-    @Override
-    public @NotNull JsonElement toJson() {
-        JsonObject json = new JsonObject();
-        json.addProperty("type", TYPE.toString());
-        json.addProperty("actualAmount", this.actualAmount);
-        json.add("ingredient", this.inner.toJson());
-        return json;
-    }
-
-    @Override
-    public boolean test(@Nullable ItemStack stack) {
-        if (stack == null) return false;
-        if (this.isEmpty) return stack.isEmpty();
-
-        if (this.value instanceof TagValueAccessor tagValue) {
-            return stack.is(tagValue.getTag());
-        } else if (this.value instanceof ItemValueAccessor itemValue) {
-            return ItemStack.isSameItem(stack, itemValue.getItem());
-        }
-        return this.inner.test(stack);
-    }
-
-    @Override
-    public ItemStack @NotNull [] getItems() {
-        if (getInner() instanceof IntProviderIngredient intProviderIngredient) {
-            return intProviderIngredient.getItems();
-        }
-        if (changed || itemStacks == null) {
-            if (isEmpty) return new ItemStack[0];
-            var items = new ObjectArrayList<ItemStack>(inner.getItems().length);
-            for (ItemStack item : this.inner.getItems()) {
-                items.add(item.copyWithCount(Ints.saturatedCast(actualAmount)));
-            }
-            itemStacks = items.toArray(new ItemStack[0]);
-            changed = false;
-        }
-        return itemStacks;
-    }
-
-    @Override
-    public int hashCode() {
-        if (this.hashCode == 0) {
-            this.hashCode = Objects.hash(this.actualAmount, Objects.hashCode(this.inner));
-        }
-        return this.hashCode;
-    }
-
-    public int getInnerHashCode() {
-        if (this.innerHashCode == 0) {
-            int hash = 0;
-            for (var v : ((IngredientAccessor) this.inner).getValues()) {
-                if (v instanceof TagValueAccessor tag) hash += tag.getTag().hashCode();
-                else if (v instanceof ItemValueAccessor item) {
-                    var i = item.getItem();
-                    if (i.isEmpty()) continue;
-                    hash += i.getItem().hashCode() + (i.getTag() != null ? i.getTag().hashCode() : 0);
-                }
-            }
-            this.innerHashCode = hash;
-        }
-        return this.innerHashCode;
-    }
-
-    public void setActualAmount(long actualAmount) {
-        this.actualAmount = actualAmount;
-        this.changed = true;
-    }
-
-    public static final IIngredientSerializer<LongIngredient> SERIALIZER = new IIngredientSerializer<>() {
-
-        @Override
-        public @NotNull LongIngredient parse(FriendlyByteBuf buffer) {
-            long amount = buffer.readVarLong();
-            return new LongIngredient(Ingredient.fromNetwork(buffer), amount);
-        }
-
-        @Override
-        public @NotNull LongIngredient parse(JsonObject json) {
-            long amount = json.get("actualAmount").getAsLong();
-            Ingredient inner = Ingredient.fromJson(json.get("ingredient"));
-            return new LongIngredient(inner, amount);
-        }
-
-        @Override
-        public void write(FriendlyByteBuf buffer, LongIngredient ingredient) {
-            buffer.writeVarLong(ingredient.getActualAmount());
-            ingredient.inner.toNetwork(buffer);
-        }
-    };
+    public int hashCode() { return Objects.hash(inner, actualAmount); }
 }

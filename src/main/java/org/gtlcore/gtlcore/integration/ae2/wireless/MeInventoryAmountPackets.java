@@ -2,14 +2,15 @@ package org.gtlcore.gtlcore.integration.ae2.wireless;
 
 import org.gtlcore.gtlcore.integration.ae2.MeInventoryAmountService;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.stacks.AEKey;
 
@@ -26,41 +27,34 @@ public final class MeInventoryAmountPackets {
 
     private MeInventoryAmountPackets() {}
 
-    public static void register(SimpleChannel channel, IntSupplier packetIds) {
-        channel.registerMessage(
-                packetIds.getAsInt(),
-                Request.class,
-                Request::encode,
-                Request::decode,
-                Request::handle,
-                Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        channel.registerMessage(
-                packetIds.getAsInt(),
-                Response.class,
-                Response::encode,
-                Response::decode,
-                Response::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+    public static void register(PayloadRegistrar registrar) {
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Request.TYPE, Request::encode, Request::decode, Request::handle, PacketFlow.SERVERBOUND);
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Response.TYPE, Response::encode, Response::decode, Response::handle, PacketFlow.CLIENTBOUND);
     }
 
     public static void sendRequest(AEKey key) {
-        WirelessAePackets.CHANNEL.sendToServer(new Request(key));
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(new Request(key));
     }
 
-    public record Request(AEKey key) {
+    public record Request(AEKey key) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Request> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "me_inventory_amount/request"));
 
-        private static void encode(Request packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<Request> type() { return TYPE; }
+
+
+        private static void encode(Request packet, RegistryFriendlyByteBuf buffer) {
             WirelessAeKeyPacketCodec.write(buffer, packet.key);
         }
 
-        private static Request decode(FriendlyByteBuf buffer) {
+        private static Request decode(RegistryFriendlyByteBuf buffer) {
             return new Request(WirelessAeKeyPacketCodec.read(buffer));
         }
 
-        private static void handle(Request packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(Request packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null) {
                     return;
                 }
@@ -68,21 +62,26 @@ public final class MeInventoryAmountPackets {
                     return;
                 }
                 MeInventoryAmountService.Result result = MeInventoryAmountService.query(player, packet.key);
-                WirelessAePackets.CHANNEL.send(
-                        PacketDistributor.PLAYER.with(() -> player),
+                PacketDistributor.sendToPlayer(player,
                         new Response(packet.key, result.available(), result.amount()));
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record Response(AEKey key, boolean available, BigInteger amount) {
+    public record Response(AEKey key, boolean available, BigInteger amount) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Response> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "me_inventory_amount/response"));
+
+        @Override
+        public CustomPacketPayload.Type<Response> type() { return TYPE; }
+
 
         public Response {
             amount = available ? amount.max(BigInteger.ZERO) : BigInteger.ZERO;
         }
 
-        private static void encode(Response packet, FriendlyByteBuf buffer) {
+        private static void encode(Response packet, RegistryFriendlyByteBuf buffer) {
             WirelessAeKeyPacketCodec.write(buffer, packet.key);
             buffer.writeBoolean(packet.available);
             if (packet.available) {
@@ -90,20 +89,17 @@ public final class MeInventoryAmountPackets {
             }
         }
 
-        private static Response decode(FriendlyByteBuf buffer) {
+        private static Response decode(RegistryFriendlyByteBuf buffer) {
             AEKey key = WirelessAeKeyPacketCodec.read(buffer);
             boolean available = buffer.readBoolean();
             BigInteger amount = available ? new BigInteger(buffer.readByteArray(32)) : BigInteger.ZERO;
             return new Response(key, available, amount);
         }
 
-        private static void handle(Response packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
-            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(
-                    Dist.CLIENT,
-                    () -> () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
-                            .handleMeInventoryAmount(packet)));
-            context.setPacketHandled(true);
+        private static void handle(Response packet, IPayloadContext context) {
+            context.enqueueWork(() -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
+                            .handleMeInventoryAmount(packet));
+
         }
     }
 }

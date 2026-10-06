@@ -1,9 +1,8 @@
 package org.gtlcore.gtlcore.api.machine.trait;
 
 import com.lowdragmc.lowdraglib.misc.ItemTransferList;
-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
 
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -22,23 +21,20 @@ public final class LongItemStorageLookup {
         WRAPPED_STORAGES.put(handler, storage);
     }
 
-    public static @Nullable ILongItemStorage find(IItemTransfer transfer) {
-        if (transfer instanceof ILongItemStorage storage) return storage;
-        if (transfer instanceof ItemTransferList list) {
-            return containsLongStorage(list) ? new TransferListStorage(list) : null;
+    public static @Nullable ILongItemStorage find(IItemHandler handler) {
+        if (handler instanceof ILongItemStorage storage) return storage;
+        ILongItemStorage attached = WRAPPED_STORAGES.get(handler);
+        if (attached != null) return attached;
+        if (handler instanceof ItemTransferList list && containsLongStorage(list)) {
+            return new TransferListStorage(list);
         }
         return null;
     }
 
-    public static @Nullable ILongItemStorage find(IItemHandler handler) {
-        if (handler instanceof ILongItemStorage storage) return storage;
-        return WRAPPED_STORAGES.get(handler);
-    }
-
-    private static boolean containsLongStorage(IItemTransfer transfer) {
-        if (transfer instanceof ILongItemStorage) return true;
+    private static boolean containsLongStorage(IItemHandler transfer) {
+        if (transfer instanceof ILongItemStorage || WRAPPED_STORAGES.containsKey(transfer)) return true;
         if (!(transfer instanceof ItemTransferList list)) return false;
-        for (IItemTransfer nested : list.transfers) {
+        for (IItemHandler nested : list.transfers) {
             if (containsLongStorage(nested)) return true;
         }
         return false;
@@ -49,7 +45,7 @@ public final class LongItemStorageLookup {
         @Override
         public long gtlcore$getStoredAmount(int slot) {
             int offset = 0;
-            for (IItemTransfer nested : transfer.transfers) {
+            for (IItemHandler nested : transfer.transfers) {
                 int slots = nested.getSlots();
                 if (slot < offset + slots) {
                     int nestedSlot = slot - offset;

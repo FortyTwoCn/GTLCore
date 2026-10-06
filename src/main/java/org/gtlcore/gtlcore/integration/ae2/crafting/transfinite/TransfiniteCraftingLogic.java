@@ -35,8 +35,10 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.core.AELog;
-import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.CraftingJobStatusPacket;
+import net.neoforged.neoforge.network.PacketDistributor;
+import appeng.core.network.clientbound.CraftingJobStatusPacket;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import appeng.crafting.CraftingLink;
 import appeng.crafting.execution.CraftingCpuHelper;
 import appeng.crafting.execution.CraftingSubmitResult;
@@ -462,8 +464,8 @@ public final class TransfiniteCraftingLogic implements ICraftingJobSuspension, I
         }
     }
 
-    public void readFromNbt(CompoundTag data) {
-        this.inventory.readFromNBT(data.getList("inventory", CompoundTag.TAG_COMPOUND));
+    public void readFromNbt(CompoundTag data, HolderLookup.Provider registries) {
+        this.inventory.readFromNBT(data.getList("inventory", CompoundTag.TAG_COMPOUND), registries);
         if (data.contains(GraphJobCodec.NBT_KEY, CompoundTag.TAG_COMPOUND)) {
             this.job = null;
             this.graph.read(data);
@@ -479,15 +481,15 @@ public final class TransfiniteCraftingLogic implements ICraftingJobSuspension, I
         }
     }
 
-    public void writeToNbt(CompoundTag data) {
-        data.put("inventory", this.inventory.writeToNBT());
+    public void writeToNbt(CompoundTag data, HolderLookup.Provider registries) {
+        data.put("inventory", this.inventory.writeToNBT(registries));
         if (this.graph.ownsTask()) {
             this.graph.write(data);
             return;
         }
         data.remove(GraphJobCodec.NBT_KEY);
         if (this.job != null) {
-            data.put("job", this.job.writeToNbt());
+            data.put("job", this.job.writeToNbt(registries));
         }
     }
 
@@ -641,19 +643,19 @@ public final class TransfiniteCraftingLogic implements ICraftingJobSuspension, I
         var server = this.cpu.getLevel().getServer();
         var player = IPlayerRegistry.getConnected(server, playerId);
         if (player != null && changedJob.getFinalOutput() != null) {
-            NetworkHandler.instance().sendTo(new CraftingJobStatusPacket(
+            PacketDistributor.sendToPlayer(player, new CraftingJobStatusPacket(
                     changedJob.getLink().getCraftingID(),
                     changedJob.getFinalOutput().what(),
                     changedJob.getFinalOutput().amount(),
                     changedJob.getRemainingAmount(),
-                    status), player);
+                    status));
         }
     }
 
     private static boolean isWrittenBookOutput(@Nullable GenericStack output) {
         return output != null && output.what() instanceof AEItemKey itemKey &&
-                itemKey.getItem() == Items.WRITTEN_BOOK && itemKey.hasTag() &&
-                itemKey.getTag().contains("display");
+                itemKey.getItem() == Items.WRITTEN_BOOK && (itemKey.get(DataComponents.CUSTOM_NAME) != null || itemKey.get(DataComponents.LORE) != null ||
+                        itemKey.get(DataComponents.DYED_COLOR) != null);
     }
 
     @Override

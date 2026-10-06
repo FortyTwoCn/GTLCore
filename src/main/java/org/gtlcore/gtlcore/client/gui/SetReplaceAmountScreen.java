@@ -14,7 +14,7 @@ import appeng.client.gui.widgets.TabButton;
 import appeng.core.localization.GuiText;
 import appeng.menu.SlotSemantics;
 import com.glodblock.github.extendedae.client.gui.GuiPatternModifier;
-import com.glodblock.github.extendedae.common.EPPItemAndBlock;
+import com.glodblock.github.extendedae.common.EAESingletons;
 import com.glodblock.github.extendedae.container.ContainerPatternModifier;
 
 import java.util.function.Consumer;
@@ -39,7 +39,7 @@ public class SetReplaceAmountScreen extends AESubScreen<ContainerPatternModifier
 
         widgets.addButton("save", GuiText.Set.text(), this::confirm);
 
-        var icon = new ItemStack(EPPItemAndBlock.PATTERN_MODIFIER);
+        var icon = new ItemStack(EAESingletons.PATTERN_MODIFIER);
         widgets.add("back", new TabButton(icon, icon.getHoverName(), btn -> returnToParent()));
 
         this.amount = widgets.addNumberEntryWidget("amountToStock", NumberEntryType.of(currentStack.what()));

@@ -1,6 +1,7 @@
 package org.gtlcore.gtlcore.mixin.gtm.machine;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.ParallelHatchPartMachine;
 
 import org.spongepowered.asm.mixin.Final;
@@ -23,23 +24,19 @@ public abstract class ParallelHatchPartMachineMixin {
     @Shadow(remap = false)
     private int currentParallel;
 
-    @Inject(method = "<init>", at = @At("RETURN"), remap = false)
-    public void ParallelHatchPartMachine(IMachineBlockEntity holder, int tier, CallbackInfo ci) {
-        this.maxParallel = (int) Math.pow(4, tier - 2);
+    @Inject(method = "<init>(Lcom/gregtechceu/gtceu/api/blockentity/BlockEntityCreationInfo;I)V", at = @At("RETURN"), remap = false, require = 1)
+    public void ParallelHatchPartMachine(BlockEntityCreationInfo holder, int tier, CallbackInfo ci) {
+        this.maxParallel = Math.max(1, (int) Math.pow(4, tier - 2));
+        this.currentParallel = maxParallel;
     }
 
-    @Inject(method = "getCurrentParallel", at = @At("HEAD"), remap = false, cancellable = true)
+    @Inject(method = "getCurrentParallel", at = @At("HEAD"), remap = false, cancellable = true, require = 1)
     private void getCurrentParallelInj(CallbackInfoReturnable<Integer> cir) {
         if (currentParallel == 0) cir.setReturnValue(maxParallel);
     }
 
-    @Inject(method = "setCurrentParallel", at = @At("HEAD"), remap = false)
-    private void setCurrentParallelInj(int parallelAmount, CallbackInfo ci) {
-        if (currentParallel == 0) currentParallel = maxParallel;
-    }
-
-    @Inject(method = "canShared", at = @At("HEAD"), remap = false, cancellable = true)
-    public void canShared(CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "canShared(Lcom/gregtechceu/gtceu/api/machine/multiblock/MultiblockControllerMachine;Ljava/lang/String;)Z", at = @At("HEAD"), remap = false, cancellable = true, require = 1)
+    public void canShared(MultiblockControllerMachine controller, String structure, CallbackInfoReturnable<Boolean> cir) {
         cir.setReturnValue(true);
     }
 }

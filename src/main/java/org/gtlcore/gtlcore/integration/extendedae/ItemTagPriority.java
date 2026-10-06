@@ -4,7 +4,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import appeng.api.stacks.AEKey;
 import appeng.util.prioritylist.IPartitionList;
@@ -47,7 +47,7 @@ public class ItemTagPriority implements IPartitionList {
     private boolean eval(@NotNull Object obj) {
         Holder<?> refer = null;
         if (obj instanceof Item item) {
-            refer = ForgeRegistries.ITEMS.getHolder(item).orElse(null);
+            refer = BuiltInRegistries.ITEM.getHolder(BuiltInRegistries.ITEM.getKey(item)).orElse(null);
         } else if (obj instanceof Fluid) {
             return false;
         }

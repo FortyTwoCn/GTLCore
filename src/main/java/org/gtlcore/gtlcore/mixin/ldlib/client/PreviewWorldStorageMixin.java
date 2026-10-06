@@ -2,8 +2,8 @@ package org.gtlcore.gtlcore.mixin.ldlib.client;
 
 import org.gtlcore.gtlcore.client.preview.PreviewBlockPosHash;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
-import com.lowdragmc.lowdraglib.utils.TrackedDummyWorld;
+import com.lowdragmc.lowdraglib.utils.data.BlockInfo;
+import com.lowdragmc.lowdraglib.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;

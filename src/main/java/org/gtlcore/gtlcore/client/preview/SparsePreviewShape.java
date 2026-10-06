@@ -2,11 +2,10 @@ package org.gtlcore.gtlcore.client.preview;
 
 import org.gtlcore.gtlcore.mixin.ldlib.BlockInfoAccessor;
 
-import com.gregtechceu.gtceu.api.block.IMachineBlock;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
+import org.gtlcore.gtlcore.api.gui.preview.NativePreviewGeometry;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.lowdragmc.lowdraglib.utils.data.BlockInfo;
 
 import net.minecraft.core.BlockPos;
 
@@ -21,24 +20,20 @@ public final class SparsePreviewShape {
     public final BlockPos controller;
     public final int height;
 
-    public SparsePreviewShape(MultiblockShapeInfo shape, MultiblockMachineDefinition definition) {
+    public SparsePreviewShape(NativePreviewGeometry shape, MultiblockMachineDefinition definition) {
         var positions = new LongArrayList();
         var infos = new ObjectArrayList<BlockInfo>();
-        var source = shape.getBlocks();
-        BlockPos controller = null;
-        int height = 0;
-        for (int x = 0; x < source.length; x++) {
-            height = Math.max(height, source[x].length);
-            for (int y = 0; y < source[x].length; y++) {
-                for (int z = 0; z < source[x][y].length; z++) {
-                    var info = source[x][y][z];
-                    if (info == null || info.getBlockState().isAir()) continue;
-                    positions.add(BlockPos.asLong(x, y, z));
-                    infos.add(info);
-                    if (info.getBlockState().getBlock() instanceof IMachineBlock machine && machine.getDefinition() == definition) controller = new BlockPos(x, y, z);
-                }
-            }
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        for (var pos : shape.states().keySet()) {
+            minX = Math.min(minX, pos.getX()); minY = Math.min(minY, pos.getY()); minZ = Math.min(minZ, pos.getZ()); maxY = Math.max(maxY, pos.getY());
         }
+        var minimum = new BlockPos(minX, minY, minZ);
+        for (var entry : shape.states().entrySet()) {
+            var pos = entry.getKey().subtract(minimum); positions.add(pos.asLong());
+            infos.add(BlockInfo.fromBlockState(entry.getValue()));
+        }
+        BlockPos controller = shape.controllerPos().subtract(minimum);
+        int height = maxY - minY + 1;
         this.positions = positions.toLongArray();
         this.blocks = infos.toArray(BlockInfo[]::new);
         this.controller = controller;

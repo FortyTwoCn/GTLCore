@@ -2,12 +2,12 @@ package org.gtlcore.gtlcore.network.packet;
 
 import org.gtlcore.gtlcore.common.player.NoClipManager;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 
 import com.glodblock.github.glodium.network.packet.IMessage;
 
-public class SSetNoClip implements IMessage<SSetNoClip> {
+public class SSetNoClip implements IMessage {
 
     private boolean enabled;
 
@@ -18,12 +18,12 @@ public class SSetNoClip implements IMessage<SSetNoClip> {
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeBoolean(enabled);
     }
 
     @Override
-    public void fromBytes(FriendlyByteBuf buf) {
+    public void fromBytes(RegistryFriendlyByteBuf buf) {
         enabled = buf.readBoolean();
     }
 
@@ -33,8 +33,8 @@ public class SSetNoClip implements IMessage<SSetNoClip> {
     }
 
     @Override
-    public Class<SSetNoClip> getPacketClass() {
-        return SSetNoClip.class;
+    public net.minecraft.resources.ResourceLocation id() {
+        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(org.gtlcore.gtlcore.network.GTLNetworkHandler.MOD_ID, "s_set_no_clip");
     }
 
     @Override

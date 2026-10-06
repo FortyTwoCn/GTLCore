@@ -25,13 +25,23 @@ import org.jetbrains.annotations.Nullable;
 
 public class WirelessNetworkBookmarkBlock extends BaseEntityBlock {
 
+    public static final com.mojang.serialization.MapCodec<WirelessNetworkBookmarkBlock> CODEC =
+            simpleCodec(WirelessNetworkBookmarkBlock::new);
+
+    @Override
+    protected com.mojang.serialization.MapCodec<WirelessNetworkBookmarkBlock> codec() { return CODEC; }
+
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public WirelessNetworkBookmarkBlock() {
-        super(BlockBehaviour.Properties.of()
+        this(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.COLOR_LIGHT_BLUE)
                 .strength(3.0F)
                 .requiresCorrectToolForDrops());
+    }
+
+    public WirelessNetworkBookmarkBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -56,16 +66,22 @@ public class WirelessNetworkBookmarkBlock extends BaseEntityBlock {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos,
-                                          Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
-        ItemStack heldStack = player.getItemInHand(hand);
-        if (!heldStack.isEmpty() && player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
-        }
-
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof WirelessNetworkBookmarkBlockEntity bookmark) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level level,
+                                                       @NotNull BlockPos pos, @NotNull Player player,
+                                                       @NotNull BlockHitResult hit) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer &&
+                level.getBlockEntity(pos) instanceof WirelessNetworkBookmarkBlockEntity bookmark) {
             WirelessNetworkBookmarkMenu.open(serverPlayer, bookmark);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    protected net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
+                                                                  BlockPos pos, Player player, InteractionHand hand,
+                                                                  BlockHitResult hit) {
+        if (player.isShiftKeyDown()) return net.minecraft.world.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        useWithoutItem(state, level, pos, player, hit);
+        return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 }

@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.*;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * @author Dragonators
@@ -20,7 +19,7 @@ import java.util.function.Predicate;
  *
  * @param <T> Ingredient/FluidIngredient
  */
-public interface IMERecipeHandler<T extends Predicate<S>, S> extends IFilteredHandler<T> {
+public interface IMERecipeHandler<T, S> extends IFilteredHandler<T> {
 
     /**
      * @return ItemCAP/FluidCAP
@@ -74,7 +73,7 @@ public interface IMERecipeHandler<T extends Predicate<S>, S> extends IFilteredHa
 
     @SuppressWarnings("unchecked")
     default T copyContent(Object content) {
-        return getCapability().copyInner((T) content);
+        return getCapability().copyContent(getCapability().of(content));
     }
 
     // ==================== Recipe Handling ====================
@@ -132,8 +131,6 @@ public interface IMERecipeHandler<T extends Predicate<S>, S> extends IFilteredHa
      * @param simulate     是否模拟
      */
     default void initMEHandleContents(GTRecipe recipe, List<?> leftContents, boolean simulate) {
-        if (leftContents.isEmpty()) return;
-
         List<T> typedContents = new ObjectArrayList<>(leftContents.size());
         for (Object leftObj : leftContents) {
             typedContents.add(this.copyContent(leftObj));

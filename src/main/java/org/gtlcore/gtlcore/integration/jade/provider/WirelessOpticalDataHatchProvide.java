@@ -1,15 +1,15 @@
 package org.gtlcore.gtlcore.integration.jade.provider;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.api.capability.BindCapability;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.WirelessOpticalDataHatchMachine;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.integration.jade.provider.CapabilityBlockProvider;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -26,13 +26,12 @@ import snownee.jade.api.config.IPluginConfig;
 public class WirelessOpticalDataHatchProvide extends CapabilityBlockProvider<BindCapability> {
 
     public WirelessOpticalDataHatchProvide() {
-        super(GTLCore.id("wireless_data_hatch_provider"));
+        super(ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_data_hatch_provider"));
     }
 
     @Override
     protected @Nullable BindCapability getCapability(Level level, BlockPos pos, @Nullable Direction side) {
-        if (level.getBlockEntity(pos) instanceof MetaMachineBlockEntity metaMachineBlockEntity &&
-                metaMachineBlockEntity.getMetaMachine() instanceof BindCapability capability) {
+        if (level.hasChunkAt(pos) && MetaMachine.getMachine(level, pos) instanceof BindCapability capability) {
             return capability;
         }
         return null;
@@ -51,9 +50,7 @@ public class WirelessOpticalDataHatchProvide extends CapabilityBlockProvider<Bin
 
     @Override
     protected void addTooltip(CompoundTag capData, ITooltip tooltip, Player player, BlockAccessor block, BlockEntity blockEntity, IPluginConfig config) {
-        if (!(blockEntity instanceof MetaMachineBlockEntity metaMachineBlockEntity)) return;
-        var metaMachine = metaMachineBlockEntity.getMetaMachine();
-        if (metaMachine instanceof WirelessOpticalDataHatchMachine wod) {
+        if (blockEntity instanceof WirelessOpticalDataHatchMachine wod) {
             if (capData.getBoolean("is_bind")) {
                 if (wod.isTransmitter()) {
                     tooltip.add(Component.translatable("gtceu.machine.wireless_data_transmitter_hatch.bind", capData.getString("pos")));

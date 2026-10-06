@@ -2,9 +2,9 @@ package org.gtlcore.gtlcore.integration.ae2.chamber;
 
 import org.gtlcore.gtlcore.GTLCore;
 
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import appeng.api.networking.IGrid;
 import appeng.hooks.ticking.TickHandler;
@@ -15,7 +15,7 @@ import java.util.WeakHashMap;
 import java.util.function.Supplier;
 
 /** Server-thread directory snapshots shared by viewers; values do not retain their grid. */
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = GTLCore.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
 public final class ChamberDirectoryCache {
 
     private static final Map<IGrid, Snapshot> SNAPSHOTS = new WeakHashMap<>();

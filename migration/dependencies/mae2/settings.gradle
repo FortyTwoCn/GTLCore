@@ -1,0 +1,15 @@
+pluginManagement {
+    repositories { gradlePluginPortal(); maven { url = 'https://maven.neoforged.net/releases' } }
+}
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs { from(files('../../../gradle/libs.versions.toml')) }
+        forge { from(files('../../../gradle/forge.versions.toml')) }
+    }
+}
+rootProject.name = 'mae2-neoforge'
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+includeBuild(file('../../../' + coreProperties.getProperty('gtceu_source'))) {
+    dependencySubstitution { substitute module('com.gregtechceu.gtceu:gtceu-1.21.1') using project(':') }
+}

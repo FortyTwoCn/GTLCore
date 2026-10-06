@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.api.item.tool.ae2.patternTool;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.slf4j.LoggerFactory;
 
 import lombok.Data;
 
@@ -29,6 +29,6 @@ public class ConflictAnalysisResult {
         sb.append("\n>>成品：\n");
         RecipeStackHelper.getOutputItemStacksFromRecipe(conflictAnalysisObj.recipe).forEach(itemStack -> sb.append("物品：").append(RecipeStackHelper.getItemTranslatedName(itemStack)));
         RecipeStackHelper.getOutputFluidStacksFromRecipe(conflictAnalysisObj.recipe).forEach(fluidStack -> sb.append("流体：").append(RecipeStackHelper.getFluidTranslatedName(fluidStack)));
-        GTLCore.LOGGER.info(sb);
+        LoggerFactory.getLogger("gtlcore.pattern_tool").info(sb.toString());
     }
 }

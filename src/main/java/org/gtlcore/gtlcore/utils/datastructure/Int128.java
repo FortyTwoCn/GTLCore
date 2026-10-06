@@ -563,7 +563,7 @@ public final class Int128 extends Number implements Comparable<Int128> {
     public String toString() {
         if (isZero()) return "0";
 
-        if (high == 0 || (high == -1 && low < 0)) {
+        if ((high == 0 && low >= 0) || (high == -1 && low < 0)) {
             return Long.toString(low);
         }
 
@@ -578,7 +578,7 @@ public final class Int128 extends Number implements Comparable<Int128> {
         if (negative && workLow == 0) workHigh++;
 
         if (workHigh == 0) {
-            return negative ? "-" + workLow : Long.toString(workLow);
+            return (negative ? "-" : "") + Long.toUnsignedString(workLow);
         }
 
         char[] digits = new char[40];
@@ -591,11 +591,11 @@ public final class Int128 extends Number implements Comparable<Int128> {
 
             if (workHigh == 0) {
                 quotientHigh = 0;
-                quotientLow = workLow / BILLION;
-                remainder = workLow % BILLION;
+                quotientLow = Long.divideUnsigned(workLow, BILLION);
+                remainder = Long.remainderUnsigned(workLow, BILLION);
             } else {
-                long temp = workHigh % BILLION;
-                quotientHigh = workHigh / BILLION;
+                long temp = Long.remainderUnsigned(workHigh, BILLION);
+                quotientHigh = Long.divideUnsigned(workHigh, BILLION);
 
                 long combined = (temp << 32) | (workLow >>> 32);
                 long q1 = combined / BILLION;
@@ -608,9 +608,14 @@ public final class Int128 extends Number implements Comparable<Int128> {
                 quotientLow = (q1 << 32) | q0;
             }
 
-            for (int i = 0; i < 9 && (remainder != 0 || workHigh != 0 || workLow != quotientLow * BILLION + remainder); i++) {
+            int chunkStart = pos;
+            do {
                 digits[--pos] = (char) ('0' + (remainder % 10));
                 remainder /= 10;
+            } while (remainder != 0);
+            // Lower base-10^9 chunks need padding; the leading chunk must not have it.
+            if (quotientHigh != 0 || quotientLow != 0) {
+                while (chunkStart - pos < 9) digits[--pos] = '0';
             }
 
             workHigh = quotientHigh;

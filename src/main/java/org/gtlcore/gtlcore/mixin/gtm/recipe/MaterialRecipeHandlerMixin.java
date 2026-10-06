@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.mixin.gtm.recipe;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.*;
@@ -10,9 +11,8 @@ import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.data.recipe.VanillaRecipeHelper;
 import com.gregtechceu.gtceu.data.recipe.generated.MaterialRecipeHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
-import com.gregtechceu.gtceu.utils.GTUtil;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.world.item.ItemStack;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,16 +33,17 @@ import static org.gtlcore.gtlcore.common.data.GTLRecipeTypes.ELECTRIC_IMPLOSION_
 public abstract class MaterialRecipeHandlerMixin {
 
     @Shadow(remap = false)
-    private static void processEBFRecipe(Material material, BlastProperty property, ItemStack output, Consumer<FinishedRecipe> provider) {}
+    private static void processEBFRecipe(Material material, BlastProperty property, ItemStack output, RecipeOutput provider) {}
 
     /**
      * @author
      * @reason
      */
     @Overwrite(remap = false)
-    public static void processDust(TagPrefix dustPrefix, Material mat, DustProperty property,
-                                   Consumer<FinishedRecipe> provider) {
-        String id = "%s_%s_".formatted(FormattingUtil.toLowerCaseUnder(dustPrefix.name),
+    private static void processDust(RecipeOutput provider, Material mat) {
+        TagPrefix dustPrefix = dust;
+        if (!mat.shouldGenerateRecipesFor(dustPrefix) || !mat.hasProperty(PropertyKey.DUST)) return;
+        String id = "%s_%s_".formatted(FormattingUtil.toLowerCaseUnderscore(dustPrefix.name),
                 mat.getName().toLowerCase(Locale.ROOT));
         ItemStack dustStack = ChemicalHelper.get(dustPrefix, mat);
         OreProperty oreProperty = mat.hasProperty(PropertyKey.ORE) ? mat.getProperty(PropertyKey.ORE) : null;
@@ -50,12 +51,15 @@ public abstract class MaterialRecipeHandlerMixin {
             ItemStack gemStack = ChemicalHelper.get(gem, mat);
 
             if (mat.hasFlag(CRYSTALLIZABLE)) {
-                AUTOCLAVE_RECIPES.recipeBuilder("autoclave_" + id + "_water")
+                {
+                    var gtlRecipeBuilder53 = AUTOCLAVE_RECIPES.recipeBuilder("autoclave_" + id + "_water")
                         .inputItems(dustStack)
-                        .inputFluids(Water.getFluid(250))
-                        .chancedOutput(gemStack, 7000, 1000)
+                        .inputFluids(Water.getFluid(250));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder53, gemStack, 7000, 1000);
+                    gtlRecipeBuilder53
                         .duration(1200).EUt(24)
                         .save(provider);
+                }
 
                 AUTOCLAVE_RECIPES.recipeBuilder("autoclave_" + id + "_distilled")
                         .inputItems(dustStack)
@@ -66,37 +70,49 @@ public abstract class MaterialRecipeHandlerMixin {
             }
 
             if (!mat.hasFlag(EXPLOSIVE) && !mat.hasFlag(FLAMMABLE)) {
-                IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_powderbarrel")
-                        .inputItems(GTUtil.copyAmount(4, dustStack))
-                        .outputItems(GTUtil.copyAmount(3, gemStack))
-                        .chancedOutput(dust, GTMaterials.DarkAsh, 2500, 0)
+                {
+                    var gtlRecipeBuilder69 = IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_powderbarrel")
+                        .inputItems(dustStack.copyWithCount(4))
+                        .outputItems(gemStack.copyWithCount(3));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder69, dust, GTMaterials.DarkAsh, 2500, 0);
+                    gtlRecipeBuilder69
                         .explosivesType(new ItemStack(GTBlocks.POWDERBARREL, 8))
                         .save(provider);
+                }
 
-                IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_tnt")
-                        .inputItems(GTUtil.copyAmount(4, dustStack))
-                        .outputItems(GTUtil.copyAmount(3, gemStack))
-                        .chancedOutput(dust, GTMaterials.DarkAsh, 2500, 0)
+                {
+                    var gtlRecipeBuilder76 = IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_tnt")
+                        .inputItems(dustStack.copyWithCount(4))
+                        .outputItems(gemStack.copyWithCount(3));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder76, dust, GTMaterials.DarkAsh, 2500, 0);
+                    gtlRecipeBuilder76
                         .explosivesAmount(4)
                         .save(provider);
+                }
 
-                IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_dynamite")
-                        .inputItems(GTUtil.copyAmount(4, dustStack))
-                        .outputItems(GTUtil.copyAmount(3, gemStack))
-                        .chancedOutput(dust, GTMaterials.DarkAsh, 2500, 0)
+                {
+                    var gtlRecipeBuilder83 = IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_dynamite")
+                        .inputItems(dustStack.copyWithCount(4))
+                        .outputItems(gemStack.copyWithCount(3));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder83, dust, GTMaterials.DarkAsh, 2500, 0);
+                    gtlRecipeBuilder83
                         .explosivesType(GTItems.DYNAMITE.asStack(2))
                         .save(provider);
+                }
 
-                IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_itnt")
-                        .inputItems(GTUtil.copyAmount(4, dustStack))
-                        .outputItems(GTUtil.copyAmount(3, gemStack))
-                        .chancedOutput(dust, GTMaterials.DarkAsh, 2500, 0)
+                {
+                    var gtlRecipeBuilder90 = IMPLOSION_RECIPES.recipeBuilder("implode_" + id + "_itnt")
+                        .inputItems(dustStack.copyWithCount(4))
+                        .outputItems(gemStack.copyWithCount(3));
+                    GTLRecipeContents.chancedOutput(gtlRecipeBuilder90, dust, GTMaterials.DarkAsh, 2500, 0);
+                    gtlRecipeBuilder90
                         .explosivesType(new ItemStack(GTBlocks.INDUSTRIAL_TNT))
                         .save(provider);
+                }
 
                 ELECTRIC_IMPLOSION_COMPRESSOR_RECIPES.recipeBuilder("electric_implode_" + id)
-                        .inputItems(GTUtil.copyAmount(4, dustStack))
-                        .outputItems(GTUtil.copyAmount(3, gemStack))
+                        .inputItems(dustStack.copyWithCount(4))
+                        .outputItems(gemStack.copyWithCount(3))
                         .save(provider);
             }
 

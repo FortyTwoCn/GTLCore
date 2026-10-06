@@ -4,12 +4,12 @@ import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.PlanningBudget;
 
 import net.minecraft.Util;
-import net.minecraftforge.event.OnDatapackSyncEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /** Only world snapshot work uses a tick budget. Ready solver work never waits for a tick. */
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID)
+@EventBusSubscriber(modid = GTLCore.MOD_ID)
 public final class GraphSnapshots {
 
     private static final Deque<Request> pending = new ArrayDeque<>();
@@ -33,14 +33,13 @@ public final class GraphSnapshots {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public static void tick(ServerTickEvent.Post event) {
         drain();
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void start(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) spentNanos = 0;
+    public static void start(ServerTickEvent.Pre event) {
+        spentNanos = 0;
     }
 
     /** Share the tick allowance with immediate captures; do not impose a second tick wait on tiny orders. */
@@ -61,11 +60,11 @@ public final class GraphSnapshots {
      * Leave a millisecond before the real next-tick deadline; never use vanilla's
      * extendable delayed-task deadline. An overloaded server keeps the 2 ms cap.
      */
-    public static boolean idle(long nextTickMillis) {
+    public static boolean idle(long nextTickNanos) {
         if (draining || pending.isEmpty()) return false;
-        long remainingMillis = nextTickMillis - Util.getMillis();
-        if (remainingMillis <= 1) return false;
-        return drainUntil(System.nanoTime() + Math.min(1_000_000L, (remainingMillis - 1) * 1_000_000L), true);
+        long remainingNanos = nextTickNanos - Util.getNanos();
+        if (remainingNanos <= 1_000_000L) return false;
+        return drainUntil(System.nanoTime() + Math.min(1_000_000L, remainingNanos - 1_000_000L), true);
     }
 
     private static boolean drainUntil(long deadline, boolean idle) {

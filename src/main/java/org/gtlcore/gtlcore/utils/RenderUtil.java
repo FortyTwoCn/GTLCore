@@ -6,8 +6,8 @@ import org.gtlcore.gtlcore.mixin.mc.BufferBuilderAccessor;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 
@@ -18,7 +18,8 @@ public class RenderUtil {
     private static final int MAX_VERTICES_PER_BATCH = 2_097_152;
 
     public static int getBufferByteSize(BufferBuilder builder) {
-        return ((BufferBuilderAccessor) builder).getNextElementByte();
+        var access = (BufferBuilderAccessor) builder;
+        return (int) Math.min(Integer.MAX_VALUE, (long) access.gtlcore$getVertexCount() * access.gtlcore$getVertexSize());
     }
 
     public static boolean shouldStartNewBatch(BufferBuilder builder, int currentVertexCount, int estimatedAdditionalVertices) {

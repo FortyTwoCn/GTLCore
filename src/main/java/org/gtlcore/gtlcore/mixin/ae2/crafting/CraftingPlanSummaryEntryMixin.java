@@ -2,7 +2,7 @@ package org.gtlcore.gtlcore.mixin.ae2.crafting;
 
 import org.gtlcore.gtlcore.integration.ae2.crafting.ICraftingPlanSummaryEntry;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import org.spongepowered.asm.mixin.Mixin;
@@ -51,14 +51,14 @@ public class CraftingPlanSummaryEntryMixin implements ICraftingPlanSummaryEntry 
     }
 
     @Inject(at = @At("TAIL"), method = "write", remap = false)
-    private void write(FriendlyByteBuf buffer, CallbackInfo ci) {
+    private void write(RegistryFriendlyByteBuf buffer, CallbackInfo ci) {
         buffer.writeVarLong(gtlcore$craftTimes);
         buffer.writeVarLong(gtlcore$graphSeed);
         buffer.writeBoolean(gtlcore$missingGraphSeed);
     }
 
     @Inject(at = @At("TAIL"), method = "read", cancellable = true, remap = false)
-    private static void read(FriendlyByteBuf buffer, CallbackInfoReturnable<CraftingPlanSummaryEntry> cir) {
+    private static void read(RegistryFriendlyByteBuf buffer, CallbackInfoReturnable<CraftingPlanSummaryEntry> cir) {
         var entry = cir.getReturnValue();
         ((ICraftingPlanSummaryEntry) entry).gtlcore$setCraftTimes(buffer.readVarLong());
         ((ICraftingPlanSummaryEntry) entry).gtlcore$setGraphSeed(buffer.readVarLong());

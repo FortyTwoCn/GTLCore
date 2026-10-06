@@ -2,180 +2,103 @@ package org.gtlcore.gtlcore.mixin.gtm.fix;
 
 import org.gtlcore.gtlcore.api.machine.trait.IBatchMachine;
 import org.gtlcore.gtlcore.api.machine.trait.ILockRecipe;
-import org.gtlcore.gtlcore.api.machine.trait.IRecipeCapabilityMachine;
-import org.gtlcore.gtlcore.api.machine.trait.IRecipeStatus;
 import org.gtlcore.gtlcore.api.recipe.BatchProcessing;
 import org.gtlcore.gtlcore.api.recipe.IGTRecipe;
 import org.gtlcore.gtlcore.api.recipe.RecipeText;
-
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationReceiver;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
+import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifierList;
+import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.research.DataBankMachine;
+import com.gregtechceu.gtceu.common.mui.GTByteBufAdapters;
 import com.gregtechceu.gtceu.utils.GTUtil;
-
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.*;
 import net.minecraft.ChatFormatting;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-
-import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.*;
 
-import java.util.Arrays;
-import java.util.List;
-
+/** Native batch persistence and ModularUI; Core time-window batching complements GT's own batch modifier. */
 @Mixin(WorkableElectricMultiblockMachine.class)
-public abstract class WorkableElectricMultiblockMachineMixin extends WorkableMultiblockMachine implements IFancyUIMachine, IBatchMachine {
+public abstract class WorkableElectricMultiblockMachineMixin extends WorkableMultiblockMachine implements IBatchMachine {
+    public WorkableElectricMultiblockMachineMixin(BlockEntityCreationInfo info) { super(info); }
+    @Shadow(remap = false) protected EnergyContainerList energyContainer;
+    @Shadow(remap = false) public abstract EnergyContainerList getEnergyContainer();
+    @Shadow(remap = false) public abstract boolean isGenerator();
 
-    @Unique
-    private static final String GTLCORE_BATCH_ENABLED_NBT = "GTLCoreBatchEnabled";
-
-    @Unique
-    @Getter
-    private boolean batchEnabled = false;
-
-    public WorkableElectricMultiblockMachineMixin(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
-    }
-
-    @Shadow(remap = false)
-    protected EnergyContainerList energyContainer;
-
-    @Shadow(remap = false)
-    public abstract EnergyContainerList getEnergyContainer();
-
-    @Shadow(remap = false)
-    protected int tier;
-
-    @Shadow(remap = false)
-    public boolean isGenerator() {
-        throw new AssertionError();
-    }
-
-    /**
-     * @author mod_author, Dragons
-     * @reason always 1A amperage, Fix 2 64A EnergyHatch
-     */
+    /** @author GTLCore @reason Keep the controller's one-amp voltage policy with native energy containers. */
     @Overwrite(remap = false)
     public long getOverclockVoltage() {
-        if (this.energyContainer == null) {
-            this.energyContainer = this.getEnergyContainer();
-        }
-
+        if (energyContainer == null) energyContainer = getEnergyContainer();
         return Math.max(energyContainer.getInputVoltage(), energyContainer.getOutputVoltage());
     }
-
-    /**
-     * @author Dragons
-     * @reason always 1A amperage
-     */
+    /** @author GTLCore @reason Preserve the voltage tier increase from two highest-tier input hatches. */
     @Overwrite(remap = false)
     public long getMaxVoltage() {
-        if (this.energyContainer == null) {
-            this.energyContainer = getEnergyContainer();
-        }
-        return this.isGenerator() ? energyContainer.getOutputVoltage() : energyContainer.getNumHighestInputContainers() > 1 ? GTValues.V[Math.min(GTUtil.getTierByVoltage(energyContainer.getHighestInputVoltage()) + 1, GTValues.MAX)] : energyContainer.getHighestInputVoltage();
+        if (energyContainer == null) energyContainer = getEnergyContainer();
+        return isGenerator() ? energyContainer.getOutputVoltage() : energyContainer.getNumHighestInputContainers() > 1 ?
+                GTValues.V[Math.min(GTUtil.getTierByVoltage(energyContainer.getHighestInputVoltage()) + 1, GTValues.MAX)] :
+                energyContainer.getHighestInputVoltage();
     }
 
-    @Override
-    public void setBatchEnabled(boolean enabled) {
-        boolean nextState = enabled && supportsBatchProcessing();
-        if (this.batchEnabled == nextState) return;
-        this.batchEnabled = nextState;
-        this.markDirty();
-        this.getRecipeLogic().markLastRecipeDirty();
-        this.getRecipeLogic().updateTickSubscription();
+    @Inject(method = "setBatchEnabled", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$checkBatchMode(boolean enabled, CallbackInfo ci) {
+        if (enabled && !gtlcore$nativeBatchModifier() && !supportsBatchProcessing()) ci.cancel();
     }
-
-    @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        super.saveCustomPersistedData(tag, forDrop);
-        tag.putBoolean(GTLCORE_BATCH_ENABLED_NBT, this.batchEnabled);
+    @Inject(method = "setBatchEnabled", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$batchChanged(boolean enabled, CallbackInfo ci) {
+        setChanged();
+        getRecipeLogic().markLastRecipeDirty();
+        getRecipeLogic().updateTickSubscription();
     }
-
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        if (tag.contains(GTLCORE_BATCH_ENABLED_NBT, Tag.TAG_BYTE)) {
-            this.batchEnabled = tag.getBoolean(GTLCORE_BATCH_ENABLED_NBT);
-        }
+    @Unique private boolean gtlcore$nativeBatchModifier() {
+        return getDefinition().getRecipeModifier() instanceof RecipeModifierList list &&
+                Arrays.stream(list.getModifiers()).anyMatch(modifier -> modifier == GTRecipeModifiers.BATCH_MODE);
     }
-
-    @Override
-    public boolean supportsBatchProcessing() {
-        return !BatchProcessing.isBatchDisabledDefinition(this) && gtlcore$hasBaseBatchSupport() &&
-                !BatchProcessing.isCrossRecipeParallel(this);
-    }
-
-    @Override
-    public boolean canConfigureBatchProcessing() {
-        return !BatchProcessing.isBatchDisabledDefinition(this) && gtlcore$hasBaseBatchSupport() &&
-                BatchProcessing.canConfigureBatchProcessing(this);
-    }
-
-    @Unique
-    private boolean gtlcore$hasBaseBatchSupport() {
-        var recipeTypes = getDefinition().getRecipeTypes();
+    @Unique private boolean gtlcore$baseBatchSupport() {
         return !isGenerator() && !(self() instanceof IOpticalComputationReceiver) &&
                 !(self() instanceof IOpticalComputationProvider) && !(self() instanceof DataBankMachine) &&
-                recipeTypes != null && Arrays.stream(recipeTypes).anyMatch(type -> type != GTRecipeTypes.DUMMY_RECIPES);
+                Arrays.stream(getRecipeTypes()).anyMatch(type -> type != GTRecipeTypes.DUMMY_RECIPES.value()) && !gtlcore$nativeBatchModifier();
+    }
+    @Override public boolean supportsBatchProcessing() {
+        return gtlcore$baseBatchSupport() && !BatchProcessing.isBatchDisabledDefinition(this) && !BatchProcessing.isCrossRecipeParallel(this);
+    }
+    @Override public boolean canConfigureBatchProcessing() {
+        return gtlcore$baseBatchSupport() && !BatchProcessing.isBatchDisabledDefinition(this) && BatchProcessing.canConfigureBatchProcessing(this);
     }
 
-    @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                GuiTextures.BUTTON_POWER.getSubTexture(0, 0, 1, 0.5),
-                GuiTextures.BUTTON_POWER.getSubTexture(0, 0.5, 1, 0.5),
-                this::isWorkingEnabled, (clickData, pressed) -> this.setWorkingEnabled(pressed))
-                .setTooltipsSupplier(pressed -> List.of(
-                        Component.translatable(pressed ? "behaviour.soft_hammer.enabled" : "behaviour.soft_hammer.disabled"))));
-        if (this.self() instanceof IOpticalComputationReceiver || this.self() instanceof IOpticalComputationProvider || this.self() instanceof DataBankMachine) return;
-        if (!this.isGenerator()) {
-            IRecipeCapabilityMachine.attachConfigurators(configuratorPanel, (WorkableElectricMultiblockMachine) self());
-            ILockRecipe.attachRecipeLockable(configuratorPanel, this.getRecipeLogic());
-        }
-    }
-
-    @Inject(method = "addDisplayText", at = @At(value = "INVOKE", target = "Lcom/gregtechceu/gtceu/api/machine/multiblock/WorkableElectricMultiblockMachine;getDefinition()Lcom/gregtechceu/gtceu/api/machine/MultiblockMachineDefinition;"), remap = false)
-    public void addDisplayText(List<Component> textList, CallbackInfo ci) {
-        if (this.isFormed()) {
-            if (this.getRecipeLogic() instanceof IRecipeStatus status &&
-                    status.getRecipeStatus() != null &&
-                    status.getRecipeStatus().reason() != null) {
-                textList.add(status.getRecipeStatus().reason().copy().withStyle(ChatFormatting.RED));
-                if (status.getWorkingStatus() != null && status.getWorkingStatus().reason() != null)
-                    textList.add(status.getWorkingStatus().reason().copy().withStyle(ChatFormatting.RED));
-            }
-        }
-        if (this.getRecipeLogic() instanceof ILockRecipe iLockRecipe) {
-            if (iLockRecipe.isLock() && iLockRecipe.getLockRecipe() != null) {
-                textList.add(Component.translatable("gui.gtlcore.recipe_lock.recipe")
-                        .withStyle((style -> style.withHoverEvent((new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                RecipeText.getRecipeInputText(iLockRecipe.getLockRecipe())
-                                        .append(RecipeText.getRecipeOutputText(iLockRecipe.getLockRecipe()))))))));
-            } else {
-                textList.add(Component.translatable("gui.gtlcore.recipe_lock.no_recipe"));
-            }
-        }
-        var activeRecipe = this.getRecipeLogic().getLastRecipe();
-        if (this.getRecipeLogic().isActive() && activeRecipe != null && IGTRecipe.of(activeRecipe).getBatchSize() > 1) {
-            textList.add(Component.translatable("gui.gtlcore.batch_processing.active",
-                    IGTRecipe.of(activeRecipe).getBatchSize()));
-        }
+    @Inject(method = "getWidgetsForDisplay", at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$batchAndLockDisplay(PanelSyncManager syncManager, CallbackInfoReturnable<List<IWidget>> cir) {
+        IntSyncValue batch = syncManager.getOrCreateSyncHandler("gtlcoreBatchSize", IntSyncValue.class,
+                () -> new IntSyncValue(() -> {
+                    var recipe = getRecipeLogic().getLastUnrolledRecipe();
+                    return recipe == null ? 1 : IGTRecipe.of(recipe).getBatchSize();
+                }));
+        cir.getReturnValue().add(Text.dynamic(() -> Component.translatable("gui.gtlcore.batch_processing.active", batch.getIntValue()))
+                .asWidget().setEnabledIf(widget -> batch.getIntValue() > 1));
+        GenericSyncValue<FriendlyByteBuf, Component> lockText = syncManager.getOrCreateSyncHandler("gtlcoreRecipeLock", GenericSyncValue.class,
+                () -> GenericSyncValue.<FriendlyByteBuf, Component>builder(Component.class).nullable()
+                        .adapter(GTByteBufAdapters.COMPONENT).getter(() -> {
+                            if (!(getRecipeLogic() instanceof ILockRecipe lock) || !lock.isLock()) return null;
+                            var recipe = lock.getLockRecipe();
+                            if (recipe == null) return Component.translatable("gui.gtlcore.recipe_lock.no_recipe");
+                            return Component.translatable("gui.gtlcore.recipe_lock.recipe").withStyle(style -> style.withHoverEvent(
+                                    new HoverEvent(HoverEvent.Action.SHOW_TEXT, RecipeText.getRecipeInputText(recipe).append(RecipeText.getRecipeOutputText(recipe)))));
+                        }).build());
+        cir.getReturnValue().add(Text.dynamic(() -> lockText.getValue() == null ? Component.empty() : lockText.getValue())
+                .asWidget().setEnabledIf(widget -> lockText.getValue() != null));
     }
 }

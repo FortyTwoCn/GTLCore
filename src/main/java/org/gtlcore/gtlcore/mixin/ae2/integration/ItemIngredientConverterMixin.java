@@ -6,7 +6,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.ItemStack;
 
 import appeng.api.stacks.GenericStack;
-import appeng.integration.modules.jei.ItemIngredientConverter;
+import tamaized.ae2jeiintegration.integration.modules.jei.converters.ItemIngredientConverter;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;

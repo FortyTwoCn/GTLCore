@@ -20,6 +20,6 @@ public abstract class ConfigMenuInventoryMixin {
             return;
         }
         ConfigMenuInventory inventory = (ConfigMenuInventory) (Object) this;
-        cir.setReturnValue(inventory.getDelegate().isAllowed(genericStack.what()) ? genericStack : null);
+        cir.setReturnValue(inventory.getDelegate().isSupportedType(genericStack.what()) ? genericStack : null);
     }
 }

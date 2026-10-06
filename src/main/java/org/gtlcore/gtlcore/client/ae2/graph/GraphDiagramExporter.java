@@ -8,10 +8,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.imageio.ImageIO;
 
 /** Complete diagrams, independent of the viewport. GPU work is sliced; file encoding runs off-thread. */
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = GTLCore.MOD_ID, value = Dist.CLIENT)
 public final class GraphDiagramExporter {
 
     public record Node(double x, double y, AEKey icon, String name, String amount, String exact,
@@ -128,8 +128,8 @@ public final class GraphDiagramExporter {
     }
 
     @SubscribeEvent
-    public static void renderTick(TickEvent.RenderTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || JOBS.isEmpty()) return;
+    public static void renderTick(RenderFrameEvent.Post event) {
+        if (JOBS.isEmpty()) return;
         Job job = JOBS.peekFirst();
         job.advance();
         if (job.done) JOBS.removeFirst();
@@ -151,13 +151,13 @@ public final class GraphDiagramExporter {
         var projection = new Matrix4f(RenderSystem.getProjectionMatrix());
         var sorting = RenderSystem.getVertexSorting();
         var view = RenderSystem.getModelViewStack();
-        view.pushPose();
+        view.pushMatrix();
         try {
             minecraft.renderBuffers().bufferSource().endBatch();
             target.setClearColor(0, 0, 0, 0);
             target.clear(Minecraft.ON_OSX);
             target.bindWrite(true);
-            view.setIdentity();
+            view.identity();
             view.translate(0, 0, -10000);
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0, 256, 256, 0, 1000, 21000), VertexSorting.ORTHOGRAPHIC_Z);
@@ -186,7 +186,7 @@ public final class GraphDiagramExporter {
             }
         } finally {
             RenderSystem.setProjectionMatrix(projection, sorting);
-            view.popPose();
+            view.popMatrix();
             RenderSystem.applyModelViewMatrix();
             target.destroyBuffers();
             minecraft.getMainRenderTarget().bindWrite(true);

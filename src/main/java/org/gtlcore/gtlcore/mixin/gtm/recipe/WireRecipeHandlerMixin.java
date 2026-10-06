@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.mixin.gtm.recipe;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import org.gtlcore.gtlcore.common.data.GTLItems;
 
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
@@ -9,7 +10,7 @@ import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.data.recipe.generated.WireRecipeHandler;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import java.util.function.Consumer;
 
 import static com.gregtechceu.gtceu.api.GTValues.*;
@@ -29,29 +31,29 @@ public abstract class WireRecipeHandlerMixin {
 
     @Shadow(remap = false)
     @Final
-    private static Map<TagPrefix, Integer> INSULATION_AMOUNT;
+    private static Reference2IntMap<TagPrefix> INSULATION_AMOUNT;
 
     @Shadow(remap = false)
-    private static void generateManualRecipe(TagPrefix wirePrefix, Material material, TagPrefix cablePrefix, int cableAmount, Consumer<FinishedRecipe> provider) {}
+    private static void generateManualRecipe(RecipeOutput provider, TagPrefix wirePrefix, TagPrefix cablePrefix, int cableAmount, Material material) {}
 
     /**
      * @author mod_author
      * @reason Need more
      */
     @Overwrite(remap = false)
-    public static void generateCableCovering(TagPrefix wirePrefix, Material material, WireProperties property,
-                                             Consumer<FinishedRecipe> provider) {
+    private static void generateCableCovering(RecipeOutput provider, WireProperties property,
+                                             TagPrefix wirePrefix, Material material) {
         // Superconductors have no Cables, so exit early
-        if (property.isSuperconductor()) return;
+        if (!material.shouldGenerateRecipesFor(wirePrefix) || property.isSuperconductor()) return;
 
         int cableAmount = (int) (wirePrefix.getMaterialAmount(material) * 2 / M);
         TagPrefix cablePrefix = TagPrefix.get("cable" + wirePrefix.name().substring(4));
         int voltageTier = GTUtil.getTierByVoltage(property.getVoltage());
-        int insulationAmount = INSULATION_AMOUNT.get(cablePrefix);
+        int insulationAmount = INSULATION_AMOUNT.getInt(cablePrefix);
 
         // Generate hand-crafting recipes for ULV and LV cables
         if (voltageTier <= LV) {
-            generateManualRecipe(wirePrefix, material, cablePrefix, cableAmount, provider);
+            generateManualRecipe(provider, wirePrefix, cablePrefix, cableAmount, material);
         }
 
         // Rubber Recipe (ULV-EV cables)
@@ -61,7 +63,7 @@ public abstract class WireRecipeHandlerMixin {
                     .EUt(VA[ULV]).duration(100)
                     .inputItems(wirePrefix, material)
                     .outputItems(cablePrefix, material)
-                    .inputFluids(Rubber.getFluid(L * (long) insulationAmount));
+                    .inputFluids(GTLRecipeContents.fluid(Rubber, L * (long) insulationAmount));
 
             if (voltageTier == EV) {
                 builder.inputItems(foil, PolyvinylChloride, insulationAmount);
@@ -90,7 +92,7 @@ public abstract class WireRecipeHandlerMixin {
             builder.inputItems(foil, PolyvinylChloride, insulationAmount);
         }
 
-        builder.inputFluids(SiliconeRubber.getFluid(L * (long) insulationAmount / 2))
+        builder.inputFluids(GTLRecipeContents.fluid(SiliconeRubber, L * (long) insulationAmount / 2))
                 .save(provider);
 
         // Styrene Butadiene Rubber Recipe (all cables)
@@ -114,7 +116,7 @@ public abstract class WireRecipeHandlerMixin {
             builder.inputItems(foil, PolyvinylChloride, insulationAmount);
         }
 
-        builder.inputFluids(StyreneButadieneRubber.getFluid(L * (long) insulationAmount / 4))
+        builder.inputFluids(GTLRecipeContents.fluid(StyreneButadieneRubber, L * (long) insulationAmount / 4))
                 .save(provider);
     }
 }

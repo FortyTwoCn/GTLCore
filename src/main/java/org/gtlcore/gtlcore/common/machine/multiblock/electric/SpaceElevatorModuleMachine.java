@@ -6,23 +6,22 @@ import org.gtlcore.gtlcore.common.data.GTLRecipeModifiers;
 import org.gtlcore.gtlcore.utils.MachineUtil;
 
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineLife;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
-import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
-import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import org.gtlcore.gtlcore.api.recipe.CoreRecipeModifiers;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.PanelSyncManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -31,45 +30,40 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachine
-                                        implements IModularMachineModule<SpaceElevatorMachine, SpaceElevatorModuleMachine>, IMachineLife {
+                                        implements IModularMachineModule<SpaceElevatorMachine, SpaceElevatorModuleMachine> {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(SpaceElevatorModuleMachine.class, WorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER);
     private static final int CONNECTION_CHECK_INTERVAL_TICKS = 20;
 
-    public SpaceElevatorModuleMachine(IMachineBlockEntity holder, boolean sepmTier, Object... args) {
-        super(holder, args);
+    public SpaceElevatorModuleMachine(BlockEntityCreationInfo holder, boolean sepmTier) {
+        super(holder);
         this.sepmTier = sepmTier;
     }
 
-    @DescSynced
+    @SyncToClient
     private int spaceElevatorTier = 0;
+    @SyncToClient
     private int moduleTier = 0;
 
     private final boolean sepmTier;
     @Nullable
     private TickableSubscription connectionSubscription;
 
-    @Persisted
+    @SaveField
     @Nullable
-    @Getter
-    @Setter
     private BlockPos hostPosition;
 
     @Nullable
-    @Getter
-    @Setter
     private SpaceElevatorMachine host;
 
     @Override
@@ -78,9 +72,13 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
     }
 
     @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
+    public BlockPos getHostPosition() { return hostPosition; }
+    @Override
+    public void setHostPosition(@Nullable BlockPos pos) { hostPosition = pos == null ? null : pos.immutable(); setChanged(); }
+    @Override
+    public SpaceElevatorMachine getHost() { return host; }
+    @Override
+    public void setHost(@Nullable SpaceElevatorMachine host) { this.host = host; }
 
     // ========================================
     // Elevator connection
@@ -102,15 +100,15 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String name) {
+        super.formStructure(name);
         updateConnectionSubscription();
         reconcileHostConnection("module_structure_formed");
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String name) {
+        super.invalidateStructure(name);
         removeFromHost(this.host);
         updateConnectionSubscription();
     }
@@ -123,12 +121,6 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
     }
 
     @Override
-    public void onMachineRemoved() {
-        removeFromHost(this.host);
-        stopConnectionSubscription();
-    }
-
-    @Override
     public void onLoad() {
         super.onLoad();
         updateConnectionSubscription();
@@ -136,21 +128,13 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
 
     @Override
     public void onUnload() {
+        removeFromHost(this.host);
         stopConnectionSubscription();
         super.onUnload();
     }
 
-    @Override
-    public void removeFromHost(@Nullable SpaceElevatorMachine host) {
-        BlockPos previousHostPosition = getHostPosition();
-        IModularMachineModule.super.removeFromHost(host);
-        if (previousHostPosition != null) {
-
-        }
-    }
-
     private void updateConnectionSubscription() {
-        if (isFormed()) {
+        if (getLevel() instanceof ServerLevel && isFormed()) {
             if (connectionSubscription == null) {
                 connectionSubscription = subscribeServerTick(this::connectionTick);
             }
@@ -200,6 +184,7 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
         BlockPos[] candidates = getHostPositions(powerCore);
 
         for (BlockPos candidatePos : candidates) {
+            if (!serverLevel.hasChunkAt(candidatePos)) continue;
             MetaMachine machine = MetaMachine.getMachine(serverLevel, candidatePos);
             boolean formed = machine instanceof SpaceElevatorMachine elevator && elevator.isFormed();
             boolean valid = isValidHost(machine);
@@ -215,7 +200,7 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
 
     @Nullable
     private SpaceElevatorMachine getLiveHost(ServerLevel level, @Nullable BlockPos position) {
-        if (position == null) {
+        if (position == null || !level.hasChunkAt(position)) {
             return null;
         }
         MetaMachine machine = MetaMachine.getMachine(level, position);
@@ -224,7 +209,7 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
 
     @Nullable
     private BlockPos findPowerCore(Level level) {
-        BlockPos pos = getPos();
+        BlockPos pos = getBlockPos();
         BlockPos[] powerCorePositions = new BlockPos[] {
                 pos.offset(8, -2, 3),
                 pos.offset(8, -2, -3),
@@ -236,7 +221,7 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
                 pos.offset(-3, -2, -8)
         };
         for (BlockPos position : powerCorePositions) {
-            if (level.getBlockState(position).is(GTLBlocks.POWER_CORE.get())) {
+            if (level.hasChunkAt(position) && level.getBlockState(position).is(GTLBlocks.POWER_CORE.get())) {
                 return position;
             }
         }
@@ -274,6 +259,8 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
     // ========================================
 
     private void getSpaceElevatorTier() {
+        int oldElevatorTier = spaceElevatorTier;
+        int oldModuleTier = moduleTier;
         if (this.host != null) {
             final RecipeLogic logic = host.getRecipeLogic();
             if (logic.isWorking() && logic.getProgress() > 80) {
@@ -287,26 +274,30 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
             spaceElevatorTier = 0;
             moduleTier = 0;
         }
+        if (oldElevatorTier != spaceElevatorTier) getSyncDataHolder().markClientSyncFieldDirty("spaceElevatorTier");
+        if (oldModuleTier != moduleTier) getSyncDataHolder().markClientSyncFieldDirty("moduleTier");
     }
 
     @Nullable
-    public static GTRecipe recipeModifier(MetaMachine machine, @NotNull GTRecipe recipe, @NotNull OCParams params,
-                                          @NotNull OCResult result) {
+    public static ModifierFunction recipeModifier(MetaMachine machine, @NotNull GTRecipe recipe) {
         if (machine instanceof SpaceElevatorModuleMachine moduleMachine) {
             moduleMachine.getSpaceElevatorTier();
             if (moduleMachine.spaceElevatorTier < 1) {
-                return null;
+                return ModifierFunction.NULL;
             }
             if (moduleMachine.sepmTier && recipe.data.getInt("SEPMTier") > moduleMachine.moduleTier) {
-                return null;
+                return ModifierFunction.NULL;
             }
-            GTRecipe recipe1 = GTLRecipeModifiers.reduction(machine, recipe, 1, Math.pow(0.8, moduleMachine.spaceElevatorTier - 1));
-            if (recipe1 != null) {
-                recipe1 = GTRecipeModifiers.accurateParallel(machine, recipe1, (int) Math.pow(4, moduleMachine.moduleTier - 1), false).getFirst();
-                if (recipe1 != null) return RecipeHelper.applyOverclock(OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK, recipe1, moduleMachine.getOverclockVoltage(), params, result);
-            }
+            return input -> {
+                var reduced = GTLRecipeModifiers.reduction(machine, input, 1, Math.pow(0.8, moduleMachine.spaceElevatorTier - 1));
+                if (reduced == null) return null;
+                var parallel = CoreRecipeModifiers.accurateParallel(machine, reduced,
+                        (int) Math.pow(4, moduleMachine.moduleTier - 1), false).getFirst();
+                return parallel == null ? null : OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK
+                        .getModifier(machine, parallel, moduleMachine.getOverclockVoltage()).apply(parallel);
+            };
         }
-        return null;
+        return ModifierFunction.NULL;
     }
 
     @Override
@@ -322,8 +313,13 @@ public class SpaceElevatorModuleMachine extends WorkableElectricMultiblockMachin
     }
 
     @Override
-    public void addDisplayText(@NotNull List<Component> textList) {
-        super.addDisplayText(textList);
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager sync) {
+        var widgets = new ArrayList<>(super.getWidgetsForDisplay(sync));
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("spaceElevatorModule", (controller, lines) -> addDisplayText(lines)).apply(this, sync));
+        return widgets;
+    }
+
+    private void addDisplayText(@NotNull List<Component> textList) {
         if (!this.isFormed) return;
         if (getOffsetTimer() % 10 == 0) {
             getSpaceElevatorTier();

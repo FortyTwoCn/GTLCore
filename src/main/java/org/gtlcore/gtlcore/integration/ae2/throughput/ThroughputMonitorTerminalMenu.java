@@ -7,6 +7,7 @@ import org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,8 +19,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.implementations.blockentities.IViewCellStorage;
 import appeng.api.inventories.InternalInventory;
@@ -28,11 +28,11 @@ import appeng.api.stacks.AEKey;
 import appeng.core.definitions.AEItems;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
-import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.MenuHostLocator;
 import appeng.menu.locator.MenuLocators;
 import appeng.util.inv.AppEngInternalInventory;
-import de.mari_023.ae2wtlib.terminal.WTMenuHost;
-import de.mari_023.ae2wtlib.wut.ItemWUT;
+import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
+import de.mari_023.ae2wtlib.api.terminal.ItemWUT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,9 +50,6 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
     public static final int MAX_SYNC_SOURCE_ENTRIES = ThroughputMonitorCollector.MAX_TRACKED_SOURCES_PER_KEY;
     private static final double MAX_INTERACTION_DISTANCE_SQUARED = 64.0D;
     private static final double BLOCK_CENTER_OFFSET = 0.5D;
-    private static final Comparator<Entry> ENTRY_ORDER = Comparator
-            .comparing((Entry entry) -> entry.key().getType().getId().toString())
-            .thenComparing(entry -> entry.key().toTagGeneric().toString());
     private static final Comparator<SourceEntry> SOURCE_ORDER = Comparator
             .comparing((SourceEntry entry) -> entry.dimension().toString())
             .thenComparingInt(entry -> entry.pos().getX())
@@ -88,7 +85,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
 
     public static ThroughputMonitorTerminalMenu createWirelessClientMenu(int containerId, Inventory inventory,
                                                                          FriendlyByteBuf data) {
-        MenuLocator locator = MenuLocators.readFromPacket(data);
+        MenuHostLocator locator = MenuLocators.readFromPacket(data);
         boolean returningFromSubmenu = data.readBoolean();
         WTMenuHost host = locator.locate(inventory.player, WTMenuHost.class);
         return new ThroughputMonitorTerminalMenu(
@@ -103,7 +100,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
 
     private ThroughputMonitorTerminalMenu(MenuType<?> menuType, int containerId, Inventory inventory,
                                           ThroughputMonitorTerminalPart terminal, @Nullable WTMenuHost wirelessHost,
-                                          @Nullable MenuLocator locator, boolean returningFromSubmenu) {
+                                          @Nullable MenuHostLocator locator, boolean returningFromSubmenu) {
         super(menuType, containerId, inventory, terminal == null ? wirelessHost : terminal);
         this.terminal = terminal;
         this.wirelessHost = wirelessHost;
@@ -125,9 +122,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
     }
 
     public static void open(ServerPlayer player, ThroughputMonitorTerminalPart terminal) {
-        NetworkHooks.openScreen(
-                player,
-                new MenuProvider() {
+        player.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {
@@ -150,19 +145,17 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
                 buffer -> {});
     }
 
-    public static boolean openWireless(Player player, MenuLocator locator, boolean returningFromSubmenu) {
+    public static boolean openWireless(Player player, MenuHostLocator locator, boolean returningFromSubmenu) {
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return false;
         }
 
         WTMenuHost host = locator.locate(player, WTMenuHost.class);
-        if (host == null || !host.rangeCheck()) {
+        if (host == null || !host.isValid() || !host.getLinkStatus().connected()) {
             return false;
         }
 
-        NetworkHooks.openScreen(
-                serverPlayer,
-                new MenuProvider() {
+        serverPlayer.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {
@@ -253,8 +246,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
             if (initialSyncPending || !currentEntries.equals(entries)) {
                 initialSyncPending = false;
                 entries = currentEntries;
-                WirelessAePackets.CHANNEL.send(
-                        PacketDistributor.PLAYER.with(() -> serverPlayer),
+                PacketDistributor.sendToPlayer(serverPlayer,
                         new WirelessAePackets.SyncThroughputMonitorTerminalPacket(containerId, entries));
             }
             for (AEKey key : trackedSourceKeys) {
@@ -270,8 +262,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
                 .findFirst()
                 .map(ThroughputMonitorTerminalMenu::collectSourceEntries)
                 .orElseGet(List::of);
-        WirelessAePackets.CHANNEL.send(
-                PacketDistributor.PLAYER.with(() -> player),
+        PacketDistributor.sendToPlayer(player,
                 new WirelessAePackets.SyncThroughputMonitorSourcesPacket(containerId, key, sources));
     }
 
@@ -308,7 +299,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
         super.removed(player);
     }
 
-    public static void writeEntries(FriendlyByteBuf buffer, List<Entry> entries) {
+    public static void writeEntries(RegistryFriendlyByteBuf buffer, List<Entry> entries) {
         buffer.writeVarInt(entries.size());
         for (Entry entry : entries) {
             AEKey.writeKey(buffer, entry.key());
@@ -318,7 +309,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
         }
     }
 
-    public static List<Entry> readEntries(FriendlyByteBuf buffer) {
+    public static List<Entry> readEntries(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
         if (size < 0 || size > MAX_SYNC_ENTRIES) {
             throw new IllegalArgumentException("Invalid throughput monitor entry count: " + size);
@@ -414,7 +405,7 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
         }
     }
 
-    private static List<Entry> collectEntries(List<ThroughputMonitorCollector.Snapshot> snapshots) {
+    private List<Entry> collectEntries(List<ThroughputMonitorCollector.Snapshot> snapshots) {
         List<Entry> entries = new ArrayList<>();
         for (ThroughputMonitorCollector.Snapshot snapshot : snapshots) {
             entries.add(new Entry(
@@ -423,7 +414,8 @@ public class ThroughputMonitorTerminalMenu extends AEBaseMenu {
                     snapshot.extractedPerSecond(),
                     snapshot.sources().size()));
         }
-        entries.sort(ENTRY_ORDER);
+        entries.sort(Comparator.comparing((Entry entry) -> entry.key().getType().getId().toString())
+                .thenComparing(entry -> entry.key().toTagGeneric(menuPlayer.level().registryAccess()).toString()));
         return List.copyOf(entries.subList(0, Math.min(entries.size(), MAX_SYNC_ENTRIES)));
     }
 

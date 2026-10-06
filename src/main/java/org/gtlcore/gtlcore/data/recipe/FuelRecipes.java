@@ -1,11 +1,12 @@
 package org.gtlcore.gtlcore.data.recipe;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import org.gtlcore.gtlcore.common.data.GTLMaterials;
 
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKeys;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import java.util.function.Consumer;
 
@@ -17,7 +18,7 @@ import static org.gtlcore.gtlcore.common.data.GTLRecipeTypes.*;
 
 public class FuelRecipes {
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         COMBUSTION_GENERATOR_FUELS.recipeBuilder("naphtha")
                 .inputFluids(Naphtha.getFluid(1))
                 .duration(20)
@@ -97,7 +98,7 @@ public class FuelRecipes {
                 .save(provider);
 
         COMBUSTION_GENERATOR_FUELS.recipeBuilder("light_oil")
-                .inputFluids(OilLight.getFluid(32))
+                .inputFluids(LightOil.getFluid(32))
                 .duration(10)
                 .EUt(-V[LV])
                 .save(provider);
@@ -248,7 +249,7 @@ public class FuelRecipes {
                 .save(provider);
 
         SEMI_FLUID_GENERATOR_FUELS.recipeBuilder("oil_light")
-                .inputFluids(OilLight.getFluid(4))
+                .inputFluids(LightOil.getFluid(4))
                 .duration(10)
                 .EUt(-V[LV])
                 .save(provider);
@@ -260,7 +261,7 @@ public class FuelRecipes {
                 .save(provider);
 
         SEMI_FLUID_GENERATOR_FUELS.recipeBuilder("oil_heavy")
-                .inputFluids(OilHeavy.getFluid(4))
+                .inputFluids(HeavyOil.getFluid(4))
                 .duration(15)
                 .EUt(-V[LV])
                 .save(provider);

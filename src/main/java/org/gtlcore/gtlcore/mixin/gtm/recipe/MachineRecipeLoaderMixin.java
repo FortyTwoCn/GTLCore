@@ -7,7 +7,7 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.data.recipe.VanillaRecipeHelper;
 import com.gregtechceu.gtceu.data.recipe.misc.MachineRecipeLoader;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -26,7 +26,7 @@ public abstract class MachineRecipeLoaderMixin {
      * @reason .
      */
     @Overwrite(remap = false)
-    private static void registerHatchConversion(Consumer<FinishedRecipe> provider) {
+    private static void registerHatchConversion(RecipeOutput provider) {
         for (int i = 0; i < FLUID_IMPORT_HATCH.length; i++) {
             if (FLUID_IMPORT_HATCH[i] != null && FLUID_EXPORT_HATCH[i] != null) {
 
@@ -109,7 +109,7 @@ public abstract class MachineRecipeLoaderMixin {
         VanillaRecipeHelper.addShapedRecipe(provider, "steam_bus_input_to_output", STEAM_IMPORT_BUS.asStack(),
                 "d", "B", 'B', STEAM_EXPORT_BUS.asStack());
 
-        if (GTCEu.isAE2Loaded()) {
+        if (GTCEu.isModLoaded("ae2")) {
             VanillaRecipeHelper.addShapedRecipe(provider, "me_fluid_hatch_output_to_input",
                     GTLMachines.GTAEMachines.FLUID_IMPORT_HATCH_ME.asStack(), "d", "B", 'B',
                     GTLMachines.GTAEMachines.FLUID_EXPORT_HATCH_ME.asStack());

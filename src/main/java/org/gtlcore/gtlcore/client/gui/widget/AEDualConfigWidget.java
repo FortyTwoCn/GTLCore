@@ -1,286 +1,147 @@
 package org.gtlcore.gtlcore.client.gui.widget;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
+import com.gregtechceu.gtceu.integration.ae2.gui.AEConfigSyncHandler;
 import com.gregtechceu.gtceu.integration.ae2.slot.*;
-
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
-import com.lowdragmc.lowdraglib.utils.Size;
-
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
-import appeng.api.stacks.GenericStack;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import appeng.api.stacks.*;
+import brachy.modularui.api.IPanelHandler;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.value.sync.*;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.ButtonWidget;
 import java.util.function.IntConsumer;
 
-/**
- * @author EasterFG on 2025/3/7
- */
-public class AEDualConfigWidget extends WidgetGroup {
-
-    protected final IConfigurableSlot[] config;
-    protected Int2ObjectMap<IConfigurableSlot> changeMap = new Int2ObjectOpenHashMap<>();
-
-    protected IConfigurableSlot[] cached;
-    protected IConfigurableSlot[] displayList;
-    protected ButtonWidget pageUpWidget;
-    protected ButtonWidget pageDownWidget;
-    protected AEDualAmountSetWidget amountSetWidget;
+/** A single paginated native display for paired item/fluid slots. All edits are checked on the server. */
+public class AEDualConfigWidget extends ParentWidget<AEDualConfigWidget> {
+    public static final int CONFIG_SIZE = 16;
     private final ExportOnlyAEItemList aeItem;
     private final ExportOnlyAEFluidList aeFluid;
     private final IntConsumer pageSetter;
     private final boolean amountEditingEnabled;
+    private final int count, rows, pageSize, maxPage;
+    private int page, editingIndex = -1;
+    private PanelSyncManager manager;
+    private AEConfigSyncHandler display;
+    private IntSyncValue pageValue;
+    private BooleanSyncValue autoPullValue;
+    private IPanelHandler amountPanel;
+    private final IConfigurableSlotList combined;
 
-    public static final int CONFIG_SIZE = 16;
-    protected int page;
-    protected final int MAX_PAGE;
-    private final int offset;
-    private final int pageSize;
-    private final int rows;
-
-    private static final int UPDATE_ID = 1001;
-
-    public AEDualConfigWidget(int x, int y, ExportOnlyAEItemList aeItem, ExportOnlyAEFluidList aeFluid, IntConsumer pageSetter, int page) {
-        this(x, y, aeItem, aeFluid, pageSetter, page, false, 2);
+    public AEDualConfigWidget(int x, int y, ExportOnlyAEItemList item, ExportOnlyAEFluidList fluid, IntConsumer setter, int page) {
+        this(x, y, item, fluid, setter, page, false, 2);
     }
-
-    public AEDualConfigWidget(int x, int y, ExportOnlyAEItemList aeItem, ExportOnlyAEFluidList aeFluid,
-                              IntConsumer pageSetter, int page, boolean amountEditingEnabled) {
-        this(x, y, aeItem, aeFluid, pageSetter, page, amountEditingEnabled, 2);
+    public AEDualConfigWidget(int x, int y, ExportOnlyAEItemList item, ExportOnlyAEFluidList fluid,
+                              IntConsumer setter, int page, boolean editable) {
+        this(x, y, item, fluid, setter, page, editable, 2);
     }
-
-    public AEDualConfigWidget(int x, int y, ExportOnlyAEItemList aeItem, ExportOnlyAEFluidList aeFluid,
-                              IntConsumer pageSetter, int page, boolean amountEditingEnabled, int rows) {
-        super(new Position(x, y), new Size(8 * 18, Math.max(1, rows) * 38 + 17));
-        this.aeItem = aeItem;
-        this.aeFluid = aeFluid;
-        this.pageSetter = pageSetter;
-        this.amountEditingEnabled = amountEditingEnabled;
-        this.rows = Math.max(1, rows);
-        this.pageSize = this.rows * 8;
-        this.offset = aeItem.getSize();
-        this.MAX_PAGE = Math.max(1, offset / pageSize);
-        this.page = Math.max(1, Math.min(page, MAX_PAGE));
-        this.config = marge();
-        init();
-        int navigationY = this.rows * 38 + 1;
-        this.pageUpWidget = new ButtonWidget(3, navigationY, 16, 16,
-                GuiTextures.BUTTON_LEFT, this::pageUp);
-        this.pageDownWidget = new ButtonWidget(125, navigationY, 16, 16,
-                GuiTextures.BUTTON_RIGHT, this::pageDown);
-        this.addWidget(new LabelWidget(66, navigationY + 5, () -> this.page + " / " + MAX_PAGE));
-        this.addWidget(this.pageUpWidget);
-        this.addWidget(this.pageDownWidget);
-        this.amountSetWidget = new AEDualAmountSetWidget(31, -50, this);
-        this.addWidget(this.amountSetWidget);
-        this.addWidget(this.amountSetWidget.getAmountText());
-        this.disableAmount();
-    }
-
-    protected void pageUp(ClickData data) {
-        if (page < 2) return;
-        disableAmount();
-        page--;
-        pageSetter.accept(page);
-    }
-
-    protected void pageDown(ClickData data) {
-        if (page >= MAX_PAGE) return;
-        disableAmount();
-        page++;
-        pageSetter.accept(page);
-    }
-
-    protected boolean isAutoPull() {
-        return aeFluid.isAutoPull() || aeItem.isAutoPull();
-    }
-
-    public int getSlotIndex(int visibleIndex) {
-        return (page - 1) * pageSize + visibleIndex;
-    }
-
-    private IConfigurableSlot[] marge() {
-        ExportOnlyAEItemSlot[] itemSlots = aeItem.getInventory();
-        ExportOnlyAEFluidSlot[] fluidSlots = aeFluid.getInventory();
-        IConfigurableSlot[] result = new IConfigurableSlot[itemSlots.length + fluidSlots.length];
-        System.arraycopy(itemSlots, 0, result, 0, itemSlots.length);
-        System.arraycopy(fluidSlots, 0, result, itemSlots.length, fluidSlots.length);
-        return result;
-    }
-
-    protected final void init() {
-        int line;
-        this.displayList = new IConfigurableSlot[this.config.length];
-        this.cached = new IConfigurableSlot[this.config.length];
-        int half = this.config.length / 2;
-        for (int index = 0; index < this.config.length; index++) {
-            this.displayList[index] = index < half ? new ExportOnlyAEItemSlot() : new ExportOnlyAEFluidSlot();
-            this.cached[index] = index < half ? new ExportOnlyAEItemSlot() : new ExportOnlyAEFluidSlot();
-            line = index / 8;
-            if (line >= rows) continue;
-            this.addWidget(new AEDualConfigSlotWidget((index - line * 8) * 18, line * (18 * 2 + 2), this, index));
-        }
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (this.amountEditingEnabled && this.amountSetWidget.isVisible() &&
-                this.amountSetWidget.getAmountText().mouseClicked(mouseX, mouseY, button)) {
-            return true;
-        }
-        for (Widget w : this.widgets) {
-            if (w instanceof AEDualConfigSlotWidget slot) {
-                slot.setSelect(false);
+    public AEDualConfigWidget(int x, int y, ExportOnlyAEItemList item, ExportOnlyAEFluidList fluid,
+                              IntConsumer setter, int page, boolean editable, int rows) {
+        aeItem = item; aeFluid = fluid; pageSetter = setter; amountEditingEnabled = editable;
+        if (item.getConfigurableSlots() != fluid.getConfigurableSlots()) throw new IllegalArgumentException("Paired AE slot counts differ");
+        count = item.getConfigurableSlots(); this.rows = Math.max(1, rows); pageSize = this.rows * 8;
+        maxPage = Math.max(1, (count + pageSize - 1) / pageSize); this.page = Math.clamp(page, 1, maxPage);
+        pos(x, y).size(144, this.rows * 38 + 17);
+        combined = new IConfigurableSlotList() {
+            @Override public int getConfigurableSlots() { return count; }
+            @Override public IConfigurableSlot getConfigurableSlot(int index) {
+                var item = getItemConfig(index); var fluid = getFluidConfig(index);
+                return item.getConfig() != null ? item : fluid.getConfig() != null ? fluid : item.getStock() != null ? item : fluid;
             }
-        }
-        this.disableAmount();
-        return super.mouseClicked(mouseX, mouseY, button);
+        };
+        for (int i = 0; i < pageSize; i++) child(new AEDualConfigSlotWidget((i % 8) * 18, (i / 8) * 38, this, i));
+        int navigation = this.rows * 38 + 1;
+        child(new ButtonWidget<>().name("dualConfig_previous_page").overlay(Text.str("<")).pos(3, navigation).size(16).onMousePressed((context, button) -> changePage(-1, button)));
+        child(new ButtonWidget<>().name("dualConfig_next_page").overlay(Text.str(">")).pos(125, navigation).size(16).onMousePressed((context, button) -> changePage(1, button)));
+        child(Text.dynamic(() -> Component.literal(currentPage() + " / " + maxPage)).asWidget().pos(50, navigation + 4).width(60));
     }
-
+    public AEDualConfigWidget syncManager(PanelSyncManager sync) {
+        manager = sync;
+        pageValue = SyncHandlers.intNumber(() -> page, value -> { page = Math.clamp(value, 1, maxPage); editingIndex = -1; pageSetter.accept(page); }).allowC2S();
+        autoPullValue = new BooleanSyncValue(() -> aeItem.isAutoPull() || aeFluid.isAutoPull());
+        sync.syncValue("dualConfigPage", pageValue); sync.syncValue("dualConfigAutoPull", autoPullValue);
+        display = new AEConfigSyncHandler(combined, count); sync.syncValue("dualConfigDisplay", display);
+        if (amountEditingEnabled) amountPanel = sync.syncedPanel("dualAmountEditor", true, (sm, handler) ->
+                PopupPanel.createPopupPanel("dualAmountEditorPanel", 168, 58)
+                        .child(new AEDualAmountSetWidget(4, 5, this).syncManager(sm)));
+        sync.registerServerSyncedAction("dual_config_set", packet -> {
+            int index = packet.readVarInt(); if (!canEdit(index)) return;
+            var item = sync.getPlayer().containerMenu.getCarried();
+            if (item.isEmpty()) return;
+            var fluid = FluidUtil.getFluidContained(item);
+            if (fluid.isPresent()) configure(index, GenericStack.fromFluidStack(fluid.get()));
+            else configure(index, GenericStack.fromItemStack(item));
+        });
+        sync.registerServerSyncedAction("dual_config_ghost", packet -> {
+            int index = packet.readVarInt(); boolean fluid = packet.readBoolean();
+            var stack = fluid ? GenericStack.fromFluidStack(FluidStack.STREAM_CODEC.decode(packet)) :
+                    GenericStack.fromItemStack(ItemStack.STREAM_CODEC.decode(packet));
+            if (canEdit(index)) configure(index, stack);
+        });
+        sync.registerServerSyncedAction("dual_config_clear", packet -> {
+            int index = packet.readVarInt(); if (canEdit(index)) { getItemConfig(index).setConfig(null); getFluidConfig(index).setConfig(null); }
+        });
+        sync.registerServerSyncedAction("dual_config_amount", packet -> {
+            int index = packet.readVarInt(); long amount = packet.readVarLong();
+            if (amountEditingEnabled && canEdit(index) && amount > 0 && getConfig(index).getConfig() != null)
+                getConfig(index).setConfig(new GenericStack(getConfig(index).getConfig().what(), amount));
+        });
+        sync.registerServerSyncedAction("dual_config_edit", packet -> {
+            int index = packet.readVarInt();
+            editingIndex = amountEditingEnabled && canEdit(index) && getConfig(index).getConfig() != null ? index : -1;
+        });
+        return this;
+    }
+    private boolean canEdit(int index) { return index >= 0 && index < count && !aeItem.isAutoPull() && !aeFluid.isAutoPull(); }
+    private int currentPage() { return Math.clamp(pageValue == null ? page : pageValue.getIntValue(), 1, maxPage); }
+    private boolean changePage(int delta, int button) {
+        if (button != 0 || pageValue == null) return false;
+        pageValue.setIntValue(Math.clamp(currentPage() + delta, 1, maxPage)); disableAmount(); return true;
+    }
+    public int getSlotIndex(int visible) { return (currentPage() - 1) * pageSize + visible; }
+    public int getSlotCount() { return count; }
+    public boolean isAutoPull() { return autoPullValue == null ? aeItem.isAutoPull() || aeFluid.isAutoPull() : autoPullValue.getBoolValue(); }
+    public boolean isAmountEditingEnabled() { return amountEditingEnabled; }
+    public PanelSyncManager getSyncManager() { return manager; }
+    public IConfigurableSlot getItemConfig(int index) { return aeItem.getConfigurableSlot(index); }
+    public IConfigurableSlot getFluidConfig(int index) { return aeFluid.getConfigurableSlot(index); }
+    public IConfigurableSlot getConfig(int index) { return getItemConfig(index).getConfig() != null ? getItemConfig(index) : getFluidConfig(index); }
+    public boolean hasStackInConfig(GenericStack stack) { return aeItem.hasStackInConfig(stack, true) || aeFluid.hasStackInConfig(stack, true); }
+    public boolean configure(int index, GenericStack stack) {
+        if (!canEdit(index) || stack == null || stack.amount() <= 0 || !(stack.what() instanceof AEItemKey || stack.what() instanceof AEFluidKey)) return false;
+        var existing = getConfig(index).getConfig();
+        if ((existing == null || !existing.what().equals(stack.what())) && hasStackInConfig(stack)) return false;
+        var configured = new GenericStack(stack.what(), amountEditingEnabled ? stack.amount() : 1);
+        if (stack.what() instanceof AEItemKey) setItemConfig(index, configured); else setFluidConfig(index, configured);
+        return true;
+    }
+    public void setItemConfig(int index, GenericStack stack) { getFluidConfig(index).setConfig(null); getItemConfig(index).setConfig(stack); }
+    public void setFluidConfig(int index, GenericStack stack) { getItemConfig(index).setConfig(null); getFluidConfig(index).setConfig(stack); }
+    @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
+    public GenericStack getDisplayStack(int index, boolean stock) {
+        if (index < 0 || index >= count || display == null) return null;
+        return stock ? display.getClientStock(index) : display.getClientConfig(index);
+    }
     public void enableAmount(int index) {
-        if (!this.amountEditingEnabled) {
-            return;
-        }
-        this.amountSetWidget.setSlotIndex(index);
-        this.amountSetWidget.setVisible(true);
-        this.amountSetWidget.getAmountText().setVisible(true);
+        if (!amountEditingEnabled || amountPanel == null || isAutoPull() || index < 0 || index >= count) return;
+        manager.callSyncedAction("dual_config_edit", packet -> packet.writeVarInt(index)); amountPanel.openPanel();
     }
-
-    public void disableAmount() {
-        this.amountSetWidget.setSlotIndex(-1);
-        this.amountSetWidget.setVisible(false);
-        this.amountSetWidget.getAmountText().setVisible(false);
+    public void disableAmount() { editingIndex = -1; if (amountPanel != null && amountPanel.isPanelOpen()) amountPanel.closePanel(); }
+    public String getEditedAmount() {
+        if (!canEdit(editingIndex)) return "0";
+        var config = getConfig(editingIndex).getConfig(); return config == null ? "0" : Long.toString(config.amount());
     }
-
-    public boolean isAmountEditingEnabled() {
-        return this.amountEditingEnabled;
+    public boolean isEditedFluid() {
+        return canEdit(editingIndex) && getConfig(editingIndex).getConfig() != null && getConfig(editingIndex).getConfig().what() instanceof AEFluidKey;
     }
-
-    @Override
-    public void detectAndSendChanges() {
-        super.detectAndSendChanges();
-        this.changeMap.clear();
-        for (int index = 0; index < this.config.length; index++) {
-            IConfigurableSlot newSlot = this.config[index];
-            IConfigurableSlot oldSlot = this.cached[index];
-            GenericStack nConfig = newSlot.getConfig();
-            GenericStack nStock = newSlot.getStock();
-            GenericStack oConfig = oldSlot.getConfig();
-            GenericStack oStock = oldSlot.getStock();
-            if (!areAEStackCountsEqual(nConfig, oConfig) || !areAEStackCountsEqual(nStock, oStock)) {
-                this.changeMap.put(index, newSlot.copy());
-                this.cached[index] = this.config[index].copy();
-                this.gui.holder.markAsDirty();
-            }
-        }
-        if (!this.changeMap.isEmpty()) {
-            this.writeUpdateInfo(UPDATE_ID, buf -> {
-                buf.writeVarInt(this.changeMap.size());
-                for (int index : this.changeMap.keySet()) {
-                    GenericStack sConfig = this.changeMap.get(index).getConfig();
-                    GenericStack sStock = this.changeMap.get(index).getStock();
-                    buf.writeVarInt(index);
-                    if (sConfig != null) {
-                        buf.writeBoolean(true);
-                        GenericStack.writeBuffer(sConfig, buf);
-                    } else {
-                        buf.writeBoolean(false);
-                    }
-                    if (sStock != null) {
-                        buf.writeBoolean(true);
-                        GenericStack.writeBuffer(sStock, buf);
-                    } else {
-                        buf.writeBoolean(false);
-                    }
-                }
-            });
-        }
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    @Override
-    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
-        super.readUpdateInfo(id, buffer);
-        if (id == UPDATE_ID) {
-            int size = buffer.readVarInt();
-            for (int i = 0; i < size; i++) {
-                int index = buffer.readVarInt();
-                IConfigurableSlot slot = this.displayList[index];
-                if (buffer.readBoolean()) {
-                    slot.setConfig(GenericStack.readBuffer(buffer));
-                } else {
-                    slot.setConfig(null);
-                }
-                if (buffer.readBoolean()) {
-                    slot.setStock(GenericStack.readBuffer(buffer));
-                } else {
-                    slot.setStock(null);
-                }
-            }
-        }
-    }
-
-    public boolean hasStackInConfig(GenericStack stack) {
-        return aeItem.hasStackInConfig(stack, true) ||
-                aeFluid.hasStackInConfig(stack, true);
-    }
-
-    public final void setItemConfig(int index, GenericStack stack) {
-        var fluidConfig = getFluidConfig(index);
-        if (fluidConfig != null) {
-            fluidConfig.setConfig(null);
-        }
-        getItemConfig(index).setConfig(stack);
-    }
-
-    public final void setFluidConfig(int index, GenericStack stack) {
-        var itemConfig = getItemConfig(index);
-        if (itemConfig != null) {
-            itemConfig.setConfig(null);
-        }
-        getFluidConfig(index).setConfig(stack);
-    }
-
-    public final IConfigurableSlot getItemConfig(int index) {
-        return config[index];
-    }
-
-    public final IConfigurableSlot getFluidConfig(int index) {
-        return config[index + offset];
-    }
-
-    public final IConfigurableSlot getConfig(int index) {
-        var c = getItemConfig(index);
-        if (c.getConfig() == null) {
-            return getFluidConfig(index);
-        }
-        return c;
-    }
-
-    public final IConfigurableSlot getDisplay(int index) {
-        var c = displayList[index];
-        if (c.getConfig() == null) {
-            return displayList[index + offset];
-        }
-        return c;
-    }
-
-    protected final boolean areAEStackCountsEqual(GenericStack s1, GenericStack s2) {
-        if (s2 == s1) {
-            return true;
-        }
-        if (s1 != null && s2 != null) {
-            return s1.amount() == s2.amount() && s1.what().matches(s2);
-        }
-        return false;
+    public void setEditedAmount(String value) {
+        if (!canEdit(editingIndex) || !amountEditingEnabled || value.length() > 19) return;
+        try {
+            long amount = Long.parseLong(value); var slot = getConfig(editingIndex);
+            if (amount > 0 && slot.getConfig() != null) slot.setConfig(new GenericStack(slot.getConfig().what(), amount));
+        } catch (NumberFormatException ignored) {}
     }
 }

@@ -27,12 +27,13 @@ public class InfinityCellHandler implements ICellHandler {
     }
 
     public void addCellInformationToTooltip(ItemStack stack, List<Component> lines) {
-        InfinityCellInventory handler = getCellInventory(stack, null);
-        if (handler != null && handler.hasDiskUUID()) {
+        // Tooltips also run on remote clients, which do not own disk_manager.dat.
+        var uuid = CellItemData.getDiskUUID(stack);
+        if (uuid != null) {
             lines.add(Component.literal("UUID: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(handler.getDiskUUID().toString()).withStyle(ChatFormatting.AQUA)));
+                    .append(Component.literal(uuid.toString()).withStyle(ChatFormatting.AQUA)));
             lines.add(Component.literal("Byte: ").withStyle(ChatFormatting.GRAY)
-                    .append(NumberUtils.numberText(handler.getNbtItemCount()).withStyle(ChatFormatting.GREEN)));
+                    .append(NumberUtils.numberText(CellItemData.getStoredCount(stack)).withStyle(ChatFormatting.GREEN)));
         }
     }
 }

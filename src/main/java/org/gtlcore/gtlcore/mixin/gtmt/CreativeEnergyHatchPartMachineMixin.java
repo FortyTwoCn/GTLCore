@@ -1,184 +1,70 @@
 package org.gtlcore.gtlcore.mixin.gtmt;
 
 import org.gtlcore.gtlcore.integration.gtmt.InfinityEnergyContainer;
-import org.gtlcore.gtlcore.integration.gtmt.NewGTValues;
+import org.gtlcore.gtlcore.integration.gtmt.NativeCreativeEnergyUI;
 import org.gtlcore.gtlcore.utils.NumberUtils;
-
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
-import com.gregtechceu.gtceu.api.pattern.MultiblockWorldSavedData;
-import com.gregtechceu.gtceu.utils.GTUtil;
-
-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SelectorWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.player.Player;
-
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableEnergyContainer;
 import com.hepdd.gtmthings.common.block.machine.multiblock.part.CreativeEnergyHatchPartMachine;
-import org.apache.commons.lang3.ArrayUtils;
-import org.jetbrains.annotations.NotNull;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widget.ParentWidget;
 import org.spongepowered.asm.mixin.*;
-
-import java.util.Arrays;
 
 @Mixin(CreativeEnergyHatchPartMachine.class)
 public abstract class CreativeEnergyHatchPartMachineMixin extends TieredIOPartMachine {
+    @Shadow(remap = false) @Final public NotifiableEnergyContainer energyContainer;
+    @Shadow(remap = false) private long voltage;
+    @Shadow(remap = false) private long maxEnergy;
+    @Shadow(remap = false) private int setTier;
+    @Shadow(remap = false) private int amps;
+    @Shadow(remap = false) protected abstract void updateMachine();
 
-    @Shadow(remap = false)
-    @Final
-    public NotifiableEnergyContainer energyContainer;
+    protected CreativeEnergyHatchPartMachineMixin(BlockEntityCreationInfo info, int tier, IO io) { super(info, tier, io); }
 
-    @Shadow(remap = false)
-    private long voltage;
-
-    @Persisted
-    @Shadow(remap = false)
-    private Long maxEnergy;
-
-    @Shadow(remap = false)
-    private int setTier;
-
-    @Shadow(remap = false)
-    private int amps;
-
-    public CreativeEnergyHatchPartMachineMixin(IMachineBlockEntity holder, int tier, IO io) {
-        super(holder, tier, io);
-    }
-
-    /**
-     * @author liansishen
-     * @reason Lastest GTMT
-     */
+    /** @author GTLCore @reason Preserve the original maximum creative voltage using a native attached trait. */
     @Overwrite(remap = false)
     protected NotifiableEnergyContainer createEnergyContainer() {
-        this.setTier = 30;
-        this.voltage = GTValues.VEX[setTier];
-        this.maxEnergy = NumberUtils.saturatedMultiply(this.voltage, this.amps);
-        return new InfinityEnergyContainer(this, this.maxEnergy, this.voltage, this.amps, 0L, 0L);
+        setTier = GTValues.MAX_TRUE;
+        voltage = GTValues.VEX[setTier];
+        maxEnergy = NumberUtils.saturatedMultiply(voltage, amps);
+        return new InfinityEnergyContainer(maxEnergy, voltage, amps, 0, 0);
     }
 
-    /**
-     * @author liansishen
-     * @reason Lastest GTMT
-     */
+    /** @author GTLCore @reason Preserve exact voltage input and all thirty-one creative tiers in ModularUI. */
     @Overwrite(remap = false)
-    public ModularUI createUI(Player entityPlayer) {
-        return new ModularUI(176, 136, this, entityPlayer)
-                .background(GuiTextures.BACKGROUND)
-                .widget(new LabelWidget(7, 32, "gtceu.creative.energy.voltage"))
-                .widget(new TextFieldWidget(9, 47, 152, 16, () -> String.valueOf(voltage),
-                        value -> {
-                            gTLCore$setVoltage(Long.parseLong(value));
-                            setTier = GTUtil.getTierByVoltage(this.voltage);
-                        }).setNumbersOnly(8L, Long.MAX_VALUE))
-                .widget(new LabelWidget(7, 74, "gtceu.creative.energy.amperage"))
-                .widget(new ButtonWidget(7, 87, 20, 20,
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON, new TextTexture("-")),
-                        cd -> gTLCore$setAmps(--amps == -1 ? 0 : amps)))
-                .widget(new TextFieldWidget(31, 89, 114, 16, () -> String.valueOf(amps),
-                        value -> gTLCore$setAmps(Integer.parseInt(value))).setNumbersOnly(1, 67108864))
-                .widget(new ButtonWidget(149, 87, 20, 20,
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON, new TextTexture("+")),
-                        cd -> {
-                            if (amps < Integer.MAX_VALUE) {
-                                gTLCore$setAmps(++amps);
-                            }
-                        }))
-
-                .widget(new SelectorWidget(7, 7, 50, 20, Arrays.stream(NewGTValues.VNF).toList(), -1)
-                        .setOnChanged(tier -> {
-                            setTier = ArrayUtils.indexOf(NewGTValues.VNF, tier);
-                            gTLCore$setVoltage(GTValues.VEX[setTier]);
-                        })
-                        .setSupplier(() -> NewGTValues.VNF[setTier])
-                        .setButtonBackground(ResourceBorderTexture.BUTTON_COMMON)
-                        .setBackground(ColorPattern.BLACK.rectTexture())
-                        .setValue(NewGTValues.VNF[setTier]));
+    public void buildMainUI(ParentWidget<?> parent, PosGuiData data, PanelSyncManager manager, UISettings settings) {
+        NativeCreativeEnergyUI.build(parent, manager, () -> voltage, this::setVoltage, () -> amps, this::setAmps, GTValues.ULV);
     }
 
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        gTLCore$updateEnergyContainer();
-    }
-
-    @Unique
-    private void gTLCore$setVoltage(long voltage) {
-        this.voltage = voltage;
-        this.maxEnergy = NumberUtils.saturatedMultiply(this.voltage, this.amps);
-        gTLCore$updateMachine();
-    }
-
-    @Unique
-    private void gTLCore$setAmps(int amps) {
-        this.amps = amps;
-        this.maxEnergy = NumberUtils.saturatedMultiply(this.voltage, this.amps);
-        gTLCore$updateMachine();
-    }
-
-    @Unique
-    private void gTLCore$updateEnergyContainer() {
-        this.energyContainer.resetBasicInfo(this.maxEnergy, this.voltage, this.amps, 0, 0);
-        this.energyContainer.setEnergyStored(this.maxEnergy);
-    }
-
-    @Unique
-    private void gTLCore$updateMachine() {
-        gTLCore$updateEnergyContainer();
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> {
-                for (var c : getControllers()) {
-                    if (c.isFormed()) {
-                        c.getPatternLock().lock();
-                        try {
-                            c.onStructureInvalid();
-                            var mwsd = MultiblockWorldSavedData.getOrCreate(serverLevel);
-                            mwsd.removeMapping(c.getMultiblockState());
-                            mwsd.addAsyncLogic(c);
-                        } finally {
-                            c.getPatternLock().unlock();
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    /**
-     * @author Dragons
-     * @reason Dont use
-     */
+    /** @author GTLCore @reason Native voltage tiers extend through Long.MAX_VALUE. */
     @Overwrite(remap = false)
-    protected void addEnergy() {}
-
-    /**
-     * @author Dragons
-     * @reason Dont use
-     */
-    @Overwrite(remap = false)
-    protected void InfinityEnergySubscription() {}
-
-    @Override
-    public void onLoad() {
-        super.onLoad();
+    private void setVoltage(long value) {
+        if (value < GTValues.VEX[GTValues.ULV]) return;
+        voltage = value;
+        updateMachine();
     }
 
-    @Override
-    public void onUnload() {
-        super.onUnload();
+    /** @author GTLCore @reason Zero disables the supply; plus controls retain the original integer range. */
+    @Overwrite(remap = false)
+    private void setAmps(int value) {
+        if (value < 0) return;
+        amps = value;
+        updateMachine();
+    }
+
+    /** @author GTLCore @reason Recompute saturated capacity after settings changes and native SaveField reload. */
+    @Overwrite(remap = false)
+    private void updateEnergyContainer() {
+        voltage = Math.max(GTValues.VEX[GTValues.ULV], voltage);
+        amps = Math.max(0, amps);
+        setTier = NumberUtils.getFakeVoltageTier(voltage);
+        maxEnergy = NumberUtils.saturatedMultiply(voltage, amps);
+        energyContainer.resetBasicInfo(maxEnergy, voltage, amps, 0, 0);
+        energyContainer.setEnergyStored(maxEnergy);
     }
 }

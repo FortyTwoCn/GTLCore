@@ -35,22 +35,17 @@ public abstract class GuiExPatternTerminalMixin implements JeiTerminalSearchTarg
 
     @Shadow
     @Final
-    private AETextField searchOutField;
-
-    @Shadow
-    @Final
-    private AETextField searchInField;
+    private AETextField searchField;
 
     @Override
     public void gtlcore$setJeiSearchText(String searchText) {
-        AETextField targetField = this.searchInField.isFocused() ? this.searchInField : this.searchOutField;
-        targetField.setValue(searchText);
+        this.searchField.setValue(searchText);
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void gtlcore$updateOutputSearchTooltip(ContainerExPatternTerminal menu, Inventory inventory,
                                                    Component title, ScreenStyle style, CallbackInfo ci) {
-        this.searchOutField.setTooltipMessage(List.of(Component.translatable(
+        this.searchField.setTooltipMessage(List.of(Component.translatable(
                 "tooltip.gtlcore.ex_pattern_terminal.output_search")));
     }
 
@@ -74,7 +69,7 @@ public abstract class GuiExPatternTerminalMixin implements JeiTerminalSearchTarg
     @Inject(method = "drawFG", at = @At("TAIL"))
     private void gtlcore$drawMatchedPatternBorders(GuiGraphics graphics, int offsetX, int offsetY,
                                                    int mouseX, int mouseY, CallbackInfo ci) {
-        if (this.searchOutField.getValue().isEmpty() && this.searchInField.getValue().isEmpty()) {
+        if (this.searchField.getValue().isEmpty()) {
             return;
         }
         var menu = ((GuiExPatternTerminal<?>) (Object) this).getMenu();

@@ -1,6 +1,5 @@
 package org.gtlcore.gtlcore.integration.ae2.patternrelay;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.api.machine.trait.AECraft.IMECraftIOPart;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEPatternPartMachine;
 import org.gtlcore.gtlcore.integration.ae2.AEUtils;
@@ -10,11 +9,15 @@ import org.gtlcore.gtlcore.integration.ae2.graph.GraphDispatchPreflight;
 import org.gtlcore.gtlcore.utils.NumberUtils;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
@@ -71,13 +74,13 @@ public final class PatternRelayPart extends AEBasePart implements ICraftingProvi
     private static final int MAX_REFRESH_TICKS = 20;
     private static final float CABLE_CONNECTION_LENGTH = 4.0F;
     private static final double IDLE_POWER_USAGE = 1.0D;
-    private static final TagKey<Item> WRENCH_TAG = ItemTags.create(new ResourceLocation("forge", "tools/wrench"));
+    private static final TagKey<Item> WRENCH_TAG = ItemTags.create(ResourceLocation.fromNamespaceAndPath("c", "tools/wrench"));
 
-    private static final ResourceLocation MODEL_SUPPLIER = GTLCore.id("part/me_pattern_relay_supplier");
-    private static final ResourceLocation MODEL_ACCESS = GTLCore.id("part/me_pattern_relay_access");
-    private static final ResourceLocation MODEL_STATUS_OFF = new ResourceLocation("ae2", "part/interface_off");
-    private static final ResourceLocation MODEL_STATUS_ON = new ResourceLocation("ae2", "part/interface_on");
-    private static final ResourceLocation MODEL_STATUS_HAS_CHANNEL = new ResourceLocation("ae2", "part/interface_has_channel");
+    private static final ResourceLocation MODEL_SUPPLIER = ResourceLocation.fromNamespaceAndPath("gtlcore", "part/me_pattern_relay_supplier");
+    private static final ResourceLocation MODEL_ACCESS = ResourceLocation.fromNamespaceAndPath("gtlcore", "part/me_pattern_relay_access");
+    private static final ResourceLocation MODEL_STATUS_OFF = ResourceLocation.fromNamespaceAndPath("ae2", "part/interface_off");
+    private static final ResourceLocation MODEL_STATUS_ON = ResourceLocation.fromNamespaceAndPath("ae2", "part/interface_on");
+    private static final ResourceLocation MODEL_STATUS_HAS_CHANNEL = ResourceLocation.fromNamespaceAndPath("ae2", "part/interface_has_channel");
 
     private static final IPartModel SUPPLIER_OFF = new PartModel(MODEL_SUPPLIER, MODEL_STATUS_OFF);
     private static final IPartModel SUPPLIER_ON = new PartModel(MODEL_SUPPLIER, MODEL_STATUS_ON);
@@ -128,31 +131,33 @@ public final class PatternRelayPart extends AEBasePart implements ICraftingProvi
     }
 
     @Override
-    public void readFromNBT(CompoundTag data) {
-        super.readFromNBT(data);
+    public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
+        super.readFromNBT(data, registries);
         mode = getMode(data);
-        readCounter(data, TAG_PENDING_OUTPUTS, pendingOutputs);
-        readCounter(data, TAG_OBSERVED_SUPPLIER_STOCK, observedSupplierStock);
+        readCounter(data, TAG_PENDING_OUTPUTS, pendingOutputs, registries);
+        readCounter(data, TAG_OBSERVED_SUPPLIER_STOCK, observedSupplierStock, registries);
     }
 
     @Override
-    public void writeToNBT(CompoundTag data) {
-        super.writeToNBT(data);
+    public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
+        super.writeToNBT(data, registries);
         writeMode(data, mode);
-        data.put(TAG_PENDING_OUTPUTS, writeCounter(pendingOutputs));
-        data.put(TAG_OBSERVED_SUPPLIER_STOCK, writeCounter(observedSupplierStock));
+        data.put(TAG_PENDING_OUTPUTS, writeCounter(pendingOutputs, registries));
+        data.put(TAG_OBSERVED_SUPPLIER_STOCK, writeCounter(observedSupplierStock, registries));
     }
 
     @Override
-    public void exportSettings(SettingsFrom mode, CompoundTag output) {
+    public void exportSettings(SettingsFrom mode, DataComponentMap.Builder output) {
         super.exportSettings(mode, output);
-        writeMode(output, this.mode);
+        var data = output.build().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        writeMode(data, this.mode);
+        output.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
     }
 
     @Override
-    public void importSettings(SettingsFrom mode, CompoundTag input, @Nullable Player player) {
+    public void importSettings(SettingsFrom mode, DataComponentMap input, @Nullable Player player) {
         super.importSettings(mode, input, player);
-        Mode importedMode = getMode(input);
+        Mode importedMode = getMode(input.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag());
         if (this.mode != importedMode) {
             this.mode = importedMode;
             routeRefreshRequested = true;
@@ -163,13 +168,13 @@ public final class PatternRelayPart extends AEBasePart implements ICraftingProvi
     }
 
     @Override
-    public void writeToStream(FriendlyByteBuf data) {
+    public void writeToStream(RegistryFriendlyByteBuf data) {
         super.writeToStream(data);
         data.writeEnum(mode);
     }
 
     @Override
-    public boolean readFromStream(FriendlyByteBuf data) {
+    public boolean readFromStream(RegistryFriendlyByteBuf data) {
         boolean redraw = super.readFromStream(data);
         Mode previousMode = mode;
         mode = data.readEnum(Mode.class);
@@ -189,18 +194,12 @@ public final class PatternRelayPart extends AEBasePart implements ICraftingProvi
     }
 
     @Override
-    public boolean onPartActivate(Player player, InteractionHand hand, Vec3 pos) {
-        return useWrench(player, hand);
+    public boolean onUseItemOn(ItemStack heldItem, Player player, InteractionHand hand, Vec3 pos) {
+        return useWrench(heldItem, player) || super.onUseItemOn(heldItem, player, hand, pos);
     }
 
-    @Override
-    public boolean onPartShiftActivate(Player player, InteractionHand hand, Vec3 pos) {
-        return useWrench(player, hand);
-    }
-
-    private boolean useWrench(Player player, InteractionHand hand) {
-        ItemStack heldItem = player.getItemInHand(hand);
-        if (!heldItem.is(WRENCH_TAG)) {
+    private boolean useWrench(ItemStack heldItem, Player player) {
+        if (!heldItem.is(WRENCH_TAG) && !heldItem.canPerformAction(com.gregtechceu.gtceu.common.data.item.GTItemAbilities.WRENCH_ROTATE)) {
             return false;
         }
         if (isClientSide()) {
@@ -234,11 +233,11 @@ public final class PatternRelayPart extends AEBasePart implements ICraftingProvi
     }
 
     static String getModeNameTranslationKey(ItemStack stack) {
-        return getMode(stack.getTag()).nameTranslationKey;
+        return getMode(stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag()).nameTranslationKey;
     }
 
     static boolean isAccessMode(ItemStack stack) {
-        return getMode(stack.getTag()) == Mode.ACCESS;
+        return getMode(stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag()) == Mode.ACCESS;
     }
 
     @Override
@@ -382,7 +381,7 @@ public final class PatternRelayPart extends AEBasePart implements ICraftingProvi
 
     @Override
     public TickingRequest getTickingRequest(IGridNode node) {
-        return new TickingRequest(MIN_REFRESH_TICKS, MAX_REFRESH_TICKS, false, false);
+        return new TickingRequest(MIN_REFRESH_TICKS, MAX_REFRESH_TICKS, false);
     }
 
     @Override
@@ -556,22 +555,22 @@ public final class PatternRelayPart extends AEBasePart implements ICraftingProvi
         observedSupplierStock.removeEmptySubmaps();
     }
 
-    private static void readCounter(CompoundTag data, String key, KeyCounter counter) {
+    private static void readCounter(CompoundTag data, String key, KeyCounter counter, HolderLookup.Provider registries) {
         counter.clear();
         ListTag entries = data.getList(key, Tag.TAG_COMPOUND);
         for (Tag entry : entries) {
-            GenericStack stack = GenericStack.readTag((CompoundTag) entry);
+            GenericStack stack = GenericStack.readTag(registries, (CompoundTag) entry);
             if (stack != null && stack.amount() > 0) {
                 counter.add(stack.what(), stack.amount());
             }
         }
     }
 
-    private static ListTag writeCounter(KeyCounter counter) {
+    private static ListTag writeCounter(KeyCounter counter, HolderLookup.Provider registries) {
         ListTag entries = new ListTag();
         for (var entry : counter) {
             if (entry.getLongValue() > 0) {
-                entries.add(GenericStack.writeTag(new GenericStack(entry.getKey(), entry.getLongValue())));
+                entries.add(GenericStack.writeTag(registries, new GenericStack(entry.getKey(), entry.getLongValue())));
             }
         }
         return entries;

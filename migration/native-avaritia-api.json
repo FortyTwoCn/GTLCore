@@ -1,0 +1,234 @@
+{
+  "source": "https://github.com/Nova-Committee/Re-Avaritia/tree/8e2f0f7bdfbd1bc229e14c3c4dc0808d55ed526a",
+  "revision": "8e2f0f7bdfbd1bc229e14c3c4dc0808d55ed526a",
+  "tag": "v1.4.2-release-neoforge",
+  "minecraft": "1.21.1",
+  "loader": "neoforge",
+  "mod_id": "avaritia",
+  "modrinth_version": "uY1x1LTC",
+  "version": "1.21.1-1.4.2-release",
+  "mod_version": "1.4.2",
+  "jar_file": "Re-Avaritia-neoforge-1.21.1-1.4.2-release.jar",
+  "jar_sha512": "cdea0ad05932415670d75066792a96808ea6c9eea1bf4033790669af3b022eb5426df0ff0df6eba72205624fd96a15e16a051711722ce7a9f626e091db10b0a4",
+  "obsolete_mixin": {
+    "name": "avaritia.client.InfinityArmorModelMixin",
+    "reason": "The native infinity armor model has no per-frame Logger.info call; its upstream implementation already has the required quiet rendering behavior. The old Forge descriptor and logger redirect are removed.",
+    "native_source": "src/main/java/committee/nova/mods/avaritia/client/model/entity/InfinityArmorModel.java",
+    "sha256": "e7753b693851e3ca7a93f865781853212de0c58f8f13273b4780754cf570ecd4"
+  },
+  "models": {
+    "assets/gtceu/models/item/cosmic_dust.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "ebf007ff0219f21d3d7d5f890480f3dde45a9504200570875b79aa8e75dba98f"
+    },
+    "assets/gtceu/models/item/cosmic_foil.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "64334d9ddc7805a07b3f50b12b17bfa705ae554a1c81f550ce2fb7c04cf41ffd"
+    },
+    "assets/gtceu/models/item/cosmic_ingot.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "71a748c79638b3495bda2d57e22e11fbc53a8f3bdceab82aa6152d36157f7f2c"
+    },
+    "assets/gtceu/models/item/cosmic_nugget.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "03ea6a42ccc9f416888d46b3c2c3d4b7baca9e517f4d7321723b5e437eab6257"
+    },
+    "assets/gtceu/models/item/cosmic_plate.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "14f9a2be4e1c43d69407746d701a34c0d7b6c2957cb0e5f73399e1926b160cbe"
+    },
+    "assets/gtceu/models/item/cosmic_rod.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "4b66d442644c60e85f9096945164bd7fa6ba5024cb2e0bf6aa07c44b96f8ef58"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "0b1808c25a01b3f0709e8e503befcda3b23f90fa8cd3f45c511a11ac904919ee"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_foil.json": {
+      "loader": "avaritia:halo",
+      "sha256": "1b806ded016fad7b49a1812c72b50f7aa03d69ae9199e4c00df6177202d21018"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_ingot.json": {
+      "loader": "avaritia:halo",
+      "sha256": "91e97affaa272b4c6ad8f5eb1692735fc4ea0e9463964fccfac5d1520df6cbc7"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_nanoswarm.json": {
+      "loader": "avaritia:halo",
+      "sha256": "9ddb518347fba4fa82ef2ba539a833ea04770d51695608cfe15039ef16b947e0"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_nugget.json": {
+      "loader": "avaritia:halo",
+      "sha256": "f2b6c4107ae49534bf6493e0cdd1ffbfb67f319c449d946ccbad9ceb5153174d"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_plate.json": {
+      "loader": "avaritia:halo",
+      "sha256": "875a925131005e2514758230028afcfa62728fd4bd59ae276ce4fb24e4cd6f9f"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_rod.json": {
+      "loader": "avaritia:halo",
+      "sha256": "a9969bb79d69dfc7e49dc58d3a7f9d8349de91bf4feba8ada36cd388ce387138"
+    },
+    "assets/gtceu/models/item/cosmicneutronium_spring.json": {
+      "loader": "avaritia:halo",
+      "sha256": "cee7aeca216a5b31f67741ad6e85797c85ed10a024fe3aa1bc52645bc943dc69"
+    },
+    "assets/gtceu/models/item/double_cosmic_plate.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "996141d10c0ff2bb4e94369ac8fbea1c6638bfd4ae5257e47bd955b5162c27f1"
+    },
+    "assets/gtceu/models/item/double_cosmicneutronium_plate.json": {
+      "loader": "avaritia:halo",
+      "sha256": "d79cb0ebb67f253ba6691e9615850c04a6542353cece1efcfba949bf23330727"
+    },
+    "assets/gtceu/models/item/double_eternity_plate.json": {
+      "loader": "avaritia:halo",
+      "sha256": "11df5546fd67ac67704616c956e729a82572cb3c92625e72a2d18915ff7e6380"
+    },
+    "assets/gtceu/models/item/eternity_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "e5d5605f7732ae8c131e0466ee6e7d6410c3f3ad5e385e82f34478a54f76e09d"
+    },
+    "assets/gtceu/models/item/eternity_foil.json": {
+      "loader": "avaritia:halo",
+      "sha256": "e23f5bf300a90d25e0ff05064afeb97f095b4c7081e33e2c48823f7fb0269d9f"
+    },
+    "assets/gtceu/models/item/eternity_ingot.json": {
+      "loader": "avaritia:halo",
+      "sha256": "8b335f43cdcfde7772565a602d019f09691642ebd4b871b104865d67caab1da6"
+    },
+    "assets/gtceu/models/item/eternity_nanoswarm.json": {
+      "loader": "avaritia:halo",
+      "sha256": "96daed3b687e9678b0a6e873b2b1861534e110a1540f242850b209394cf8f3d3"
+    },
+    "assets/gtceu/models/item/eternity_nugget.json": {
+      "loader": "avaritia:halo",
+      "sha256": "76096b31ce3f4c29bdf01e13f5ce7847a4388bf44029e5314aea2c38a0b62f92"
+    },
+    "assets/gtceu/models/item/eternity_plate.json": {
+      "loader": "avaritia:halo",
+      "sha256": "11df5546fd67ac67704616c956e729a82572cb3c92625e72a2d18915ff7e6380"
+    },
+    "assets/gtceu/models/item/eternity_rod.json": {
+      "loader": "avaritia:halo",
+      "sha256": "6a9ec388ecf10aabf3d81a6efaacae65c89f2342d93df3e7f0b18e2b45b8b05b"
+    },
+    "assets/gtceu/models/item/fine_cosmic_wire.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "932da0923ce510752d8ff04edf7d79c5c02833b2d90e506f26a3e0a3f416c08e"
+    },
+    "assets/gtceu/models/item/fine_cosmicneutronium_wire.json": {
+      "loader": "avaritia:halo",
+      "sha256": "059394388bb47a158e5f71d892ff541b75f21f666d45fc67d7d20ed7a1de251d"
+    },
+    "assets/gtceu/models/item/hot_cosmicneutronium_ingot.json": {
+      "loader": "avaritia:halo",
+      "sha256": "096c3de981033608f98502fa64bf567f3839eb2fea69a69ef4e5f183091944a3"
+    },
+    "assets/gtceu/models/item/hot_eternity_ingot.json": {
+      "loader": "avaritia:halo",
+      "sha256": "587b7051f8f0f936c299ff0d7f588928ebf9b2cdd5506c3282876bb9cc499e1a"
+    },
+    "assets/gtceu/models/item/hot_infinity_ingot.json": {
+      "loader": "avaritia:halo",
+      "sha256": "3161b6f53fdb20644eb3f6d5f1662146b25bc8f62096cceb72736437f917ce5a"
+    },
+    "assets/gtceu/models/item/infinity_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "90a7ea19563eaa494b6e1a876458c233a9f0fc2998b6476f9da516bf3da71a6a"
+    },
+    "assets/gtceu/models/item/infinity_nugget.json": {
+      "loader": "avaritia:halo",
+      "sha256": "b6256ef86a87ce5ee6ed2e3fb3cca4c02ccd35e1a58a14972d83661fc223ed6b"
+    },
+    "assets/gtceu/models/item/infinity_rod.json": {
+      "loader": "avaritia:halo",
+      "sha256": "df1448970414a6c497e9f53ed46731deae458b474ecbc9a02301047ea79594d5"
+    },
+    "assets/gtceu/models/item/long_cosmic_rod.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "b23c905afdf517a884dbde096686a1a9b55290d30ed5c471993707236fe0c637"
+    },
+    "assets/gtceu/models/item/long_cosmicneutronium_rod.json": {
+      "loader": "avaritia:halo",
+      "sha256": "90e40d190ad718233fcef3df4d485d7e9a18eb6d18498d076515b49a72b9b0e8"
+    },
+    "assets/gtceu/models/item/long_magmatter_rod.json": {
+      "loader": "avaritia:halo",
+      "sha256": "86bbea32b740fa6e8acde1ee4e3a39ae619ad3254abc6772c29fffb3a42d8818"
+    },
+    "assets/gtceu/models/item/magmatter_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "834e116f6135d2a7383a6b12a9f13497633617fa88a7c6037fd92a3de51dac79"
+    },
+    "assets/gtceu/models/item/magmatter_ingot.json": {
+      "loader": "avaritia:halo",
+      "sha256": "0eb921ce1affd9c840ab733f4fd85d16855fe6dccf2557f1936ee925399ed165"
+    },
+    "assets/gtceu/models/item/magmatter_nugget.json": {
+      "loader": "avaritia:halo",
+      "sha256": "908405ab6346ccc6b93fb26ce44a61da098d0a6a9cc758dfa5c94547a62cee28"
+    },
+    "assets/gtceu/models/item/magmatter_rod.json": {
+      "loader": "avaritia:halo",
+      "sha256": "d530e8fc4abe59b2635a3eed5b8d1ad7c69840d88fcb3799e47b1690c1af9fb7"
+    },
+    "assets/gtceu/models/item/small_cosmic_dust.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "d4378f1694ad98aa71facba0d42423de3ec5105d30af1a855bb1715750ae5233"
+    },
+    "assets/gtceu/models/item/small_cosmicneutronium_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "bee6a72d5bb6c56e14ac19106f987a328bde9aa9e4653b32e8cd79f6d50d1a6b"
+    },
+    "assets/gtceu/models/item/small_cosmicneutronium_spring.json": {
+      "loader": "avaritia:halo",
+      "sha256": "ca34a94c1dc69dcbdca00f1041765bdbac3f70fc3031661853b6a38380d0f47f"
+    },
+    "assets/gtceu/models/item/small_eternity_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "091ed261b997624d335d613cea9b542b77b7b050c37afe6ba2e902eac81c7c57"
+    },
+    "assets/gtceu/models/item/small_infinity_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "65799a7274b890e29a177ba6e23dc822cd1dedc46b6420bfdb700a2985d03809"
+    },
+    "assets/gtceu/models/item/small_magmatter_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "2467be854ffe61f8018d57a3ef8576408c111dc8083c62ee3ea0dfd88e446ec6"
+    },
+    "assets/gtceu/models/item/tiny_cosmic_dust.json": {
+      "loader": "avaritia:cosmic",
+      "sha256": "c4cb2ee32b00c8923d774aeec4d67a61e0822056b3855551c240c684a1718a5c"
+    },
+    "assets/gtceu/models/item/tiny_cosmicneutronium_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "b1059e1db0bfe4c482fd8dd686230de30356a4c83ed35ef15e56b5416a227992"
+    },
+    "assets/gtceu/models/item/tiny_eternity_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "c39de2f15c9caf4820548b6a697b2cb64468d2d586ac2186d56fa3965a0150ed"
+    },
+    "assets/gtceu/models/item/tiny_infinity_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "84a457a41d3fe37faeb285d3fced3e1a54f351da9d72d99a972628026c97232e"
+    },
+    "assets/gtceu/models/item/tiny_magmatter_dust.json": {
+      "loader": "avaritia:halo",
+      "sha256": "1ff180953205e0a1d1abc7777a6c3eb290df81183ed4d3a07c001f2814553673"
+    }
+  },
+  "unverified": [
+    "Full production material registration and infinity texture/model overrides",
+    "Cosmic mask textures referenced from the external KubeJS resource pack",
+    "Actual infinity armor entity rendering"
+  ],
+  "client_validation": {
+    "scope": "All fifty unchanged production model JSON files baked and drawn through the published native loaders and item renderer in a bounded client grid. Physical production material registration and external KubeJS mask resources are not part of this scoped validation.",
+    "models": 50,
+    "cosmic": 11,
+    "halo": 39,
+    "original_json_sha256_checked": true,
+    "frames": 60
+  }
+}

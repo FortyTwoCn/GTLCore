@@ -1,6 +1,7 @@
 package org.gtlcore.gtlcore.api.recipe;
 
-import org.gtlcore.gtlcore.utils.NumberUtils;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
 
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
@@ -29,11 +30,12 @@ public class RecipeText {
             var items = io ? recipe.getInputContents(ItemRecipeCapability.CAP) : recipe.getOutputContents(ItemRecipeCapability.CAP);
             var fluids = io ? recipe.getInputContents(FluidRecipeCapability.CAP) : recipe.getOutputContents(FluidRecipeCapability.CAP);
             for (var item : items) {
-                var stacks = ItemRecipeCapability.CAP.of(item.content).getItems();
+                var ingredient = ItemRecipeCapability.CAP.of(item.content());
+                var stacks = ingredient.getItems();
                 if (stacks.length == 0) continue;
                 var stack = stacks[0];
-                int count = stack.getCount();
-                float chance = 100.0F * (float) item.chance / (float) item.maxChance;
+                long count = LongIngredient.amount(ingredient);
+                float chance = 100.0F * item.chance() / Math.max(1, item.maxChance());
                 String percent = FormattingUtil.formatPercent(chance);
                 if (chance == 100.0F) {
                     buffer.append(Component.translatable("gtceu.machine.lockrecipe.line.0", stack.getHoverName(), count).withStyle(ChatFormatting.GRAY));
@@ -44,21 +46,21 @@ public class RecipeText {
                 }
             }
             for (var fluid : fluids) {
-                var stacks = FluidRecipeCapability.CAP.of(fluid.content).getStacks();
+                var ingredient = FluidRecipeCapability.CAP.of(fluid.content());
+                var stacks = ingredient.getFluids();
                 if (stacks.length == 0) continue;
                 var stack = stacks[0];
-                long amount = stack.getAmount();
-                String s;
-                if (amount < 1000) s = amount + "mB";
-                else s = NumberUtils.formatLong(amount / 1000) + "B";
-                float chance = 100.0F * (float) fluid.chance / (float) fluid.maxChance;
+                long amount = LongFluidIngredient.amount(ingredient);
+                String s = amount < 1000 ? amount + "mB" :
+                        java.math.BigDecimal.valueOf(amount).movePointLeft(3).stripTrailingZeros().toPlainString() + "B";
+                float chance = 100.0F * fluid.chance() / Math.max(1, fluid.maxChance());
                 String percent = FormattingUtil.formatPercent(chance);
                 if (chance == 100.0F) {
-                    buffer.append(Component.translatable("gtceu.machine.lockrecipe.line.0", stack.getDisplayName(), s).withStyle(ChatFormatting.GRAY));
+                    buffer.append(Component.translatable("gtceu.machine.lockrecipe.line.0", stack.getHoverName(), s).withStyle(ChatFormatting.GRAY));
                 } else if (chance == 0.0F) {
-                    buffer.append(Component.translatable("gtceu.machine.lockrecipe.line.2", stack.getDisplayName(), s).withStyle(ChatFormatting.GRAY));
+                    buffer.append(Component.translatable("gtceu.machine.lockrecipe.line.2", stack.getHoverName(), s).withStyle(ChatFormatting.GRAY));
                 } else {
-                    buffer.append(Component.translatable("gtceu.machine.lockrecipe.line.1", stack.getDisplayName(), s, percent).withStyle(ChatFormatting.GRAY));
+                    buffer.append(Component.translatable("gtceu.machine.lockrecipe.line.1", stack.getHoverName(), s, percent).withStyle(ChatFormatting.GRAY));
                 }
             }
             return buffer;

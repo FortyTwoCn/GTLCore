@@ -7,12 +7,15 @@ import com.lowdragmc.lowdraglib.client.model.custommodel.*;
 
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.model.BakedModelWrapper;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.Nullable;
@@ -27,17 +30,15 @@ import javax.annotation.Nonnull;
  * @author EasterFG on 2025/3/2
  */
 @Mixin(CustomBakedModel.class)
-public abstract class CustomBakedModelFixed implements BakedModel {
+public abstract class CustomBakedModelFixed extends BakedModelWrapper<BakedModel> {
+    @Unique
+    private final ConcurrentMap<GTLQuadKey, List<BakedQuad>> gtlcore$quadCache = new ConcurrentHashMap<>();
 
-    @Mutable
-    @Final
-    @Shadow(remap = false)
-    private final BakedModel parent;
-    protected final ConcurrentMap<Direction, ConcurrentMap<Connections, List<BakedQuad>>> sideCache = new ConcurrentHashMap<>();
-    protected final List<BakedQuad> noSideCache = new ObjectArrayList<>();
+    private record GTLQuadKey(Connections connections, BlockState state, Direction side,
+                              RenderType layer, List<BakedQuad> base) {}
 
     protected CustomBakedModelFixed(BakedModel parent) {
-        this.parent = parent;
+        super(parent);
     }
 
     /**
@@ -46,32 +47,16 @@ public abstract class CustomBakedModelFixed implements BakedModel {
      */
     @Overwrite(remap = false)
     @Nonnull
-    @Deprecated
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand) {
-        return parent.getQuads(state, side, rand);
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    @Nonnull
-    public List<BakedQuad> getCustomQuads(BlockAndTintGetter level, BlockPos pos, @Nonnull BlockState state, @Nullable Direction side, RandomSource rand) {
+    public List<BakedQuad> getCustomQuads(BlockAndTintGetter level, BlockPos pos, @Nonnull BlockState state,
+                                         @Nullable Direction side, RandomSource rand, ModelData modelData,
+                                         @Nullable RenderType renderType) {
         var connections = Connections.checkConnections(level, pos, state, side);
-        if (side == null) {
-            if (noSideCache.isEmpty()) {
-                synchronized (noSideCache) {
-                    if (noSideCache.isEmpty()) {
-                        noSideCache.addAll(buildCustomQuads(connections, parent.getQuads(state, null, rand), 0.0f));
-                    }
-                }
-            }
-            return noSideCache;
-        }
-        return sideCache
-                .computeIfAbsent(side, key -> new ConcurrentHashMap<>())
-                .computeIfAbsent(connections, key -> buildCustomQuads(key, parent.getQuads(state, side, rand), 0.0f));
+        var base = List.copyOf(originalModel.getQuads(state, side, rand, modelData, renderType));
+        var key = new GTLQuadKey(connections, state, side, renderType, base);
+        // Some dynamic parents allocate new quads every frame; bound their cache too.
+        if (gtlcore$quadCache.size() >= 512) gtlcore$quadCache.clear();
+        return gtlcore$quadCache.computeIfAbsent(key,
+                ignored -> List.copyOf(buildCustomQuads(connections, base, 0.0f)));
     }
 
     /**

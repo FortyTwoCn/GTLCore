@@ -1,5 +1,8 @@
 package org.gtlcore.gtlcore.common.data.machines;
 
+import org.gtlcore.gtlcore.api.recipe.CoreRecipeModifiers;
+import com.gregtechceu.gtceu.api.registry.registrate.entry.MachineEntry;
+import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.common.data.*;
 import org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure;
@@ -15,9 +18,9 @@ import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.CoilWorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.pattern.Predicates;
+import com.gregtechceu.gtceu.api.multiblock.Predicates;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
-import com.gregtechceu.gtceu.common.data.GCyMBlocks;
+import com.gregtechceu.gtceu.common.data.GCYMBlocks;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
@@ -26,8 +29,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Blocks;
 
-import static com.gregtechceu.gtceu.api.pattern.Predicates.blocks;
-import static com.gregtechceu.gtceu.api.pattern.Predicates.controller;
+import static com.gregtechceu.gtceu.api.multiblock.Predicates.blocks;
+import static com.gregtechceu.gtceu.api.multiblock.Predicates.controller;
 import static com.gregtechceu.gtceu.common.registry.GTRegistration.REGISTRATE;
 
 @SuppressWarnings("unused")
@@ -35,7 +38,7 @@ public class MultiBlockMachineB {
 
     public static void init() {}
 
-    public final static MultiblockMachineDefinition GRAVITATION_SHOCKBURST = REGISTRATE.multiblock("gravitation_shockburst", WorkableElectricMultiblockMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> GRAVITATION_SHOCKBURST = REGISTRATE.multiblock("gravitation_shockburst", WorkableElectricMultiblockMachine::new)
             .rotationState(RotationState.ALL)
             .recipeType(GTLRecipeTypes.GRAVITATION_SHOCKBURST_RECIPES)
             .recipeType(GTLRecipeTypes.ELECTRIC_IMPLOSION_COMPRESSOR_RECIPES)
@@ -47,21 +50,21 @@ public class MultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeModifiers(GTRecipeModifiers.PARALLEL_HATCH, GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.PERFECT_OVERCLOCK_SUBTICK))
             .appearanceBlock(GTLBlocks.CREATE_CASING)
-            .pattern(definition -> MultiBlockMachineBStructure.GRAVITATION_SHOCKBURST
-                    .where("a", Predicates.blocks(GTLBlocks.CREATE_CASING.get())
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(3))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(3))
-                            .or(Predicates.abilities(PartAbility.PARALLEL_HATCH).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.INPUT_LASER).setMaxGlobalLimited(1)))
-                    .where("b", Predicates.blocks(GTLBlocks.INFINITY_GLASS.get()))
-                    .where("c", Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.block, GTLMaterials.Infinity)))
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where(" ", Predicates.any())
+            .pattern(definition -> MultiBlockMachineBStructure.GRAVITATION_SHOCKBURST.get()
+                    .where('a', Predicates.blocks(GTLBlocks.CREATE_CASING.get())
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(3))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(3))
+                            .and(Predicates.abilities(PartAbility.PARALLEL_HATCH).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.INPUT_LASER).setMaxGlobalLimited(1)))
+                    .where('b', Predicates.blocks(GTLBlocks.INFINITY_GLASS.get()))
+                    .where('c', Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.block, GTLMaterials.Infinity)))
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where(' ', Predicates.any())
                     .build())
-            .workableCasingRenderer(GTLCore.id("block/create_casing"), GTCEu.id("block/multiblock/fusion_reactor"))
+            .workableCasingModel(GTLCore.id("block/create_casing"), GTCEu.id("block/multiblock/fusion_reactor"))
             .register();
 
-    public final static MultiblockMachineDefinition DISSOLVING_TANK = REGISTRATE.multiblock("dissolving_tank", WorkableElectricMultiblockMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> DISSOLVING_TANK = REGISTRATE.multiblock("dissolving_tank", WorkableElectricMultiblockMachine::new)
             .langValue("Dissolving Tank")
             .tooltips(Component.translatable("gtceu.multiblock.dissolving_tank.tooltip.0"))
             .tooltips(Component.translatable("gtceu.multiblock.parallelizable.tooltip"))
@@ -73,21 +76,21 @@ public class MultiBlockMachineB {
             .recipeTypes(GTLRecipeTypes.DISSOLUTION_TREATMENT)
             .recipeModifier(GTLRecipeModifiers::dissolvingTankOverclock)
             .appearanceBlock(GTBlocks.CASING_STAINLESS_CLEAN)
-            .pattern(definition -> MultiBlockMachineBStructure.DISSOLVING_TANK
-                    .where('S', Predicates.controller(Predicates.blocks(definition.get())))
+            .pattern(definition -> MultiBlockMachineBStructure.DISSOLVING_TANK.get()
+                    .where('S', Predicates.controller(Predicates.blocks(definition.getBlock())))
                     .where('X', Predicates.blocks(GTBlocks.CASING_STAINLESS_CLEAN.get()))
                     .where('K', Predicates.blocks(GTBlocks.CASING_INVAR_HEATPROOF.get()))
                     .where('O', Predicates.blocks(GTBlocks.CASING_STAINLESS_CLEAN.get())
-                            .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                            .or(Predicates.autoAbilities(true, false, true)))
+                            .and(Predicates.autoAbilities(definition.getRecipeTypes()))
+                            .and(Predicates.autoAbilities(true, false, true)))
                     .where('G', Predicates.blocks(GTBlocks.CASING_TEMPERED_GLASS.get()))
                     .where('A', Predicates.air())
                     .where('#', Predicates.any())
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_clean_stainless_steel"), GTCEu.id("block/multiblock/generator/large_gas_turbine"))
+            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_clean_stainless_steel"), GTCEu.id("block/multiblock/generator/large_gas_turbine"))
             .register();
 
-    public final static MultiblockMachineDefinition DIGESTION_TANK = REGISTRATE.multiblock("digestion_tank", CoilWorkableElectricMultiblockMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> DIGESTION_TANK = REGISTRATE.multiblock("digestion_tank", CoilWorkableElectricMultiblockMachine::new)
             .langValue("Digestion Tank")
             .tooltips(Component.translatable("gtceu.multiblock.parallelizable.tooltip"))
             .tooltips(Component.translatable("tooltip.gtlcore.structure.source", "GTNH"))
@@ -98,23 +101,23 @@ public class MultiBlockMachineB {
             .recipeTypes(GTLRecipeTypes.DIGESTION_TREATMENT)
             .recipeModifiers(GTRecipeModifiers.PARALLEL_HATCH, GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK))
             .appearanceBlock(GTBlocks.CASING_TUNGSTENSTEEL_ROBUST)
-            .pattern(definition -> MultiBlockMachineBStructure.DIGESTION_TANK
-                    .where('S', Predicates.controller(Predicates.blocks(definition.get())))
+            .pattern(definition -> MultiBlockMachineBStructure.DIGESTION_TANK.get()
+                    .where('S', Predicates.controller(Predicates.blocks(definition.getBlock())))
                     .where('X', Predicates.blocks(GTBlocks.CASING_STAINLESS_CLEAN.get()))
                     .where('K', Predicates.blocks(GTBlocks.CASING_INVAR_HEATPROOF.get()))
                     .where('Y', Predicates.blocks(GTBlocks.CASING_TUNGSTENSTEEL_ROBUST.get()))
                     .where('M', Predicates.heatingCoils())
                     .where('O', Predicates.blocks(GTBlocks.CASING_TUNGSTENSTEEL_ROBUST.get())
-                            .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                            .or(Predicates.autoAbilities(true, false, true)))
+                            .and(Predicates.autoAbilities(definition.getRecipeTypes()))
+                            .and(Predicates.autoAbilities(true, false, true)))
                     .where('A', Predicates.air())
                     .where('#', Predicates.any())
                     .build())
             .beforeWorking((machine, recipe) -> machine instanceof CoilWorkableElectricMultiblockMachine coilMachine && coilMachine.getCoilType().getCoilTemperature() >= recipe.data.getInt("ebf_temp"))
-            .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_robust_tungstensteel"), GTCEu.id("block/multiblock/gcym/large_maceration_tower"))
+            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_robust_tungstensteel"), GTCEu.id("block/multiblock/gcym/large_maceration_tower"))
             .register();
 
-    public final static MultiblockMachineDefinition WOOD_DISTILLATION = REGISTRATE.multiblock("wood_distillation", WorkableElectricMultiblockMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> WOOD_DISTILLATION = REGISTRATE.multiblock("wood_distillation", WorkableElectricMultiblockMachine::new)
             .rotationState(RotationState.ALL)
             .recipeType(GTLRecipeTypes.WOOD_DISTILLATION_RECIPES)
             .tooltips(Component.translatable("gtceu.multiblock.parallelizable.tooltip"))
@@ -123,33 +126,33 @@ public class MultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeModifiers(GTRecipeModifiers.PARALLEL_HATCH, GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.NON_PERFECT_OVERCLOCK))
             .appearanceBlock(GTBlocks.CASING_INVAR_HEATPROOF)
-            .pattern(definition -> MultiBlockMachineBStructure.WOOD_DISTILLATION
-                    .where("M", controller(blocks(definition.get())))
-                    .where("I", blocks(GTBlocks.CASING_INVAR_HEATPROOF.get()))
-                    .where("N", blocks(GTBlocks.HERMETIC_CASING_HV.get()))
-                    .where("J", blocks(GTBlocks.CASING_STAINLESS_EVAPORATION.get()))
-                    .where("E", blocks(GTBlocks.FILTER_CASING.get()))
-                    .where("L", blocks(GTBlocks.CASING_INVAR_HEATPROOF.get())
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(2).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(2).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(6).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(2).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1).setPreviewCount(1))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("B", Predicates.blocks(GCyMBlocks.HEAT_VENT.get()))
-                    .where("H", Predicates.abilities(PartAbility.MUFFLER))
-                    .where("D", blocks(GTBlocks.CASING_STAINLESS_CLEAN.get()))
-                    .where("G", blocks(GTBlocks.CASING_STEEL_PIPE.get()))
-                    .where("K", blocks(GTBlocks.FIREBOX_STEEL.get()))
-                    .where("C", Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.StainlessSteel)))
-                    .where("A", blocks(GTBlocks.CASING_ALUMINIUM_FROSTPROOF.get()))
-                    .where(" ", Predicates.any())
+            .pattern(definition -> MultiBlockMachineBStructure.WOOD_DISTILLATION.get()
+                    .where('M', controller(blocks(definition.getBlock())))
+                    .where('I', blocks(GTBlocks.CASING_INVAR_HEATPROOF.get()))
+                    .where('N', blocks(GTBlocks.HERMETIC_CASING_HV.get()))
+                    .where('J', blocks(org.gtlcore.gtlcore.common.data.GTLRetainedGTBlocks.CASING_STAINLESS_EVAPORATION.get()))
+                    .where('E', blocks(GTBlocks.FILTER_CASING.get()))
+                    .where('L', blocks(GTBlocks.CASING_INVAR_HEATPROOF.get())
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2).setPreviewCount(1))
+                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(2).setPreviewCount(1))
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(2).setPreviewCount(1))
+                            .and(Predicates.abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(6).setPreviewCount(1))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(2).setPreviewCount(1))
+                            .and(Predicates.abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1).setPreviewCount(1))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('B', Predicates.blocks(GCYMBlocks.HEAT_VENT.get()))
+                    .where('H', Predicates.abilities(PartAbility.MUFFLER))
+                    .where('D', blocks(GTBlocks.CASING_STAINLESS_CLEAN.get()))
+                    .where('G', blocks(GTBlocks.CASING_STEEL_PIPE.get()))
+                    .where('K', blocks(GTBlocks.FIREBOX_STEEL.get()))
+                    .where('C', Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.StainlessSteel)))
+                    .where('A', blocks(GTBlocks.CASING_ALUMINIUM_FROSTPROOF.get()))
+                    .where(' ', Predicates.any())
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_heatproof"), GTCEu.id("block/multiblock/electric_blast_furnace"))
+            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_heatproof"), GTCEu.id("block/multiblock/electric_blast_furnace"))
             .register();
 
-    public final static MultiblockMachineDefinition DESULFURIZER = REGISTRATE.multiblock("desulfurizer", WorkableElectricParallelHatchMultipleRecipesMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> DESULFURIZER = REGISTRATE.multiblock("desulfurizer", WorkableElectricParallelHatchMultipleRecipesMachine::new)
             .rotationState(RotationState.ALL)
             .recipeType(GTLRecipeTypes.DESULFURIZER_RECIPES)
             .tooltips(Component.translatable("gtceu.machine.multiple_recipes.tooltip"))
@@ -158,24 +161,24 @@ public class MultiBlockMachineB {
                     Component.translatable("gtceu.desulfurizer")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .appearanceBlock(GTBlocks.CASING_STAINLESS_CLEAN)
-            .pattern(definition -> MultiBlockMachineBStructure.DESULFURIZER
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("I", blocks(GTBlocks.CASING_INVAR_HEATPROOF.get()))
-                    .where("X", Predicates.blocks(GTBlocks.CASING_STEEL_PIPE.get()))
-                    .where("P", Predicates.blocks(GTBlocks.CASING_BRONZE_PIPE.get()))
-                    .where("G", Predicates.blocks(GTBlocks.HERMETIC_CASING_MV.get()))
-                    .where("D", Predicates.blocks(GTBlocks.CASING_STAINLESS_CLEAN.get())
+            .pattern(definition -> MultiBlockMachineBStructure.DESULFURIZER.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('I', blocks(GTBlocks.CASING_INVAR_HEATPROOF.get()))
+                    .where('X', Predicates.blocks(GTBlocks.CASING_STEEL_PIPE.get()))
+                    .where('P', Predicates.blocks(GTBlocks.CASING_BRONZE_PIPE.get()))
+                    .where('G', Predicates.blocks(GTBlocks.HERMETIC_CASING_MV.get()))
+                    .where('D', Predicates.blocks(GTBlocks.CASING_STAINLESS_CLEAN.get())
                             .setMinGlobalLimited(36)
-                            .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                            .or(Predicates.autoAbilities(true, false, true)))
-                    .where("L", Predicates.blocks(GTBlocks.COIL_KANTHAL.get()))
-                    .where("C", Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get()))
-                    .where(" ", Predicates.any())
+                            .and(Predicates.autoAbilities(definition.getRecipeTypes()))
+                            .and(Predicates.autoAbilities(true, false, true)))
+                    .where('L', Predicates.blocks(GTBlocks.COIL_KANTHAL.get()))
+                    .where('C', Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get()))
+                    .where(' ', Predicates.any())
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_clean_stainless_steel"), GTCEu.id("block/multiblock/large_chemical_reactor"))
+            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_clean_stainless_steel"), GTCEu.id("block/multiblock/large_chemical_reactor"))
             .register();
 
-    public final static MultiblockMachineDefinition PRIMITIVE_VOID_ORE = ConfigHolder.INSTANCE.enablePrimitiveVoidOre ?
+    public final static MachineEntry<MultiblockMachineDefinition> PRIMITIVE_VOID_ORE = ConfigHolder.INSTANCE.enablePrimitiveVoidOre ?
             REGISTRATE.multiblock("primitive_void_ore", PrimitiveOreMachine::new)
                     .langValue("Primitive Void Ore")
                     .tooltips(Component.translatable("tooltip.gtlcore.primitive_void_ore_random_output"))
@@ -184,20 +187,20 @@ public class MultiBlockMachineB {
                     .rotationState(RotationState.ALL)
                     .recipeType(GTLRecipeTypes.PRIMITIVE_VOID_ORE_RECIPES)
                     .appearanceBlock(() -> Blocks.DIRT)
-                    .pattern(definition -> MultiBlockMachineBStructure.PRIMITIVE_VOID_ORE
-                            .where('S', Predicates.controller(Predicates.blocks(definition.get())))
+                    .pattern(definition -> MultiBlockMachineBStructure.PRIMITIVE_VOID_ORE.get()
+                            .where('S', Predicates.controller(Predicates.blocks(definition.getBlock())))
                             .where('X',
                                     Predicates.blocks(Blocks.DIRT)
-                                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS))
-                                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS)))
+                                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS))
+                                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS)))
                             .where('A', Predicates.air())
                             .build())
-                    .workableCasingRenderer(new ResourceLocation("minecraft:block/dirt"),
+                    .workableCasingModel(ResourceLocation.parse("minecraft:block/dirt"),
                             GTCEu.id("block/multiblock/gcym/large_extractor"))
                     .register() :
             null;
 
-    public final static MultiblockMachineDefinition LARGE_FRAGMENT_WORLD_COLLECTION_MACHINE = ConfigHolder.INSTANCE.enableSkyBlokeMode ?
+    public final static MachineEntry<MultiblockMachineDefinition> LARGE_FRAGMENT_WORLD_COLLECTION_MACHINE = ConfigHolder.INSTANCE.enableSkyBlokeMode ?
             REGISTRATE.multiblock("large_fragment_world_collection_machine", WorkableElectricMultiblockMachine::new)
                     .langValue("Large fragment world collection machine")
                     .tooltips(Component.translatable("gtlcore.machine.large_fragment_world_collection.sky_block_mode"))
@@ -206,20 +209,20 @@ public class MultiBlockMachineB {
                     .tooltips(Component.translatable("gtlcore.machine.large_fragment_world_collection.max_parallel"))
                     .tooltipBuilder(GTLMachines.GTL_ADD)
                     .recipeModifiers(
-                            (machine, recipe, params, result) -> GTLRecipeModifiers.reduction(machine, recipe, 256, 0.25),
-                            (machine, recipe, params, result) -> GTRecipeModifiers.accurateParallel(machine, recipe, 64, false).getFirst())
+                            (machine, source) -> recipe -> GTLRecipeModifiers.reduction(machine, recipe, 256, 0.25),
+                            (machine, source) -> recipe -> CoreRecipeModifiers.accurateParallel(machine, recipe, 64, false).getFirst())
                     .rotationState(RotationState.ALL)
                     .recipeType(GTLRecipeTypes.FRAGMENT_WORLD_COLLECTION)
                     .appearanceBlock(GTBlocks.CASING_TITANIUM_STABLE)
-                    .pattern(definition -> MultiBlockMachineBStructure.LARGE_FRAGMENT_WORLD_COLLECTION_MACHINE
-                            .where('S', Predicates.controller(Predicates.blocks(definition.get())))
+                    .pattern(definition -> MultiBlockMachineBStructure.LARGE_FRAGMENT_WORLD_COLLECTION_MACHINE.get()
+                            .where('S', Predicates.controller(Predicates.blocks(definition.getBlock())))
                             .where('X', Predicates.blocks(GTBlocks.CASING_TITANIUM_STABLE.get())
-                                    .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setExactLimit(1)))
+                                    .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setExactLimit(1)))
                             .where('I', Predicates.abilities(PartAbility.IMPORT_ITEMS))
                             .where('O', Predicates.abilities(PartAbility.EXPORT_ITEMS))
                             .where('A', Predicates.any())
                             .build())
-                    .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_stable_titanium"),
+                    .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_stable_titanium"),
                             GTCEu.id("block/multiblock/gcym/large_extractor"))
                     .register() :
             null;

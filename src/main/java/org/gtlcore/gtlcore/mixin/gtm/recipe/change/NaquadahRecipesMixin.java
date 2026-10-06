@@ -1,8 +1,9 @@
 package org.gtlcore.gtlcore.mixin.gtm.recipe.change;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import com.gregtechceu.gtceu.data.recipe.serialized.chemistry.NaquadahRecipes;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -24,7 +25,7 @@ public abstract class NaquadahRecipesMixin {
      * @reason
      */
     @Overwrite(remap = false)
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         // FLUOROANTIMONIC ACID
 
         CHEMICAL_RECIPES.recipeBuilder("antimony_trioxide").EUt(VA[ULV]).duration(60)
@@ -146,13 +147,16 @@ public abstract class NaquadahRecipesMixin {
                 .outputFluids(SulfuricAcid.getFluid(1000))
                 .save(provider);
 
-        DISTILLATION_RECIPES.recipeBuilder("enriched_naquadah_waste_separation").EUt(VA[HV]).duration(300)
-                .inputFluids(EnrichedNaquadahWaste.getFluid(2000))
-                .chancedOutput(dust, BariumSulfide, 5000, 0)
+        {
+            var gtlRecipeBuilder149 = DISTILLATION_RECIPES.recipeBuilder("enriched_naquadah_waste_separation").EUt(VA[HV]).duration(300)
+                .inputFluids(EnrichedNaquadahWaste.getFluid(2000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder149, dust, BariumSulfide, 5000, 0);
+            gtlRecipeBuilder149
                 .outputFluids(SulfuricAcid.getFluid(500))
                 .outputFluids(EnrichedNaquadahSolution.getFluid(250))
                 .outputFluids(NaquadriaSolution.getFluid(100))
                 .save(provider);
+        }
 
         // NAQUADRIA PROCESS
         NEUTRON_ACTIVATOR_RECIPES.recipeBuilder("enriched_naquadah_separation")
@@ -197,14 +201,17 @@ public abstract class NaquadahRecipesMixin {
                 .outputFluids(AcidicNaquadriaSolution.getFluid(3000))
                 .save(provider);
 
-        CENTRIFUGE_RECIPES.recipeBuilder("acidic_naquadria_solution_separation").EUt(VA[HV]).duration(100)
+        {
+            var gtlRecipeBuilder200 = CENTRIFUGE_RECIPES.recipeBuilder("acidic_naquadria_solution_separation").EUt(VA[HV]).duration(100)
                 .inputFluids(AcidicNaquadriaSolution.getFluid(3000))
                 .outputFluids(NaquadriaWaste.getFluid(2000))
                 .outputFluids(Fluorine.getFluid(500))
-                .outputItems(dustTiny, NaquadriaSulfate, 2)
-                .chancedOutput(dustTiny, NaquadriaSulfate, 1, 6000, 100)
-                .chancedOutput(dustTiny, NaquadriaSulfate, 1, 4000, 100)
+                .outputItems(dustTiny, NaquadriaSulfate, 2);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder200, dustTiny, NaquadriaSulfate, 1, 6000, 100);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder200, dustTiny, NaquadriaSulfate, 1, 4000, 100);
+            gtlRecipeBuilder200
                 .save(provider);
+        }
 
         CHEMICAL_RECIPES.recipeBuilder("xenon_trioxide")
                 .inputFluids(Xenon.getFluid(1000))
@@ -271,12 +278,15 @@ public abstract class NaquadahRecipesMixin {
                 .outputFluids(SulfuricAcid.getFluid(1000))
                 .save(provider);
 
-        DISTILLATION_RECIPES.recipeBuilder("naquadria_waste_separation").EUt(VA[EV]).duration(400)
-                .inputFluids(NaquadriaWaste.getFluid(2000))
-                .chancedOutput(dust, TriniumSulfide, 8000, 500)
+        {
+            var gtlRecipeBuilder274 = DISTILLATION_RECIPES.recipeBuilder("naquadria_waste_separation").EUt(VA[EV]).duration(400)
+                .inputFluids(NaquadriaWaste.getFluid(2000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder274, dust, TriniumSulfide, 8000, 500);
+            gtlRecipeBuilder274
                 .outputFluids(NaquadriaSolution.getFluid(250))
                 .outputFluids(EnrichedNaquadahSolution.getFluid(100))
                 .save(provider);
+        }
 
         // TRINIUM
 

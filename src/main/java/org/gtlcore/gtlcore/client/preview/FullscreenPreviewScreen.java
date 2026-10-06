@@ -108,8 +108,8 @@ public final class FullscreenPreviewScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double x, double y, double delta) {
-        return controls.widget().mouseWheelMove(x, y, delta);
+    public boolean mouseScrolled(double x, double y, double horizontal, double delta) {
+        return controls.widget().mouseWheelMove(x, y, horizontal, delta);
     }
 
     @Override

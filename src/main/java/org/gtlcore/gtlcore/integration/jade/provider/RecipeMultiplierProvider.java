@@ -75,7 +75,7 @@ public final class RecipeMultiplierProvider extends CapabilityBlockProvider<IRec
         }
 
         if (Double.isFinite(resolvedMultipliers.energy()) &&
-                (currentOriginRecipe == null || RecipeHelper.getInputEUt(currentOriginRecipe) > 0)) {
+                (currentOriginRecipe == null || currentOriginRecipe.getInputEUt().getTotalEU() > 0)) {
             data.putDouble(ENERGY_MULTIPLIER_TAG, resolvedMultipliers.energy());
         }
         if (Double.isFinite(durationMultiplier)) {

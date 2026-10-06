@@ -60,4 +60,17 @@ run/
 /tools/*stress*
 /CGSE_*.zip
 /CGE_*.zip
+/migration/full-server-smoke/
+/migration/full-gametest/
+/migration/full-client/
 /GTL_vs_CP_SAT_*.zip
+
+# Native publication: runtime binaries and validation outputs are release assets.
+/libs/
+/logs/
+/javac.*.args
+/hs_err_pid*.log
+/migration/validation/
+/migration/full-dedicated/
+/.kotlin/
+**/__pycache__/

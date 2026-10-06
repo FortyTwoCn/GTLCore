@@ -3,21 +3,20 @@ package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 import org.gtlcore.gtlcore.api.machine.multiblock.ParallelMachine;
 import org.gtlcore.gtlcore.common.machine.trait.MultipleRecipesLogic;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 
 import org.jetbrains.annotations.NotNull;
 
 public class WorkableElectricMultipleRecipesMachine extends WorkableElectricMultiblockMachine implements ParallelMachine {
 
-    public WorkableElectricMultipleRecipesMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    public WorkableElectricMultipleRecipesMachine(BlockEntityCreationInfo holder, Object... args) {
+        this(holder, new MultipleRecipesLogic());
     }
 
-    @Override
-    protected @NotNull RecipeLogic createRecipeLogic(Object @NotNull... args) {
-        return new MultipleRecipesLogic(this);
+    public WorkableElectricMultipleRecipesMachine(BlockEntityCreationInfo info, MultipleRecipesLogic logic) {
+        super(info, logic);
     }
 
     @NotNull

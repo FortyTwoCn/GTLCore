@@ -1,127 +1,63 @@
 package org.gtlcore.gtlcore.mixin.gtm.api.capability;
 
-import org.gtlcore.gtlcore.api.recipe.IParallelLogic;
-import org.gtlcore.gtlcore.common.data.source_tooltip.SourceTooltip;
-import org.gtlcore.gtlcore.integration.jei.RecipeChanceTooltip;
-import org.gtlcore.gtlcore.utils.TextUtil;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidParallelLogic;
+import org.gtlcore.gtlcore.api.recipe.IAdvancedContentModifier;
+import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
+import com.gregtechceu.gtceu.api.recipe.ingredient.IntProviderFluidIngredient;
+import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.AbstractMapIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import java.util.List;
 
-import com.gregtechceu.gtceu.api.capability.recipe.*;
+import com.gregtechceu.gtceu.api.capability.recipe.IRecipeCapabilityHolder;
+import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
-import com.gregtechceu.gtceu.api.recipe.content.*;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.client.TooltipsHandler;
 
-import com.lowdragmc.lowdraglib.LDLib;
-import com.lowdragmc.lowdraglib.gui.widget.TankWidget;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
-import com.google.common.primitives.Ints;
-import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
-import java.util.function.BiConsumer;
-
-import static com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability.CAP;
-
+/** Native entry points; ordinary ingredients keep GTCEu's implementation. */
 @Mixin(FluidRecipeCapability.class)
-public abstract class FluidRecipeCapabilityMixin extends RecipeCapability<FluidIngredient> {
-
-    protected FluidRecipeCapabilityMixin(String name, int color, boolean doRenderSlot, int sortIndex, IContentSerializer<FluidIngredient> serializer) {
-        super(name, color, doRenderSlot, sortIndex, serializer);
-    }
-
-    /**
-     * @author Adonis
-     * @reason 流体输入输出上限改为long
-     */
-    @Overwrite(remap = false)
-    public FluidIngredient copyWithModifier(FluidIngredient content, ContentModifier modifier) {
-        if (content.isEmpty()) {
-            return content.copy();
-        } else {
-            FluidIngredient copy = content.copy();
-            copy.setAmount(modifier.apply(copy.getAmount()).longValue());
-            return copy;
+public class FluidRecipeCapabilityMixin {
+    @Inject(method = "getMaxParallelByInput", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$longFluidInputParallel(IRecipeCapabilityHolder holder, GTRecipe recipe, int limit,
+                                          boolean tick, CallbackInfoReturnable<Integer> cir) {
+        var contents = (tick ? recipe.tickInputs : recipe.inputs).get(FluidRecipeCapability.CAP);
+        if (LongFluidParallelLogic.hasLongIngredients(contents) || LongFluidParallelLogic.hasLongInventory(holder)) {
+            cir.setReturnValue((int) LongFluidParallelLogic.getMaxParallelByInput(holder, recipe, limit, tick));
         }
     }
 
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public int limitParallel(GTRecipe recipe, IRecipeCapabilityHolder holder, int multiplier) {
-        return Ints.saturatedCast(IParallelLogic.getOutputFluidParallel(holder, recipe, recipe.getOutputContents(CAP), multiplier));
+    @Inject(method = "limitMaxParallelByOutput", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$longFluidOutputParallel(IRecipeCapabilityHolder holder, GTRecipe recipe, int limit,
+                                           boolean tick, CallbackInfoReturnable<Integer> cir) {
+        if (holder instanceof FluidRecipeCapability.ICustomParallel) return;
+        var contents = (tick ? recipe.tickOutputs : recipe.outputs).get(FluidRecipeCapability.CAP);
+        if (contents == null || contents.isEmpty()) return;
+        boolean large = LongFluidParallelLogic.hasLongIngredients(contents) || contents.stream().anyMatch(content ->
+                LongFluidIngredient.amount(FluidRecipeCapability.CAP.of(content.content())) * (double) limit > Integer.MAX_VALUE);
+        if (large) cir.setReturnValue((int) LongFluidParallelLogic.limitMaxParallelByOutput(holder, recipe, limit, tick));
     }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public int getMaxParallelRatio(IRecipeCapabilityHolder holder, GTRecipe recipe, int parallelAmount) {
-        return Ints.saturatedCast(IParallelLogic.getInputFluidParallel(holder, recipe, parallelAmount));
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    @Inject(method = "applyWidgetInfo",
-            at = @At(value = "INVOKE",
-                     target = "Lcom/lowdragmc/lowdraglib/gui/widget/TankWidget;setXEIChance(F)Lcom/lowdragmc/lowdraglib/gui/widget/TankWidget;",
-                     shift = At.Shift.AFTER),
-            remap = false,
-            require = 0)
-    private void hideAmountInXEI(CallbackInfo ci,
-                                 @Local(name = "tank") TankWidget tank,
-                                 @Local(name = "isXEI") boolean isXEI) {
-        if (isXEI) {
-            tank.setShowAmount(false);
+    @Inject(method = "copyWithModifier(Lnet/neoforged/neoforge/fluids/crafting/SizedFluidIngredient;Lcom/gregtechceu/gtceu/api/recipe/content/ContentModifier;)Lnet/neoforged/neoforge/fluids/crafting/SizedFluidIngredient;",
+            at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$modifyFluidQuantity(SizedFluidIngredient content, ContentModifier modifier,
+                                             CallbackInfoReturnable<SizedFluidIngredient> cir) {
+        if (content.ingredient() instanceof IntProviderFluidIngredient) return;
+        if (LongFluidIngredient.get(content) != null ||
+                ((Object) modifier instanceof IAdvancedContentModifier precise && precise.gtlcore$hasDivision()) ||
+                content.amount() * modifier.multiplier() + modifier.addition() > Integer.MAX_VALUE) {
+            cir.setReturnValue(LongFluidIngredient.withAmount(content,
+                    Math.max(1, IAdvancedContentModifier.applyLong(modifier, LongFluidIngredient.amount(content)))));
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
-    @ModifyArg(method = "applyWidgetInfo",
-               at = @At(value = "INVOKE",
-                        target = "Lcom/lowdragmc/lowdraglib/gui/widget/TankWidget;setOnAddedTooltips(Ljava/util/function/BiConsumer;)Lcom/lowdragmc/lowdraglib/gui/widget/TankWidget;"),
-               remap = false)
-    public BiConsumer<TankWidget, List<Component>> applyWidgetInfo(BiConsumer<TankWidget, List<Component>> onAddedTooltips,
-                                                                   @Local(name = "content") Content content,
-                                                                   @Local(name = "recipe") GTRecipe recipe,
-                                                                   @Local(name = "index") int index,
-                                                                   @Local(name = "io") IO io,
-                                                                   @Local(name = "isXEI") boolean isXEI) {
-        return (w, tooltips) -> {
-            var ingredient = FluidRecipeCapability.CAP.of(content.content);
-            if (ingredient.getStacks().length > 0) {
-                FluidStack stack = ingredient.getStacks()[0];
-                if (!isXEI) {
-                    TooltipsHandler.appendFluidTooltips(stack.getFluid(),
-                            stack.getAmount(), tooltips::add, TooltipFlag.NORMAL);
-                } else {
-                    TextUtil.appendChemicalFormulaTooltip(stack.getFluid(), tooltips);
-                    // EMI 中的来源提示在其他地方被添加过了
-                    if (!LDLib.isEmiLoaded()) {
-                        SourceTooltip.append(stack.getFluid(), tooltips::add);
-                    }
-                    TextUtil.appendIngotConversionTooltip(stack, tooltips, stack.getAmount());
-                }
-            }
-
-            RecipeChanceTooltip.add(content, ChanceLogic.OR, tooltips, io);
-            if (isTickSlot(index, io, recipe)) {
-                tooltips.add(Component.translatable("gtceu.gui.content.per_tick"));
-            }
-        };
+    @Inject(method = "getDefaultMapIngredient", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$indexMatchingFluid(Object value, CallbackInfoReturnable<List<AbstractMapIngredient>> cir) {
+        if (value instanceof SizedFluidIngredient sized && LongFluidIngredient.get(sized) != null) {
+            cir.setReturnValue(((FluidRecipeCapability) (Object) this)
+                    .getDefaultMapIngredient(LongFluidIngredient.matchingIngredient(sized)));
+        }
     }
 }

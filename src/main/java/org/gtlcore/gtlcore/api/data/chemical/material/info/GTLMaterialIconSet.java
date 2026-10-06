@@ -3,22 +3,31 @@ package org.gtlcore.gtlcore.api.data.chemical.material.info;
 import org.gtlcore.gtlcore.client.renderer.item.StereoscopicItemRenderer;
 
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconSet;
-import com.gregtechceu.gtceu.api.item.component.ICustomRenderer;
+import com.lowdragmc.lowdraglib.client.renderer.IRenderer;
+import net.minecraft.resources.ResourceLocation;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.function.Supplier;
 
 @Getter
 public class GTLMaterialIconSet extends com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconSet {
 
-    private final ICustomRenderer customRenderer;
+    private final Supplier<IRenderer> customRenderer;
 
     public GTLMaterialIconSet(@NotNull String name,
                               @Nullable com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconSet parentIconset,
                               boolean isRootIconset,
-                              ICustomRenderer customRenderer) {
-        super(name, parentIconset, isRootIconset);
+                              Supplier<IRenderer> customRenderer) {
+        this(ResourceLocation.fromNamespaceAndPath("gtceu", name), parentIconset, isRootIconset, customRenderer);
+    }
+
+    public GTLMaterialIconSet(@NotNull ResourceLocation id,
+                              @Nullable MaterialIconSet parentIconset,
+                              boolean isRootIconset,
+                              Supplier<IRenderer> customRenderer) {
+        super(id, parentIconset, isRootIconset);
         this.customRenderer = customRenderer;
     }
 
@@ -28,5 +37,6 @@ public class GTLMaterialIconSet extends com.gregtechceu.gtceu.api.data.chemical.
             false,
             () -> StereoscopicItemRenderer.INSTANCE);
 
-    public static final MaterialIconSet LIMPID = new MaterialIconSet("limpid", DULL);
+    public static final MaterialIconSet LIMPID = new MaterialIconSet(
+            ResourceLocation.fromNamespaceAndPath("gtceu", "limpid"), DULL);
 }

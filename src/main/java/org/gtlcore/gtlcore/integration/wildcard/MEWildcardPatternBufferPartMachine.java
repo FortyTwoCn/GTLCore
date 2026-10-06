@@ -8,28 +8,35 @@ import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.WildcardRecipeHandl
 import org.gtlcore.gtlcore.integration.ae2.AEUtils;
 
 import com.gregtechceu.gtceu.api.capability.recipe.*;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
+import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferRecipeHandlerTraitBase;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.slot.ItemSlot;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
+import net.minecraft.core.HolderLookup;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
 
-import com.lowdragmc.lowdraglib.gui.widget.*;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.implementations.blockentities.PatternContainerGroup;
@@ -52,20 +59,18 @@ import java.util.*;
  * Pattern buffer variant backed by one wildcard pattern.
  * <p>
  * The wildcard item is persisted. Expanded pattern slots are rebuilt at runtime, and slot-bound state is restored by
- * matching saved pattern outputs because wildcard expansion order is not stable across reloads.
+ * matching complete saved component inputs and outputs because wildcard expansion order is not stable across reloads.
  */
 public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEWildcardPatternBufferPartMachine.class, MEPatternBufferPartMachineBase.MANAGED_FIELD_HOLDER);
 
     // ========================================
     // Wildcard Pattern State
     // ========================================
 
     @Getter
-    @Persisted
-    private final ItemStackTransfer wildcardPatternSlot;
+    @SaveField
+    @SyncToClient
+    private final CustomItemStackHandler wildcardPatternSlot;
 
     private final List<IPatternDetails> expandedPatterns = new ObjectArrayList<>();
 
@@ -76,6 +81,10 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
     private final IntSet activeSlotIndices = new IntOpenHashSet();
 
     private final MEWildcardPatternBufferPersistenceHelper persistenceHelper = new MEWildcardPatternBufferPersistenceHelper();
+    private CompoundTag pendingDynamicState = new CompoundTag();
+
+    @SaveField
+    private final DynamicState wildcardDynamicState = new DynamicState();
 
     // ========================================
     // Runtime Recipe Cache
@@ -88,10 +97,10 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
     // Traits
     // ========================================
 
-    protected final WildcardRecipeHandlerTrait recipeHandler;
+    protected final MEPatternBufferRecipeHandlerTraitBase recipeHandler;
 
-    @DescSynced
-    @Persisted
+    @SyncToClient
+    @SaveField
     public boolean isHiddenTerminal = false;
 
     @Override
@@ -115,28 +124,39 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
         @Override
         public void setItemDirect(int slotIndex, ItemStack stack) {
             wildcardPatternSlot.setStackInSlot(0, stack);
-            wildcardPatternSlot.onContentsChanged(0);
-            onWildcardPatternChange();
         }
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return WildcardPatternCompatImpl.isWildcardPattern(stack);
+            return NativeWildcardPatternDecoder.isWildcardPattern(stack);
         }
     };
 
-    public MEWildcardPatternBufferPartMachine(IMachineBlockEntity holder, IO io) {
+    public MEWildcardPatternBufferPartMachine(BlockEntityCreationInfo holder, IO io) {
         super(holder, io);
 
-        this.wildcardPatternSlot = new ItemStackTransfer(1);
-        this.wildcardPatternSlot.setFilter(WildcardPatternCompatImpl::isWildcardPattern);
+        this.wildcardPatternSlot = new CustomItemStackHandler(1) {
+            @Override public void onContentsChanged(int slot) {
+                super.onContentsChanged(slot);
+                if (!isRemote() && getLevel() != null) onWildcardPatternChange();
+                markAsChanged();
+                syncDataHolder.markClientSyncFieldDirty("wildcardPatternSlot");
+            }
+        };
+        this.wildcardPatternSlot.setFilter(NativeWildcardPatternDecoder::isWildcardPattern);
 
         this.patternToSlotMap.defaultReturnValue(-1);
 
-        this.recipeHandler = new WildcardRecipeHandlerTrait(this, io);
+        this.recipeHandler = attachTrait(createRecipeHandler(io));
 
         getMainNode().addService(IGridTickable.class, new Ticker());
     }
+
+    protected MEPatternBufferRecipeHandlerTraitBase createRecipeHandler(IO io) {
+        return new WildcardRecipeHandlerTrait(this, io);
+    }
+
+    protected InternalSlot createWildcardInternalSlot(int index) { return new InternalSlot(index); }
 
     // ========================================
     // LIFECYCLE & NETWORK MANAGEMENT
@@ -146,7 +166,8 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
     public void onLoad() {
         super.onLoad();
         if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> {
+            scheduleForNextServerTick(() -> {
+                if (isRemoved()) return;
                 refreshPatterns(true);
                 needPatternSync = true;
             });
@@ -162,17 +183,23 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
     }
 
     protected void onWildcardPatternChange() {
-        if (isRemote()) return;
+        if (isRemote() || destroying) return;
 
         for (InternalSlot slot : internalSlots) {
             refundSlot(slot.getItemInventory(), slot.getFluidInventory());
         }
         AEUtils.reFunds(buffer, getMainNode().getGrid(), actionSource);
 
+        // A pattern can be changed before the delayed world-load restore runs. Refund that saved ownership too.
+        persistenceHelper.clearPatternIndex();
+        persistenceHelper.restore(recipeCacheMap, (slot, data) -> { throw new IllegalStateException("Unexpected wildcard restore slot"); },
+                this::refundPersistedSlotData);
+        pendingDynamicState = new CompoundTag();
         clearPatternData();
 
         refreshPatterns(false);
         needPatternSync = true;
+        markAsChanged();
     }
 
     private void clearPatternData() {
@@ -185,59 +212,77 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
         persistenceHelper.clearPendingRestoreData();
     }
 
-    private void clearRuntimeRecipeCache() {
+    protected void clearRuntimeRecipeCache() {
         for (int slot : activeSlotIndices) {
             removeSlotFromMap.accept(slot);
             notifyProxySlotRemoved(slot);
         }
         recipeCacheMap.clear();
+        markAsChanged();
     }
 
     private void refreshPatterns(boolean restorePersistedData) {
+        clearRuntimeRecipeCache();
+        internalSlots.clear(); expandedPatterns.clear(); patternToSlotMap.clear(); activeSlotIndices.clear();
+        persistenceHelper.clearPatternIndex();
         ItemStack wildcardStack = wildcardPatternSlot.getStackInSlot(0);
         if (!wildcardStack.isEmpty() && getLevel() != null) {
-            List<IPatternDetails> patterns = WildcardPatternCompatImpl.expandPatterns(wildcardStack, getLevel());
+            List<IPatternDetails> patterns = NativeWildcardPatternDecoder.expand(wildcardStack, getLevel());
 
-            for (int i = 0; i < patterns.size(); i++) {
-                IPatternDetails pattern = patterns.get(i);
+            for (var original : patterns) {
+                int i = internalSlots.size();
+                InternalSlot slot = createWildcardInternalSlot(i);
+                IPatternDetails pattern = realPatternHelper.processPatternWithCircuit(original.getDefinition().toStack(),
+                        slot.getCacheManager()::setCircuitCache, getLevel(), true);
+                if (pattern == null) continue;
                 expandedPatterns.add(pattern);
                 patternToSlotMap.put(pattern, i);
                 activeSlotIndices.add(i);
-                persistenceHelper.indexPattern(pattern, i);
+                persistenceHelper.indexPattern(original, i);
 
-                InternalSlot slot = new InternalSlot(i);
                 slot.setOnContentsChanged(() -> {
-                    recipeHandler.getMeFluidHandler().notifyListeners();
-                    recipeHandler.getMeItemHandler().notifyListeners();
+                    recipeHandler.notifyInputListeners();
+                    markAsChanged();
                 });
                 internalSlots.add(slot);
             }
 
-            if (restorePersistedData) {
-                persistenceHelper.restore(
-                        recipeCacheMap,
-                        (slot, slotData) -> internalSlots.get(slot).deserializeNBT(slotData),
-                        this::refundPersistedSlotData);
-            }
+        }
+        if (restorePersistedData) {
+            persistenceHelper.restore(recipeCacheMap,
+                    (slot, data) -> internalSlots.get(slot).deserializeNBT(getLevel().registryAccess(), data),
+                    this::refundPersistedSlotData);
+            pendingDynamicState = new CompoundTag();
+            markAsChanged();
         }
     }
 
     private void refundPersistedSlotData(List<CompoundTag> slotDataList) {
-        Object2LongOpenHashMap<AEItemKey> itemInventory = new Object2LongOpenHashMap<>();
-        Object2LongOpenHashMap<AEFluidKey> fluidInventory = new Object2LongOpenHashMap<>();
-
         for (CompoundTag slotData : slotDataList) {
-            AEUtils.appendPersistedInventory(slotData.getList("inventory", Tag.TAG_COMPOUND), AEItemKey::fromTag, itemInventory);
-            AEUtils.appendPersistedInventory(slotData.getList("fluidInventory", Tag.TAG_COMPOUND), AEFluidKey::fromTag, fluidInventory);
+            var items = new Object2LongOpenHashMap<AEItemKey>();
+            var fluids = new Object2LongOpenHashMap<AEFluidKey>();
+            AEUtils.loadInventory(slotData.getList("inventory", Tag.TAG_COMPOUND), data -> AEItemKey.fromTag(getLevel().registryAccess(), data), items);
+            AEUtils.loadInventory(slotData.getList("fluidInventory", Tag.TAG_COMPOUND), data -> AEFluidKey.fromTag(getLevel().registryAccess(), data), fluids);
+            refundSlot(items, fluids);
         }
-
-        refundSlot(itemInventory, fluidInventory);
     }
 
     @Override
-    public void onMachineRemoved() {
-        super.onMachineRemoved();
-        clearInventory(wildcardPatternSlot);
+    protected void appendPendingRefundsForDrop(org.gtlcore.gtlcore.integration.ae2.AERefundQueue owned, HolderLookup.Provider registries) {
+        for (var slot : persistenceHelper.pendingInventories()) {
+            var items = new Object2LongOpenHashMap<AEItemKey>();
+            var fluids = new Object2LongOpenHashMap<AEFluidKey>();
+            AEUtils.loadInventory(slot.getList("inventory", Tag.TAG_COMPOUND), data -> AEItemKey.fromTag(registries, data), items);
+            AEUtils.loadInventory(slot.getList("fluidInventory", Tag.TAG_COMPOUND), data -> AEFluidKey.fromTag(registries, data), fluids);
+            owned.appendSnapshot(items); owned.appendSnapshot(fluids);
+        }
+    }
+
+    @Override
+    public void onMachineDestroyed() {
+        destroying = true;
+        wildcardPatternSlot.dropInventoryInWorld(getLevel(), getBlockPos());
+        super.onMachineDestroyed();
     }
 
     // ========================================
@@ -252,7 +297,7 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
     }
 
     @Override
-    protected int getInternalSlotCount() {
+    public int getInternalSlotCount() {
         return internalSlots.size();
     }
 
@@ -267,7 +312,7 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
     }
 
     @Override
-    protected InternalSlot getInternalSlot(int index) {
+    public InternalSlot getInternalSlot(int index) {
         return internalSlots.get(index);
     }
 
@@ -275,74 +320,68 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
     // Persistence
     // ========================================
 
-    @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        super.saveCustomPersistedData(tag, forDrop);
-        persistenceHelper.save(
-                tag, internalSlots.size(),
-                slot -> internalSlots.get(slot).isActive(),
-                slot -> internalSlots.get(slot).serializeNBT(),
-                recipeCacheMap::containsKey,
-                recipeCacheMap);
+    private final class DynamicState implements INBTSerializable<CompoundTag> {
+        @Override public CompoundTag serializeNBT(HolderLookup.Provider registries) {
+            if (!pendingDynamicState.isEmpty()) return pendingDynamicState.copy();
+            var tag = new CompoundTag();
+            persistenceHelper.save(tag, registries, internalSlots.size(),
+                    slot -> internalSlots.get(slot).isActive(),
+                    slot -> internalSlots.get(slot).serializeNBT(registries),
+                    recipeCacheMap::containsKey, recipeCacheMap);
+            return tag;
+        }
+        @Override public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag) {
+            pendingDynamicState = tag.copy();
+            persistenceHelper.load(tag, registries);
+        }
     }
 
     @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        persistenceHelper.load(tag);
+    public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var builder = super.getPanelBuilder(data, sync, settings).addTitleBar(false);
+        var inherited = builder.leftConfigurators();
+        var hidden = SyncHandlers.bool(() -> isHiddenTerminal, value -> {
+            isHiddenTerminal = value; markAsChanged(); syncDataHolder.markClientSyncFieldDirty("isHiddenTerminal");
+        }).allowC2S();
+        sync.syncValue("wildcardHiddenTerminal", hidden);
+        var rename = sync.syncedPanel("wildcardRename", true, (manager, handler) -> {
+            var name = SyncHandlers.string(() -> customName, this::setCustomName).allowC2S();
+            manager.syncValue("wildcardCustomName", name);
+            return PopupPanel.createPopupPanel("wildcardRenamePanel", 150, 52)
+                    .child(Text.lang("gtceu.gui.pattern_buffer.set_custom_name").asWidget().pos(4, 4))
+                    .child(new TextFieldWidget().value(name).size(140, 18).pos(4, 26));
+        });
+        return builder.leftConfigurators(flow -> {
+            inherited.accept(flow);
+            flow.child(new ToggleButton().name("wildcardTerminalVisibility").size(18).value(hidden).overlay(Text.str("V"))
+                    .tooltipDynamic(t -> t.addLine(Component.translatable(hidden.getBoolValue() ?
+                            "gui.gtlcore.hidden_in_terminal" : "gui.gtlcore.visible_in_terminal"))))
+                    .child(new ButtonWidget<>().name("wildcardRenameButton").size(18).overlay(Text.str("✎"))
+                            .onMousePressed((context, button) -> { if (button != 0) return false; rename.openPanel(); return true; }));
+        });
     }
 
     @Override
-    @NotNull
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public void buildMainUI(ParentWidget<?> parent, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var online = SyncHandlers.bool(this::isOnline, null);
+        var patterns = SyncHandlers.intNumber(expandedPatterns::size, null);
+        var cached = SyncHandlers.intNumber(recipeCacheMap::size, null);
+        sync.syncValue("wildcardOnline", online); sync.syncValue("wildcardPatterns", patterns); sync.syncValue("wildcardCached", cached);
+        parent.child(new ParentWidget<>().name("wildcardMain").size(158, mainPanelHeight())
+                .child(Text.of(getDefinition().asStack().getHoverName()).asWidget().name("wildcardTitle").pos(8, 0).size(144, 20))
+                .child(Text.dynamic(() -> Component.translatable(online.getBoolValue() ?
+                        "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline")).asWidget().pos(8, 24))
+                .child(new ItemSlot().name("wildcardPatternSlot").slot(wildcardPatternSlot, 0).pos(132, 23)
+                        .background(GTGuiTextures.SLOT).overlay(GTGuiTextures.PATTERN_OVERLAY))
+                .child(Text.dynamic(() -> Component.translatable("gtceu.machine.me_wildcard_pattern_buffer.patterns",
+                        patterns.getIntValue())).asWidget().pos(8, 44))
+                .child(new PatternCycleWidget(8, 56, 142, 36, this::getAvailablePatterns).sync(sync, "wildcardExpandedPreview", this::getOffsetTimer))
+                .child(Text.dynamic(() -> Component.translatable("gtceu.machine.me_wildcard_pattern_buffer.cached",
+                        cached.getIntValue())).asWidget().pos(8, 94))
+                .child(new PatternCycleWidget(8, 106, 142, 36, this::getCachedPreviewPatterns).sync(sync, "wildcardCachedPreview", this::getOffsetTimer)));
     }
 
-    // ========================================
-    // GUI SYSTEM
-    // ========================================
-
-    @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        super.attachConfigurators(configuratorPanel);
-        // Visibility in ME Pattern Access Terminal
-        configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                org.gtlcore.gtlcore.api.gui.GuiTextures.BUTTON_VISIBLE.getSubTexture(0, 0, 1, 0.5),
-                org.gtlcore.gtlcore.api.gui.GuiTextures.BUTTON_VISIBLE.getSubTexture(0, 0.5, 1, 0.5),
-                () -> this.isHiddenTerminal, (clickData, pressed) -> this.isHiddenTerminal = pressed)
-                .setTooltipsSupplier(pressed -> List.of(
-                        Component.translatable(pressed ? "gui.gtlcore.hidden_in_terminal" : "gui.gtlcore.visible_in_terminal"))));
-    }
-
-    @Override
-    public @NotNull Widget createUIWidget() {
-        var group = new WidgetGroup(0, 0, 158, 156);
-
-        group.addWidget(new LabelWidget(8, 4,
-                () -> this.isOnline ? "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline"));
-
-        group.addWidget(new AETextInputButtonWidget(90, 4, 60, 10)
-                .setText(customName)
-                .setOnConfirm(this::setCustomName)
-                .setButtonTooltips(Component.translatable("gui.gtceu.rename.desc")));
-
-        group.addWidget(new SlotWidget(wildcardPatternSlot, 0, 70, 25)
-                .setChangeListener(this::onWildcardPatternChange)
-                .setBackground(GuiTextures.SLOT, GuiTextures.PATTERN_OVERLAY));
-
-        group.addWidget(new LabelWidget(8, 50,
-                () -> Component.translatable("gtceu.machine.me_wildcard_pattern_buffer.patterns",
-                        expandedPatterns.size()).getString()));
-
-        group.addWidget(new PatternCycleWidget(8, 62, 142, 36, () -> expandedPatterns));
-
-        group.addWidget(new LabelWidget(8, 104,
-                () -> Component.translatable("gtceu.machine.me_wildcard_pattern_buffer.cached",
-                        recipeCacheMap.size()).getString()));
-
-        group.addWidget(new PatternCycleWidget(8, 116, 142, 36, this::getCachedPreviewPatterns));
-        return group;
-    }
+    protected int mainPanelHeight() { return 142; }
 
     private List<IPatternDetails> getCachedPreviewPatterns() {
         List<IPatternDetails> patterns = new ObjectArrayList<>();
@@ -375,17 +414,9 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
 
     @Override
     public PatternContainerGroup getTerminalGroup() {
-        if (!customName.isEmpty()) {
-            return new PatternContainerGroup(
-                    AEItemKey.of(WildcardPatternCompatImpl.getWildcardPatternBufferDefinition().asStack()),
-                    Component.literal(customName),
-                    Collections.emptyList());
-        } else {
-            return new PatternContainerGroup(
-                    AEItemKey.of(WildcardPatternCompatImpl.getWildcardPatternBufferDefinition().asStack()),
-                    WildcardPatternCompatImpl.getWildcardPatternBufferDefinition().getItem().getDescription(),
-                    Collections.emptyList());
-        }
+        var icon = getDefinition().asStack();
+        return new PatternContainerGroup(AEItemKey.of(icon),
+                customName.isEmpty() ? icon.getHoverName() : Component.literal(customName), List.of());
     }
 
     // ========================================
@@ -394,11 +425,11 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
 
     @Override
     protected @NotNull WildcardMEPatternTrait createMETrait() {
-        return new WildcardMEPatternTrait(this);
+        return new WildcardMEPatternTrait();
     }
 
     @Override
-    public Pair<IMERecipeHandlerTrait<Ingredient, ItemStack>, IMERecipeHandlerTrait<FluidIngredient, FluidStack>> getMERecipeHandlerTraits() {
+    public Pair<IMERecipeHandlerTrait<net.neoforged.neoforge.common.crafting.SizedIngredient, ItemStack>, IMERecipeHandlerTrait<net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient, net.neoforged.neoforge.fluids.FluidStack>> getMERecipeHandlerTraits() {
         return Pair.of(recipeHandler.getMeItemHandler(), recipeHandler.getMeFluidHandler());
     }
 
@@ -410,17 +441,19 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
 
         @Override
         public TickingRequest getTickingRequest(IGridNode node) {
-            return new TickingRequest(5, 60, false, true);
+            return new TickingRequest(5, 60, false);
         }
 
         @Override
         public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
             if (!getMainNode().isActive()) {
+                isSleeping = true;
                 return TickRateModulation.SLEEP;
             }
 
             if (buffer.isEmpty()) {
                 if (ticksSinceLastCall >= 60) {
+                    isSleeping = true;
                     return TickRateModulation.SLEEP;
                 } else return TickRateModulation.SLOWER;
             } else {
@@ -436,13 +469,13 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
 
     protected class WildcardMEPatternTrait extends MEIOTrait implements IMEPatternTrait {
 
-        public WildcardMEPatternTrait(MEWildcardPatternBufferPartMachine machine) {
-            super(machine);
+        public WildcardMEPatternTrait() {
+            super();
         }
 
         @Override
         public MEWildcardPatternBufferPartMachine getMachine() {
-            return (MEWildcardPatternBufferPartMachine) machine;
+            return (MEWildcardPatternBufferPartMachine) super.getMachine();
         }
 
         @Override
@@ -460,8 +493,9 @@ public class MEWildcardPatternBufferPartMachine extends MEPatternBufferPartMachi
 
         @Override
         public void setSlotCacheRecipe(int index, GTRecipe recipe) {
-            if (recipe != null && recipe.recipeType != GTRecipeTypes.DUMMY_RECIPES && index >= 0 && index < internalSlots.size()) {
+            if (recipe != null && recipe.recipeType != GTRecipeTypes.DUMMY_RECIPES.get() && index >= 0 && index < internalSlots.size()) {
                 recipeCacheMap.put(index, recipe);
+                markAsChanged();
             }
         }
 

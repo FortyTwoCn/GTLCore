@@ -1,10 +1,11 @@
 package org.gtlcore.gtlcore.common.data.machines;
 
+import com.gregtechceu.gtceu.api.registry.registrate.entry.MachineEntry;
+import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.api.machine.multiblock.GTLPartAbility;
 import org.gtlcore.gtlcore.api.pattern.GTLPredicates;
 import org.gtlcore.gtlcore.api.recipe.RecipeResult;
-import org.gtlcore.gtlcore.client.renderer.machine.SpaceElevatorRenderer;
 import org.gtlcore.gtlcore.common.block.BlockMap;
 import org.gtlcore.gtlcore.common.block.GTLFusionCasingBlock;
 import org.gtlcore.gtlcore.common.data.*;
@@ -17,6 +18,10 @@ import org.gtlcore.gtlcore.utils.MachineIO;
 import org.gtlcore.gtlcore.utils.Registries;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
+import org.gtlcore.gtlcore.common.data.GTLAnimationModels;
+import static com.gregtechceu.gtceu.common.data.models.GTMachineModels.createWorkableCasingMachineModel;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
@@ -25,12 +30,13 @@ import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
-import com.gregtechceu.gtceu.api.pattern.Predicates;
+import org.gtlcore.gtlcore.api.gui.preview.NativePreviewGeometry;
+import org.gtlcore.gtlcore.api.gui.preview.NativePreviewShapes;
+import com.gregtechceu.gtceu.api.multiblock.Predicates;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.client.renderer.machine.FusionReactorRenderer;
+import com.gregtechceu.gtceu.client.renderer.machine.DynamicRenderHelper;
 import com.gregtechceu.gtceu.common.data.*;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.FusionReactorMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
@@ -51,7 +57,7 @@ import com.hepdd.gtmthings.data.CustomMachines;
 
 import java.util.*;
 
-import static com.gregtechceu.gtceu.api.pattern.Predicates.*;
+import static com.gregtechceu.gtceu.api.multiblock.Predicates.*;
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.DUMMY_RECIPES;
 import static com.gregtechceu.gtceu.common.registry.GTRegistration.REGISTRATE;
 
@@ -60,7 +66,7 @@ public class AdvancedMultiBlockMachineB {
 
     public static void init() {}
 
-    public final static MultiblockMachineDefinition PROCESSING_PLANT = REGISTRATE.multiblock("processing_plant", (holder) -> new StorageMachine(holder, 1))
+    public final static MachineEntry<MultiblockMachineDefinition> PROCESSING_PLANT = REGISTRATE.multiblock("processing_plant", (holder) -> new StorageMachine(holder, 1))
             .rotationState(RotationState.ALL)
             .recipeType(GTRecipeTypes.BENDER_RECIPES)
             .recipeType(GTRecipeTypes.COMPRESSOR_RECIPES)
@@ -93,13 +99,13 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeModifiers(GTLRecipeModifiers::processingPlantOverclock)
             .appearanceBlock(GTLBlocks.MULTI_FUNCTIONAL_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureA.PROCESSING_PLANT
-                    .where("a", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("b", Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureA.PROCESSING_PLANT.get()
+                    .where('a', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('b', Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
                             .setMinGlobalLimited(14)
-                            .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("c", Predicates.blocks(GTBlocks.CASING_BRONZE_GEARBOX.get()))
+                            .and(Predicates.autoAbilities(definition.getRecipeTypes()))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('c', Predicates.blocks(GTBlocks.CASING_BRONZE_GEARBOX.get()))
                     .build())
             .beforeWorking((machine, recipe) -> {
                 boolean isrecipe = false;
@@ -141,10 +147,10 @@ public class AdvancedMultiBlockMachineB {
                 return isrecipe;
             })
             .additionalDisplay(GTLMachines.PROCESSING_PLANT_PARALLEL)
-            .workableCasingRenderer(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
+            .workableCasingModel(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
             .register();
 
-    public final static MultiblockMachineDefinition ASSEMBLE_PLANT = REGISTRATE.multiblock("assemble_plant", (holder) -> new StorageMachine(holder, 1))
+    public final static MachineEntry<MultiblockMachineDefinition> ASSEMBLE_PLANT = REGISTRATE.multiblock("assemble_plant", (holder) -> new StorageMachine(holder, 1))
             .rotationState(RotationState.ALL)
             .recipeType(GTRecipeTypes.ASSEMBLER_RECIPES)
             .recipeType(GTRecipeTypes.CIRCUIT_ASSEMBLER_RECIPES)
@@ -158,13 +164,13 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeModifiers(GTLRecipeModifiers::processingPlantOverclock)
             .appearanceBlock(GTLBlocks.MULTI_FUNCTIONAL_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureA.ASSEMBLE_PLANT
-                    .where("a", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("b", Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureA.ASSEMBLE_PLANT.get()
+                    .where('a', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('b', Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
                             .setMinGlobalLimited(14)
-                            .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("c", Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.StainlessSteel)))
+                            .and(Predicates.autoAbilities(definition.getRecipeTypes()))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('c', Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.StainlessSteel)))
                     .build())
             .beforeWorking((machine, recipe) -> {
                 boolean isrecipe = false;
@@ -188,10 +194,10 @@ public class AdvancedMultiBlockMachineB {
                 return isrecipe;
             })
             .additionalDisplay(GTLMachines.PROCESSING_PLANT_PARALLEL)
-            .workableCasingRenderer(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
+            .workableCasingModel(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
             .register();
 
-    public final static MultiblockMachineDefinition SEPARATED_PLANT = REGISTRATE.multiblock("separated_plant", (holder) -> new StorageMachine(holder, 1))
+    public final static MachineEntry<MultiblockMachineDefinition> SEPARATED_PLANT = REGISTRATE.multiblock("separated_plant", (holder) -> new StorageMachine(holder, 1))
             .rotationState(RotationState.ALL)
             .recipeType(GTRecipeTypes.CENTRIFUGE_RECIPES)
             .recipeType(GTRecipeTypes.THERMAL_CENTRIFUGE_RECIPES)
@@ -216,13 +222,13 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeModifiers(GTLRecipeModifiers::processingPlantOverclock)
             .appearanceBlock(GTLBlocks.MULTI_FUNCTIONAL_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.SEPARATED_PLANT
-                    .where("a", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("b", Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.SEPARATED_PLANT.get()
+                    .where('a', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('b', Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
                             .setMinGlobalLimited(14)
-                            .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("c", Predicates.blocks(GTBlocks.CASING_BRONZE_PIPE.get()))
+                            .and(Predicates.autoAbilities(definition.getRecipeTypes()))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('c', Predicates.blocks(GTBlocks.CASING_BRONZE_PIPE.get()))
                     .build())
             .beforeWorking((machine, recipe) -> {
                 boolean isrecipe = false;
@@ -256,10 +262,10 @@ public class AdvancedMultiBlockMachineB {
                 return isrecipe;
             })
             .additionalDisplay(GTLMachines.PROCESSING_PLANT_PARALLEL)
-            .workableCasingRenderer(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
+            .workableCasingModel(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
             .register();
 
-    public final static MultiblockMachineDefinition MIXED_PLANT = REGISTRATE.multiblock("mixed_plant", (holder) -> new StorageMachine(holder, 1))
+    public final static MachineEntry<MultiblockMachineDefinition> MIXED_PLANT = REGISTRATE.multiblock("mixed_plant", (holder) -> new StorageMachine(holder, 1))
             .rotationState(RotationState.ALL)
             .recipeType(GTRecipeTypes.CHEMICAL_RECIPES)
             .recipeType(GTRecipeTypes.MIXER_RECIPES)
@@ -278,13 +284,13 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeModifiers(GTLRecipeModifiers::processingPlantOverclock)
             .appearanceBlock(GTLBlocks.MULTI_FUNCTIONAL_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.MIXED_PLANT
-                    .where("a", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("b", Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.MIXED_PLANT.get()
+                    .where('a', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('b', Predicates.blocks(GTLBlocks.MULTI_FUNCTIONAL_CASING.get())
                             .setMinGlobalLimited(14)
-                            .or(Predicates.autoAbilities(definition.getRecipeTypes()))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("c", Predicates.blocks(GTBlocks.CASING_STEEL_PIPE.get()))
+                            .and(Predicates.autoAbilities(definition.getRecipeTypes()))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('c', Predicates.blocks(GTBlocks.CASING_STEEL_PIPE.get()))
                     .build())
             .beforeWorking((machine, recipe) -> {
                 boolean isrecipe = false;
@@ -312,10 +318,10 @@ public class AdvancedMultiBlockMachineB {
                 return isrecipe;
             })
             .additionalDisplay(GTLMachines.PROCESSING_PLANT_PARALLEL)
-            .workableCasingRenderer(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
+            .workableCasingModel(GTLCore.id("block/multi_functional_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
             .register();
 
-    public final static MultiblockMachineDefinition WEATHER_CONTROL = REGISTRATE.multiblock("weather_control", WorkableElectricMultiblockMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> WEATHER_CONTROL = REGISTRATE.multiblock("weather_control", WorkableElectricMultiblockMachine::new)
             .rotationState(RotationState.NON_Y_AXIS)
             .allowExtendedFacing(false)
             .recipeType(GTLRecipeTypes.WEATHER_CONTROL_RECIPES)
@@ -325,18 +331,18 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.weather_control")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(new OverclockingLogic(1, 1, false)))
+            .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.create(1, 1, false)))
             .appearanceBlock(GTBlocks.STEEL_HULL)
-            .pattern(definition -> AdvancedMultiBlockMachineStructureB.WEATHER_CONTROL
-                    .where("A", Predicates.blocks(GTBlocks.STEEL_HULL.get())
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(1)))
-                    .where("B", Predicates.blocks(Blocks.IRON_BLOCK))
-                    .where("C", Predicates.blocks(Blocks.LIGHTNING_ROD))
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where(" ", Predicates.any())
+            .pattern(definition -> AdvancedMultiBlockMachineStructureB.WEATHER_CONTROL.get()
+                    .where('A', Predicates.blocks(GTBlocks.STEEL_HULL.get())
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(1)))
+                    .where('B', Predicates.blocks(Blocks.IRON_BLOCK))
+                    .where('C', Predicates.blocks(Blocks.LIGHTNING_ROD))
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where(' ', Predicates.any())
                     .build())
-            .shapeInfo(controller -> MultiblockShapeInfo.builder()
+            .onRegister(controller -> NativePreviewShapes.register(controller, () -> List.of(NativePreviewGeometry.visualBuilder()
                     .aisle("AAA", " A ", " A ", "   ", "   ", "   ", "   ")
                     .aisle("AAA", "ABA", "ABA", " B ", " B ", " B ", " C ")
                     .aisle("A~A", " A ", " A ", "   ", "   ", "   ", "   ")
@@ -345,7 +351,7 @@ public class AdvancedMultiBlockMachineB {
                     .where('B', Blocks.IRON_BLOCK)
                     .where('C', Blocks.LIGHTNING_ROD.defaultBlockState().setValue(DirectionalBlock.FACING, Direction.UP))
                     .where(' ', Blocks.AIR)
-                    .build())
+                    .build(controller))))
             .afterWorking(machine -> {
                 Level level = machine.self().getLevel();
                 if (level instanceof ServerLevel serverLevel) {
@@ -361,10 +367,10 @@ public class AdvancedMultiBlockMachineB {
                     }
                 }
             })
-            .workableCasingRenderer(GTCEu.id("block/casings/steam/steel/side"), GTCEu.id("block/multiblock/gcym/large_maceration_tower"))
+            .workableCasingModel(GTCEu.id("block/casings/steam/steel/side"), GTCEu.id("block/multiblock/gcym/large_maceration_tower"))
             .register();
 
-    public final static MultiblockMachineDefinition NANO_FORGE_1 = REGISTRATE.multiblock("nano_forge_1", (holder) -> new StorageMachine(holder, 64))
+    public final static MachineEntry<MultiblockMachineDefinition> NANO_FORGE_1 = REGISTRATE.multiblock("nano_forge_1", (holder) -> new StorageMachine(holder, 64))
             .rotationState(RotationState.NON_Y_AXIS)
             .allowExtendedFacing(false)
             .recipeType(GTLRecipeTypes.NANO_FORGE_RECIPES)
@@ -375,20 +381,20 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.nano_forge")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .recipeModifiers((machine, recipe, params, result) -> GTLRecipeModifiers.nanoForgeOverclock(machine, recipe, params, result, 1))
+            .recipeModifiers((machine, recipe) -> GTLRecipeModifiers.nanoForgeOverclock(machine, recipe, 1))
             .appearanceBlock(GTLBlocks.NAQUADAH_ALLOY_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.NANO_FORGE_1
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("B", Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get()))
-                    .where("A", Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get())
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS))
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS))
-                            .or(Predicates.abilities(PartAbility.INPUT_LASER)))
-                    .where("C", Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Ruridit)))
-                    .where(" ", Predicates.any())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.NANO_FORGE_1.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('B', Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get()))
+                    .where('A', Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get())
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS))
+                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS))
+                            .and(Predicates.abilities(PartAbility.INPUT_LASER)))
+                    .where('C', Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Ruridit)))
+                    .where(' ', Predicates.any())
                     .build())
-            .additionalDisplay((controller, components) -> {
+            .additionalDisplay(org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays.syncedLines((controller, components) -> {
                 if (controller.isFormed() && controller instanceof StorageMachine machine) {
                     if (Objects.equals(Registries.getItemId(machine.getMachineStorageItem()), "gtceu:carbon_nanoswarm")) {
                         components.add(Component.translatable("gtceu.multiblock.parallel", Component.literal(String.valueOf(Math.min((machine.getMachineStorageItem().getCount()), 64))).withStyle(ChatFormatting.DARK_PURPLE)).withStyle(ChatFormatting.GRAY));
@@ -396,11 +402,11 @@ public class AdvancedMultiBlockMachineB {
                         components.add(Component.translatable("message.gtlcore.need_carbon_nano_swarm_red").withStyle(ChatFormatting.RED));
                     }
                 }
-            })
-            .workableCasingRenderer(GTLCore.id("block/casings/hyper_mechanical_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
+            }))
+            .workableCasingModel(GTLCore.id("block/casings/hyper_mechanical_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
             .register();
 
-    public final static MultiblockMachineDefinition NANO_FORGE_2 = REGISTRATE.multiblock("nano_forge_2", (holder) -> new StorageMachine(holder, 64))
+    public final static MachineEntry<MultiblockMachineDefinition> NANO_FORGE_2 = REGISTRATE.multiblock("nano_forge_2", (holder) -> new StorageMachine(holder, 64))
             .rotationState(RotationState.NON_Y_AXIS)
             .allowExtendedFacing(false)
             .recipeType(GTLRecipeTypes.NANO_FORGE_RECIPES)
@@ -412,21 +418,21 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.nano_forge")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .recipeModifiers((machine, recipe, params, result) -> GTLRecipeModifiers.nanoForgeOverclock(machine, recipe, params, result, 2))
+            .recipeModifiers((machine, recipe) -> GTLRecipeModifiers.nanoForgeOverclock(machine, recipe, 2))
             .appearanceBlock(GTLBlocks.NAQUADAH_ALLOY_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.NANO_FORGE_2
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("A", Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get()))
-                    .where("C", Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get())
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS))
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS))
-                            .or(Predicates.abilities(PartAbility.INPUT_LASER)))
-                    .where("B", Predicates.blocks(GTBlocks.CASING_ASSEMBLY_LINE.get()))
-                    .where("D", Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Ruridit)))
-                    .where(" ", Predicates.any())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.NANO_FORGE_2.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('A', Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get()))
+                    .where('C', Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get())
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS))
+                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS))
+                            .and(Predicates.abilities(PartAbility.INPUT_LASER)))
+                    .where('B', Predicates.blocks(GTBlocks.CASING_ASSEMBLY_LINE.get()))
+                    .where('D', Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Ruridit)))
+                    .where(' ', Predicates.any())
                     .build())
-            .additionalDisplay((controller, components) -> {
+            .additionalDisplay(org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays.syncedLines((controller, components) -> {
                 if (controller.isFormed() && controller instanceof StorageMachine machine) {
                     if (Objects.equals(Registries.getItemId(machine.getMachineStorageItem()), "gtceu:neutronium_nanoswarm")) {
                         components.add(Component.translatable("gtceu.multiblock.parallel", Component.literal(String.valueOf(Math.min((machine.getMachineStorageItem().getCount()), 64))).withStyle(ChatFormatting.DARK_PURPLE)).withStyle(ChatFormatting.GRAY));
@@ -434,11 +440,11 @@ public class AdvancedMultiBlockMachineB {
                         components.add(Component.translatable("message.gtlcore.need_neutronium_nano_swarm_red").withStyle(ChatFormatting.RED));
                     }
                 }
-            })
-            .workableCasingRenderer(GTLCore.id("block/casings/hyper_mechanical_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
+            }))
+            .workableCasingModel(GTLCore.id("block/casings/hyper_mechanical_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
             .register();
 
-    public final static MultiblockMachineDefinition NANO_FORGE_3 = REGISTRATE.multiblock("nano_forge_3", (holder) -> new StorageMachine(holder, 64))
+    public final static MachineEntry<MultiblockMachineDefinition> NANO_FORGE_3 = REGISTRATE.multiblock("nano_forge_3", (holder) -> new StorageMachine(holder, 64))
             .rotationState(RotationState.NON_Y_AXIS)
             .allowExtendedFacing(false)
             .recipeType(GTLRecipeTypes.NANO_FORGE_RECIPES)
@@ -451,21 +457,21 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.nano_forge")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .recipeModifiers((machine, recipe, params, result) -> GTLRecipeModifiers.nanoForgeOverclock(machine, recipe, params, result, 3))
+            .recipeModifiers((machine, recipe) -> GTLRecipeModifiers.nanoForgeOverclock(machine, recipe, 3))
             .appearanceBlock(GTLBlocks.NAQUADAH_ALLOY_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.NANO_FORGE_3
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("A", Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get()))
-                    .where("D", Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get())
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS))
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS))
-                            .or(Predicates.abilities(PartAbility.INPUT_LASER)))
-                    .where("B", Predicates.blocks(GTLBlocks.ADVANCED_ASSEMBLY_LINE_UNIT.get()))
-                    .where("C", Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Ruridit)))
-                    .where(" ", Predicates.any())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.NANO_FORGE_3.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('A', Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get()))
+                    .where('D', Predicates.blocks(GTLBlocks.NAQUADAH_ALLOY_CASING.get())
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS))
+                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS))
+                            .and(Predicates.abilities(PartAbility.INPUT_LASER)))
+                    .where('B', Predicates.blocks(GTLBlocks.ADVANCED_ASSEMBLY_LINE_UNIT.get()))
+                    .where('C', Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Ruridit)))
+                    .where(' ', Predicates.any())
                     .build())
-            .additionalDisplay((controller, components) -> {
+            .additionalDisplay(org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays.syncedLines((controller, components) -> {
                 if (controller.isFormed() && controller instanceof StorageMachine machine) {
                     if (Objects.equals(Registries.getItemId(machine.getMachineStorageItem()), "gtceu:draconium_nanoswarm")) {
                         components.add(Component.translatable("gtceu.multiblock.parallel", Component.literal(String.valueOf(Math.min((machine.getMachineStorageItem().getCount()), 64))).withStyle(ChatFormatting.DARK_PURPLE)).withStyle(ChatFormatting.GRAY));
@@ -473,11 +479,11 @@ public class AdvancedMultiBlockMachineB {
                         components.add(Component.translatable("message.gtlcore.need_dragon_nano_swarm_red").withStyle(ChatFormatting.RED));
                     }
                 }
-            })
-            .workableCasingRenderer(GTLCore.id("block/casings/hyper_mechanical_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
+            }))
+            .workableCasingModel(GTLCore.id("block/casings/hyper_mechanical_casing"), GTCEu.id("block/multiblock/gcym/large_assembler"))
             .register();
 
-    public final static MultiblockMachineDefinition ISA_MILL = REGISTRATE.multiblock("isa_mill", (holder) -> new StorageMachine(holder, 1))
+    public final static MachineEntry<MultiblockMachineDefinition> ISA_MILL = REGISTRATE.multiblock("isa_mill", org.gtlcore.gtlcore.common.machine.multiblock.electric.IsaMillMachine::new)
             .rotationState(RotationState.ALL)
             .recipeType(GTLRecipeTypes.ISA_MILL_RECIPES)
             .tooltips(Component.translatable("gtceu.machine.isa_mill.tooltip.0"))
@@ -486,44 +492,24 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.isa_mill")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .recipeModifier((machine, recipe, params, result) -> {
-                if (machine instanceof StorageMachine storageMachine) {
-                    ItemStack item = storageMachine.getMachineStorageItem();
-                    int tier = switch (Registries.getItemId(item)) {
-                        case "kubejs:grindball_aluminium" -> 2;
-                        case "kubejs:grindball_soapstone" -> 1;
-                        default -> 0;
-                    };
-                    if (tier == recipe.data.getInt("grindball")) {
-                        int damage = item.getDamageValue();
-                        if (damage < item.getMaxDamage()) {
-                            item.setDamageValue(damage + 1);
-                            storageMachine.setMachineStorageItem(item);
-                        } else {
-                            storageMachine.setMachineStorageItem(new ItemStack(Items.AIR));
-                        }
-                        return RecipeHelper.applyOverclock(OverclockingLogic.PERFECT_OVERCLOCK_SUBTICK, recipe, storageMachine.getOverclockVoltage(), params, result);
-                    }
-                }
-                return null;
-            })
+            .recipeModifier(org.gtlcore.gtlcore.common.machine.multiblock.electric.IsaMillMachine::recipeModifier)
             .appearanceBlock(() -> Registries.getBlock("kubejs:inconel_625_casing"))
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.ISA_MILL
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("B", Predicates.blocks(Registries.getBlock("kubejs:inconel_625_casing"))
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(4))
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.MUFFLER).setExactLimit(1)))
-                    .where("C", Predicates.blocks(Registries.getBlock("kubejs:inconel_625_gearbox")))
-                    .where("A", Predicates.blocks(Registries.getBlock("kubejs:inconel_625_pipe")))
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.ISA_MILL.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('B', Predicates.blocks(Registries.getBlock("kubejs:inconel_625_casing"))
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(4))
+                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.MUFFLER).setExactLimit(1)))
+                    .where('C', Predicates.blocks(Registries.getBlock("kubejs:inconel_625_gearbox")))
+                    .where('A', Predicates.blocks(Registries.getBlock("kubejs:inconel_625_pipe")))
                     .build())
-            .workableCasingRenderer(new ResourceLocation("kubejs:block/inconel_625_casing"), GTCEu.id("block/multiblock/gcym/large_maceration_tower"))
+            .workableCasingModel(ResourceLocation.parse("kubejs:block/inconel_625_casing"), GTCEu.id("block/multiblock/gcym/large_maceration_tower"))
             .register();
 
-    public static final MultiblockMachineDefinition NEUTRON_ACTIVATOR = REGISTRATE
+    public static final MachineEntry<MultiblockMachineDefinition> NEUTRON_ACTIVATOR = REGISTRATE
             .multiblock("neutron_activator", NeutronActivatorMachine::new)
             .rotationState(RotationState.NON_Y_AXIS)
             .tooltips(Component.translatable("gtceu.machine.neutron_activator.tooltip.0"))
@@ -540,33 +526,33 @@ public class AdvancedMultiBlockMachineB {
                     Component.translatable("gtceu.neutron_activator")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeTypes(GTLRecipeTypes.NEUTRON_ACTIVATOR_RECIPES)
-            .recipeModifiers(((machine, recipe, params, result) -> NeutronActivatorMachine.recipeModifier(machine, recipe)))
+            .recipeModifiers(NeutronActivatorMachine::recipeModifier)
             .appearanceBlock(GTBlocks.CASING_STAINLESS_CLEAN)
-            .pattern(definition -> AdvancedMultiBlockMachineStructureB.ISA_MILL_2
+            .pattern(definition -> AdvancedMultiBlockMachineStructureB.ISA_MILL_2.get()
                     .where('G', controller(blocks(definition.getBlock())))
                     .where('A', blocks(GTBlocks.CASING_STAINLESS_CLEAN.get())
-                            .or(blocks(GTLMachines.NEUTRON_SENSOR.get()).setMaxGlobalLimited(1))
-                            .or(abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(1))
-                            .or(abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(2))
-                            .or(abilities(GTLPartAbility.NEUTRON_ACCELERATOR).setMaxGlobalLimited(2))
-                            .or(abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1))
-                            .or(abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                            .and(blocks(GTLMachines.NEUTRON_SENSOR.getBlock()).setMaxGlobalLimited(1))
+                            .and(abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(1))
+                            .and(abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(2))
+                            .and(abilities(GTLPartAbility.NEUTRON_ACCELERATOR).setMaxGlobalLimited(2))
+                            .and(abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1))
+                            .and(abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
                     .where('B', frames(GTMaterials.Tungsten))
                     .where('C', blocks(GTBlocks.CASING_STAINLESS_CLEAN.get())
-                            .or(abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(1))
-                            .or(abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(2)))
+                            .and(abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(1))
+                            .and(abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(2)))
                     .where('D', blocks(GTLBlocks.PROCESS_MACHINE_CASING.get()))
                     .where('E', blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
                     .where('F', GTLPredicates.countBlock("SpeedPipe",
                             Registries.getBlock("kubejs:speeding_pipe")))
                     .where(' ', any())
                     .build())
-            .workableCasingRenderer(
+            .workableCasingModel(
                     GTCEu.id("block/casings/solid/machine_casing_clean_stainless_steel"),
                     GTCEu.id("block/multiblock/fusion_reactor"))
             .register();
 
-    public final static MultiblockMachineDefinition HEAT_EXCHANGER = REGISTRATE
+    public final static MachineEntry<MultiblockMachineDefinition> HEAT_EXCHANGER = REGISTRATE
             .multiblock("heat_exchanger", HeatExchangerMachine::new)
             .langValue("Heat Exchanger")
             .tooltips(Component.translatable("gtceu.machine.heat_exchanger.tooltip.0"))
@@ -577,24 +563,24 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .rotationState(RotationState.ALL)
             .recipeType(GTLRecipeTypes.HEAT_EXCHANGER_RECIPES)
-            .recipeModifiers((machine, recipe, params, result) -> HeatExchangerMachine.recipeModifier(machine, recipe))
+            .recipeModifiers(HeatExchangerMachine::recipeModifier)
             .appearanceBlock(GTBlocks.CASING_TUNGSTENSTEEL_ROBUST)
-            .pattern(definition -> AdvancedMultiBlockMachineStructureB.HEAT_EXCHANGER
-                    .where('S', controller(blocks(definition.get())))
+            .pattern(definition -> AdvancedMultiBlockMachineStructureB.HEAT_EXCHANGER.get()
+                    .where('S', controller(blocks(definition.getBlock())))
                     .where('A',
                             blocks(GTBlocks.CASING_TUNGSTENSTEEL_ROBUST.get()).setMinGlobalLimited(98)
-                                    .or(autoAbilities(definition.getRecipeTypes()))
-                                    .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                                    .and(autoAbilities(definition.getRecipeTypes()))
+                                    .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
                     .where('C', blocks(GTBlocks.CASING_TUNGSTENSTEEL_PIPE.get()))
                     .where('B', blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
                     .where('D', blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.HSSG)))
                     .where(' ', any())
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_robust_tungstensteel"),
+            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_robust_tungstensteel"),
                     GTCEu.id("block/multiblock/implosion_compressor"))
             .register();
 
-    public static final MultiblockMachineDefinition[] FLUID_DRILLING_RIG = GTMachines.registerTieredMultis(
+    public static final MachineEntry<MultiblockMachineDefinition>[] FLUID_DRILLING_RIG = GTMachineUtils.registerTieredMultis(REGISTRATE, 
             "fluid_drilling_rig", INFFluidDrillMachine::new, (tier, builder) -> builder
                     .rotationState(RotationState.ALL)
                     .langValue("%s Fluid Drilling Rig %s".formatted(GTValues.VLVH[tier], GTValues.VLVT[tier]))
@@ -609,22 +595,22 @@ public class AdvancedMultiBlockMachineB {
                                     FormattingUtil.formatNumbers(INFFluidDrillMachine.getRigMultiplier(tier) * 1.5)))
                     .tooltipBuilder(GTLMachines.GTL_ADD)
                     .appearanceBlock(() -> INFFluidDrillMachine.getCasingState(tier))
-                    .pattern((definition) -> AdvancedMultiBlockMachineStructureB.HEAT_EXCHANGER_2
-                            .where('S', controller(blocks(definition.get())))
+                    .pattern((definition) -> AdvancedMultiBlockMachineStructureB.HEAT_EXCHANGER_2.get()
+                            .where('S', controller(blocks(definition.getBlock())))
                             .where('X', blocks(INFFluidDrillMachine.getCasingState(tier)).setMinGlobalLimited(3)
-                                    .or(abilities(PartAbility.INPUT_ENERGY).setMinGlobalLimited(1)
+                                    .and(abilities(PartAbility.INPUT_ENERGY).setMinGlobalLimited(1)
                                             .setMaxGlobalLimited(2))
-                                    .or(abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(1)))
+                                    .and(abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(1)))
                             .where('C', blocks(INFFluidDrillMachine.getCasingState(tier)))
                             .where('F', blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Ruridit)))
                             .where('#', any())
                             .build())
-                    .workableCasingRenderer(GTLCore.id("block/casings/iridium_casing"),
+                    .workableCasingModel(GTLCore.id("block/casings/iridium_casing"),
                             GTCEu.id("block/multiblock/fluid_drilling_rig"))
                     .register(),
             GTValues.ZPM);
 
-    public final static MultiblockMachineDefinition ADVANCED_ASSEMBLY_LINE = REGISTRATE
+    public final static MachineEntry<MultiblockMachineDefinition> ADVANCED_ASSEMBLY_LINE = REGISTRATE
             .multiblock("advanced_assembly_line", AdvancedAssemblyLineMachine::new)
             .rotationState(RotationState.ALL)
             .recipeType(GTRecipeTypes.ASSEMBLY_LINE_RECIPES)
@@ -637,27 +623,27 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .recipeModifier(AdvancedAssemblyLineMachine::recipeModifier)
             .appearanceBlock(GTBlocks.CASING_STEEL_SOLID)
-            .pattern(definition -> AdvancedMultiBlockMachineStructureB.ADVANCED_ASSEMBLY_LINE
-                    .where("S", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("F", Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get())
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(4))
-                            .or(Predicates.abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1)))
-                    .where("O", Predicates.abilities(PartAbility.EXPORT_ITEMS).addTooltips(Component.translatable("gtceu.multiblock.pattern.location_end")))
-                    .where("Y", Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get())
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2)))
-                    .where("I", Predicates.blocks(GTMachines.ITEM_IMPORT_BUS[0].get()).or(Predicates.blocks(CustomMachines.HUGE_ITEM_IMPORT_BUS[0].get())))
-                    .where("G", Predicates.blocks(GTBlocks.CASING_GRATE.get()))
-                    .where("D", Predicates.blocks(GTBlocks.CASING_GRATE.get())
-                            .or(Predicates.abilities(PartAbility.OPTICAL_DATA_RECEPTION).setExactLimit(1)))
-                    .where("A", Predicates.blocks(GTBlocks.CASING_ASSEMBLY_CONTROL.get()))
-                    .where("R", Predicates.blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
-                    .where("T", GTLPredicates.countBlock("Unit", GTLBlocks.ADVANCED_ASSEMBLY_LINE_UNIT.get()))
-                    .where("#", Predicates.any())
+            .pattern(definition -> AdvancedMultiBlockMachineStructureB.ADVANCED_ASSEMBLY_LINE.get()
+                    .where('S', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('F', Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get())
+                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(4))
+                            .and(Predicates.abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1)))
+                    .where('O', Predicates.abilities(PartAbility.EXPORT_ITEMS).addTooltips(Component.translatable("gtceu.multiblock.pattern.location_end")))
+                    .where('Y', Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get())
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2)))
+                    .where('I', Predicates.blocks(GTMachines.ITEM_IMPORT_BUS[0].getBlock()).and(Predicates.blocks(CustomMachines.HUGE_ITEM_IMPORT_BUS[0].getBlock())))
+                    .where('G', Predicates.blocks(GTBlocks.CASING_GRATE.get()))
+                    .where('D', Predicates.blocks(GTBlocks.CASING_GRATE.get())
+                            .and(Predicates.abilities(PartAbility.OPTICAL_DATA_RECEPTION).setExactLimit(1)))
+                    .where('A', Predicates.blocks(GTBlocks.CASING_ASSEMBLY_CONTROL.get()))
+                    .where('R', Predicates.blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
+                    .where('T', GTLPredicates.countBlock("Unit", GTLBlocks.ADVANCED_ASSEMBLY_LINE_UNIT.get()))
+                    .where('#', Predicates.any())
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_solid_steel"), GTCEu.id("block/multiblock/assembly_line"))
+            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_solid_steel"), GTCEu.id("block/multiblock/assembly_line"))
             .register();
 
-    public final static MultiblockMachineDefinition FISSION_REACTOR = REGISTRATE.multiblock("fission_reactor", FissionReactorMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> FISSION_REACTOR = REGISTRATE.multiblock("fission_reactor", FissionReactorMachine::new)
             .rotationState(RotationState.NON_Y_AXIS)
             .allowExtendedFacing(false)
             .recipeType(GTLRecipeTypes.FISSION_REACTOR_RECIPES)
@@ -680,25 +666,25 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.fission_reactor")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .recipeModifier((machine, recipe, params, result) -> FissionReactorMachine.recipeModifier(machine, recipe))
+            .recipeModifier(FissionReactorMachine::recipeModifier)
             .appearanceBlock(GTLBlocks.FISSION_REACTOR_CASING)
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.FISSION_REACTOR
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("A", Predicates.blocks(GTLBlocks.FISSION_REACTOR_CASING.get())
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(1)))
-                    .where("B", Predicates.blocks(GTBlocks.CASING_LAMINATED_GLASS.get()).or(Predicates.blocks(GTLBlocks.FISSION_REACTOR_CASING.get())))
-                    .where("C", Predicates.air().or(GTLPredicates.countBlock("FuelAssembly", GTLBlocks.FISSION_FUEL_ASSEMBLY.get()))
-                            .or(GTLPredicates.countBlock("Cooler", GTLBlocks.COOLER.get())))
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.FISSION_REACTOR.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('A', Predicates.blocks(GTLBlocks.FISSION_REACTOR_CASING.get())
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(1)))
+                    .where('B', Predicates.blocks(GTBlocks.CASING_LAMINATED_GLASS.get()).and(Predicates.blocks(GTLBlocks.FISSION_REACTOR_CASING.get())))
+                    .where('C', Predicates.air().and(GTLPredicates.countBlock("FuelAssembly", GTLBlocks.FISSION_FUEL_ASSEMBLY.get()))
+                            .and(GTLPredicates.countBlock("Cooler", GTLBlocks.COOLER.get())))
                     .build())
-            .workableCasingRenderer(GTLCore.id("block/casings/fission_reactor_casing"), GTCEu.id("block/multiblock/fusion_reactor"))
+            .workableCasingModel(GTLCore.id("block/casings/fission_reactor_casing"), GTCEu.id("block/multiblock/fusion_reactor"))
             .register();
 
-    public final static MultiblockMachineDefinition SPACE_ELEVATOR = REGISTRATE.multiblock("space_elevator", SpaceElevatorMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> SPACE_ELEVATOR = REGISTRATE.multiblock("space_elevator", SpaceElevatorMachine::new)
             .rotationState(RotationState.NON_Y_AXIS)
             .allowExtendedFacing(false)
             .recipeType(GTLRecipeTypes.SPACE_ELEVATOR_RECIPES)
@@ -709,35 +695,36 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.space_elevator")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(new OverclockingLogic(1, 4, false)))
+            .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.create(1, 4, false)))
             .appearanceBlock(GTLBlocks.SPACE_ELEVATOR_MECHANICAL_CASING)
-            .pattern(definition -> AdvancedMultiBlockMachineStructureB.SPACE_ELEVATOR
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("X", Predicates.blocks(GTLBlocks.SPACE_ELEVATOR_MECHANICAL_CASING.get())
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.COMPUTATION_DATA_RECEPTION).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("E", Predicates.blocks(GTLBlocks.SPACE_ELEVATOR_SUPPORT.get()))
-                    .where("H", Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Neutronium)))
-                    .where("F", Predicates.blocks(Registries.getBlock("kubejs:space_elevator_internal_support")))
-                    .where("C", GTLPredicates.tierCasings(BlockMap.sepmMap, "SEPMTier"))
-                    .where("A", Predicates.blocks(Registries.getBlock("kubejs:high_strength_concrete")))
-                    .where("D", Predicates.blocks(GTLBlocks.SPACE_ELEVATOR_MECHANICAL_CASING.get()))
-                    .where("M", Predicates.blocks(GTLBlocks.POWER_CORE.get()))
-                    .where("G", Predicates.blocks(Registries.getBlock("kubejs:module_base")))
-                    .where("V", Predicates.any().or(Predicates.blocks(Registries.getBlock("kubejs:module_connector")).setPreviewCount(1)))
-                    .where("-", Predicates.air())
-                    .where(" ", Predicates.any())
+            .pattern(definition -> AdvancedMultiBlockMachineStructureB.SPACE_ELEVATOR.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('X', Predicates.blocks(GTLBlocks.SPACE_ELEVATOR_MECHANICAL_CASING.get())
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.COMPUTATION_DATA_RECEPTION).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('E', Predicates.blocks(GTLBlocks.SPACE_ELEVATOR_SUPPORT.get()))
+                    .where('H', Predicates.blocks(ChemicalHelper.getBlock(TagPrefix.frameGt, GTMaterials.Neutronium)))
+                    .where('F', Predicates.blocks(Registries.getBlock("kubejs:space_elevator_internal_support")))
+                    .where('C', GTLPredicates.tierCasings(BlockMap.sepmMap, "SEPMTier"))
+                    .where('A', Predicates.blocks(Registries.getBlock("kubejs:high_strength_concrete")))
+                    .where('D', Predicates.blocks(GTLBlocks.SPACE_ELEVATOR_MECHANICAL_CASING.get()))
+                    .where('M', Predicates.blocks(GTLBlocks.POWER_CORE.get()))
+                    .where('G', Predicates.blocks(Registries.getBlock("kubejs:module_base")))
+                    .where('V', Predicates.any().and(Predicates.blocks(Registries.getBlock("kubejs:module_connector")).setPreviewCount(1)))
+                    .where('-', Predicates.air())
+                    .where(' ', Predicates.any())
                     .build())
-            .renderer(SpaceElevatorRenderer::new)
-            .hasTESR(true)
+            .modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE)
+            .model(GTLAnimationModels.spaceElevator())
+            .hasBER(true)
             .register();
 
-    public final static MultiblockMachineDefinition SLAUGHTERHOUSE = REGISTRATE.multiblock("slaughterhouse", SlaughterhouseMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> SLAUGHTERHOUSE = REGISTRATE.multiblock("slaughterhouse", SlaughterhouseMachine::new)
             .rotationState(RotationState.NON_Y_AXIS)
             .allowExtendedFacing(false)
-            .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(new OverclockingLogic(1, 4, false)))
+            .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.create(1, 4, false)))
             .appearanceBlock(GTBlocks.CASING_STEEL_SOLID)
             .recipeType(GTLRecipeTypes.SLAUGHTERHOUSE_RECIPES)
             .tooltips(Component.translatable("gtceu.machine.slaughterhouse.tooltip.0"))
@@ -749,23 +736,23 @@ public class AdvancedMultiBlockMachineB {
             .tooltips(Component.translatable("gtceu.machine.available_recipe_map_1.tooltip",
                     Component.translatable("gtceu.slaughterhouse")))
             .tooltipBuilder(GTLMachines.GTL_ADD)
-            .pattern(definition -> AdvancedMultiBlockMachineStructureB.SLAUGHTERHOUSE
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("A", Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get())
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
-                            .or(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(4))
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("B", Predicates.blocks(GTBlocks.CASING_TEMPERED_GLASS.get()))
-                    .where("C", Predicates.blocks(GTBlocks.CASING_STEEL_GEARBOX.get()))
-                    .where("D", Predicates.blocks(Blocks.IRON_BARS))
-                    .where("E", Predicates.blocks(GTBlocks.FIREBOX_STEEL.get()))
-                    .where(" ", Predicates.air())
+            .pattern(definition -> AdvancedMultiBlockMachineStructureB.SLAUGHTERHOUSE.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('A', Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get())
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
+                            .and(Predicates.abilities(PartAbility.EXPORT_ITEMS).setMaxGlobalLimited(4))
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('B', Predicates.blocks(GTBlocks.CASING_TEMPERED_GLASS.get()))
+                    .where('C', Predicates.blocks(GTBlocks.CASING_STEEL_GEARBOX.get()))
+                    .where('D', Predicates.blocks(Blocks.IRON_BARS))
+                    .where('E', Predicates.blocks(GTBlocks.FIREBOX_STEEL.get()))
+                    .where(' ', Predicates.air())
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/solid/machine_casing_solid_steel"), GTCEu.id("block/multiblock/gcym/large_cutter"))
+            .workableCasingModel(GTCEu.id("block/casings/solid/machine_casing_solid_steel"), GTCEu.id("block/multiblock/gcym/large_cutter"))
             .register();
 
-    public static final MultiblockMachineDefinition[] FUSION_REACTOR = GTMachines.registerTieredMultis("fusion_reactor",
+    public static final MachineEntry<MultiblockMachineDefinition>[] FUSION_REACTOR = GTMachineUtils.registerTieredMultis(REGISTRATE, "fusion_reactor",
             FusionReactorMachine::new, (tier, builder) -> builder
                     .rotationState(RotationState.ALL)
                     .langValue("Fusion Reactor Computer MK %s".formatted(FormattingUtil.toRomanNumeral(tier - 5)))
@@ -782,24 +769,24 @@ public class AdvancedMultiBlockMachineB {
                     .appearanceBlock(() -> GTLFusionCasingBlock.getCasingState(tier))
                     .pattern((definition) -> {
                         var casing = blocks(GTLFusionCasingBlock.getCasingState(tier));
-                        return AdvancedMultiBlockMachineStructureB.SLAUGHTERHOUSE_2
-                                .where('S', controller(blocks(definition.get())))
-                                .where('G', blocks(GTBlocks.FUSION_GLASS.get()).or(casing))
-                                .where('E', casing.or(
+                        return AdvancedMultiBlockMachineStructureB.SLAUGHTERHOUSE_2.get()
+                                .where('S', controller(blocks(definition.getBlock())))
+                                .where('G', blocks(GTBlocks.FUSION_GLASS.get()).and(casing))
+                                .where('E', casing.and(
                                         blocks(PartAbility.INPUT_ENERGY.getBlockRange(tier, GTValues.UEV).toArray(Block[]::new))
                                                 .setMinGlobalLimited(1).setPreviewCount(16)))
                                 .where('C', casing)
                                 .where('K', blocks(GTLFusionCasingBlock.getCoilState(tier)))
-                                .where('O', casing.or(abilities(PartAbility.EXPORT_FLUIDS)))
+                                .where('O', casing.and(abilities(PartAbility.EXPORT_FLUIDS)))
                                 .where('A', air())
-                                .where('I', casing.or(abilities(PartAbility.IMPORT_FLUIDS).setMinGlobalLimited(2)))
+                                .where('I', casing.and(abilities(PartAbility.IMPORT_FLUIDS).setMinGlobalLimited(2)))
                                 .where('#', any())
                                 .build();
                     })
-                    .shapeInfos((controller) -> {
-                        List<MultiblockShapeInfo> shapeInfos = new ArrayList<>();
+                    .onRegister(controller -> NativePreviewShapes.register(controller, () -> {
+                        List<NativePreviewGeometry> shapeInfos = new ArrayList<>();
 
-                        MultiblockShapeInfo.ShapeInfoBuilder baseBuilder = MultiblockShapeInfo.builder()
+                        NativePreviewGeometry.VisualBuilder baseBuilder = NativePreviewGeometry.visualBuilder()
                                 .aisle("###############", "######NMN######", "###############")
                                 .aisle("######DCD######", "####GG###GG####", "######UCU######")
                                 .aisle("####CC###CC####", "###w##SGS##e###", "####CC###CC####")
@@ -833,17 +820,19 @@ public class AdvancedMultiBlockMachineB {
 
                         shapeInfos.add(baseBuilder.shallowCopy()
                                 .where('G', GTLFusionCasingBlock.getCasingState(tier))
-                                .build());
-                        shapeInfos.add(baseBuilder.build());
+                                .build(controller));
+                        shapeInfos.add(baseBuilder.build(controller));
                         return shapeInfos;
-                    })
-                    .renderer(() -> new FusionReactorRenderer(GTLFusionCasingBlock.getCasingType(tier).getTexture(),
-                            GTCEu.id("block/multiblock/fusion_reactor")))
-                    .hasTESR(true)
+                    }))
+                    .modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE)
+                    .model(createWorkableCasingMachineModel(GTLFusionCasingBlock.getCasingType(tier).getTexture(),
+                            GTCEu.id("block/multiblock/fusion_reactor"))
+                            .andThen(model -> model.addDynamicRenderer(DynamicRenderHelper::createFusionRingRender)))
+                    .hasBER(true)
                     .register(),
             GTValues.UHV, GTValues.UEV);
 
-    public static final MultiblockMachineDefinition[] COMPRESSED_FUSION_REACTOR = GTMachines.registerTieredMultis("compressed_fusion_reactor",
+    public static final MachineEntry<MultiblockMachineDefinition>[] COMPRESSED_FUSION_REACTOR = GTMachineUtils.registerTieredMultis(REGISTRATE, "compressed_fusion_reactor",
             (holder, tier) -> new FusionReactorMachine(holder, tier) {
 
                 @Override
@@ -867,26 +856,26 @@ public class AdvancedMultiBlockMachineB {
                     .appearanceBlock(() -> GTLFusionCasingBlock.getCasingState(tier))
                     .pattern((definition) -> {
                         var casing = blocks(GTLFusionCasingBlock.getCasingState(tier));
-                        return AdvancedMultiBlockMachineStructureB.SLAUGHTERHOUSE_3
-                                .where('S', controller(blocks(definition.get())))
+                        return AdvancedMultiBlockMachineStructureB.SLAUGHTERHOUSE_3.get()
+                                .where('S', controller(blocks(definition.getBlock())))
                                 .where('B', blocks(GTBlocks.FUSION_GLASS.get()))
                                 .where('C', casing)
-                                .where('P', casing.or(abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1).setPreviewCount(1)))
-                                .where('I', casing.or(abilities(PartAbility.IMPORT_FLUIDS))
-                                        .or(abilities(PartAbility.EXPORT_FLUIDS).setPreviewCount(16)))
+                                .where('P', casing.and(abilities(PartAbility.PARALLEL_HATCH).setMaxGlobalLimited(1).setPreviewCount(1)))
+                                .where('I', casing.and(abilities(PartAbility.IMPORT_FLUIDS))
+                                        .and(abilities(PartAbility.EXPORT_FLUIDS).setPreviewCount(16)))
                                 .where('F', blocks(GTLFusionCasingBlock.getFrameState(tier)))
                                 .where('H', blocks(GTLFusionCasingBlock.getCompressedCoilState(tier)))
-                                .where('E', casing.or(blocks(PartAbility.INPUT_ENERGY.getBlockRange(tier, 14).toArray(Block[]::new)))
-                                        .or(blocks(PartAbility.INPUT_LASER.getBlockRange(tier, 14).toArray(Block[]::new)).setPreviewCount(16)))
+                                .where('E', casing.and(blocks(PartAbility.INPUT_ENERGY.getBlockRange(tier, 14).toArray(Block[]::new)))
+                                        .and(blocks(PartAbility.INPUT_LASER.getBlockRange(tier, 14).toArray(Block[]::new)).setPreviewCount(16)))
                                 .where('#', air())
                                 .where(' ', any())
                                 .build();
                     })
-                    .workableCasingRenderer(GTLFusionCasingBlock.getCasingType(tier).getTexture(), GTCEu.id("block/multiblock/fusion_reactor"))
+                    .workableCasingModel(GTLFusionCasingBlock.getCasingType(tier).getTexture(), GTCEu.id("block/multiblock/fusion_reactor"))
                     .register(),
             GTValues.LuV, GTValues.ZPM, GTValues.UV, GTValues.UHV, GTValues.UEV);
 
-    public final static MultiblockMachineDefinition SUPER_COMPUTATION = REGISTRATE.multiblock("super_computation", (holder) -> new ComputationProviderMachine(holder, false))
+    public final static MachineEntry<MultiblockMachineDefinition> SUPER_COMPUTATION = REGISTRATE.multiblock("super_computation", (holder) -> new ComputationProviderMachine(holder, false))
             .rotationState(RotationState.NONE)
             .allowExtendedFacing(false)
             .allowFlip(false)
@@ -902,25 +891,25 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .appearanceBlock(GTBlocks.COMPUTER_CASING)
             .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK))
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.SUPER_COMPUTATION
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("a", Predicates.blocks(GTBlocks.COMPUTER_CASING.get())
-                            .or(Predicates.abilities(PartAbility.COMPUTATION_DATA_TRANSMISSION).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
-                            .or(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
-                            .or(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
-                    .where("b", Predicates.blocks(GTBlocks.COMPUTER_HEAT_VENT.get()))
-                    .where("c", Predicates.fluids(Registries.getFluid("kubejs:gelid_cryotheum")))
-                    .where("d", Predicates.blocks(GTLBlocks.SUPER_COOLER_COMPONENT.get()))
-                    .where("e", Predicates.blocks(GTLBlocks.SUPER_COMPUTATION_COMPONENT.get()))
-                    .where("f", Predicates.blocks(GTBlocks.ADVANCED_COMPUTER_CASING.get()))
-                    .where("g", Predicates.blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
-                    .where(" ", Predicates.any())
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.SUPER_COMPUTATION.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('a', Predicates.blocks(GTBlocks.COMPUTER_CASING.get())
+                            .and(Predicates.abilities(PartAbility.COMPUTATION_DATA_TRANSMISSION).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2))
+                            .and(Predicates.abilities(PartAbility.IMPORT_ITEMS).setMaxGlobalLimited(1))
+                            .and(Predicates.abilities(PartAbility.MAINTENANCE).setExactLimit(1)))
+                    .where('b', Predicates.blocks(GTBlocks.COMPUTER_HEAT_VENT.get()))
+                    .where('c', Predicates.fluids(Registries.getFluid("kubejs:gelid_cryotheum")))
+                    .where('d', Predicates.blocks(GTLBlocks.SUPER_COOLER_COMPONENT.get()))
+                    .where('e', Predicates.blocks(GTLBlocks.SUPER_COMPUTATION_COMPONENT.get()))
+                    .where('f', Predicates.blocks(GTBlocks.ADVANCED_COMPUTER_CASING.get()))
+                    .where('g', Predicates.blocks(GTBlocks.CASING_LAMINATED_GLASS.get()))
+                    .where(' ', Predicates.any())
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/hpca/computer_casing/back"), GTCEu.id("block/multiblock/super_computation"))
+            .workableCasingModel(GTCEu.id("block/casings/hpca/computer_casing/back"), GTCEu.id("block/multiblock/super_computation"))
             .register();
 
-    public final static MultiblockMachineDefinition CREATE_COMPUTATION = REGISTRATE.multiblock("create_computation", (holder) -> new ComputationProviderMachine(holder, true))
+    public final static MachineEntry<MultiblockMachineDefinition> CREATE_COMPUTATION = REGISTRATE.multiblock("create_computation", (holder) -> new ComputationProviderMachine(holder, true))
             .rotationState(RotationState.ALL)
             .recipeType(GTRecipeTypes.DUMMY_RECIPES)
             .tooltips(Component.translatable("gtceu.machine.create_computation.tooltip.0"))
@@ -929,18 +918,18 @@ public class AdvancedMultiBlockMachineB {
             .tooltipBuilder(GTLMachines.GTL_ADD)
             .appearanceBlock(GTBlocks.ADVANCED_COMPUTER_CASING)
             .recipeModifier(GTRecipeModifiers.ELECTRIC_OVERCLOCK.apply(OverclockingLogic.NON_PERFECT_OVERCLOCK_SUBTICK))
-            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.CREATE_COMPUTATION
-                    .where("~", Predicates.controller(Predicates.blocks(definition.get())))
-                    .where("b", Predicates.blocks(GTBlocks.ADVANCED_COMPUTER_CASING.get())
-                            .or(Predicates.abilities(PartAbility.COMPUTATION_DATA_TRANSMISSION).setExactLimit(1))
-                            .or(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(1)))
-                    .where("a", Predicates.blocks(GTBlocks.ADVANCED_COMPUTER_CASING.get()))
-                    .where("c", Predicates.blocks(Registries.getBlock("kubejs:create_hpca_component")))
+            .pattern((definition) -> AdvancedMultiBlockMachineStructureB.CREATE_COMPUTATION.get()
+                    .where('~', Predicates.controller(Predicates.blocks(definition.getBlock())))
+                    .where('b', Predicates.blocks(GTBlocks.ADVANCED_COMPUTER_CASING.get())
+                            .and(Predicates.abilities(PartAbility.COMPUTATION_DATA_TRANSMISSION).setExactLimit(1))
+                            .and(Predicates.abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(1)))
+                    .where('a', Predicates.blocks(GTBlocks.ADVANCED_COMPUTER_CASING.get()))
+                    .where('c', Predicates.blocks(Registries.getBlock("kubejs:create_hpca_component")))
                     .build())
-            .workableCasingRenderer(GTCEu.id("block/casings/hpca/advanced_computer_casing/back"), GTCEu.id("block/multiblock/hpca"))
+            .workableCasingModel(GTCEu.id("block/casings/hpca/advanced_computer_casing/back"), GTCEu.id("block/multiblock/hpca"))
             .register();
 
-    public final static MultiblockMachineDefinition ADVANCED_INFINITE_DRILLER = REGISTRATE.multiblock("advanced_infinite_driller", AdvancedInfiniteDrillMachine::new)
+    public final static MachineEntry<MultiblockMachineDefinition> ADVANCED_INFINITE_DRILLER = REGISTRATE.multiblock("advanced_infinite_driller", AdvancedInfiniteDrillMachine::new)
             .rotationState(RotationState.NON_Y_AXIS)
             .recipeType(DUMMY_RECIPES)
             .appearanceBlock(GTLBlocks.HYPER_MECHANICAL_CASING)
@@ -951,30 +940,30 @@ public class AdvancedMultiBlockMachineB {
                     list.add(Component.translatable("gtceu.machine.advanced_infinite_driller.drilled_fluid.tooltip." + i));
                 }
             })
-            .pattern(definition -> AdvancedMultiBlockMachineStructureB.ADVANCED_INFINITE_DRILLER
-                    .where("#", controller(blocks(definition.get())))
-                    .where("I", blocks(Registries.getBlock("gtceu:filter_casing")))
-                    .where("G", blocks(Registries.getBlock("kubejs:dimensional_bridge_casing")))
-                    .where("N", Predicates.heatingCoils())
-                    .where("M", blocks(Registries.getBlock("kubejs:neutronium_gearbox")))
-                    .where("L", blocks(Registries.getBlock("gtceu:vanadium_block")))
-                    .where("B", blocks(Registries.getBlock("gtlcore:hyper_core")))
-                    .where("D", blocks(Registries.getBlock("minecraft:oak_log")))
-                    .where("F", blocks(Registries.getBlock("kubejs:restraint_device")))
-                    .where("H", blocks(Registries.getBlock("gtceu:heat_vent")))
-                    .where("K", blocks(Registries.getBlock("kubejs:machine_casing_grinding_head")))
-                    .where("E", blocks(Registries.getBlock("gtceu:neutronium_frame")))
-                    .where("J", blocks(Registries.getBlock("gtceu:ptfe_pipe_casing")))
-                    .where("C", blocks(GTLBlocks.HYPER_MECHANICAL_CASING.get()))
-                    .where("A", blocks(Registries.getBlock("gtlcore:iridium_casing"))
-                            .or(abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(2))
-                            .or(abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(16))
-                            .or(abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2).setMinGlobalLimited(1))
-                            .or(abilities(PartAbility.INPUT_LASER).setMaxGlobalLimited(1)))
-                    .where("Q", blocks(GTLBlocks.HYPER_CORE.get())
-                            .or(blocks(GTLMachines.HEAT_SENSOR.get())))
+            .pattern(definition -> AdvancedMultiBlockMachineStructureB.ADVANCED_INFINITE_DRILLER.get()
+                    .where('#', controller(blocks(definition.getBlock())))
+                    .where('I', blocks(Registries.getBlock("gtceu:filter_casing")))
+                    .where('G', blocks(Registries.getBlock("kubejs:dimensional_bridge_casing")))
+                    .where('N', Predicates.heatingCoils())
+                    .where('M', blocks(Registries.getBlock("kubejs:neutronium_gearbox")))
+                    .where('L', blocks(Registries.getBlock("gtceu:vanadium_block")))
+                    .where('B', blocks(Registries.getBlock("gtlcore:hyper_core")))
+                    .where('D', blocks(Registries.getBlock("minecraft:oak_log")))
+                    .where('F', blocks(Registries.getBlock("kubejs:restraint_device")))
+                    .where('H', blocks(Registries.getBlock("gtceu:heat_vent")))
+                    .where('K', blocks(Registries.getBlock("kubejs:machine_casing_grinding_head")))
+                    .where('E', blocks(Registries.getBlock("gtceu:neutronium_frame")))
+                    .where('J', blocks(Registries.getBlock("gtceu:ptfe_pipe_casing")))
+                    .where('C', blocks(GTLBlocks.HYPER_MECHANICAL_CASING.get()))
+                    .where('A', blocks(Registries.getBlock("gtlcore:iridium_casing"))
+                            .and(abilities(PartAbility.IMPORT_FLUIDS).setMaxGlobalLimited(2))
+                            .and(abilities(PartAbility.EXPORT_FLUIDS).setMaxGlobalLimited(16))
+                            .and(abilities(PartAbility.INPUT_ENERGY).setMaxGlobalLimited(2).setMinGlobalLimited(1))
+                            .and(abilities(PartAbility.INPUT_LASER).setMaxGlobalLimited(1)))
+                    .where('Q', blocks(GTLBlocks.HYPER_CORE.get())
+                            .and(blocks(GTLMachines.HEAT_SENSOR.getBlock())))
                     .build())
-            .workableCasingRenderer(GTLCore.id("block/casings/iridium_casing"),
+            .workableCasingModel(GTLCore.id("block/casings/iridium_casing"),
                     GTCEu.id("block/multiblock/fluid_drilling_rig"))
             .register();
 }

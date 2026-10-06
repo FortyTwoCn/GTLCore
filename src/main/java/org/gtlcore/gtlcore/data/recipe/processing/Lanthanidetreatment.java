@@ -1,8 +1,9 @@
 package org.gtlcore.gtlcore.data.recipe.processing;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import java.util.function.Consumer;
 
@@ -16,7 +17,7 @@ import static org.gtlcore.gtlcore.common.data.GTLRecipeTypes.*;
 
 public class Lanthanidetreatment {
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         DIGESTION_TREATMENT.recipeBuilder("monazite_rare_earth_turbid_liquid1")
                 .inputItems(dust, Monazite, 2)
                 .inputFluids(NitricAcid.getFluid(700))
@@ -38,21 +39,24 @@ public class Lanthanidetreatment {
                 .EUt(480)
                 .save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("diluted_monazite_slurry3")
-                .inputFluids(DilutedMonaziteSlurry.getFluid(1000))
-                .chancedOutput(dust, MonaziteSulfatePowder, 1, 9000, 0)
-                .chancedOutput(dust, SiliconDioxide, 1, 7500, 0)
-                .chancedOutput(dust, Rutile, 1, 2000, 0)
-                .chancedOutput(dust, RedZirconPowder, 1, 500, 0)
-                .chancedOutput(dust, Ilmenite, 1, 2000, 0)
+        {
+            var gtlRecipeBuilder41 = SIFTER_RECIPES.recipeBuilder("diluted_monazite_slurry3")
+                .inputFluids(DilutedMonaziteSlurry.getFluid(1000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder41, dust, MonaziteSulfatePowder, 1, 9000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder41, dust, SiliconDioxide, 1, 7500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder41, dust, Rutile, 1, 2000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder41, dust, RedZirconPowder, 1, 500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder41, dust, Ilmenite, 1, 2000, 0);
+            gtlRecipeBuilder41
                 .duration(400)
                 .EUt(120)
                 .save(provider);
+        }
 
         CENTRIFUGE_RECIPES.recipeBuilder("red_zircon_powder4")
                 .inputItems(dust, RedZirconPowder, 4)
                 .outputItems(dust, Zircon, 3)
-                .outputItems(dust, GraniteRed, 2)
+                .outputItems(dust, RedGranite, 2)
                 .duration(320)
                 .EUt(90)
                 .save(provider);
@@ -73,13 +77,16 @@ public class Lanthanidetreatment {
                 .EUt(480)
                 .save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("acidic_monazite_powder7")
-                .inputItems(dust, AcidicMonazitePowder, 1)
-                .chancedOutput(dust, MonaziteRareEarthFilterResiduePowder, 1, 9000, 0)
-                .chancedOutput(dust, ThoriumPhosphateFilterCakePowder, 1, 7000, 0)
+        {
+            var gtlRecipeBuilder76 = SIFTER_RECIPES.recipeBuilder("acidic_monazite_powder7")
+                .inputItems(dust, AcidicMonazitePowder, 1);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder76, dust, MonaziteRareEarthFilterResiduePowder, 1, 9000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder76, dust, ThoriumPhosphateFilterCakePowder, 1, 7000, 0);
+            gtlRecipeBuilder76
                 .duration(300)
                 .EUt(256)
                 .save(provider);
+        }
 
         BLAST_RECIPES.recipeBuilder("thorium_phosphate_filter_cake_powder8")
                 .inputItems(dust, ThoriumPhosphateFilterCakePowder, 1)
@@ -105,14 +112,17 @@ public class Lanthanidetreatment {
                 .EUt(240)
                 .save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("neutralized_monazite_rare_earth_filter_residue_powder11")
-                .inputItems(dust, NeutralizedMonaziteRareEarthFilterResiduePowder, 1)
-                .chancedOutput(dust, ConcentratedMonaziteRareEarthHydroxidePowder, 1, 9000, 0)
-                .chancedOutput(dust, UraniumFilterResiduePowder, 1, 5000, 0)
-                .chancedOutput(dust, UraniumFilterResiduePowder, 1, 4000, 0)
+        {
+            var gtlRecipeBuilder108 = SIFTER_RECIPES.recipeBuilder("neutralized_monazite_rare_earth_filter_residue_powder11")
+                .inputItems(dust, NeutralizedMonaziteRareEarthFilterResiduePowder, 1);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder108, dust, ConcentratedMonaziteRareEarthHydroxidePowder, 1, 9000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder108, dust, UraniumFilterResiduePowder, 1, 5000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder108, dust, UraniumFilterResiduePowder, 1, 4000, 0);
+            gtlRecipeBuilder108
                 .duration(160)
                 .EUt(480)
                 .save(provider);
+        }
 
         CHEMICAL_BATH_RECIPES.recipeBuilder("uranium_filter_residue_powder12")
                 .inputItems(dust, UraniumFilterResiduePowder, 1)
@@ -122,16 +132,19 @@ public class Lanthanidetreatment {
                 .EUt(120)
                 .save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("neutralized_uranium_filter_residue_powder13")
-                .inputItems(dust, NeutralizedUraniumFilterResiduePowder, 1)
-                .chancedOutput(dust, Uranium235, 1, 4500, 0)
-                .chancedOutput(dust, Uranium235, 1, 4000, 0)
-                .chancedOutput(dust, Uranium235, 1, 3000, 0)
-                .chancedOutput(dust, Uranium235, 1, 3000, 0)
-                .chancedOutput(dust, Uranium235, 1, 2000, 0)
+        {
+            var gtlRecipeBuilder125 = SIFTER_RECIPES.recipeBuilder("neutralized_uranium_filter_residue_powder13")
+                .inputItems(dust, NeutralizedUraniumFilterResiduePowder, 1);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder125, dust, Uranium235, 1, 4500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder125, dust, Uranium235, 1, 4000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder125, dust, Uranium235, 1, 3000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder125, dust, Uranium235, 1, 3000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder125, dust, Uranium235, 1, 2000, 0);
+            gtlRecipeBuilder125
                 .duration(240)
                 .EUt(30)
                 .save(provider);
+        }
 
         BLAST_RECIPES.recipeBuilder("concentrated_monazite_rare_earth_hydroxide_powder14")
                 .inputItems(dust, ConcentratedMonaziteRareEarthHydroxidePowder, 1)
@@ -254,13 +267,16 @@ public class Lanthanidetreatment {
                 .blastFurnaceTemp(3820)
                 .save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("concentrated_nitric_leachate_from_monazite27")
-                .inputFluids(NitricLeachateFromMonazite.getFluid(1000))
-                .chancedOutput(dust, CeriumOxide, 1, 1000, 100)
+        {
+            var gtlRecipeBuilder257 = SIFTER_RECIPES.recipeBuilder("concentrated_nitric_leachate_from_monazite27")
+                .inputFluids(NitricLeachateFromMonazite.getFluid(1000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder257, dust, CeriumOxide, 1, 1000, 100);
+            gtlRecipeBuilder257
                 .outputFluids(ConcentratedNitricLeachateFromMonazite.getFluid(1000))
                 .duration(200)
                 .EUt(240)
                 .save(provider);
+        }
 
         VACUUM_RECIPES.recipeBuilder("cooling_concentrated_nitric_monazite_rare_earth_powder28")
                 .inputFluids(ConcentratedNitricLeachateFromMonazite.getFluid(1000))
@@ -269,13 +285,16 @@ public class Lanthanidetreatment {
                 .EUt(240)
                 .save(provider);
 
-        ELECTROMAGNETIC_SEPARATOR_RECIPES.recipeBuilder("monazite_rare_earth_precipitate_powder29")
-                .inputItems(dust, CoolingConcentratedNitricMonaziteRareEarthPowder, 1)
-                .chancedOutput(dust, MonaziteRareEarthPrecipitatePowder, 1, 9000, 0)
-                .chancedOutput(dust, EuropiumOxide, 1, 500, 0)
+        {
+            var gtlRecipeBuilder272 = ELECTROMAGNETIC_SEPARATOR_RECIPES.recipeBuilder("monazite_rare_earth_precipitate_powder29")
+                .inputItems(dust, CoolingConcentratedNitricMonaziteRareEarthPowder, 1);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder272, dust, MonaziteRareEarthPrecipitatePowder, 1, 9000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder272, dust, EuropiumOxide, 1, 500, 0);
+            gtlRecipeBuilder272
                 .duration(100)
                 .EUt(240)
                 .save(provider);
+        }
 
         BLAST_RECIPES.recipeBuilder("heterogeneous_halide_monazite_rare_earth_mixture_powder30")
                 .inputItems(dust, MonaziteRareEarthPrecipitatePowder, 1)
@@ -313,13 +332,16 @@ public class Lanthanidetreatment {
                 .EUt(1920)
                 .save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("samarium_precipitate_powder34")
+        {
+            var gtlRecipeBuilder316 = SIFTER_RECIPES.recipeBuilder("samarium_precipitate_powder34")
                 .inputItems(dust, SamariumPrecipitatePowder, 3)
-                .outputItems(dust, Samarium, 2)
-                .chancedOutput(dust, Gadolinium, 1, 2000, 0)
+                .outputItems(dust, Samarium, 2);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder316, dust, Gadolinium, 1, 2000, 0);
+            gtlRecipeBuilder316
                 .duration(160)
                 .EUt(1920)
                 .save(provider);
+        }
 
         DIGESTION_TREATMENT.recipeBuilder("samarium_rrare_eearth_turbid_liquid35")
                 .inputItems(dust, SamariumRefinedPowder, 16)
@@ -331,25 +353,31 @@ public class Lanthanidetreatment {
                 .blastFurnaceTemp(2680)
                 .save(provider);
 
-        DISSOLUTION_TREATMENT.recipeBuilder("samarium_rrare_eearth_turbid_liquid36")
+        {
+            var gtlRecipeBuilder334 = DISSOLUTION_TREATMENT.recipeBuilder("samarium_rrare_eearth_turbid_liquid36")
                 .inputFluids(SamariumRrareEearthTurbidLiquid.getFluid(1000))
-                .inputFluids(NitricAcid.getFluid(1000))
-                .chancedOutput(dust, CeriumRichMixturePowder, 1, 6000, 0)
-                .chancedOutput(dust, CeriumOxide, 1, 8000, 0)
+                .inputFluids(NitricAcid.getFluid(1000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder334, dust, CeriumRichMixturePowder, 1, 6000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder334, dust, CeriumOxide, 1, 8000, 0);
+            gtlRecipeBuilder334
                 .outputFluids(SamariumRareEarthSlurry.getFluid(2000))
                 .duration(80)
                 .EUt(1920)
                 .save(provider);
+        }
 
-        DISSOLUTION_TREATMENT.recipeBuilder("samarium_rare_earth_slurry37")
+        {
+            var gtlRecipeBuilder344 = DISSOLUTION_TREATMENT.recipeBuilder("samarium_rare_earth_slurry37")
                 .inputFluids(SamariumRareEarthSlurry.getFluid(1000))
-                .inputFluids(Water.getFluid(9000))
-                .chancedOutput(dust, NeodymiumRareEarthConcentratePowder, 1, 9000, 0)
-                .chancedOutput(dust, NeodymiumRareEarthConcentratePowder, 1, 6000, 0)
+                .inputFluids(Water.getFluid(9000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder344, dust, NeodymiumRareEarthConcentratePowder, 1, 9000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder344, dust, NeodymiumRareEarthConcentratePowder, 1, 6000, 0);
+            gtlRecipeBuilder344
                 .outputFluids(SamariumRareEarthDilutedSolution.getFluid(10000))
                 .duration(120)
                 .EUt(1920)
                 .save(provider);
+        }
 
         LARGE_CHEMICAL_RECIPES.recipeBuilder("lanthanum_chloride38")
                 .inputItems(dust, NeodymiumRareEarthConcentratePowder, 1)
@@ -360,23 +388,29 @@ public class Lanthanidetreatment {
                 .EUt(120)
                 .save(provider);
 
-        LARGE_CHEMICAL_RECIPES.recipeBuilder("samarium_oxalate_with_impurities39")
+        {
+            var gtlRecipeBuilder363 = LARGE_CHEMICAL_RECIPES.recipeBuilder("samarium_oxalate_with_impurities39")
                 .inputFluids(SamariumRareEarthDilutedSolution.getFluid(2000))
                 .inputFluids(OxalicAcid.getFluid(3000))
-                .outputItems(dust, SamariumOxalateWithImpurities, 5)
-                .chancedOutput(dust, PhosphorusFreeSamariumConcentratePowder, 3, 1000, 0)
+                .outputItems(dust, SamariumOxalateWithImpurities, 5);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder363, dust, PhosphorusFreeSamariumConcentratePowder, 3, 1000, 0);
+            gtlRecipeBuilder363
                 .outputFluids(SamariumRrareEearthTurbidLiquid.getFluid(50))
                 .duration(280)
                 .EUt(480)
                 .save(provider);
+        }
 
-        CENTRIFUGE_RECIPES.recipeBuilder("Samarium40")
-                .inputItems(dust, PhosphorusFreeSamariumConcentratePowder, 1)
-                .chancedOutput(dust, Samarium, 1, 9000, 0)
-                .chancedOutput(dust, ThoritePowder, 2, 8000, 0)
+        {
+            var gtlRecipeBuilder373 = CENTRIFUGE_RECIPES.recipeBuilder("Samarium40")
+                .inputItems(dust, PhosphorusFreeSamariumConcentratePowder, 1);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder373, dust, Samarium, 1, 9000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder373, dust, ThoritePowder, 2, 8000, 0);
+            gtlRecipeBuilder373
                 .duration(100)
                 .EUt(1920)
                 .save(provider);
+        }
 
         LARGE_CHEMICAL_RECIPES.recipeBuilder("samarium_chloride_concentrate_solution41")
                 .inputItems(dust, SamariumOxalateWithImpurities, 5)
@@ -476,16 +510,19 @@ public class Lanthanidetreatment {
                 .EUt(1920)
                 .save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("filtered_fluoro_carbon_lanthanide_slurry52")
-                .inputFluids(DilutedFluoroCarbonLanthanideSlurry.getFluid(1000))
-                .chancedOutput(dust, SiliconDioxide, 1, 9000, 0)
-                .chancedOutput(dust, Rutile, 1, 7500, 0)
-                .chancedOutput(dust, RedZirconPowder, 1, 1000, 0)
-                .chancedOutput(dust, Ilmenite, 1, 500, 0)
+        {
+            var gtlRecipeBuilder479 = SIFTER_RECIPES.recipeBuilder("filtered_fluoro_carbon_lanthanide_slurry52")
+                .inputFluids(DilutedFluoroCarbonLanthanideSlurry.getFluid(1000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder479, dust, SiliconDioxide, 1, 9000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder479, dust, Rutile, 1, 7500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder479, dust, RedZirconPowder, 1, 1000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder479, dust, Ilmenite, 1, 500, 0);
+            gtlRecipeBuilder479
                 .outputFluids(FilteredFluoroCarbonLanthanideSlurry.getFluid(400))
                 .duration(200)
                 .EUt(240)
                 .save(provider);
+        }
 
         BLAST_RECIPES.recipeBuilder("fluoro_carbon_lanthanide_cerium_oxide_powder53")
                 .inputFluids(FilteredFluoroCarbonLanthanideSlurry.getFluid(1000))
@@ -554,14 +591,17 @@ public class Lanthanidetreatment {
                 .EUt(480)
                 .save(provider);
 
-        CENTRIFUGE_RECIPES.recipeBuilder("samarium_rare_earth_concentrate_powder61")
-                .inputFluids(FluoroCarbonLanthanideCeriumRareEarthSuspension.getFluid(1000))
-                .chancedOutput(dust, NeodymiumRareEarthConcentratePowder, 1, 8000, 0)
-                .chancedOutput(dust, SamariumRareEarthConcentratePowder, 1, 5000, 0)
+        {
+            var gtlRecipeBuilder557 = CENTRIFUGE_RECIPES.recipeBuilder("samarium_rare_earth_concentrate_powder61")
+                .inputFluids(FluoroCarbonLanthanideCeriumRareEarthSuspension.getFluid(1000));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder557, dust, NeodymiumRareEarthConcentratePowder, 1, 8000, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder557, dust, SamariumRareEarthConcentratePowder, 1, 5000, 0);
+            gtlRecipeBuilder557
                 .outputFluids(Acetone.getFluid(450))
                 .duration(450)
                 .EUt(120)
                 .save(provider);
+        }
 
         LARGE_CHEMICAL_RECIPES.recipeBuilder("fluorinated_samarium_concentrate_powder62")
                 .inputItems(dust, SamariumRareEarthConcentratePowder, 1)

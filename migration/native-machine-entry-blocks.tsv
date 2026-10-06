@@ -1,0 +1,12 @@
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdditionalMultiBlockMachine.java	251	GTLMachines.GTAEMachines.ME_MOLECULAR_ASSEMBLER_IO.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdvancedMultiBlockMachineA.java	327	GTMachines.ITEM_IMPORT_BUS.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdvancedMultiBlockMachineA.java	327	CustomMachines.HUGE_ITEM_IMPORT_BUS.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdvancedMultiBlockMachineA.java	330	GTLMachines.HUGE_FLUID_IMPORT_HATCH.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdvancedMultiBlockMachineB.java	550	GTLMachines.NEUTRON_SENSOR.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdvancedMultiBlockMachineB.java	650	GTMachines.ITEM_IMPORT_BUS.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdvancedMultiBlockMachineB.java	650	CustomMachines.HUGE_ITEM_IMPORT_BUS.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/AdvancedMultiBlockMachineB.java	977	GTLMachines.HEAT_SENSOR.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/MultiBlockMachineA.java	578	GTMachines.ITEM_IMPORT_BUS.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/MultiBlockMachineA.java	912	GTMachines.MUFFLER_HATCH.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/MultiBlockMachineA.java	936	GTMachines.MUFFLER_HATCH.getBlock
+/workspace/GTLCore/src/main/java/org/gtlcore/gtlcore/common/data/machines/MultiBlockMachineA.java	2170	GTMachines.MUFFLER_HATCH.getBlock

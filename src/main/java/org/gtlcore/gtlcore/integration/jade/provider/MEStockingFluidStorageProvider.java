@@ -3,14 +3,13 @@ package org.gtlcore.gtlcore.integration.jade.provider;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.integration.jade.MEStockingFluidJadeHelper;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 
 import snownee.jade.api.Accessor;
+import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.view.ClientViewGroup;
 import snownee.jade.api.view.FluidView;
 import snownee.jade.api.view.IClientExtensionProvider;
@@ -19,7 +18,7 @@ import snownee.jade.api.view.ViewGroup;
 
 import java.util.List;
 
-public enum MEStockingFluidStorageProvider implements IServerExtensionProvider<MetaMachineBlockEntity, CompoundTag>, IClientExtensionProvider<CompoundTag, FluidView> {
+public enum MEStockingFluidStorageProvider implements IServerExtensionProvider<CompoundTag>, IClientExtensionProvider<CompoundTag, FluidView> {
 
     INSTANCE;
 
@@ -27,9 +26,9 @@ public enum MEStockingFluidStorageProvider implements IServerExtensionProvider<M
     private static final int PRIORITY = -10;
 
     @Override
-    public List<ViewGroup<CompoundTag>> getGroups(ServerPlayer player, ServerLevel level,
-                                                  MetaMachineBlockEntity blockEntity, boolean showDetails) {
-        return MEStockingFluidJadeHelper.createGroups(blockEntity.getMetaMachine());
+    public List<ViewGroup<CompoundTag>> getGroups(Accessor<?> accessor) {
+        if (!(accessor instanceof BlockAccessor block) || !(block.getBlockEntity() instanceof MetaMachine machine)) return null;
+        return MEStockingFluidJadeHelper.createGroups(machine);
     }
 
     @Override

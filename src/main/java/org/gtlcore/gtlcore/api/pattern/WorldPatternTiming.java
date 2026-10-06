@@ -1,11 +1,12 @@
 package org.gtlcore.gtlcore.api.pattern;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-import com.gregtechceu.gtceu.api.pattern.MultiblockState;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.multiblock.pattern.PatternState;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
@@ -25,7 +26,7 @@ public final class WorldPatternTiming implements AutoCloseable {
     private static final ThreadLocal<Matcher> MATCHER = new ThreadLocal<>();
 
     private final WorldPatternTiming previous;
-    private final MultiblockState state;
+    private final PatternState state;
     private final long sequence = SEQUENCE.incrementAndGet();
     private final String identity;
     private final String dimension;
@@ -53,13 +54,13 @@ public final class WorldPatternTiming implements AutoCloseable {
     private boolean lastFlipped;
     private String result = "exception";
 
-    private WorldPatternTiming(MultiblockState state, IMultiController controller, String source) {
+    private WorldPatternTiming(ServerLevel level, PatternState state, MultiblockControllerMachine controller, String source) {
         this.state = state;
         this.source = source;
-        identity = controller == null ? "unknown" : controller.self().getDefinition().getId().toString();
-        ServerLevel level = (ServerLevel) state.world;
+        identity = controller == null ? "unknown" : controller.getDefinition().getId().toString();
         dimension = level.dimension().location().toString();
-        position = state.controllerPos.getX() + "," + state.controllerPos.getY() + "," + state.controllerPos.getZ();
+        var pos = state.getControllerPos() != null ? state.getControllerPos() : controller == null ? null : controller.getBlockPos();
+        position = pos == null ? "unbound" : pos.getX() + "," + pos.getY() + "," + pos.getZ();
         serverThread = level.getServer().isSameThread();
         focused = FOCUS.isEmpty() || identity.contains(FOCUS);
         previous = CHECK.get();
@@ -73,16 +74,16 @@ public final class WorldPatternTiming implements AutoCloseable {
         start = System.nanoTime();
     }
 
-    public static WorldPatternTiming beginCheck(IMultiController controller, String source) {
-        if (!ENABLED || !(controller.self().getLevel() instanceof ServerLevel)) return null;
-        return new WorldPatternTiming(controller.getMultiblockState(), controller, source);
+    public static WorldPatternTiming beginCheck(MultiblockControllerMachine controller, String source) {
+        if (!ENABLED || !(controller.getLevel() instanceof ServerLevel)) return null;
+        return new WorldPatternTiming((ServerLevel) controller.getLevel(), controller.getDefaultPatternState(), controller, source);
     }
 
-    public static Matcher beginMatcher(MultiblockState state, Direction facing, boolean flipped) {
-        if (!ENABLED || !(state.world instanceof ServerLevel)) return null;
+    public static Matcher beginMatcher(Level level, PatternState state, Direction facing, boolean flipped) {
+        if (!ENABLED || !(level instanceof ServerLevel)) return null;
         WorldPatternTiming owner = CHECK.get();
         boolean standalone = owner == null || owner.state != state;
-        if (standalone) owner = new WorldPatternTiming(state, state.lastController, "direct_orientation");
+        if (standalone) owner = new WorldPatternTiming((ServerLevel) level, state, state.getController(), "direct_orientation");
         return new Matcher(owner, state, facing, flipped, standalone);
     }
 
@@ -95,7 +96,7 @@ public final class WorldPatternTiming implements AutoCloseable {
         result = "false".equals(lockAcquired) ? "lock_busy" : Boolean.toString(matched);
     }
 
-    public static void attempt(MultiblockState state, String algorithm) {
+    public static void attempt(PatternState state, String algorithm) {
         if (!ENABLED) return;
         Matcher matcher = MATCHER.get();
         if (matcher != null && matcher.state == state) {
@@ -104,19 +105,19 @@ public final class WorldPatternTiming implements AutoCloseable {
         }
     }
 
-    public static void slice(MultiblockState state) {
+    public static void slice(PatternState state) {
         if (!ENABLED) return;
         Matcher matcher = MATCHER.get();
         if (matcher != null && matcher.state == state) matcher.owner.slices++;
     }
 
-    public static void replay(MultiblockState state) {
+    public static void replay(PatternState state) {
         if (!ENABLED) return;
         Matcher matcher = MATCHER.get();
         if (matcher != null && matcher.state == state) matcher.owner.replays++;
     }
 
-    public static void replayedSlice(MultiblockState state) {
+    public static void replayedSlice(PatternState state) {
         if (!ENABLED) return;
         Matcher matcher = MATCHER.get();
         if (matcher != null && matcher.state == state) matcher.owner.replayedSlices++;
@@ -138,18 +139,23 @@ public final class WorldPatternTiming implements AutoCloseable {
                     sequence, identity, dimension, position, thread, serverThread, source, result, lockAcquired,
                     millis(elapsed), millis(lockNanos), millis(matcherNanos), matcherCalls,
                     algorithm, startAttempts, slices, replays, replayedSlices, lastFacing, lastFlipped,
-                    state.error == MultiblockState.UNLOAD_ERROR, unloadedAttempts,
+                    unloaded(state), unloadedAttempts,
                     firstFailureError, firstFailurePos, firstFailureFacing, firstFailureFlipped);
         }
+    }
+
+    private static boolean unloaded(PatternState state) {
+        var level = state.getContext().getCurrentBlockInfo().getLevel();
+        return level != null && !level.hasChunkAt(state.getContext().pos());
     }
 
     private static String millis(long nanos) {
         return String.format(Locale.ROOT, "%.3f", nanos / 1_000_000.0);
     }
 
-    private static String lastVisitedPosition(MultiblockState state) {
+    private static String lastVisitedPosition(PatternState state) {
         try {
-            var pos = state.getPos();
+            var pos = state.getContext().pos();
             return pos == null ? "unknown" : pos.getX() + "," + pos.getY() + "," + pos.getZ();
         } catch (RuntimeException ignored) {
             // GTCEu's getter dereferences its nullable position before the first update.
@@ -160,7 +166,7 @@ public final class WorldPatternTiming implements AutoCloseable {
     public static final class Matcher implements AutoCloseable {
 
         private final WorldPatternTiming owner;
-        private final MultiblockState state;
+        private final PatternState state;
         private final Matcher previous;
         private final boolean standalone;
         private final String facing;
@@ -169,7 +175,7 @@ public final class WorldPatternTiming implements AutoCloseable {
         private boolean matched;
         private boolean completed;
 
-        private Matcher(WorldPatternTiming owner, MultiblockState state, Direction facing, boolean flipped,
+        private Matcher(WorldPatternTiming owner, PatternState state, Direction facing, boolean flipped,
                         boolean standalone) {
             this.owner = owner;
             this.state = state;
@@ -195,11 +201,11 @@ public final class WorldPatternTiming implements AutoCloseable {
             else MATCHER.set(previous);
             try {
                 // Snapshot each orientation's error before the outer GT wrapper retries a flip and clears it.
-                boolean unloaded = completed && state.error == MultiblockState.UNLOAD_ERROR;
+                boolean unloaded = completed && unloaded(state);
                 if (unloaded) owner.unloadedAttempts++;
                 if ((!completed || !matched) && "none".equals(owner.firstFailureError)) {
                     owner.firstFailureError = !completed ? "exception" : unloaded ? "unloaded" :
-                            state.error == null ? "predicate_rejected" : state.error.getClass().getSimpleName();
+                            state.getErrors().isEmpty() ? "predicate_rejected" : state.getErrors().getFirst().getClass().getSimpleName();
                     owner.firstFailurePos = lastVisitedPosition(state);
                     owner.firstFailureFacing = facing;
                     owner.firstFailureFlipped = flipped;

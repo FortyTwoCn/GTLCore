@@ -2,44 +2,35 @@ package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEIOPartMachine;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEIOTrait;
+import org.gtlcore.gtlcore.integration.ae2.AEGridMachineSettings;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineLife;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.integration.ae2.machine.feature.IGridConnectedMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.GridNodeHolder;
 
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.security.IActionSource;
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
+import java.util.List;
 
-public abstract class MEIOPartMachine extends MultiblockPartMachine implements IMachineLife, IGridConnectedMachine, IMEIOPartMachine {
+public abstract class MEIOPartMachine extends MultiblockPartMachine implements IGridConnectedMachine, IMEIOPartMachine {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(MEIOPartMachine.class, MultiblockPartMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
+    @SaveField
     @Getter
     protected final GridNodeHolder nodeHolder;
 
     @Getter
-    @Setter
-    @DescSynced
+    @SyncToClient
     protected boolean isOnline;
 
     protected final IMEIOTrait meTrait;
@@ -50,16 +41,20 @@ public abstract class MEIOPartMachine extends MultiblockPartMachine implements I
 
     protected boolean isSleeping = true;
 
-    public MEIOPartMachine(IMachineBlockEntity holder, IO io) {
+    public MEIOPartMachine(BlockEntityCreationInfo holder, IO io) {
         super(holder);
-        this.nodeHolder = createNodeHolder();
+        this.nodeHolder = attachTrait(createNodeHolder());
         this.actionSource = IActionSource.ofMachine(nodeHolder.getMainNode()::getNode);
         this.io = io;
         this.meTrait = createMETrait();
+        if (!(meTrait instanceof MachineTrait trait)) {
+            throw new IllegalStateException("ME IO behaviour must be a native machine trait");
+        }
+        attachPersistentTrait("meTrait", trait);
     }
 
     protected @NotNull IMEIOTrait createMETrait() {
-        return new MEIOTrait(this);
+        return new MEIOTrait();
     }
 
     @Override
@@ -67,23 +62,32 @@ public abstract class MEIOPartMachine extends MultiblockPartMachine implements I
         return meTrait;
     }
 
-    @Nullable
     @Override
-    public IFancyUIProvider.@Nullable PageGroupingData getPageGroupingData() {
-        return switch (this.io) {
-            case IN -> new PageGroupingData("gtceu.multiblock.page_switcher.io.import", 1);
-            case OUT -> new PageGroupingData("gtceu.multiblock.page_switcher.io.export", 2);
-            case BOTH -> new PageGroupingData("gtceu.multiblock.page_switcher.io.both", 3);
-            case NONE -> null;
-        };
+    public boolean isOnline() { return isOnline; }
+
+    @Override
+    public void setOnline(boolean online) {
+        if (isOnline == online) return;
+        isOnline = online;
+        syncDataHolder.markClientSyncFieldDirty("isOnline");
     }
 
     @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        if (tag.getCompound("ForgeData").getBoolean("isAllFacing")) {
-            getMainNode().setExposedOnSides(EnumSet.allOf(Direction.class));
-        }
+    public void onLoad() {
+        AEGridMachineSettings.applyExposedSides(this, getFrontFacing());
+        super.onLoad();
+    }
+
+    @Override
+    public void onUnload() {
+        super.onUnload();
+        isSleeping = true;
+        setOnline(false);
+    }
+
+    @Override
+    public void saveChanges() {
+        markAsChanged();
     }
 
     @Override
@@ -94,7 +98,7 @@ public abstract class MEIOPartMachine extends MultiblockPartMachine implements I
     @Override
     public void onRotated(@NotNull Direction oldFacing, @NotNull Direction newFacing) {
         super.onRotated(oldFacing, newFacing);
-        this.getMainNode().setExposedOnSides(EnumSet.of(newFacing));
+        AEGridMachineSettings.applyExposedSides(this, newFacing);
     }
 
     @Override
@@ -103,27 +107,20 @@ public abstract class MEIOPartMachine extends MultiblockPartMachine implements I
         if (isOnline()) meTrait.notifySelfIO();
     }
 
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
     protected GridNodeHolder createNodeHolder() {
         return new GridNodeHolder(this);
     }
 
     public class MEIOTrait extends MachineTrait implements IMEIOTrait {
 
-        protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-                MEIOPartMachine.class);
-
-        public MEIOTrait(MEIOPartMachine machine) {
-            super(machine);
+        @Override
+        protected List<Class<?>> validMachineClasses() {
+            return List.of(MEIOPartMachine.class);
         }
 
         @Override
         public MEIOPartMachine getMachine() {
-            return (MEIOPartMachine) machine;
+            return (MEIOPartMachine) super.getMachine();
         }
 
         @Override
@@ -143,9 +140,5 @@ public abstract class MEIOPartMachine extends MultiblockPartMachine implements I
             return io;
         }
 
-        @Override
-        public ManagedFieldHolder getFieldHolder() {
-            return MANAGED_FIELD_HOLDER;
-        }
     }
 }

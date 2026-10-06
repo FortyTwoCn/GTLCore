@@ -1,60 +1,53 @@
 package org.gtlcore.gtlcore.client.renderer.machine;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.gtlcore.gtlcore.api.GTLConstants;
 import org.gtlcore.gtlcore.client.ClientUtil;
-import org.gtlcore.gtlcore.common.machine.multiblock.electric.HarmonyMachine;
 import org.gtlcore.gtlcore.utils.RenderUtil;
 
-import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
-import com.gregtechceu.gtceu.client.renderer.machine.IControllerRenderer;
-import com.gregtechceu.gtceu.client.renderer.machine.WorkableCasingMachineRenderer;
+import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 
-import com.lowdragmc.lowdraglib.client.bakedpipeline.FaceQuad;
-import com.lowdragmc.lowdraglib.client.model.ModelFactory;
 
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.ModelState;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import org.jetbrains.annotations.Nullable;
+import com.mojang.serialization.MapCodec;
+import com.gregtechceu.gtceu.client.renderer.machine.DynamicRender;
+import com.gregtechceu.gtceu.client.renderer.machine.DynamicRenderType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
 import java.util.List;
-import java.util.function.Consumer;
 
-public class EyeOfHarmonyRenderer extends WorkableCasingMachineRenderer implements IControllerRenderer {
+public class EyeOfHarmonyRenderer extends DynamicRender<WorkableMultiblockMachine, EyeOfHarmonyRenderer> {
 
-    private static final ResourceLocation SPACE_MODEL = GTLCore.id("obj/space");
-    public static final ResourceLocation STAR_MODEL = GTLCore.id("obj/star");
-    private static final List<ResourceLocation> ORBIT_OBJECTS = List.of(
-            GTLCore.id("obj/the_nether"),
-            GTLCore.id("obj/overworld"),
-            GTLCore.id("obj/the_end"));
+    public static final ResourceLocation SPACE_MODEL = GTLConstants.id("obj/space");
+    public static final ResourceLocation STAR_MODEL = GTLConstants.id("obj/star");
+    public static final List<ResourceLocation> ORBIT_OBJECTS = List.of(
+            GTLConstants.id("obj/the_nether"),
+            GTLConstants.id("obj/overworld"),
+            GTLConstants.id("obj/the_end"));
 
-    public EyeOfHarmonyRenderer() {
-        super(GTLCore.id("block/casings/dimensionally_transcendent_casing"), GTCEu.id("block/multiblock/cosmos_simulation"));
+    public static final MapCodec<EyeOfHarmonyRenderer> CODEC = MapCodec.unit(EyeOfHarmonyRenderer::new);
+    public static final DynamicRenderType<WorkableMultiblockMachine, EyeOfHarmonyRenderer> TYPE = new DynamicRenderType<>(CODEC);
+
+    @Override
+    public DynamicRenderType<WorkableMultiblockMachine, EyeOfHarmonyRenderer> getType() {
+        return TYPE;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void render(BlockEntity blockEntity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer,
+    public void render(WorkableMultiblockMachine machine, float partialTicks, PoseStack poseStack, MultiBufferSource buffer,
                        int combinedLight, int combinedOverlay) {
-        if (blockEntity instanceof IMachineBlockEntity machineBlockEntity &&
-                machineBlockEntity.getMetaMachine() instanceof HarmonyMachine machine && machine.isActive()) {
+        if (machine.isActive()) {
             float tick = RenderUtil.getSmoothTick(machine, partialTicks);
             double x = 0.5, y = 0.5, z = 0.5;
             switch (machine.getFrontFacing()) {
@@ -101,33 +94,18 @@ public class EyeOfHarmonyRenderer extends WorkableCasingMachineRenderer implemen
     }
 
     @Override
-    public void onAdditionalModel(Consumer<ResourceLocation> registry) {
-        super.onAdditionalModel(registry);
-        registry.accept(SPACE_MODEL);
-        registry.accept(STAR_MODEL);
-        registry.accept(ORBIT_OBJECTS.get(0));
-        registry.accept(ORBIT_OBJECTS.get(1));
-        registry.accept(ORBIT_OBJECTS.get(2));
+    public boolean shouldRender(WorkableMultiblockMachine machine, Vec3 cameraPos) {
+        return machine.isActive() && super.shouldRender(machine, cameraPos);
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public void renderPartModel(List<BakedQuad> list, IMultiController iMultiController, IMultiPart iMultiPart, Direction direction, @Nullable Direction direction1, RandomSource randomSource, Direction direction2, ModelState modelState) {
-        if (direction1 != null && direction2 != null) {
-            list.add(FaceQuad.bakeFace(direction2, ModelFactory.getBlockSprite(GTCEu.id("block/casings/hpca/high_power_casing")), modelState));
-        }
+    public boolean shouldRenderOffScreen(WorkableMultiblockMachine machine) {
+        return machine.isActive();
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean hasTESR(BlockEntity blockEntity) {
-        return true;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean isGlobalRenderer(BlockEntity blockEntity) {
-        return true;
+    public AABB getRenderBoundingBox(WorkableMultiblockMachine machine) {
+        return new AABB(machine.getBlockPos()).inflate(getViewDistance());
     }
 
     @Override

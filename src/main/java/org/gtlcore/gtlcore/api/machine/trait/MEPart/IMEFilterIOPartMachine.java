@@ -2,19 +2,19 @@ package org.gtlcore.gtlcore.api.machine.trait.MEPart;
 
 import org.gtlcore.gtlcore.api.machine.trait.IMERecipeHandlerTrait;
 
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 
 public interface IMEFilterIOPartMachine extends IMEIOPartMachine {
 
-    Pair<IMERecipeHandlerTrait<Ingredient, ItemStack>, IMERecipeHandlerTrait<FluidIngredient, FluidStack>> getMERecipeHandlerTraits();
+    Pair<IMERecipeHandlerTrait<SizedIngredient, ItemStack>, IMERecipeHandlerTrait<SizedFluidIngredient, FluidStack>> getMERecipeHandlerTraits();
 
     @NotNull
     IMEFilterIOTrait getMETrait();

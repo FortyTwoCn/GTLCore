@@ -1,0 +1,7 @@
+{
+  "source_url": "https://github.com/Mari023/AE2WirelessTerminalLibrary",
+  "revision": "e62cbf9e409f060d6f164987559237b0eae9434c",
+  "version": "19.2.0",
+  "patch_sha256": "b9aab31fa00dbee9f0abded578ee6c0a56f4006da7243acadc09a73398077c04",
+  "scope": "Isolate config-screen factory, screen listener and client ticks from the dedicated-server mod constructor. No registrations or client functionality removed."
+}

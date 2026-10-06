@@ -1,101 +1,36 @@
 package org.gtlcore.gtlcore.integration.ae2.widget;
 
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.slot.AEPatternViewSlotWidget;
-
-import com.lowdragmc.lowdraglib.gui.modular.ModularUIGuiContainer;
-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
-
-import com.mojang.blaze3d.platform.InputConstants;
+import org.gtlcore.gtlcore.integration.ae2.gui.PatternBufferItemSlot;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import appeng.crafting.pattern.EncodedPatternItem;
+import brachy.modularui.value.sync.ItemSlotSyncHandler;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-
-public class AEPatternViewExtendSlotWidget extends AEPatternViewSlotWidget {
-
-    public AEPatternViewExtendSlotWidget(IItemTransfer inventory, int slotIndex, int xPosition, int yPosition) {
-        super(inventory, slotIndex, xPosition, yPosition);
-    }
-
-    @Nullable
-    private Runnable onMiddleClick;
-    @Nullable
-    private Runnable onPatternSlotChanged;
-
-    public AEPatternViewExtendSlotWidget setOnMiddleClick(@Nullable Runnable runnable) {
-        this.onMiddleClick = runnable;
-        return this;
-    }
-
-    public AEPatternViewExtendSlotWidget setOnPatternSlotChanged(@Nullable Runnable runnable) {
-        this.onPatternSlotChanged = runnable;
-        return this;
-    }
-
-    @Override
-    protected Slot createSlot(IItemTransfer itemHandler, int index) {
-        return new ExtendWidgetSlotItemTransfer(itemHandler, index, 0, 0);
-    }
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (slotReference != null && isMouseOverElement(mouseX, mouseY) && gui != null) {
-            if (button == 2 && onMiddleClick != null) {
-                writeClientAction(10, writer -> writer.writeBoolean(true));
-                onMiddleClick.run();
-                return true;
+/** Native pattern slot; vanilla menu transactions own clicks and server change notifications. */
+public class AEPatternViewExtendSlotWidget extends PatternBufferItemSlot {
+    private @Nullable Runnable onMiddleClick, onPatternSlotChanged;
+    public AEPatternViewExtendSlotWidget(IItemHandlerModifiable inventory, PanelSyncManager sync, int slot, int x, int y) {
+        super(null);
+        var handler = sync.getOrCreateSyncHandler("extendedPatternSlot", slot, ItemSlotSyncHandler.class,
+                () -> new ItemSlotSyncHandler(SyncHandlers.itemSlot(inventory, slot).accessibility(true, true)
+                        .changeListener((oldStack, newStack, client, init) -> {
+                            if (!client && !init && onPatternSlotChanged != null) onPatternSlotChanged.run();
+                        })));
+        syncHandler(handler); pos(x, y); background(GTGuiTextures.SLOT, GTGuiTextures.PATTERN_OVERLAY);
+        setItemHook(stack -> {
+            if (stack.getItem() instanceof EncodedPatternItem<?> pattern) {
+                var output = pattern.getOutput(stack); if (!output.isEmpty()) return output;
             }
-
-            var stack = slotReference.getItem();
-            if (canPutItems && stack.isEmpty() || canTakeItems && !stack.isEmpty()) {
-                ModularUIGuiContainer modularUIGui = gui.getModularUIGui();
-                boolean last = modularUIGui.getQuickCrafting();
-                InputConstants.Key mouseKey = InputConstants.Type.MOUSE.getOrCreate(button);
-                HOVER_SLOT = slotReference;
-                gui.getModularUIGui().superMouseClicked(mouseX, mouseY, button);
-                HOVER_SLOT = null;
-                if (last != modularUIGui.getQuickCrafting()) {
-                    modularUIGui.dragSplittingButton = button;
-                    if (button == 0) {
-                        modularUIGui.dragSplittingLimit = 0;
-                    } else if (button == 1) {
-                        modularUIGui.dragSplittingLimit = 1;
-                    } else if (Minecraft.getInstance().options.keyPickItem.matchesMouse(mouseKey.getValue())) {
-                        modularUIGui.dragSplittingLimit = 2;
-                    }
-                }
-                return true;
-            }
-        }
-        return false;
+            return stack;
+        });
     }
-
-    @Override
-    public void handleClientAction(int id, FriendlyByteBuf buffer) {
-        super.handleClientAction(id, buffer);
-        if (id == 10) {
-            if (onMiddleClick != null) {
-                onMiddleClick.run();
-            }
-        }
-    }
-
-    protected class ExtendWidgetSlotItemTransfer extends WidgetSlotItemTransfer {
-
-        public ExtendWidgetSlotItemTransfer(IItemTransfer itemHandler, int index, int xPosition, int yPosition) {
-            super(itemHandler, index, xPosition, yPosition);
-        }
-
-        @Override
-        public void set(@Nonnull ItemStack stack) {
-            super.set(stack);
-            if (onPatternSlotChanged != null) {
-                onPatternSlotChanged.run();
-            }
-        }
+    public AEPatternViewExtendSlotWidget setOnMiddleClick(@Nullable Runnable callback) { onMiddleClick = callback; return this; }
+    public AEPatternViewExtendSlotWidget setOnPatternSlotChanged(@Nullable Runnable callback) { onPatternSlotChanged = callback; return this; }
+    @Override public Result onMousePressed(int button) {
+        if (button == 2 && onMiddleClick != null) { onMiddleClick.run(); return Result.SUCCESS; }
+        return super.onMousePressed(button);
     }
 }

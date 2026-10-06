@@ -1,42 +1,27 @@
 package org.gtlcore.gtlcore.api.machine.trait;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.layout.Flow;
 import net.minecraft.network.chat.Component;
 
-import java.util.*;
-
-/**
- * 代码参考自gto
- * &#064;line <a href="https://github.com/GregTech-Odyssey/GTOCore">...</a>
- */
-
 public interface ILockRecipe {
+    default boolean isLock() { return false; }
+    default void setLock(boolean locked) {}
+    default GTRecipe getLockRecipe() { return null; }
+    default void setLockRecipe(GTRecipe recipe) {}
 
-    default boolean isLock() {
-        return false;
-    }
-
-    default void setLock(boolean lockRecipe) {}
-
-    default GTRecipe getLockRecipe() {
-        return null;
-    }
-
-    default void setLockRecipe(GTRecipe lockRecipe) {}
-
-    static void attachRecipeLockable(ConfiguratorPanel configuratorPanel, RecipeLogic logic) {
-        if (logic instanceof ILockRecipe iLockRecipe) {
-            configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                    GuiTextures.BUTTON_PUBLIC_PRIVATE.getSubTexture(0, 0, 1, 0.5),
-                    GuiTextures.BUTTON_PUBLIC_PRIVATE.getSubTexture(0, 0.5, 1, 0.5),
-                    iLockRecipe::isLock, (clickData, pressed) -> iLockRecipe.setLock(pressed))
-                    .setTooltipsSupplier(pressed -> List.of(Component.translatable("config.gtceu.option.recipes")
-                            .append("[").append(Component.translatable(pressed ? "theoneprobe.ae2.locked" : "theoneprobe.ae2.unlocked").append("]")))));
-        }
+    static void attachRecipeLockable(Flow configurators, RecipeLogic logic) {
+        if (!(logic instanceof ILockRecipe lock)) return;
+        var value = new BooleanSyncValue(lock::isLock, lock::setLock).allowC2S();
+        configurators.child(new ToggleButton().value(value)
+                .background(GTGuiTextures.PRIVATE_MODE_BUTTON[0])
+                .background(true, GTGuiTextures.PRIVATE_MODE_BUTTON[1])
+                .tooltipAutoUpdate(true)
+                .tooltipBuilder(tooltip -> tooltip.addLine(Component.translatable("config.gtceu.option.recipes")
+                        .append("[").append(Component.translatable(value.getBoolValue() ? "theoneprobe.ae2.locked" : "theoneprobe.ae2.unlocked")).append("]"))));
     }
 }

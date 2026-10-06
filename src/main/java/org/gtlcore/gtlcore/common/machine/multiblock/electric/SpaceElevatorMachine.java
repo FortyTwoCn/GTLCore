@@ -3,55 +3,52 @@ package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 import org.gtlcore.gtlcore.api.machine.multiblock.IModularMachineHost;
 import org.gtlcore.gtlcore.api.machine.multiblock.IModularMachineModule;
 import org.gtlcore.gtlcore.api.recipe.RecipeResult;
-import org.gtlcore.gtlcore.client.gui.widget.IExtendedClickData;
 import org.gtlcore.gtlcore.common.data.GTLBlocks;
 import org.gtlcore.gtlcore.utils.MachineUtil;
 import org.gtlcore.gtlcore.utils.datastructure.ModuleRenderInfo;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineLife;
 
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.*;
 
-import net.minecraft.Util;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import earth.terrarium.adastra.common.menus.base.PlanetsMenuProvider;
-import earth.terrarium.botarium.common.menu.MenuHooks;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
+import java.util.ArrayList;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.value.sync.InteractionSyncHandler;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widgets.ButtonWidget;
 
 import static org.gtlcore.gtlcore.common.data.machines.AdvancedMultiBlockMachineA.ASSEMBLER_MODULE;
 import static org.gtlcore.gtlcore.common.data.machines.AdvancedMultiBlockMachineA.RESOURCE_COLLECTION;
 
 public class SpaceElevatorMachine extends TierCasingMachine
-                                  implements IModularMachineHost<SpaceElevatorMachine>, IMachineLife {
+                                  implements IModularMachineHost<SpaceElevatorMachine> {
 
     private final Set<IModularMachineModule<SpaceElevatorMachine, ?>> modules = new ReferenceOpenHashSet<>();
     private int mam = 0;
     private TickableSubscription connectionSubscription;
 
-    public SpaceElevatorMachine(IMachineBlockEntity holder) {
+    public SpaceElevatorMachine(BlockEntityCreationInfo holder) {
         super(holder, "SEPMTier");
+        getRecipeLogic().setKeepSubscribing(true);
     }
 
     @Override
@@ -62,6 +59,7 @@ public class SpaceElevatorMachine extends TierCasingMachine
 
     @Override
     public void onUnload() {
+        safeClearModules();
         stopConnectionSubscription();
         super.onUnload();
     }
@@ -72,21 +70,15 @@ public class SpaceElevatorMachine extends TierCasingMachine
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String name) {
+        super.invalidateStructure(name);
         safeClearModules();
         stopConnectionSubscription();
     }
 
     @Override
-    public void onMachineRemoved() {
-        safeClearModules();
-        stopConnectionSubscription();
-    }
-
-    @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String name) {
+        super.formStructure(name);
         safeClearModules();
         scanAndConnectSpaceElevatorModules("host_structure_formed");
         updateConnectionSubscription();
@@ -98,7 +90,7 @@ public class SpaceElevatorMachine extends TierCasingMachine
      * （模块成型事件只会在模块自身生命周期触发一次，主机不再重扫则永久掉线）。
      */
     private void updateConnectionSubscription() {
-        if (isFormed()) {
+        if (getLevel() instanceof ServerLevel && isFormed()) {
             if (connectionSubscription == null) {
                 connectionSubscription = subscribeServerTick(this::connectionTick);
             }
@@ -127,7 +119,7 @@ public class SpaceElevatorMachine extends TierCasingMachine
     @Override
     public BlockPos[] getModuleScanPositions() {
         final Level level = getLevel();
-        final BlockPos powerCore = getPowerCore(getPos(), level);
+        final BlockPos powerCore = getPowerCore(getBlockPos(), level);
         if (powerCore != null) {
             return new BlockPos[] {
                     powerCore.offset(8, 2, 3),
@@ -144,6 +136,7 @@ public class SpaceElevatorMachine extends TierCasingMachine
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public @NotNull List<ModuleRenderInfo> getModulesForRendering() {
         return List.of(
                 new ModuleRenderInfo(
@@ -152,56 +145,56 @@ public class SpaceElevatorMachine extends TierCasingMachine
                         Direction.UP,
                         Direction.NORTH,
                         Direction.UP,
-                        RESOURCE_COLLECTION),
+                        RESOURCE_COLLECTION.get()),
                 new ModuleRenderInfo(
                         new BlockPos(-8, 0, 0),
                         Direction.NORTH,
                         Direction.UP,
                         Direction.WEST,
                         Direction.UP,
-                        ASSEMBLER_MODULE),
+                        ASSEMBLER_MODULE.get()),
                 new ModuleRenderInfo(
                         new BlockPos(-8, 0, 6),
                         Direction.NORTH,
                         Direction.UP,
                         Direction.WEST,
                         Direction.UP,
-                        RESOURCE_COLLECTION),
+                        RESOURCE_COLLECTION.get()),
                 new ModuleRenderInfo(
                         new BlockPos(-3, 0, 11),
                         Direction.NORTH,
                         Direction.UP,
                         Direction.SOUTH,
                         Direction.UP,
-                        ASSEMBLER_MODULE),
+                        ASSEMBLER_MODULE.get()),
                 new ModuleRenderInfo(
                         new BlockPos(3, 0, 11),
                         Direction.NORTH,
                         Direction.UP,
                         Direction.SOUTH,
                         Direction.UP,
-                        RESOURCE_COLLECTION),
+                        RESOURCE_COLLECTION.get()),
                 new ModuleRenderInfo(
                         new BlockPos(8, 0, 6),
                         Direction.NORTH,
                         Direction.UP,
                         Direction.EAST,
                         Direction.UP,
-                        ASSEMBLER_MODULE),
+                        ASSEMBLER_MODULE.get()),
                 new ModuleRenderInfo(
                         new BlockPos(8, 0, 0),
                         Direction.NORTH,
                         Direction.UP,
                         Direction.EAST,
                         Direction.UP,
-                        RESOURCE_COLLECTION),
+                        RESOURCE_COLLECTION.get()),
                 new ModuleRenderInfo(
                         new BlockPos(3, 0, -5),
                         Direction.NORTH,
                         Direction.UP,
                         Direction.NORTH,
                         Direction.UP,
-                        ASSEMBLER_MODULE));
+                        ASSEMBLER_MODULE.get()));
     }
 
     private BlockPos getPowerCore(BlockPos pos, Level level) {
@@ -213,7 +206,7 @@ public class SpaceElevatorMachine extends TierCasingMachine
                 pos.offset(0, -2, 3),
                 pos.offset(0, -2, -3) };
         for (BlockPos blockPos : coordinates) {
-            if (level.getBlockState(blockPos).is(GTLBlocks.POWER_CORE.get())) {
+            if (level.hasChunkAt(blockPos) && level.getBlockState(blockPos).is(GTLBlocks.POWER_CORE.get())) {
                 return blockPos;
             }
         }
@@ -225,10 +218,11 @@ public class SpaceElevatorMachine extends TierCasingMachine
         if (level == null) {
             return;
         }
-        BlockPos powerCore = getPowerCore(getPos(), level);
+        BlockPos powerCore = getPowerCore(getBlockPos(), level);
         BlockPos[] positions = getModuleScanPositions();
 
         for (BlockPos pos : positions) {
+            if (!level.hasChunkAt(pos)) continue;
             MetaMachine machine = MetaMachine.getMachine(level, pos);
             boolean formed = machine instanceof IModularMachineModule<?, ?> module && module.isFormed();
             boolean valid = isValidModule(machine);
@@ -264,11 +258,6 @@ public class SpaceElevatorMachine extends TierCasingMachine
     }
 
     @Override
-    public boolean keepSubscribing() {
-        return true;
-    }
-
-    @Override
     public boolean onWorking() {
         boolean value = super.onWorking();
         if (getOffsetTimer() % 20 == 0) {
@@ -281,86 +270,30 @@ public class SpaceElevatorMachine extends TierCasingMachine
     }
 
     @Override
-    public @NotNull Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(0, 0, 190, 125);
-        group.addWidget((new DraggableScrollableWidgetGroup(4, 4, 182, 117))
-                .setBackground(this.getScreenTexture())
-                .addWidget(new LabelWidget(4, 5, this.self().getBlockState().getBlock().getDescriptionId()))
-                .addWidget((new ComponentPanelWidget(4, 17, this::addDisplayText) {
-
-                    @Override
-                    @OnlyIn(Dist.CLIENT)
-                    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                        var style = getStyleUnderMouse(mouseX, mouseY);
-                        if (style != null) {
-                            if (style.getClickEvent() != null) {
-                                ClickEvent clickEvent = style.getClickEvent();
-                                String componentText = clickEvent.getValue();
-                                if (clickEvent.getAction() == ClickEvent.Action.OPEN_URL) {
-                                    if (componentText.startsWith("@!")) {
-                                        String rawText = componentText.substring(2);
-                                        ClickData clickData = new ClickData();
-                                        if (clickHandler != null) {
-                                            clickHandler.accept(rawText, clickData);
-                                        }
-                                        writeClientAction(1, buf -> {
-                                            clickData.writeToBuf(buf);
-                                            buf.writeUtf(rawText);
-                                            if (Minecraft.getInstance().player != null) buf.writeUUID(Minecraft.getInstance().player.getUUID());
-                                        });
-                                    } else if (componentText.startsWith("@#")) {
-                                        String rawText = componentText.substring(2);
-                                        Util.getPlatform().openUri(rawText);
-                                    }
-                                    playButtonClickSound();
-                                    return true;
-                                }
-                            }
-                        }
-                        return super.mouseClicked(mouseX, mouseY, button);
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager sync) {
+        var widgets = new ArrayList<>(super.getWidgetsForDisplay(sync));
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("spaceElevator", (controller, lines) -> {
+            if (isFormed()) lines.add(Component.translatable("gtceu.machine.module", getMAM()));
+        }).apply(this, sync));
+        var working = sync.getOrCreateSyncHandler("spaceElevatorWorking", BooleanSyncValue.class,
+                () -> new BooleanSyncValue(() -> isFormed() && getRecipeLogic().isWorking()));
+        var depart = sync.getOrCreateSyncHandler("spaceElevatorDepart", InteractionSyncHandler.class,
+                () -> new InteractionSyncHandler().setOnMousePressed(mouse -> {
+                    if (mouse.isLeftMouseButton() && !sync.isClient() && sync.getPlayer() instanceof ServerPlayer player) {
+                        openPlanetsMenu(player);
                     }
-
-                    @Override
-                    public void handleClientAction(int id, FriendlyByteBuf buffer) {
-                        if (id == 1) {
-                            ClickData clickData = ClickData.readFromBuf(buffer);
-                            String componentData = buffer.readUtf();
-                            ((IExtendedClickData) clickData).setUUID(buffer.readUUID());
-                            if (clickHandler != null) {
-                                clickHandler.accept(componentData, clickData);
-                            }
-                        } else {
-                            super.handleClientAction(id, buffer);
-                        }
-                    }
-                })
-                        .textSupplier(Objects.requireNonNull(this.getLevel()).isClientSide ? null : this::addDisplayText).setMaxWidthLimit(150)
-                        .clickHandler(this::handleDisplayClick)));
-        group.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        return group;
+                }));
+        widgets.add(new ButtonWidget<>().name("spaceElevatorDepart").size(150, 18)
+                .overlay(Text.of(Component.translatable("gtceu.machine.space_elevator.set_out")))
+                .syncHandler(depart).setEnabledIf(widget -> working.getBoolValue()));
+        return widgets;
     }
 
-    @Override
-    public void addDisplayText(@NotNull List<Component> textList) {
-        super.addDisplayText(textList);
-        if (!this.isFormed) return;
-        textList.add(Component.translatable("gtceu.machine.module", getMAM()));
-        textList.add(ComponentPanelWidget.withButton(Component.translatable("gtceu.machine.space_elevator.set_out"),
-                "set_out"));
-    }
-
-    @Override
-    public void handleDisplayClick(String componentData, ClickData clickData) {
-        if (!(getLevel() instanceof ServerLevel serverLevel)) return;
-        if (componentData.equals("set_out") && getRecipeLogic().isWorking()) {
-            UUID playerUUID = ((IExtendedClickData) clickData).getUUID();
-            if (playerUUID != null) {
-                ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(playerUUID);
-                if (player != null) {
-                    player.addTag("spaceelevatorst");
-                    MenuHooks.openMenu(player, new PlanetsMenuProvider());
-                }
-            }
+    private void openPlanetsMenu(ServerPlayer player) {
+        if (getLevel() instanceof ServerLevel && !isRemoved() && isFormed() && getRecipeLogic().isWorking()) {
+            player.addTag("spaceelevatorst");
+            // ResourcefulLib's provider sends the native planet/station content with the menu.
+            new PlanetsMenuProvider().openMenu(player);
         }
     }
 }

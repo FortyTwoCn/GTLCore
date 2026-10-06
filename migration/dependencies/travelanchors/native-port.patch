@@ -1,0 +1,1451 @@
+diff --git a/src/generated/resources/data/travelanchors/advancements/recipes/misc/travel_anchor.json b/src/generated/resources/data/travelanchors/advancement/recipe/misc/travel_anchor.json
+similarity index 87%
+rename from src/generated/resources/data/travelanchors/advancements/recipes/misc/travel_anchor.json
+rename to src/generated/resources/data/travelanchors/advancement/recipe/misc/travel_anchor.json
+index 78372cc..42b9b3b 100644
+--- a/src/generated/resources/data/travelanchors/advancements/recipes/misc/travel_anchor.json
++++ b/src/generated/resources/data/travelanchors/advancement/recipe/misc/travel_anchor.json
+@@ -5,7 +5,7 @@
+       "conditions": {
+         "items": [
+           {
+-            "tag": "forge:storage_blocks/iron"
++            "tag": "c:storage_blocks/iron"
+           }
+         ]
+       },
+@@ -15,7 +15,7 @@
+       "conditions": {
+         "items": [
+           {
+-            "tag": "forge:ingots/iron"
++            "tag": "c:ingots/iron"
+           }
+         ]
+       },
+@@ -25,7 +25,7 @@
+       "conditions": {
+         "items": [
+           {
+-            "tag": "forge:ender_pearls"
++            "tag": "c:ender_pearls"
+           }
+         ]
+       },
+@@ -51,4 +51,4 @@
+       "travelanchors:travel_anchor"
+     ]
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/travelanchors/advancements/recipes/misc/travel_staff.json b/src/generated/resources/data/travelanchors/advancement/recipe/misc/travel_staff.json
+similarity index 89%
+rename from src/generated/resources/data/travelanchors/advancements/recipes/misc/travel_staff.json
+rename to src/generated/resources/data/travelanchors/advancement/recipe/misc/travel_staff.json
+index 94386ab..58b4c3a 100644
+--- a/src/generated/resources/data/travelanchors/advancements/recipes/misc/travel_staff.json
++++ b/src/generated/resources/data/travelanchors/advancement/recipe/misc/travel_staff.json
+@@ -5,7 +5,7 @@
+       "conditions": {
+         "items": [
+           {
+-            "tag": "forge:ingots/iron"
++            "tag": "c:ingots/iron"
+           }
+         ]
+       },
+@@ -15,7 +15,7 @@
+       "conditions": {
+         "items": [
+           {
+-            "tag": "forge:ender_pearls"
++            "tag": "c:ender_pearls"
+           }
+         ]
+       },
+@@ -40,4 +40,4 @@
+       "travelanchors:travel_staff"
+     ]
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/travelanchors/loot_tables/blocks/travel_anchor.json b/src/generated/resources/data/travelanchors/loot_table/blocks/travel_anchor.json
+similarity index 99%
+rename from src/generated/resources/data/travelanchors/loot_tables/blocks/travel_anchor.json
+rename to src/generated/resources/data/travelanchors/loot_table/blocks/travel_anchor.json
+index e3e5a65..a05caa4 100644
+--- a/src/generated/resources/data/travelanchors/loot_tables/blocks/travel_anchor.json
++++ b/src/generated/resources/data/travelanchors/loot_table/blocks/travel_anchor.json
+@@ -18,4 +18,4 @@
+       "rolls": 1.0
+     }
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/travelanchors/recipes/travel_anchor.json b/src/generated/resources/data/travelanchors/recipe/travel_anchor.json
+similarity index 60%
+rename from src/generated/resources/data/travelanchors/recipes/travel_anchor.json
+rename to src/generated/resources/data/travelanchors/recipe/travel_anchor.json
+index d328893..c400336 100644
+--- a/src/generated/resources/data/travelanchors/recipes/travel_anchor.json
++++ b/src/generated/resources/data/travelanchors/recipe/travel_anchor.json
+@@ -3,13 +3,13 @@
+   "category": "misc",
+   "key": {
+     "b": {
+-      "tag": "forge:storage_blocks/iron"
++      "tag": "c:storage_blocks/iron"
+     },
+     "e": {
+-      "tag": "forge:ender_pearls"
++      "tag": "c:ender_pearls"
+     },
+     "i": {
+-      "tag": "forge:ingots/iron"
++      "tag": "c:ingots/iron"
+     }
+   },
+   "pattern": [
+@@ -18,7 +18,7 @@
+     "bib"
+   ],
+   "result": {
+-    "item": "travelanchors:travel_anchor"
++    "id": "travelanchors:travel_anchor"
+   },
+   "show_notification": true
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/travelanchors/recipes/travel_staff.json b/src/generated/resources/data/travelanchors/recipe/travel_staff.json
+similarity index 66%
+rename from src/generated/resources/data/travelanchors/recipes/travel_staff.json
+rename to src/generated/resources/data/travelanchors/recipe/travel_staff.json
+index f6b9fb7..cf33281 100644
+--- a/src/generated/resources/data/travelanchors/recipes/travel_staff.json
++++ b/src/generated/resources/data/travelanchors/recipe/travel_staff.json
+@@ -3,10 +3,10 @@
+   "category": "misc",
+   "key": {
+     "e": {
+-      "tag": "forge:ender_pearls"
++      "tag": "c:ender_pearls"
+     },
+     "i": {
+-      "tag": "forge:ingots/iron"
++      "tag": "c:ingots/iron"
+     }
+   },
+   "pattern": [
+@@ -15,7 +15,7 @@
+     "e  "
+   ],
+   "result": {
+-    "item": "travelanchors:travel_staff"
++    "id": "travelanchors:travel_staff"
+   },
+   "show_notification": true
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/de/castcrafter/travelanchors/EventListener.java b/src/main/java/de/castcrafter/travelanchors/EventListener.java
+index 2b152d1..f32b672 100644
+--- a/src/main/java/de/castcrafter/travelanchors/EventListener.java
++++ b/src/main/java/de/castcrafter/travelanchors/EventListener.java
+@@ -7,13 +7,13 @@ import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.InteractionResult;
+ import net.minecraft.world.entity.player.Player;
+ import net.minecraft.world.level.Level;
+-import net.minecraftforge.api.distmarker.Dist;
+-import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraftforge.client.event.MovementInputUpdateEvent;
+-import net.minecraftforge.event.entity.living.LivingEvent;
+-import net.minecraftforge.event.entity.player.PlayerEvent;
+-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+-import net.minecraftforge.eventbus.api.SubscribeEvent;
++import net.neoforged.api.distmarker.Dist;
++import net.neoforged.api.distmarker.OnlyIn;
++import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
++import net.neoforged.neoforge.event.entity.living.LivingEvent;
++import net.neoforged.neoforge.event.entity.player.PlayerEvent;
++import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
++import net.neoforged.bus.api.SubscribeEvent;
+ import org.moddingx.libx.event.InteractBlockEmptyHandEvent;
+ 
+ public class EventListener {
+@@ -54,7 +54,6 @@ public class EventListener {
+         Player player = event.getEntity();
+         if (TeleportHandler.canBlockTeleport(player) && !player.isShiftKeyDown() && event.getHand() == InteractionHand.MAIN_HAND && event.getEntity().getItemInHand(InteractionHand.OFF_HAND).isEmpty() && event.getItemStack().isEmpty()) {
+             TravelAnchors.getNetwork().sendClientEventToServer(level, ClientEventMessage.Type.EMPTY_HAND_INTERACT);
+-            event.setCancellationResult(InteractionResult.SUCCESS);
+         }
+     }
+ 
+@@ -67,8 +66,7 @@ public class EventListener {
+                 if (!event.getPlayer().isShiftKeyDown()) {
+                     if (TeleportHandler.anchorTeleport(event.getLevel(), event.getPlayer(), event.getPlayer().blockPosition().immutable().below(), event.getHand())) {
+                         event.setCanceled(true);
+-                        event.setCancellationResult(InteractionResult.SUCCESS);
+-                    }
++                                }
+                 }
+             }
+         }
+diff --git a/src/main/java/de/castcrafter/travelanchors/ModBlocks.java b/src/main/java/de/castcrafter/travelanchors/ModBlocks.java
+index 2f2cf38..ab51027 100644
+--- a/src/main/java/de/castcrafter/travelanchors/ModBlocks.java
++++ b/src/main/java/de/castcrafter/travelanchors/ModBlocks.java
+@@ -13,5 +13,5 @@ import org.moddingx.libx.menu.BlockEntityMenu;
+ @RegisterClass(registry = "BLOCK", priority = 1)
+ public class ModBlocks {
+ 
+-    public static final MenuBlockBE<TileTravelAnchor, MenuTravelAnchor> travelAnchor = new BlockTravelAnchor(TravelAnchors.getInstance(), TileTravelAnchor.class, BlockEntityMenu.createMenuType(MenuTravelAnchor::new), BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).sound(SoundType.METAL).strength(2.0f));
++    public static final MenuBlockBE<TileTravelAnchor, MenuTravelAnchor> travelAnchor = new BlockTravelAnchor(TravelAnchors.getInstance(), TileTravelAnchor.class, org.moddingx.libx.menu.type.AdvancedMenuType.create(MenuTravelAnchor::new, net.minecraft.core.BlockPos.STREAM_CODEC), BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.METAL).strength(2.0f));
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/ModEnchantments.java b/src/main/java/de/castcrafter/travelanchors/ModEnchantments.java
+index 0d8c49a..bc7f9b2 100644
+--- a/src/main/java/de/castcrafter/travelanchors/ModEnchantments.java
++++ b/src/main/java/de/castcrafter/travelanchors/ModEnchantments.java
+@@ -1,23 +1,18 @@
+ package de.castcrafter.travelanchors;
+ 
+-import de.castcrafter.travelanchors.enchantments.RangeEnchantment;
+-import de.castcrafter.travelanchors.enchantments.TeleportationEnchantment;
++import net.minecraft.core.registries.Registries;
++import net.minecraft.resources.ResourceKey;
++import net.minecraft.resources.ResourceLocation;
++import net.minecraft.world.entity.player.Player;
++import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.item.enchantment.Enchantment;
+-import net.minecraft.world.item.enchantment.EnchantmentCategory;
+-import org.moddingx.libx.annotation.registration.Reg.Exclude;
+-import org.moddingx.libx.annotation.registration.RegisterClass;
+ 
+-@RegisterClass(registry = "ENCHANTMENT")
+-public class ModEnchantments {
+-
+-    @Exclude
+-    public static final EnchantmentCategory TELEPORTABLE_NO_STAFF = EnchantmentCategory.create(TravelAnchors.getInstance().modid + "_teleportable_no_staff",
+-            item -> EnchantmentCategory.WEAPON.canEnchant(item) || EnchantmentCategory.DIGGER.canEnchant(item));
+-
+-    @Exclude
+-    public static final EnchantmentCategory TELEPORTABLE = EnchantmentCategory.create(TravelAnchors.getInstance().modid + "_teleportable",
+-            item -> item == ModItems.travelStaff || TELEPORTABLE_NO_STAFF.canEnchant(item));
+-
+-    public static final Enchantment teleportation = new TeleportationEnchantment();
+-    public static final Enchantment range = new RangeEnchantment();
++/** Native datapack enchantments retain the original IDs and levels. */
++public final class ModEnchantments {
++    private ModEnchantments() {}
++    public static final ResourceKey<Enchantment> teleportation = ResourceKey.create(Registries.ENCHANTMENT, ResourceLocation.fromNamespaceAndPath("travelanchors", "teleportation"));
++    public static final ResourceKey<Enchantment> range = ResourceKey.create(Registries.ENCHANTMENT, ResourceLocation.fromNamespaceAndPath("travelanchors", "range"));
++    public static int level(Player player, ItemStack stack, ResourceKey<Enchantment> enchantment) {
++        return stack.getEnchantmentLevel(player.level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(enchantment));
++    }
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/TeleportHandler.java b/src/main/java/de/castcrafter/travelanchors/TeleportHandler.java
+index 112bbf8..7b7db74 100644
+--- a/src/main/java/de/castcrafter/travelanchors/TeleportHandler.java
++++ b/src/main/java/de/castcrafter/travelanchors/TeleportHandler.java
+@@ -13,8 +13,8 @@ import net.minecraft.world.level.BlockGetter;
+ import net.minecraft.world.level.Level;
+ import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.phys.Vec3;
+-import net.minecraftforge.common.MinecraftForge;
+-import net.minecraftforge.event.entity.EntityTeleportEvent;
++import net.neoforged.neoforge.common.NeoForge;
++import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
+ import org.apache.commons.lang3.tuple.Pair;
+ 
+ import javax.annotation.Nullable;
+@@ -134,7 +134,7 @@ public class TeleportHandler {
+ 
+     public static boolean canItemTeleport(Player player, InteractionHand hand) {
+         return player.getItemInHand(hand).getItem() == ModItems.travelStaff
+-                || player.getItemInHand(hand).getEnchantmentLevel(ModEnchantments.teleportation) >= 1;
++                || ModEnchantments.level(player, player.getItemInHand(hand), ModEnchantments.teleportation) >= 1;
+     }
+ 
+     private static double getAngleRadians(Vec3 positionVec, BlockPos anchor, float yRot, float xRot) {
+@@ -144,8 +144,8 @@ public class TeleportHandler {
+     }
+ 
+     public static double getMaxDistance(Player player) {
+-        int mainHandLevel = player.getItemInHand(InteractionHand.MAIN_HAND).getEnchantmentLevel(ModEnchantments.range);
+-        int offHandLevel = player.getItemInHand(InteractionHand.OFF_HAND).getEnchantmentLevel(ModEnchantments.range);
++        int mainHandLevel = ModEnchantments.level(player, player.getItemInHand(InteractionHand.MAIN_HAND), ModEnchantments.range);
++        int offHandLevel = ModEnchantments.level(player, player.getItemInHand(InteractionHand.OFF_HAND), ModEnchantments.range);
+         int lvl = Math.max(mainHandLevel, offHandLevel);
+         return CommonConfig.max_distance * (1 + (lvl / 2d));
+     }
+@@ -200,7 +200,7 @@ public class TeleportHandler {
+     private static Vec3 checkTeleport(Player player, BlockPos target) {
+         if (CommonConfig.fireTeleportEvent) {
+             EntityTeleportEvent event = new EntityTeleportEvent(player, target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
+-            if (MinecraftForge.EVENT_BUS.post(event)) {
++            if (NeoForge.EVENT_BUS.post(event).isCanceled()) {
+                 return null;
+             }
+             return new Vec3(event.getTargetX(), event.getTargetY(), event.getTargetZ());
+diff --git a/src/main/java/de/castcrafter/travelanchors/TravelAnchorList.java b/src/main/java/de/castcrafter/travelanchors/TravelAnchorList.java
+index 8b08c60..d8729ee 100644
+--- a/src/main/java/de/castcrafter/travelanchors/TravelAnchorList.java
++++ b/src/main/java/de/castcrafter/travelanchors/TravelAnchorList.java
+@@ -1,12 +1,14 @@
+ package de.castcrafter.travelanchors;
+ 
+ import net.minecraft.core.BlockPos;
++import net.minecraft.core.HolderLookup;
++import net.minecraft.core.registries.Registries;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.nbt.NbtUtils;
+ import net.minecraft.nbt.ListTag;
+ import net.minecraft.nbt.Tag;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.world.level.Level;
+-import net.minecraft.world.level.block.Block;
+ import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.level.saveddata.SavedData;
+ import net.minecraft.world.level.storage.DimensionDataStorage;
+@@ -26,7 +28,7 @@ public class TravelAnchorList extends SavedData {
+     public static TravelAnchorList get(Level level) {
+         if (!level.isClientSide) {
+             DimensionDataStorage storage = ((ServerLevel) level).getDataStorage();
+-            return storage.computeIfAbsent(TravelAnchorList::new, TravelAnchorList::new, TravelAnchors.getInstance().modid);
++            return storage.computeIfAbsent(new SavedData.Factory<>(TravelAnchorList::new, TravelAnchorList::new, null), TravelAnchors.getInstance().modid);
+         } else {
+             return clientInstance;
+         }
+@@ -36,14 +38,14 @@ public class TravelAnchorList extends SavedData {
+         
+     }
+ 
+-    public TravelAnchorList(CompoundTag nbt) {
++    public TravelAnchorList(CompoundTag nbt, HolderLookup.Provider registries) {
+         this();
+-        this.load(nbt);
++        this.load(nbt, registries);
+     }
+ 
+     public final HashMap<BlockPos, Entry> anchors = new HashMap<>();
+ 
+-    public void load(@Nonnull CompoundTag nbt) {
++    public void load(@Nonnull CompoundTag nbt, HolderLookup.Provider registries) {
+         this.anchors.clear();
+         if (nbt.contains("anchors", Tag.TAG_LIST)) {
+             ListTag list = nbt.getList("anchors", Tag.TAG_COMPOUND);
+@@ -53,7 +55,10 @@ public class TravelAnchorList extends SavedData {
+                     BlockPos pos = new BlockPos(entryNBT.getInt("x"), entryNBT.getInt("y"), entryNBT.getInt("z")).immutable();
+                     String name = entryNBT.getString("name");
+                     if (!name.isEmpty()) {
+-                        this.anchors.put(pos, new Entry(entryNBT.getString("name"), entryNBT.contains("state") ? Block.stateById(entryNBT.getInt("state")) : ModBlocks.travelAnchor.defaultBlockState()));
++                        BlockState state = entryNBT.contains("state", Tag.TAG_COMPOUND)
++                                ? NbtUtils.readBlockState(registries.lookupOrThrow(Registries.BLOCK), entryNBT.getCompound("state"))
++                                : ModBlocks.travelAnchor.defaultBlockState();
++                        this.anchors.put(pos, new Entry(name, state));
+                     }
+                 }
+             }
+@@ -62,7 +67,7 @@ public class TravelAnchorList extends SavedData {
+ 
+     @Nonnull
+     @Override
+-    public CompoundTag save(@Nonnull CompoundTag compound) {
++    public CompoundTag save(@Nonnull CompoundTag compound, HolderLookup.Provider registries) {
+         ListTag list = new ListTag();
+         for (Map.Entry<BlockPos, Entry> entry : this.anchors.entrySet()) {
+             CompoundTag entryNBT = new CompoundTag();
+@@ -70,7 +75,7 @@ public class TravelAnchorList extends SavedData {
+             entryNBT.putInt("y", entry.getKey().getY());
+             entryNBT.putInt("z", entry.getKey().getZ());
+             entryNBT.putString("name", entry.getValue().name);
+-            entryNBT.putInt("state", Block.getId(entry.getValue().state));
++            entryNBT.put("state", NbtUtils.writeBlockState(entry.getValue().state));
+             list.add(entryNBT);
+         }
+         compound.put("anchors", list);
+@@ -127,4 +132,3 @@ public class TravelAnchorList extends SavedData {
+         }
+     }
+ }
+-
+diff --git a/src/main/java/de/castcrafter/travelanchors/TravelAnchors.java b/src/main/java/de/castcrafter/travelanchors/TravelAnchors.java
+index 56ac405..8011ed5 100644
+--- a/src/main/java/de/castcrafter/travelanchors/TravelAnchors.java
++++ b/src/main/java/de/castcrafter/travelanchors/TravelAnchors.java
+@@ -6,12 +6,12 @@ import de.castcrafter.travelanchors.data.ItemModelsProvider;
+ import de.castcrafter.travelanchors.data.RecipesProvider;
+ import de.castcrafter.travelanchors.network.Networking;
+ import de.castcrafter.travelanchors.render.TravelAnchorRenderer;
+-import net.minecraftforge.api.distmarker.Dist;
+-import net.minecraftforge.common.MinecraftForge;
+-import net.minecraftforge.fml.DistExecutor;
+-import net.minecraftforge.fml.common.Mod;
+-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
++import net.neoforged.api.distmarker.Dist;
++import net.neoforged.neoforge.common.NeoForge;
++import net.neoforged.fml.loading.FMLEnvironment;
++import net.neoforged.fml.common.Mod;
++import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
++import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+ import org.moddingx.libx.datagen.DatagenSystem;
+ import org.moddingx.libx.mod.ModXRegistration;
+ import org.moddingx.libx.registration.RegistrationBuilder;
+@@ -29,20 +29,23 @@ public final class TravelAnchors extends ModXRegistration {
+     private static Networking network;
+     private static Tab tab;
+ 
+-    public TravelAnchors() {
++    public TravelAnchors(net.neoforged.bus.api.IEventBus modBus) {
+         super();
+ 
+         instance = this;
+         network = new Networking(this);
+         tab = new Tab(this);
+         
+-        MinecraftForge.EVENT_BUS.register(new EventListener());
+-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MinecraftForge.EVENT_BUS.addListener(TravelAnchorRenderer::renderAnchors));
++        NeoForge.EVENT_BUS.register(new EventListener());
++        if (FMLEnvironment.dist == Dist.CLIENT) {
++            NeoForge.EVENT_BUS.addListener(TravelAnchorRenderer::renderAnchors);
++            de.castcrafter.travelanchors.client.TravelAnchorClient.register(modBus);
++        }
+ 
+         DatagenSystem.create(this, system -> {
+             system.addDataProvider(BlockStatesProvider::new);
+             system.addDataProvider(ItemModelsProvider::new);
+-            system.addDataProvider(BlockLootProvider::new);
++            system.addRegistryProvider(BlockLootProvider::new);
+             system.addDataProvider(RecipesProvider::new);
+         });
+     }
+diff --git a/src/main/java/de/castcrafter/travelanchors/block/BlockTravelAnchor.java b/src/main/java/de/castcrafter/travelanchors/block/BlockTravelAnchor.java
+index 22e1951..e986ca4 100644
+--- a/src/main/java/de/castcrafter/travelanchors/block/BlockTravelAnchor.java
++++ b/src/main/java/de/castcrafter/travelanchors/block/BlockTravelAnchor.java
+@@ -23,8 +23,8 @@ import net.minecraft.world.phys.BlockHitResult;
+ import net.minecraft.world.phys.shapes.CollisionContext;
+ import net.minecraft.world.phys.shapes.Shapes;
+ import net.minecraft.world.phys.shapes.VoxelShape;
+-import net.minecraftforge.api.distmarker.Dist;
+-import net.minecraftforge.api.distmarker.OnlyIn;
++import net.neoforged.api.distmarker.Dist;
++import net.neoforged.api.distmarker.OnlyIn;
+ import org.moddingx.libx.base.tile.MenuBlockBE;
+ import org.moddingx.libx.mod.ModX;
+ import org.moddingx.libx.registration.SetupContext;
+@@ -37,21 +37,14 @@ public class BlockTravelAnchor extends MenuBlockBE<TileTravelAnchor, MenuTravelA
+ 
+     private static final VoxelShape SHAPE = Shapes.box(0.01, 0.01, 0.01, 0.99, 0.99, 0.99);
+ 
+-    public BlockTravelAnchor(ModX mod, Class<TileTravelAnchor> teClass, MenuType<MenuTravelAnchor> menu, Properties properties) {
++    public BlockTravelAnchor(ModX mod, Class<TileTravelAnchor> teClass, org.moddingx.libx.menu.type.AdvancedMenuType<MenuTravelAnchor, ? super BlockPos> menu, Properties properties) {
+         super(mod, teClass, menu, properties);
+     }
+ 
+-    public BlockTravelAnchor(ModX mod, Class<TileTravelAnchor> teClass, MenuType<MenuTravelAnchor> menu, Properties properties, Item.Properties itemProperties) {
++    public BlockTravelAnchor(ModX mod, Class<TileTravelAnchor> teClass, org.moddingx.libx.menu.type.AdvancedMenuType<MenuTravelAnchor, ? super BlockPos> menu, Properties properties, Item.Properties itemProperties) {
+         super(mod, teClass, menu, properties, itemProperties);
+     }
+ 
+-    @Override
+-    @OnlyIn(Dist.CLIENT)
+-    public void registerClient(SetupContext ctx) {
+-        MenuScreens.register(ModBlocks.travelAnchor.menu, ScreenTravelAnchor::new);
+-        BlockEntityRenderers.register(ModBlocks.travelAnchor.getBlockEntityType(), dispatcher -> new RenderTravelAnchor());
+-    }
+-    
+     @Override
+     @SuppressWarnings("deprecation")
+     public int getLightBlock(@Nonnull BlockState state, BlockGetter level, @Nonnull BlockPos pos) {
+@@ -94,13 +87,24 @@ public class BlockTravelAnchor extends MenuBlockBE<TileTravelAnchor, MenuTravelA
+     }
+ 
+     @Override
+-    public void appendHoverText(@Nonnull ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip, @Nonnull TooltipFlag flag) {
++    public void appendHoverText(@Nonnull ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip, @Nonnull TooltipFlag flag) {
+         tooltip.add(Component.translatable("tooltip.travelanchors.travel_anchor_block").withStyle(ChatFormatting.GOLD));
+     }
+ 
+-    @Nonnull
+     @Override
+-    public InteractionResult use(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
++    public net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
++            BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
++        var result = interact(state, level, pos, player, hand, hit);
++        return result.consumesAction() ? net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide) :
++                net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
++    }
++
++    @Override
++    public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
++        return interact(state, level, pos, player, InteractionHand.MAIN_HAND, hit);
++    }
++
++    private InteractionResult interact(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
+         BlockEntity be = level.getBlockEntity(pos);
+         if (be instanceof TileTravelAnchor anchor) {
+             ItemStack stack = player.getItemInHand(hand);
+@@ -131,7 +135,7 @@ public class BlockTravelAnchor extends MenuBlockBE<TileTravelAnchor, MenuTravelA
+                 return InteractionResult.sidedSuccess(level.isClientSide);
+             }
+             
+-            return super.use(state, level, pos, player, hand, hit);
++            return super.useWithoutItem(state, level, pos, player, hit);
+         } else {
+             return InteractionResult.PASS;
+         }
+@@ -140,7 +144,7 @@ public class BlockTravelAnchor extends MenuBlockBE<TileTravelAnchor, MenuTravelA
+     @Override
+     public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState newState, boolean isMoving) {
+         super.onRemove(state, level, pos, newState, isMoving);
+-        TravelAnchorList.get(level).setAnchor(level, pos, null, ModBlocks.travelAnchor.defaultBlockState());
++        if (!state.is(newState.getBlock())) TravelAnchorList.get(level).setAnchor(level, pos, null, ModBlocks.travelAnchor.defaultBlockState());
+     }
+ 
+     @Nonnull
+diff --git a/src/main/java/de/castcrafter/travelanchors/block/MenuTravelAnchor.java b/src/main/java/de/castcrafter/travelanchors/block/MenuTravelAnchor.java
+index 8a38f50..d3748d0 100644
+--- a/src/main/java/de/castcrafter/travelanchors/block/MenuTravelAnchor.java
++++ b/src/main/java/de/castcrafter/travelanchors/block/MenuTravelAnchor.java
+@@ -9,8 +9,8 @@ import org.moddingx.libx.menu.BlockEntityMenu;
+ 
+ public class MenuTravelAnchor extends BlockEntityMenu<TileTravelAnchor> {
+ 
+-    public MenuTravelAnchor(MenuType<? extends BlockEntityMenu<?>> type, int window, Level level, BlockPos pos, Inventory playerContainer, Player player) {
+-        super(type, window, level, pos, playerContainer, player, 0, 0);
++    public MenuTravelAnchor(MenuType<? extends BlockEntityMenu<?>> type, int window, Level level, BlockPos pos, Player player, Inventory playerContainer) {
++        super(type, window, level, pos, player, playerContainer, 0, 0);
+         this.layoutPlayerInventorySlots(8, 51);
+     }
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/block/ScreenTravelAnchor.java b/src/main/java/de/castcrafter/travelanchors/block/ScreenTravelAnchor.java
+index 2ee3bd2..1aaf481 100644
+--- a/src/main/java/de/castcrafter/travelanchors/block/ScreenTravelAnchor.java
++++ b/src/main/java/de/castcrafter/travelanchors/block/ScreenTravelAnchor.java
+@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
+ 
+ public class ScreenTravelAnchor extends AbstractContainerScreen<MenuTravelAnchor> {
+ 
+-    private static final ResourceLocation GUI_TEXTURE = new ResourceLocation(TravelAnchors.getInstance().modid, "textures/gui/travel_anchor.png");
++    private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(TravelAnchors.getInstance().modid, "textures/gui/travel_anchor.png");
+     private EditBox textFieldWidget;
+ 
+     public ScreenTravelAnchor(MenuTravelAnchor screenMenu, Inventory inv, Component titleIn) {
+@@ -56,7 +56,7 @@ public class ScreenTravelAnchor extends AbstractContainerScreen<MenuTravelAnchor
+ 
+     @Override
+     public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+-        this.renderBackground(graphics);
++        this.renderBackground(graphics, mouseX, mouseY, partialTicks);
+         super.render(graphics, mouseX, mouseY, partialTicks);
+         this.renderTooltip(graphics, mouseX, mouseY);
+         this.textFieldWidget.render(graphics, mouseX, mouseY, partialTicks);
+@@ -89,6 +89,6 @@ public class ScreenTravelAnchor extends AbstractContainerScreen<MenuTravelAnchor
+ 
+     @Override
+     protected void containerTick() {
+-        this.textFieldWidget.tick();
++        super.containerTick();
+     }
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/block/TileTravelAnchor.java b/src/main/java/de/castcrafter/travelanchors/block/TileTravelAnchor.java
+index 594198e..259d402 100644
+--- a/src/main/java/de/castcrafter/travelanchors/block/TileTravelAnchor.java
++++ b/src/main/java/de/castcrafter/travelanchors/block/TileTravelAnchor.java
+@@ -3,6 +3,7 @@ package de.castcrafter.travelanchors.block;
+ import de.castcrafter.travelanchors.ModBlocks;
+ import de.castcrafter.travelanchors.TravelAnchorList;
+ import net.minecraft.core.BlockPos;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.core.registries.Registries;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.nbt.NbtUtils;
+@@ -23,19 +24,19 @@ public class TileTravelAnchor extends BlockEntityBase {
+     }
+ 
+     @Override
+-    public void saveAdditional(@Nonnull CompoundTag nbt) {
+-        super.saveAdditional(nbt);
++    public void saveAdditional(@Nonnull CompoundTag nbt, HolderLookup.Provider registries) {
++        super.saveAdditional(nbt, registries);
+         nbt.putString("travel_anchor_name", this.name);
+         nbt.putBoolean("is_locked", this.locked);
+         this.writeMimic(nbt);
+     }
+ 
+     @Override
+-    public void load(@Nonnull CompoundTag nbt) {
+-        super.load(nbt);
++    public void loadAdditional(@Nonnull CompoundTag nbt, HolderLookup.Provider registries) {
++        super.loadAdditional(nbt, registries);
+         this.name = nbt.getString("travel_anchor_name");
+         this.locked = nbt.getBoolean("is_locked");
+-        this.readMimic(nbt);
++        this.readMimic(nbt, registries);
+         if (this.level != null) {
+             TravelAnchorList.get(this.level).setAnchor(this.level, this.worldPosition, this.name, this.mimic);
+         }
+@@ -43,8 +44,8 @@ public class TileTravelAnchor extends BlockEntityBase {
+ 
+     @Nonnull
+     @Override
+-    public CompoundTag getUpdateTag() {
+-        CompoundTag nbt = super.getUpdateTag();
++    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
++        CompoundTag nbt = super.getUpdateTag(registries);
+         nbt.putString("travel_anchor_name", this.name);
+         nbt.putBoolean("is_locked", this.locked);
+         this.writeMimic(nbt);
+@@ -52,19 +53,19 @@ public class TileTravelAnchor extends BlockEntityBase {
+     }
+ 
+     @Override
+-    public void handleUpdateTag(CompoundTag nbt) {
++    public void handleUpdateTag(CompoundTag nbt, HolderLookup.Provider registries) {
+         this.name = nbt.getString("travel_anchor_name");
+         this.locked = nbt.getBoolean("is_locked");
+-        this.readMimic(nbt);
++        this.readMimic(nbt, registries);
+     }
+ 
+     private void writeMimic(CompoundTag tag) {
+         tag.put("mimic", NbtUtils.writeBlockState(this.mimic == null ? ModBlocks.travelAnchor.defaultBlockState() : this.mimic));
+     }
+ 
+-    private void readMimic(CompoundTag tag) {
+-        if (tag.contains("mimic") && this.level != null) {
+-            BlockState state = NbtUtils.readBlockState(this.level.registryAccess().lookupOrThrow(Registries.BLOCK), tag.getCompound("mimic"));
++    private void readMimic(CompoundTag tag, HolderLookup.Provider registries) {
++        if (tag.contains("mimic")) {
++            BlockState state = NbtUtils.readBlockState(registries.lookupOrThrow(Registries.BLOCK), tag.getCompound("mimic"));
+             if (state == ModBlocks.travelAnchor.defaultBlockState()) {
+                 this.mimic = null;
+             } else {
+diff --git a/src/main/java/de/castcrafter/travelanchors/client/TravelAnchorClient.java b/src/main/java/de/castcrafter/travelanchors/client/TravelAnchorClient.java
+new file mode 100644
+index 0000000..fa55fb1
+--- /dev/null
++++ b/src/main/java/de/castcrafter/travelanchors/client/TravelAnchorClient.java
+@@ -0,0 +1,17 @@
++package de.castcrafter.travelanchors.client;
++
++import de.castcrafter.travelanchors.ModBlocks;
++import de.castcrafter.travelanchors.block.RenderTravelAnchor;
++import de.castcrafter.travelanchors.block.ScreenTravelAnchor;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
++import net.neoforged.neoforge.client.event.EntityRenderersEvent;
++
++public final class TravelAnchorClient {
++    private TravelAnchorClient() {}
++    public static void register(IEventBus bus) {
++        bus.addListener((RegisterMenuScreensEvent event) -> event.register(ModBlocks.travelAnchor.menu, ScreenTravelAnchor::new));
++        bus.addListener((EntityRenderersEvent.RegisterRenderers event) -> event.registerBlockEntityRenderer(
++                ModBlocks.travelAnchor.getBlockEntityType(), context -> new RenderTravelAnchor()));
++    }
++}
+diff --git a/src/main/java/de/castcrafter/travelanchors/data/RecipesProvider.java b/src/main/java/de/castcrafter/travelanchors/data/RecipesProvider.java
+index 476a7e2..9b429c1 100644
+--- a/src/main/java/de/castcrafter/travelanchors/data/RecipesProvider.java
++++ b/src/main/java/de/castcrafter/travelanchors/data/RecipesProvider.java
+@@ -2,7 +2,7 @@ package de.castcrafter.travelanchors.data;
+ 
+ import de.castcrafter.travelanchors.ModBlocks;
+ import de.castcrafter.travelanchors.ModItems;
+-import net.minecraftforge.common.Tags;
++import net.neoforged.neoforge.common.Tags;
+ import org.moddingx.libx.datagen.DatagenContext;
+ import org.moddingx.libx.datagen.provider.recipe.RecipeProviderBase;
+ import org.moddingx.libx.datagen.provider.recipe.crafting.CraftingExtension;
+diff --git a/src/main/java/de/castcrafter/travelanchors/enchantments/RangeEnchantment.java b/src/main/java/de/castcrafter/travelanchors/enchantments/RangeEnchantment.java
+deleted file mode 100644
+index bcd84da..0000000
+--- a/src/main/java/de/castcrafter/travelanchors/enchantments/RangeEnchantment.java
++++ /dev/null
+@@ -1,41 +0,0 @@
+-package de.castcrafter.travelanchors.enchantments;
+-
+-import de.castcrafter.travelanchors.ModEnchantments;
+-import de.castcrafter.travelanchors.ModItems;
+-import net.minecraft.world.entity.EquipmentSlot;
+-import net.minecraft.world.item.ItemStack;
+-import net.minecraft.world.item.Items;
+-import net.minecraft.world.item.enchantment.Enchantment;
+-import net.minecraft.world.item.enchantment.EnchantmentHelper;
+-
+-public class RangeEnchantment extends Enchantment {
+-
+-    public RangeEnchantment() {
+-        super(Enchantment.Rarity.RARE, ModEnchantments.TELEPORTABLE, new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND});
+-    }
+-
+-    @Override
+-    public int getMaxLevel() {
+-        return 3;
+-    }
+-
+-    @Override
+-    public boolean canEnchant(ItemStack stack) {
+-        return stack.getItem() == ModItems.travelStaff || EnchantmentHelper.getItemEnchantmentLevel(ModEnchantments.teleportation, stack) > 0;
+-    }
+-
+-    @Override
+-    public boolean canApplyAtEnchantingTable(ItemStack stack) {
+-        return stack.getItem() == ModItems.travelStaff || stack.getItem() == Items.BOOK || stack.getItem() == Items.ENCHANTED_BOOK;
+-    }
+-
+-    @Override
+-    public int getMinCost(int level) {
+-        return level * 7 + 3;
+-    }
+-
+-    @Override
+-    public int getMaxCost(int level) {
+-        return this.getMinCost(level) * 2 + 2;
+-    }
+-}
+diff --git a/src/main/java/de/castcrafter/travelanchors/enchantments/TeleportationEnchantment.java b/src/main/java/de/castcrafter/travelanchors/enchantments/TeleportationEnchantment.java
+deleted file mode 100644
+index a13210a..0000000
+--- a/src/main/java/de/castcrafter/travelanchors/enchantments/TeleportationEnchantment.java
++++ /dev/null
+@@ -1,17 +0,0 @@
+-package de.castcrafter.travelanchors.enchantments;
+-
+-import de.castcrafter.travelanchors.ModEnchantments;
+-import net.minecraft.world.entity.EquipmentSlot;
+-import net.minecraft.world.item.enchantment.Enchantment;
+-
+-public class TeleportationEnchantment extends Enchantment {
+-
+-    public TeleportationEnchantment() {
+-        super(Enchantment.Rarity.RARE, ModEnchantments.TELEPORTABLE_NO_STAFF, new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND});
+-    }
+-
+-    @Override
+-    public int getMaxLevel() {
+-        return 1;
+-    }
+-}
+diff --git a/src/main/java/de/castcrafter/travelanchors/item/ItemTravelStaff.java b/src/main/java/de/castcrafter/travelanchors/item/ItemTravelStaff.java
+index 816b0c5..02a2b25 100644
+--- a/src/main/java/de/castcrafter/travelanchors/item/ItemTravelStaff.java
++++ b/src/main/java/de/castcrafter/travelanchors/item/ItemTravelStaff.java
+@@ -19,7 +19,7 @@ public class ItemTravelStaff extends ItemBase {
+     }
+ 
+     @Override
+-    public void appendHoverText(@Nonnull ItemStack stack, @Nullable Level level, List<Component> tooltip, @Nonnull TooltipFlag flag) {
++    public void appendHoverText(@Nonnull ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, List<Component> tooltip, @Nonnull TooltipFlag flag) {
+         tooltip.add(Component.translatable("tooltip.travelanchors.travel_staff").withStyle(ChatFormatting.GOLD));
+     }
+ 
+diff --git a/src/main/java/de/castcrafter/travelanchors/mixin/RangeEnchantmentMixin.java b/src/main/java/de/castcrafter/travelanchors/mixin/RangeEnchantmentMixin.java
+new file mode 100644
+index 0000000..331b500
+--- /dev/null
++++ b/src/main/java/de/castcrafter/travelanchors/mixin/RangeEnchantmentMixin.java
+@@ -0,0 +1,27 @@
++package de.castcrafter.travelanchors.mixin;
++
++import de.castcrafter.travelanchors.ModEnchantments;
++import de.castcrafter.travelanchors.ModItems;
++import net.minecraft.core.component.DataComponents;
++import net.minecraft.network.chat.contents.TranslatableContents;
++import net.minecraft.world.item.ItemStack;
++import net.minecraft.world.item.enchantment.Enchantment;
++import net.minecraft.world.item.enchantment.ItemEnchantments;
++import org.spongepowered.asm.mixin.Mixin;
++import org.spongepowered.asm.mixin.injection.At;
++import org.spongepowered.asm.mixin.injection.Inject;
++import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
++
++/** Range keeps its original prerequisite on tools; data-driven primary items handle enchanting-table availability. */
++@Mixin(Enchantment.class)
++public abstract class RangeEnchantmentMixin {
++    @Inject(method = "canEnchant", at = @At("RETURN"), cancellable = true, require = 1)
++    private void travelanchors$requireTeleportation(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
++        var enchantment = (Enchantment) (Object) this;
++        if (!cir.getReturnValue() || !(enchantment.description().getContents() instanceof TranslatableContents text) ||
++                !text.getKey().equals("enchantment.travelanchors.range")) return;
++        boolean teleportable = stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).entrySet().stream()
++                .anyMatch(entry -> entry.getKey().is(ModEnchantments.teleportation) && entry.getIntValue() > 0);
++        cir.setReturnValue(stack.is(ModItems.travelStaff) || teleportable);
++    }
++}
+diff --git a/src/main/java/de/castcrafter/travelanchors/network/AnchorListUpdateMessage.java b/src/main/java/de/castcrafter/travelanchors/network/AnchorListUpdateMessage.java
+index a16c852..2052855 100644
+--- a/src/main/java/de/castcrafter/travelanchors/network/AnchorListUpdateMessage.java
++++ b/src/main/java/de/castcrafter/travelanchors/network/AnchorListUpdateMessage.java
+@@ -1,49 +1,40 @@
+ package de.castcrafter.travelanchors.network;
+ 
+ import de.castcrafter.travelanchors.TravelAnchorList;
+-import net.minecraft.client.Minecraft;
+ import net.minecraft.nbt.CompoundTag;
+-import net.minecraft.network.FriendlyByteBuf;
+-import net.minecraftforge.network.NetworkEvent;
++import net.minecraft.network.RegistryFriendlyByteBuf;
++import net.minecraft.network.codec.StreamCodec;
++import net.minecraft.network.protocol.PacketFlow;
++import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
++import net.minecraft.resources.ResourceLocation;
++import net.neoforged.neoforge.network.handling.IPayloadContext;
++import net.neoforged.neoforge.network.registration.HandlerThread;
+ import org.moddingx.libx.network.PacketHandler;
+-import org.moddingx.libx.network.PacketSerializer;
+ 
+-import java.util.function.Supplier;
+ 
+-public record AnchorListUpdateMessage(CompoundTag nbt) {
++public record AnchorListUpdateMessage(CompoundTag nbt) implements CustomPacketPayload {
+ 
+-    public static class Handler implements PacketHandler<AnchorListUpdateMessage> {
+-
+-        @Override
+-        public Target target() {
+-            return Target.MAIN_THREAD;
+-        }
+-
+-        @Override
+-        public boolean handle(AnchorListUpdateMessage msg, Supplier<NetworkEvent.Context> ctx) {
+-            if (Minecraft.getInstance().level != null) {
+-                TravelAnchorList.get(Minecraft.getInstance().level).load(msg.nbt);
+-            }
+-
+-            return true;
+-        }
++    public AnchorListUpdateMessage {
++        nbt = java.util.Objects.requireNonNull(nbt).copy();
+     }
+ 
+-    public static class Serializer implements PacketSerializer<AnchorListUpdateMessage> {
++    @Override
++    public CompoundTag nbt() { return this.nbt.copy(); }
+ 
+-        @Override
+-        public Class<AnchorListUpdateMessage> messageClass() {
+-            return AnchorListUpdateMessage.class;
+-        }
++    public static class Handler extends PacketHandler<AnchorListUpdateMessage> {
+ 
+-        @Override
+-        public void encode(AnchorListUpdateMessage msg, FriendlyByteBuf buffer) {
+-            buffer.writeNbt(msg.nbt);
+-        }
++        public Handler() { super(TYPE, PacketFlow.CLIENTBOUND, CODEC, HandlerThread.MAIN); }
+ 
+         @Override
+-        public AnchorListUpdateMessage decode(FriendlyByteBuf buffer) {
+-            return new AnchorListUpdateMessage(buffer.readNbt());
++        public void handle(AnchorListUpdateMessage msg, IPayloadContext ctx) {
++            var level = ctx.player().level();
++            TravelAnchorList.get(level).load(msg.nbt(), level.registryAccess());
+         }
+     }
++
++    public static final CustomPacketPayload.Type<AnchorListUpdateMessage> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("travelanchors", "anchor_list_update"));
++    public static final StreamCodec<RegistryFriendlyByteBuf, AnchorListUpdateMessage> CODEC = StreamCodec.of(
++            (buf, message) -> { buf.writeNbt(message.nbt); }, buf -> new AnchorListUpdateMessage(java.util.Objects.requireNonNull(buf.readNbt())));
++    @Override public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
++
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/network/AnchorLockMessage.java b/src/main/java/de/castcrafter/travelanchors/network/AnchorLockMessage.java
+index e8d7043..4b93201 100644
+--- a/src/main/java/de/castcrafter/travelanchors/network/AnchorLockMessage.java
++++ b/src/main/java/de/castcrafter/travelanchors/network/AnchorLockMessage.java
+@@ -1,38 +1,42 @@
+ package de.castcrafter.travelanchors.network;
+ 
+ import de.castcrafter.travelanchors.block.TileTravelAnchor;
++import de.castcrafter.travelanchors.block.MenuTravelAnchor;
+ import net.minecraft.core.BlockPos;
+-import net.minecraft.network.FriendlyByteBuf;
++import net.minecraft.network.RegistryFriendlyByteBuf;
++import net.minecraft.network.codec.StreamCodec;
++import net.minecraft.network.protocol.PacketFlow;
++import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
++import net.minecraft.resources.ResourceLocation;
++import net.neoforged.neoforge.network.handling.IPayloadContext;
++import net.neoforged.neoforge.network.registration.HandlerThread;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+-import net.minecraftforge.network.NetworkEvent;
+ import org.moddingx.libx.network.PacketHandler;
+-import org.moddingx.libx.network.PacketSerializer;
+ 
+-import java.util.function.Supplier;
+ 
+-public record AnchorLockMessage(BlockPos pos) {
++public record AnchorLockMessage(BlockPos pos) implements CustomPacketPayload {
+ 
+-    public static class Handler implements PacketHandler<AnchorLockMessage> {
++    public static class Handler extends PacketHandler<AnchorLockMessage> {
+ 
+-        @Override
+-        public Target target() {
+-            return Target.MAIN_THREAD;
+-        }
++        public Handler() { super(TYPE, PacketFlow.SERVERBOUND, CODEC, HandlerThread.MAIN); }
+ 
+         @Override
+-        public boolean handle(AnchorLockMessage msg, Supplier<NetworkEvent.Context> ctx) {
+-            if (ctx.get().getSender() != null) {
++        public void handle(AnchorLockMessage msg, IPayloadContext ctx) {
++            if (ctx.player() instanceof net.minecraft.server.level.ServerPlayer sender) {
++                if (!(sender.containerMenu instanceof MenuTravelAnchor menu) || !menu.stillValid(sender)
++                        || !menu.getBlockEntity().getBlockPos().equals(msg.pos)
++                        || menu.getBlockEntity().isLocked()) return;
+                 //noinspection ConstantConditions
+-                ServerLevel level = ctx.get().getSender().serverLevel();
++                ServerLevel level = sender.serverLevel();
+                 //noinspection deprecation
+                 if (level.hasChunkAt(msg.pos)) {
+                     BlockEntity be = level.getBlockEntity(msg.pos);
+                     if (be instanceof TileTravelAnchor) {
+                         ((TileTravelAnchor) be).setLocked(true);
+-                        ServerPlayer sender = ctx.get().getSender();
++                        
+                         if (sender != null) {
+                             sender.displayClientMessage(Component.translatable("travelanchors.lock.locked"), true);
+                         }
+@@ -41,25 +45,12 @@ public record AnchorLockMessage(BlockPos pos) {
+                 }
+             }
+ 
+-            return true;
+         }
+     }
+ 
+-    public static class Serializer implements PacketSerializer<AnchorLockMessage> {
+-
+-        @Override
+-        public Class<AnchorLockMessage> messageClass() {
+-            return AnchorLockMessage.class;
+-        }
++    public static final CustomPacketPayload.Type<AnchorLockMessage> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("travelanchors", "anchor_lock"));
++    public static final StreamCodec<RegistryFriendlyByteBuf, AnchorLockMessage> CODEC = StreamCodec.of(
++            (buf, message) -> { buf.writeBlockPos(message.pos); }, buf -> new AnchorLockMessage(buf.readBlockPos()));
++    @Override public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
+ 
+-        @Override
+-        public void encode(AnchorLockMessage msg, FriendlyByteBuf buffer) {
+-            buffer.writeBlockPos(msg.pos);
+-        }
+-
+-        @Override
+-        public AnchorLockMessage decode(FriendlyByteBuf buffer) {
+-            return new AnchorLockMessage(buffer.readBlockPos());
+-        }
+-    }
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/network/AnchorNameChangeMessage.java b/src/main/java/de/castcrafter/travelanchors/network/AnchorNameChangeMessage.java
+index 267ad75..60cc613 100644
+--- a/src/main/java/de/castcrafter/travelanchors/network/AnchorNameChangeMessage.java
++++ b/src/main/java/de/castcrafter/travelanchors/network/AnchorNameChangeMessage.java
+@@ -1,30 +1,34 @@
+ package de.castcrafter.travelanchors.network;
+ 
+ import de.castcrafter.travelanchors.block.TileTravelAnchor;
++import de.castcrafter.travelanchors.block.MenuTravelAnchor;
+ import net.minecraft.core.BlockPos;
+-import net.minecraft.network.FriendlyByteBuf;
++import net.minecraft.network.RegistryFriendlyByteBuf;
++import net.minecraft.network.codec.StreamCodec;
++import net.minecraft.network.protocol.PacketFlow;
++import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
++import net.minecraft.resources.ResourceLocation;
++import net.neoforged.neoforge.network.handling.IPayloadContext;
++import net.neoforged.neoforge.network.registration.HandlerThread;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+-import net.minecraftforge.network.NetworkEvent;
+ import org.moddingx.libx.network.PacketHandler;
+-import org.moddingx.libx.network.PacketSerializer;
+ 
+-import java.util.function.Supplier;
+ 
+-public record AnchorNameChangeMessage(BlockPos pos, String name) {
++public record AnchorNameChangeMessage(BlockPos pos, String name) implements CustomPacketPayload {
+ 
+-    public static class Handler implements PacketHandler<AnchorNameChangeMessage> {
++    public static class Handler extends PacketHandler<AnchorNameChangeMessage> {
+ 
+-        @Override
+-        public Target target() {
+-            return Target.MAIN_THREAD;
+-        }
++        public Handler() { super(TYPE, PacketFlow.SERVERBOUND, CODEC, HandlerThread.MAIN); }
+ 
+         @Override
+-        public boolean handle(AnchorNameChangeMessage msg, Supplier<NetworkEvent.Context> ctx) {
+-            if (ctx.get().getSender() != null) {
++        public void handle(AnchorNameChangeMessage msg, IPayloadContext ctx) {
++            if (ctx.player() instanceof net.minecraft.server.level.ServerPlayer sender) {
++                if (!(sender.containerMenu instanceof MenuTravelAnchor menu) || !menu.stillValid(sender)
++                        || !menu.getBlockEntity().getBlockPos().equals(msg.pos)
++                        || menu.getBlockEntity().isLocked()) return;
+                 //noinspection ConstantConditions
+-                ServerLevel level = ctx.get().getSender().serverLevel();
++                ServerLevel level = sender.serverLevel();
+                 //noinspection deprecation
+                 if (level.hasChunkAt(msg.pos)) {
+                     BlockEntity be = level.getBlockEntity(msg.pos);
+@@ -35,26 +39,12 @@ public record AnchorNameChangeMessage(BlockPos pos, String name) {
+                 }
+             }
+ 
+-            return true;
+         }
+     }
+ 
+-    public static class Serializer implements PacketSerializer<AnchorNameChangeMessage> {
+-
+-        @Override
+-        public Class<AnchorNameChangeMessage> messageClass() {
+-            return AnchorNameChangeMessage.class;
+-        }
++    public static final CustomPacketPayload.Type<AnchorNameChangeMessage> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("travelanchors", "anchor_name_change"));
++    public static final StreamCodec<RegistryFriendlyByteBuf, AnchorNameChangeMessage> CODEC = StreamCodec.of(
++            (buf, message) -> { buf.writeBlockPos(message.pos); buf.writeUtf(message.name, 32767); }, buf -> new AnchorNameChangeMessage(buf.readBlockPos(), buf.readUtf(32767)));
++    @Override public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
+ 
+-        @Override
+-        public void encode(AnchorNameChangeMessage msg, FriendlyByteBuf buffer) {
+-            buffer.writeBlockPos(msg.pos);
+-            buffer.writeUtf(msg.name);
+-        }
+-
+-        @Override
+-        public AnchorNameChangeMessage decode(FriendlyByteBuf buffer) {
+-            return new AnchorNameChangeMessage(buffer.readBlockPos(), buffer.readUtf(32767));
+-        }
+-    }
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/network/ClientEventMessage.java b/src/main/java/de/castcrafter/travelanchors/network/ClientEventMessage.java
+index 4cd30d1..276750d 100644
+--- a/src/main/java/de/castcrafter/travelanchors/network/ClientEventMessage.java
++++ b/src/main/java/de/castcrafter/travelanchors/network/ClientEventMessage.java
+@@ -1,29 +1,29 @@
+ package de.castcrafter.travelanchors.network;
+ 
+ import de.castcrafter.travelanchors.TeleportHandler;
+-import net.minecraft.network.FriendlyByteBuf;
++import net.minecraft.network.RegistryFriendlyByteBuf;
++import net.minecraft.network.codec.StreamCodec;
++import net.minecraft.network.protocol.PacketFlow;
++import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
++import net.minecraft.resources.ResourceLocation;
++import net.neoforged.neoforge.network.handling.IPayloadContext;
++import net.neoforged.neoforge.network.registration.HandlerThread;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.InteractionHand;
+-import net.minecraftforge.network.NetworkEvent;
+ import org.moddingx.libx.network.PacketHandler;
+-import org.moddingx.libx.network.PacketSerializer;
+ 
+-import java.util.function.Supplier;
+ 
+-public record ClientEventMessage(Type type) {
++public record ClientEventMessage(Type eventType) implements CustomPacketPayload {
+ 
+-    public static class Handler implements PacketHandler<ClientEventMessage> {
++    public static class Handler extends PacketHandler<ClientEventMessage> {
+ 
+-        @Override
+-        public Target target() {
+-            return Target.MAIN_THREAD;
+-        }
++        public Handler() { super(TYPE, PacketFlow.SERVERBOUND, CODEC, HandlerThread.MAIN); }
+ 
+         @Override
+-        public boolean handle(ClientEventMessage msg, Supplier<NetworkEvent.Context> ctx) {
+-            ServerPlayer player = ctx.get().getSender();
++        public void handle(ClientEventMessage msg, IPayloadContext ctx) {
++            ServerPlayer player = ctx.player() instanceof ServerPlayer serverPlayer ? serverPlayer : null;
+             if (player != null) {
+-                switch (msg.type) {
++                switch (msg.eventType) {
+                     case JUMP:
+                         if (TeleportHandler.canElevate(player)) {
+                             if (TeleportHandler.elevateUp(player)) {
+@@ -55,27 +55,13 @@ public record ClientEventMessage(Type type) {
+                 }
+             }
+ 
+-            return true;
+         }
+     }
+ 
+-    public static class Serializer implements PacketSerializer<ClientEventMessage> {
+-
+-        @Override
+-        public Class<ClientEventMessage> messageClass() {
+-            return ClientEventMessage.class;
+-        }
+-
+-        @Override
+-        public void encode(ClientEventMessage msg, FriendlyByteBuf buffer) {
+-            buffer.writeEnum(msg.type);
+-        }
+-
+-        @Override
+-        public ClientEventMessage decode(FriendlyByteBuf buffer) {
+-            return new ClientEventMessage(buffer.readEnum(Type.class));
+-        }
+-    }
++    public static final CustomPacketPayload.Type<ClientEventMessage> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("travelanchors", "client_event"));
++    public static final StreamCodec<RegistryFriendlyByteBuf, ClientEventMessage> CODEC = StreamCodec.of(
++            (buf, message) -> { buf.writeEnum(message.eventType); }, buf -> new ClientEventMessage(buf.readEnum(Type.class)));
++    @Override public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
+ 
+     public enum Type {
+         JUMP,
+diff --git a/src/main/java/de/castcrafter/travelanchors/network/Networking.java b/src/main/java/de/castcrafter/travelanchors/network/Networking.java
+index 0f79411..2108167 100644
+--- a/src/main/java/de/castcrafter/travelanchors/network/Networking.java
++++ b/src/main/java/de/castcrafter/travelanchors/network/Networking.java
+@@ -6,61 +6,38 @@ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.entity.player.Player;
+ import net.minecraft.world.level.Level;
+-import net.minecraftforge.network.NetworkDirection;
+-import net.minecraftforge.network.PacketDistributor;
++import net.neoforged.neoforge.network.PacketDistributor;
+ import org.moddingx.libx.mod.ModX;
+ import org.moddingx.libx.network.NetworkX;
+-
+ import javax.annotation.Nullable;
+ 
+ public class Networking extends NetworkX {
+-
+     public Networking(ModX mod) {
+         super(mod);
++        register(new AnchorNameChangeMessage.Handler());
++        register(new AnchorLockMessage.Handler());
++        register(new AnchorListUpdateMessage.Handler());
++        register(new ClientEventMessage.Handler());
+     }
+-
+-    @Override
+-    protected Protocol getProtocol() {
+-        return Protocol.of("6");
+-    }
+-
+-    protected void registerPackets() {
+-        this.registerGame(NetworkDirection.PLAY_TO_SERVER, new AnchorNameChangeMessage.Serializer(), () -> AnchorNameChangeMessage.Handler::new);
+-        this.registerGame(NetworkDirection.PLAY_TO_SERVER, new AnchorLockMessage.Serializer(), () -> AnchorLockMessage.Handler::new);
+-        this.registerGame(NetworkDirection.PLAY_TO_CLIENT, new AnchorListUpdateMessage.Serializer(), () -> AnchorListUpdateMessage.Handler::new);
+-        this.registerGame(NetworkDirection.PLAY_TO_SERVER, new ClientEventMessage.Serializer(), () -> ClientEventMessage.Handler::new);
+-    }
+-
++    @Override protected String getVersion() { return "7-native-1.21.1"; }
+     public void sendNameChange(Level level, BlockPos pos, String name) {
+-        if (level.isClientSide) {
+-            this.channel.sendToServer(new AnchorNameChangeMessage(pos, name));
+-        }
++        if (level.isClientSide) PacketDistributor.sendToServer(new AnchorNameChangeMessage(pos, name));
+     }
+-    
+     public void sendLock(Level level, BlockPos pos) {
+-        if (level.isClientSide) {
+-            this.channel.sendToServer(new AnchorLockMessage(pos));
+-        }
++        if (level.isClientSide) PacketDistributor.sendToServer(new AnchorLockMessage(pos));
+     }
+-
+     public void updateTravelAnchorList(Level level, @Nullable TravelAnchorList list) {
+         if (!level.isClientSide) {
+-            if (list == null) {
+-                list = TravelAnchorList.get(level);
+-            }
+-            this.channel.send(PacketDistributor.DIMENSION.with(level::dimension), new AnchorListUpdateMessage(list.save(new CompoundTag())));
++            if (list == null) list = TravelAnchorList.get(level);
++            PacketDistributor.sendToPlayersInDimension((net.minecraft.server.level.ServerLevel) level,
++                    new AnchorListUpdateMessage(list.save(new CompoundTag(), level.registryAccess())));
+         }
+     }
+-
+     public void updateTravelAnchorList(Player player) {
+-        if (!player.getCommandSenderWorld().isClientSide && player instanceof ServerPlayer) {
+-            this.channel.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new AnchorListUpdateMessage(TravelAnchorList.get(player.getCommandSenderWorld()).save(new CompoundTag())));
+-        }
++        if (player instanceof ServerPlayer serverPlayer) PacketDistributor.sendToPlayer(serverPlayer,
++                new AnchorListUpdateMessage(TravelAnchorList.get(player.level()).save(new CompoundTag(), player.level().registryAccess())));
+     }
+-
+     public void sendClientEventToServer(Level level, ClientEventMessage.Type type) {
+-        if (level.isClientSide) {
+-            this.channel.sendToServer(new ClientEventMessage(type));
+-        }
++        if (level.isClientSide) PacketDistributor.sendToServer(new ClientEventMessage(type));
+     }
+ }
+diff --git a/src/main/java/de/castcrafter/travelanchors/render/TravelAnchorRenderer.java b/src/main/java/de/castcrafter/travelanchors/render/TravelAnchorRenderer.java
+index 86f646a..5964c55 100644
+--- a/src/main/java/de/castcrafter/travelanchors/render/TravelAnchorRenderer.java
++++ b/src/main/java/de/castcrafter/travelanchors/render/TravelAnchorRenderer.java
+@@ -25,8 +25,8 @@ import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.level.LightLayer;
+ import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.phys.Vec3;
+-import net.minecraftforge.client.event.RenderLevelStageEvent;
+-import net.minecraftforge.client.model.data.ModelData;
++import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
++import net.neoforged.neoforge.client.model.data.ModelData;
+ import org.apache.commons.lang3.tuple.Pair;
+ import org.moddingx.libx.annotation.model.Model;
+ import org.moddingx.libx.render.RenderHelperLevel;
+@@ -66,9 +66,9 @@ public class TravelAnchorRenderer {
+                 double maxDistanceSq = TeleportHandler.getMaxDistance(player);
+                 maxDistanceSq = maxDistanceSq * maxDistanceSq;
+                 TravelAnchorList list = TravelAnchorList.get(Minecraft.getInstance().level);
+-                double posX = Mth.lerp(event.getPartialTick(), player.xo, player.getX());
+-                double posY = Mth.lerp(event.getPartialTick(), player.yo, player.getY());
+-                double posZ = Mth.lerp(event.getPartialTick(), player.zo, player.getZ());
++                double posX = Mth.lerp(event.getPartialTick().getGameTimeDeltaPartialTick(false), player.xo, player.getX());
++                double posY = Mth.lerp(event.getPartialTick().getGameTimeDeltaPartialTick(false), player.yo, player.getY());
++                double posZ = Mth.lerp(event.getPartialTick().getGameTimeDeltaPartialTick(false), player.zo, player.getZ());
+                 Vec3 projection = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+                 double projPosX = projection.x;
+                 double projPosY = projection.y;
+diff --git a/src/main/resources/META-INF/mods.toml b/src/main/resources/META-INF/neoforge.mods.toml
+similarity index 70%
+rename from src/main/resources/META-INF/mods.toml
+rename to src/main/resources/META-INF/neoforge.mods.toml
+index bb5fb2d..b8e5859 100644
+--- a/src/main/resources/META-INF/mods.toml
++++ b/src/main/resources/META-INF/neoforge.mods.toml
+@@ -1,10 +1,10 @@
+ modLoader="javafml"
+-loaderVersion="[47,)"
++loaderVersion="[4,)"
+ license="Apache License 2.0"
+ 
+ [[mods]]
+ modId="travelanchors"
+-version="${version}"
++version="6.0.0-gtl.1"
+ displayName="Travel Anchors"
+ displayURL="https://www.curseforge.com/minecraft/mc-mods/travel-anchors"
+ updateJSONURL="https://assets.melanx.de/updates/travel-anchors.json"
+@@ -15,22 +15,25 @@ Adds a staff of travelling and a travel anchor to teleport around the world.
+ '''
+ 
+ [[dependencies.travelanchors]]
+-    modId="forge"
+-    mandatory=true
+-    versionRange="[47.0.3,)"
++    modId="neoforge"
++    type="required"
++    versionRange="[21.1.248,)"
+     ordering="NONE"
+     side="BOTH"
+ 
+ [[dependencies.travelanchors]]
+     modId="minecraft"
+-    mandatory=true
+-    versionRange="[1.20.1,)"
++    type="required"
++    versionRange="[1.21.1,1.21.2)"
+     ordering="NONE"
+     side="BOTH"
+ 
+ [[dependencies.travelanchors]]
+     modId="libx"
+-    mandatory=true
+-    versionRange="[1.20.1-5.0.1,)"
++    type="required"
++    versionRange="[1.21.1-6.0.15,)"
+     ordering="NONE"
+     side="BOTH"
++
++[[mixins]]
++config="travelanchors.mixin.json"
+diff --git a/src/main/resources/data/minecraft/tags/enchantment/in_enchanting_table.json b/src/main/resources/data/minecraft/tags/enchantment/in_enchanting_table.json
+new file mode 100644
+index 0000000..8554027
+--- /dev/null
++++ b/src/main/resources/data/minecraft/tags/enchantment/in_enchanting_table.json
+@@ -0,0 +1,7 @@
++{
++  "replace": false,
++  "values": [
++    "travelanchors:teleportation",
++    "travelanchors:range"
++  ]
++}
+diff --git a/src/main/resources/data/minecraft/tags/enchantment/on_random_loot.json b/src/main/resources/data/minecraft/tags/enchantment/on_random_loot.json
+new file mode 100644
+index 0000000..8554027
+--- /dev/null
++++ b/src/main/resources/data/minecraft/tags/enchantment/on_random_loot.json
+@@ -0,0 +1,7 @@
++{
++  "replace": false,
++  "values": [
++    "travelanchors:teleportation",
++    "travelanchors:range"
++  ]
++}
+diff --git a/src/main/resources/data/minecraft/tags/enchantment/on_traded_equipment.json b/src/main/resources/data/minecraft/tags/enchantment/on_traded_equipment.json
+new file mode 100644
+index 0000000..8554027
+--- /dev/null
++++ b/src/main/resources/data/minecraft/tags/enchantment/on_traded_equipment.json
+@@ -0,0 +1,7 @@
++{
++  "replace": false,
++  "values": [
++    "travelanchors:teleportation",
++    "travelanchors:range"
++  ]
++}
+diff --git a/src/main/resources/data/minecraft/tags/enchantment/tradeable.json b/src/main/resources/data/minecraft/tags/enchantment/tradeable.json
+new file mode 100644
+index 0000000..8554027
+--- /dev/null
++++ b/src/main/resources/data/minecraft/tags/enchantment/tradeable.json
+@@ -0,0 +1,7 @@
++{
++  "replace": false,
++  "values": [
++    "travelanchors:teleportation",
++    "travelanchors:range"
++  ]
++}
+diff --git a/src/main/resources/data/travelanchors/enchantment/range.json b/src/main/resources/data/travelanchors/enchantment/range.json
+new file mode 100644
+index 0000000..576449f
+--- /dev/null
++++ b/src/main/resources/data/travelanchors/enchantment/range.json
+@@ -0,0 +1,23 @@
++{
++  "description": {
++    "translate": "enchantment.travelanchors.range"
++  },
++  "supported_items": "#travelanchors:teleportable",
++  "primary_items": "#travelanchors:travel_staves",
++  "weight": 2,
++  "max_level": 3,
++  "min_cost": {
++    "base": 10,
++    "per_level_above_first": 7
++  },
++  "max_cost": {
++    "base": 22,
++    "per_level_above_first": 14
++  },
++  "anvil_cost": 4,
++  "slots": [
++    "mainhand",
++    "offhand"
++  ],
++  "effects": {}
++}
+diff --git a/src/main/resources/data/travelanchors/enchantment/teleportation.json b/src/main/resources/data/travelanchors/enchantment/teleportation.json
+new file mode 100644
+index 0000000..58299dd
+--- /dev/null
++++ b/src/main/resources/data/travelanchors/enchantment/teleportation.json
+@@ -0,0 +1,23 @@
++{
++  "description": {
++    "translate": "enchantment.travelanchors.teleportation"
++  },
++  "supported_items": "#travelanchors:teleportable_no_staff",
++  "primary_items": "#travelanchors:teleportable_no_staff",
++  "weight": 2,
++  "max_level": 1,
++  "min_cost": {
++    "base": 11,
++    "per_level_above_first": 10
++  },
++  "max_cost": {
++    "base": 16,
++    "per_level_above_first": 10
++  },
++  "anvil_cost": 4,
++  "slots": [
++    "mainhand",
++    "offhand"
++  ],
++  "effects": {}
++}
+diff --git a/src/main/resources/data/travelanchors/tags/item/teleportable.json b/src/main/resources/data/travelanchors/tags/item/teleportable.json
+new file mode 100644
+index 0000000..b1cb370
+--- /dev/null
++++ b/src/main/resources/data/travelanchors/tags/item/teleportable.json
+@@ -0,0 +1,7 @@
++{
++  "replace": false,
++  "values": [
++    "#travelanchors:teleportable_no_staff",
++    "travelanchors:travel_staff"
++  ]
++}
+diff --git a/src/main/resources/data/travelanchors/tags/item/teleportable_no_staff.json b/src/main/resources/data/travelanchors/tags/item/teleportable_no_staff.json
+new file mode 100644
+index 0000000..48f33f8
+--- /dev/null
++++ b/src/main/resources/data/travelanchors/tags/item/teleportable_no_staff.json
+@@ -0,0 +1,7 @@
++{
++  "replace": false,
++  "values": [
++    "#minecraft:enchantable/sword",
++    "#minecraft:enchantable/mining"
++  ]
++}
+diff --git a/src/main/resources/data/travelanchors/tags/item/travel_staves.json b/src/main/resources/data/travelanchors/tags/item/travel_staves.json
+new file mode 100644
+index 0000000..d8816ea
+--- /dev/null
++++ b/src/main/resources/data/travelanchors/tags/item/travel_staves.json
+@@ -0,0 +1,6 @@
++{
++  "replace": false,
++  "values": [
++    "travelanchors:travel_staff"
++  ]
++}
+diff --git a/src/main/resources/pack.mcmeta b/src/main/resources/pack.mcmeta
+index 649ebc4..f360f61 100644
+--- a/src/main/resources/pack.mcmeta
++++ b/src/main/resources/pack.mcmeta
+@@ -1,8 +1 @@
+-{
+-  "pack": {
+-    "description": "TravelAnchors resources",
+-    "pack_format": 15,
+-    "forge:client_resources_pack_format": 15,
+-    "forge:server_data_pack_format": 15
+-  }
+-}
++{"pack":{"pack_format":48,"description":"Travel Anchors native 1.21.1 resources"}}
+diff --git a/src/main/resources/travelanchors.mixin.json b/src/main/resources/travelanchors.mixin.json
+new file mode 100644
+index 0000000..dfad9ee
+--- /dev/null
++++ b/src/main/resources/travelanchors.mixin.json
+@@ -0,0 +1,12 @@
++{
++  "required": true,
++  "minVersion": "0.8",
++  "package": "de.castcrafter.travelanchors.mixin",
++  "compatibilityLevel": "JAVA_21",
++  "mixins": [
++    "RangeEnchantmentMixin"
++  ],
++  "injectors": {
++    "defaultRequire": 1
++  }
++}

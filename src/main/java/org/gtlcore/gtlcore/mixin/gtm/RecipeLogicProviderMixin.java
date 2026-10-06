@@ -1,117 +1,36 @@
 package org.gtlcore.gtlcore.mixin.gtm;
 
-import org.gtlcore.gtlcore.api.machine.ISteamMachine;
-import org.gtlcore.gtlcore.api.machine.trait.IRecipeStatus;
-import org.gtlcore.gtlcore.utils.NumberUtils;
-
-import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
-import com.gregtechceu.gtceu.integration.jade.provider.CapabilityBlockProvider;
+import org.gtlcore.gtlcore.integration.jade.NativeRecipeLogicTooltip;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 import com.gregtechceu.gtceu.integration.jade.provider.RecipeLogicProvider;
-import com.gregtechceu.gtceu.utils.FormattingUtil;
-import com.gregtechceu.gtceu.utils.GTUtil;
-
-import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 
-import static net.minecraft.ChatFormatting.*;
-import static org.gtlcore.gtlcore.utils.TextUtil.GTL_CORE$VC;
-
-/**
- * @author EasterFG on 2024/12/10
- */
 @Mixin(RecipeLogicProvider.class)
-public abstract class RecipeLogicProviderMixin extends CapabilityBlockProvider<RecipeLogic> {
-
-    protected RecipeLogicProviderMixin(ResourceLocation uid) {
-        super(uid);
+public abstract class RecipeLogicProviderMixin {
+    @Inject(method = "write(Lcom/gregtechceu/gtceu/api/machine/trait/recipe/RecipeLogic;)Lnet/minecraft/nbt/CompoundTag;",
+            at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$writeStatus(RecipeLogic logic, CallbackInfoReturnable<CompoundTag> cir) {
+        NativeRecipeLogicTooltip.writeStatus(cir.getReturnValue(), logic,
+                logic.getMachine().getLevel().registryAccess());
     }
 
-    @Inject(method = "write(Lnet/minecraft/nbt/CompoundTag;Lcom/gregtechceu/gtceu/api/machine/trait/RecipeLogic;)V", at = @At("HEAD"), remap = false)
-    protected void write(CompoundTag data, RecipeLogic capability, CallbackInfo ci) {
-        if (capability instanceof IRecipeStatus status) {
-            if (status.getRecipeStatus() != null && status.getRecipeStatus().reason() != null)
-                data.putString("reason", Component.Serializer.toJson(status.getRecipeStatus().reason()));
-            if (status.getWorkingStatus() != null && status.getWorkingStatus().reason() != null)
-                data.putString("work_reason", Component.Serializer.toJson(status.getWorkingStatus().reason()));
-        }
-    }
-
-    @Override
-    protected void addTooltip(CompoundTag capData, ITooltip tooltip, Player player, BlockAccessor block,
-                              BlockEntity blockEntity, IPluginConfig config) {
-        if (capData.getBoolean("Working")) {
-            var recipeInfo = capData.getCompound("Recipe");
-            if (!recipeInfo.isEmpty()) {
-                var EUt = recipeInfo.getLong("EUt");
-                var isInput = recipeInfo.getBoolean("isInput");
-                boolean isSteam = false;
-
-                if (EUt > 0) {
-                    if (blockEntity instanceof MetaMachineBlockEntity mbe) {
-                        var machine = mbe.getMetaMachine();
-                        if (machine instanceof ISteamMachine steamMachine) {
-                            EUt = (long) Math.ceil(EUt * steamMachine.getConversionRate());
-                            isSteam = true;
-                        }
-                    }
-
-                    MutableComponent text;
-
-                    if (isSteam) {
-                        text = Component.literal(FormattingUtil.formatNumbers(EUt) + " mB/t")
-                                .withStyle(ChatFormatting.GREEN);
-                    } else {
-                        long absEUt = Math.abs(EUt);
-
-                        // Default behavior, if this TE is not a steam machine (or somehow not instanceof
-                        // IGregTechTileEntity...)
-                        var tier = GTUtil.getTierByVoltage(absEUt);
-                        text = Component.literal(NumberUtils.formatLong(absEUt)).withStyle(RED)
-                                .append(Component.literal(" EU/t").withStyle(RESET)
-                                        .append(Component.literal(" (").withStyle(GREEN)
-                                                .append(Component
-                                                        .translatable("gtceu.top.electricity",
-                                                                FormattingUtil.formatNumber2Places(absEUt / ((float) GTValues.V[tier])),
-                                                                GTValues.VNF[tier])
-                                                        .withStyle(style -> style.withColor(GTL_CORE$VC[tier])))
-                                                .append(Component.literal(")").withStyle(GREEN))));
-                    }
-
-                    if (isInput) {
-                        var component = isSteam ? Component.translatable("gtceu.jade.steam_consumption") :
-                                Component.translatable("gtceu.top.energy_consumption");
-                        tooltip.add(component.append(" ").append(text));
-                    } else {
-                        tooltip.add(Component.translatable("gtceu.top.energy_production").append(" ").append(text));
-                    }
-                }
-            }
-            String reason = capData.getString("work_reason");
-            if (reason.isEmpty()) return;
-            Component reasonComponent = Component.Serializer.fromJson(reason);
-            if (reasonComponent == null) return;
-            tooltip.add(Component.translatable("gtceu.recipe.fail.reason", reasonComponent).withStyle(RED));
-        } else {
-            String reason = capData.getString("reason");
-            if (reason.isEmpty()) return;
-            Component reasonComponent = Component.Serializer.fromJson(reason);
-            if (reasonComponent == null) return;
-            tooltip.add(Component.translatable("gtceu.recipe.fail.reason", reasonComponent).withStyle(RED));
-        }
+    @Inject(method = "addTooltip(Lnet/minecraft/nbt/CompoundTag;Lsnownee/jade/api/ITooltip;Lnet/minecraft/world/entity/player/Player;Lsnownee/jade/api/BlockAccessor;Lnet/minecraft/world/level/block/entity/BlockEntity;Lsnownee/jade/api/config/IPluginConfig;)V",
+            at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$nativeStatusTooltip(CompoundTag data, ITooltip tooltip, Player player,
+                                           BlockAccessor accessor, BlockEntity entity, IPluginConfig config,
+                                           CallbackInfo ci) {
+        NativeRecipeLogicTooltip.rows(data, NativeRecipeLogicTooltip.steamRate(entity),
+                accessor.getLevel().registryAccess()).forEach(tooltip::add);
+        ci.cancel();
     }
 }

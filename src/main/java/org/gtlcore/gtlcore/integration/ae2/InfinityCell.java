@@ -7,7 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.core.component.DataComponents;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.stacks.AEKeyType;
@@ -42,7 +43,7 @@ public class InfinityCell extends Item implements ICellWorkbenchItem, AEToolItem
 
     @Override
     public FuzzyMode getFuzzyMode(final ItemStack is) {
-        final String fz = is.getOrCreateTag().getString("FuzzyMode");
+        final String fz = is.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getString("FuzzyMode");
         if (fz.isEmpty()) {
             return FuzzyMode.IGNORE_ALL;
         }
@@ -55,7 +56,7 @@ public class InfinityCell extends Item implements ICellWorkbenchItem, AEToolItem
 
     @Override
     public void setFuzzyMode(final ItemStack is, final FuzzyMode fzMode) {
-        is.getOrCreateTag().putString("FuzzyMode", fzMode.name());
+        CustomData.update(DataComponents.CUSTOM_DATA, is, tag -> tag.putString("FuzzyMode", fzMode.name()));
     }
 
     @Override
@@ -64,7 +65,7 @@ public class InfinityCell extends Item implements ICellWorkbenchItem, AEToolItem
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext world, List<Component> tooltip, TooltipFlag context) {
         Preconditions.checkArgument(stack.getItem() == this);
         InfinityCellHandler.INSTANCE.addCellInformationToTooltip(stack, tooltip);
     }

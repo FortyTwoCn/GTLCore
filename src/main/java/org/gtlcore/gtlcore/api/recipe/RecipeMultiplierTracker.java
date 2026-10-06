@@ -67,9 +67,9 @@ public final class RecipeMultiplierTracker {
 
     private static Multipliers calculate(GTRecipe baseRecipe, GTRecipe modifiedRecipe) {
         double energyMultiplier = 1;
-        double baseEUt = Math.abs((double) RecipeHelper.getInputEUt(baseRecipe));
+        double baseEUt = Math.abs((double) baseRecipe.getInputEUt().getTotalEU());
         if (baseEUt > 0) {
-            double modifiedEUt = Math.abs((double) RecipeHelper.getInputEUt(modifiedRecipe));
+            double modifiedEUt = Math.abs((double) modifiedRecipe.getInputEUt().getTotalEU());
             long parallels = Math.max(1, IGTRecipe.of(modifiedRecipe).getRealParallels());
             energyMultiplier = modifiedEUt / baseEUt / parallels;
         }

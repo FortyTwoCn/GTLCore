@@ -4,19 +4,21 @@ import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.integration.ae2.WirelessTerminalGridResolver;
 import org.gtlcore.gtlcore.integration.ae2.crafting.IMaxFastCraftingProviderVersion;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.networking.IGrid;
 import appeng.api.stacks.AEKey;
@@ -29,7 +31,7 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 /** Versioned, shared snapshots with byte and key budgets; no per-frame server queries. */
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID)
+@EventBusSubscriber(modid = GTLCore.MOD_ID)
 public final class JeiPatternQuery {
 
     private static final int CHUNK_KEYS = 512;
@@ -52,9 +54,9 @@ public final class JeiPatternQuery {
         return menu instanceof AEBaseMenu ? menu.containerId : -1;
     }
 
-    public static void register(SimpleChannel channel, IntSupplier ids) {
-        channel.registerMessage(ids.getAsInt(), Request.class, Request::write, Request::read, Request::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        channel.registerMessage(ids.getAsInt(), Response.class, Response::write, Response::read, Response::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+    public static void register(PayloadRegistrar registrar) {
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Request.TYPE, Request::write, Request::read, Request::handle, PacketFlow.SERVERBOUND);
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Response.TYPE, Response::write, Response::read, Response::handle, PacketFlow.CLIENTBOUND);
     }
 
     private static IGrid findGrid(ServerPlayer player) {
@@ -66,7 +68,7 @@ public final class JeiPatternQuery {
         return WirelessTerminalGridResolver.find(player, player.serverLevel());
     }
 
-    private static Snapshot snapshot(IGrid grid) {
+    private static Snapshot snapshot(IGrid grid, RegistryAccess registries) {
         if (grid == null) return EMPTY;
         var service = grid.getCraftingService();
         long version = ((IMaxFastCraftingProviderVersion) service).gtlcore$getMaxFastCraftingProviderVersionTick();
@@ -77,16 +79,16 @@ public final class JeiPatternQuery {
         // Provider changes that do not change outputs must not trigger another full download.
         Snapshot result = previous != null && !previous.chunks.isCompletedExceptionally() && previous.keys.equals(keys) ?
                 new Snapshot(version, previous.revision, previous.keys, previous.chunks) :
-                new Snapshot(version, ++nextRevision, keys, encodeAsync(keys));
+                new Snapshot(version, ++nextRevision, keys, encodeAsync(keys, registries));
         SNAPSHOTS.put(grid, result);
         return result;
     }
 
-    private static CompletableFuture<List<EncodedChunk>> encodeAsync(Set<AEKey> keys) {
+    private static CompletableFuture<List<EncodedChunk>> encodeAsync(Set<AEKey> keys, RegistryAccess registries) {
         try {
             return CompletableFuture.supplyAsync(() -> {
 
-                List<EncodedChunk> chunks = encode(keys);
+                List<EncodedChunk> chunks = encode(keys, registries);
 
                 return chunks;
             }, ENCODER);
@@ -95,10 +97,10 @@ public final class JeiPatternQuery {
         }
     }
 
-    private static List<EncodedChunk> encode(Set<AEKey> keys) {
+    private static List<EncodedChunk> encode(Set<AEKey> keys, RegistryAccess registries) {
         List<EncodedChunk> chunks = new ArrayList<>();
-        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
-        FriendlyByteBuf keyBuffer = new FriendlyByteBuf(Unpooled.buffer());
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries);
+        RegistryFriendlyByteBuf keyBuffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries);
         int count = 0;
         try {
             for (AEKey key : keys) {
@@ -121,7 +123,7 @@ public final class JeiPatternQuery {
         return List.copyOf(chunks);
     }
 
-    private static EncodedChunk copyChunk(FriendlyByteBuf buffer, int count) {
+    private static EncodedChunk copyChunk(RegistryFriendlyByteBuf buffer, int count) {
         byte[] bytes = new byte[buffer.readableBytes()];
         buffer.getBytes(buffer.readerIndex(), bytes);
         return new EncodedChunk(bytes, count);
@@ -144,8 +146,8 @@ public final class JeiPatternQuery {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) return;
+    public static void tick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         var transfers = TRANSFERS.get(player);
         if (transfers == null) return;
         int activeContext = contextId(player.containerMenu);
@@ -177,7 +179,7 @@ public final class JeiPatternQuery {
     }
 
     private static void send(ServerPlayer player, Response response) {
-        WirelessAePackets.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), response);
+        PacketDistributor.sendToPlayer(player, response);
     }
 
     @SubscribeEvent
@@ -188,22 +190,27 @@ public final class JeiPatternQuery {
         ENCODER.getQueue().clear();
     }
 
-    public record Request(long id, int menuId, long knownRevision) {
+    public record Request(long id, int menuId, long knownRevision) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Request> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "jei_pattern_query/request"));
 
-        private static void write(Request p, FriendlyByteBuf b) {
+        @Override
+        public CustomPacketPayload.Type<Request> type() { return TYPE; }
+
+
+        private static void write(Request p, RegistryFriendlyByteBuf b) {
             b.writeLong(p.id);
             b.writeVarInt(p.menuId);
             b.writeLong(p.knownRevision);
         }
 
-        private static Request read(FriendlyByteBuf b) {
+        private static Request read(RegistryFriendlyByteBuf b) {
             return new Request(b.readLong(), b.readVarInt(), b.readLong());
         }
 
-        private static void handle(Request p, Supplier<NetworkEvent.Context> supplier) {
-            var context = supplier.get();
+        private static void handle(Request p, IPayloadContext context) {
             context.enqueueWork(() -> {
-                var player = context.getSender();
+                var player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || (p.menuId != -1 && contextId(player.containerMenu) != p.menuId)) return;
                 var limiter = p.menuId == -1 ? WIRELESS_LIMITER : TERMINAL_LIMITER;
                 if (!limiter.tryAcquire(player, player.serverLevel().getGameTime())) {
@@ -211,19 +218,25 @@ public final class JeiPatternQuery {
                     return;
                 }
                 var grid = p.menuId == -1 ? WirelessTerminalGridResolver.find(player, player.serverLevel()) : findGrid(player);
-                Snapshot snapshot = snapshot(grid);
+                Snapshot snapshot = snapshot(grid, player.registryAccess());
 
                 if (snapshot.revision == p.knownRevision) send(player, new Response(p.id, snapshot.revision, 0, 0, 0, new byte[0]));
                 else TRANSFERS.computeIfAbsent(player, ignored -> new HashMap<>()).put(p.menuId, new Transfer(p, snapshot));
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     /** Negative/zero chunks are retry/unchanged acknowledgements. Payload is encoded once per network revision. */
-    public record Response(long id, long revision, int chunk, int chunks, int keyCount, byte[] data) {
+    public record Response(long id, long revision, int chunk, int chunks, int keyCount, byte[] data) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Response> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "jei_pattern_query/response"));
 
-        private static void write(Response p, FriendlyByteBuf b) {
+        @Override
+        public CustomPacketPayload.Type<Response> type() { return TYPE; }
+
+
+        private static void write(Response p, RegistryFriendlyByteBuf b) {
             b.writeLong(p.id);
             b.writeLong(p.revision);
             b.writeVarInt(p.chunk);
@@ -232,7 +245,7 @@ public final class JeiPatternQuery {
             b.writeByteArray(p.data);
         }
 
-        private static Response read(FriendlyByteBuf b) {
+        private static Response read(RegistryFriendlyByteBuf b) {
             long id = b.readLong(), revision = b.readLong();
             int chunk = b.readVarInt(), chunks = b.readVarInt(), count = b.readVarInt();
             byte[] data = b.readByteArray(MAX_PACKET_BYTES);
@@ -240,8 +253,8 @@ public final class JeiPatternQuery {
             return new Response(id, revision, chunk, chunks, count, data);
         }
 
-        public void addKeysTo(Set<AEKey> keys) {
-            FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(data));
+        public void addKeysTo(Set<AEKey> keys, RegistryAccess registries) {
+            RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.wrappedBuffer(data), registries);
             try {
                 for (int i = 0; i < keyCount; i++) keys.add(WirelessAeKeyPacketCodec.read(buffer));
                 if (buffer.isReadable()) throw new IllegalArgumentException("Trailing pattern snapshot data");
@@ -250,10 +263,9 @@ public final class JeiPatternQuery {
             }
         }
 
-        private static void handle(Response p, Supplier<NetworkEvent.Context> supplier) {
-            var context = supplier.get();
-            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> org.gtlcore.gtlcore.client.ae2.JeiPatternStatus.receive(p)));
-            context.setPacketHandled(true);
+        private static void handle(Response p, IPayloadContext context) {
+            context.enqueueWork(() -> org.gtlcore.gtlcore.client.ae2.JeiPatternStatus.receive(p));
+
         }
     }
 }

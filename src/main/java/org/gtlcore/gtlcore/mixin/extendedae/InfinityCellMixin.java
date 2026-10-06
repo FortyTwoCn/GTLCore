@@ -1,11 +1,11 @@
 package org.gtlcore.gtlcore.mixin.extendedae;
 
 import appeng.api.stacks.AEKey;
-import com.glodblock.github.extendedae.common.items.InfinityCell;
+import com.glodblock.github.extendedae.common.items.ItemInfinityCell;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(InfinityCell.class)
+@Mixin(ItemInfinityCell.class)
 public abstract class InfinityCellMixin {
 
     /**

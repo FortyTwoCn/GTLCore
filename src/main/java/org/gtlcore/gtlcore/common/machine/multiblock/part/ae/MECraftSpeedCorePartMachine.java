@@ -2,16 +2,16 @@ package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 
 import org.gtlcore.gtlcore.api.machine.trait.AECraft.IMECraftSpeedCore;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class MECraftSpeedCorePartMachine extends MultiblockPartMachine implements IMECraftSpeedCore {
+public class MECraftSpeedCorePartMachine extends MultiblockPartMachine implements com.gregtechceu.gtceu.api.machine.feature.IMuiMachine, IMECraftSpeedCore {
 
-    public MECraftSpeedCorePartMachine(IMachineBlockEntity holder) {
+    public MECraftSpeedCorePartMachine(BlockEntityCreationInfo holder) {
         super(holder);
     }
 

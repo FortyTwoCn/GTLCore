@@ -1,45 +1,38 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 
-import org.gtlcore.gtlcore.api.gui.GuiTextures;
-import org.gtlcore.gtlcore.api.machine.trait.AECraft.IMECraftIOPart;
-import org.gtlcore.gtlcore.api.machine.trait.AECraft.IMECraftPatternContainer;
-import org.gtlcore.gtlcore.common.data.GTLMachines;
-import org.gtlcore.gtlcore.common.machine.multiblock.part.PaginationUIManager;
-import org.gtlcore.gtlcore.integration.ae2.AEUtils;
+import org.gtlcore.gtlcore.api.machine.trait.AECraft.*;
+import org.gtlcore.gtlcore.config.ConfigHolder;
+import org.gtlcore.gtlcore.integration.ae2.AEBufferedOutput;
+import org.gtlcore.gtlcore.integration.ae2.MolecularAssemblerPatternHelper;
+import org.gtlcore.gtlcore.integration.ae2.gui.MolecularPatternPagination;
+import org.gtlcore.gtlcore.integration.ae2.gui.MolecularAssemblerUIFactory;
 import org.gtlcore.gtlcore.integration.ae2.graph.GraphDispatchPreflight;
 import org.gtlcore.gtlcore.integration.lowdragmc.misc.MutableItemTransferList;
-
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
+import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyInvConfigurator;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
-
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
-
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.inventories.InternalInventory;
@@ -47,17 +40,25 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.crafting.ICraftingProvider;
-import appeng.api.networking.ticking.IGridTickable;
-import appeng.api.networking.ticking.TickRateModulation;
-import appeng.api.networking.ticking.TickingRequest;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.GenericStack;
-import appeng.api.stacks.KeyCounter;
+import appeng.api.networking.ticking.*;
+import appeng.api.stacks.*;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import appeng.crafting.pattern.AEProcessingPattern;
 import appeng.crafting.pattern.EncodedPatternItem;
 import appeng.helpers.patternprovider.PatternContainer;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.drawable.UITexture;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.*;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.widgets.layout.Grid;
+import brachy.modularui.widgets.slot.ItemSlot;
+import brachy.modularui.widgets.slot.SlotGroup;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -66,22 +67,13 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.*;
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.Map;
-
-import static org.gtlcore.gtlcore.integration.ae2.AEUtils.*;
 
 public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implements PatternContainer, IMECraftIOPart,
-                                               GraphDispatchPreflight {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(MEMolecularAssemblerIOPartMachine.class, MEIOPartMachine.MANAGED_FIELD_HOLDER);
-
-    private static final int ROWS_PER_PAGE = 8;
-    private static final int PATTERNS_PER_ROW = 9;
+                                               GraphDispatchPreflight, IMolecularAssemblerOutputMachine, IMuiMachine {
 
     private final InternalInventory internalPatternInventory = new InternalInventory() {
 
@@ -98,17 +90,16 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
         @Override
         public void setItemDirect(int slotIndex, ItemStack stack) {
             mutableItemTransferList.setStackInSlot(slotIndex, stack);
-            mutableItemTransferList.onContentsChanged();
             onPatternChange(slotIndex);
         }
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return slot <= mutableItemTransferList.getSlots() && AEUtils.molecularFilter(stack, getLevel());
+            return slot >= 0 && slot < mutableItemTransferList.getSlots() && MolecularAssemblerPatternHelper.molecularFilter(stack, getLevel());
         }
     };
-    @DescSynced
-    @Persisted
+    @SyncToClient
+    @SaveField
     public boolean isHiddenTerminal = false;
 
     @Override
@@ -119,14 +110,18 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
     // Status
     // ========================================
 
-    @DescSynced
-    @Persisted
-    @Setter
+    @SyncToClient
+    @SaveField
     protected String customName = "";
 
     private boolean needPatternSync;
 
     private boolean shouldOpen = false;
+
+    @Getter
+    private long patternBindingRevision;
+
+    public boolean hasPatternMenu() { return isFormed() && (isRemote() ? !proxies.isEmpty() : shouldOpen); }
 
     // ========================================
     // Handlers
@@ -136,14 +131,13 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
 
     private final MutableItemTransferList mutableItemTransferList;
 
-    protected PaginationUIManager paginationUIManager;
-
     // ========================================
     // Inventory
     // ========================================
 
-    @Persisted
-    protected final ItemStackTransfer sharedToolsInventory;
+    @Getter
+    @SaveField
+    protected final CustomItemStackHandler sharedToolsInventory;
 
     private final BiMap<@NotNull IPatternDetails, Integer> patternSlotMap;
 
@@ -155,11 +149,14 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
     @Getter
     private final Object2LongOpenHashMap<AEKey> buffer;
 
-    @DescSynced
-    private final Set<Long> proxies = new LongOpenHashSet();
-    private final ReferenceSortedSet<IItemTransfer> proxyStackTransfers = new ReferenceLinkedOpenHashSet<>();
+    @SaveField
+    private final MolecularAssemblerOutputStorage craftStorage;
 
-    public MEMolecularAssemblerIOPartMachine(IMachineBlockEntity holder) {
+    @SyncToClient
+    private final Set<Long> proxies = new LongOpenHashSet();
+    private final ReferenceSortedSet<IItemHandlerModifiable> proxyStackTransfers = new ReferenceLinkedOpenHashSet<>();
+
+    public MEMolecularAssemblerIOPartMachine(BlockEntityCreationInfo holder) {
         super(holder, IO.BOTH);
         getMainNode().addService(IGridTickable.class, new Ticker()).addService(ICraftingProvider.class, this);
 
@@ -167,8 +164,10 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
         toolsSlotMap = new Int2ObjectOpenHashMap<>();
         outputItems = new Object2LongLinkedOpenHashMap<>();
         buffer = new Object2LongOpenHashMap<>();
-        maHandler = new MECraftHandler(this);
-        sharedToolsInventory = new ItemStackTransfer(9);
+        craftStorage = new MolecularAssemblerOutputStorage(this);
+        maHandler = attachTrait(new MECraftHandler());
+        sharedToolsInventory = new CustomItemStackHandler(9);
+        sharedToolsInventory.setOnContentsChanged(this::markAsChanged);
 
         mutableItemTransferList = new MutableItemTransferList();
     }
@@ -179,7 +178,7 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
             return false;
         }
 
-        final GenericStack output = processingPattern.getOutputs()[0];
+        final GenericStack output = processingPattern.getOutputs().getFirst();
         if (!(output.what() instanceof AEItemKey)) return false;
 
         int slot = patternSlotMap.get(processingPattern);
@@ -193,25 +192,42 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
             }
 
             if (!requiredTools.isEmpty()) {
-                AEUtils.pushInputsToMEPatternBufferInventory(keyCounters, this.buffer::addTo);
-                this.meTrait.notifySelfIO();
-                return true;
+                var refund = new Object2LongOpenHashMap<AEKey>();
+                try {
+                    for (var counter : keyCounters) for (var entry : counter) {
+                        if (entry.getLongValue() <= 0) return false;
+                        refund.put(entry.getKey(), Math.addExact(refund.getLong(entry.getKey()), entry.getLongValue()));
+                    }
+                    for (var entry : refund.object2LongEntrySet()) Math.addExact(buffer.getLong(entry.getKey()), entry.getLongValue());
+                } catch (ArithmeticException overflow) { return false; }
+                for (var entry : refund.object2LongEntrySet()) buffer.addTo(entry.getKey(), entry.getLongValue());
+                markAsChanged(); meTrait.notifySelfIO(); return true;
             }
         }
 
-        final GenericStack requireStack = processingPattern.getInputs()[0].getPossibleInputs()[0];
+        var supplied = new Object2LongOpenHashMap<AEKey>();
+        try {
+            for (var counter : keyCounters) for (var entry : counter) {
+                if (entry.getLongValue() <= 0) return false;
+                supplied.put(entry.getKey(), Math.addExact(supplied.getLong(entry.getKey()), entry.getLongValue()));
+            }
+        } catch (ArithmeticException overflow) { return false; }
         long multiplier = 0;
-        for (var inputList : keyCounters) {
-            for (var input : inputList) {
-                if (requireStack.what().equals(input.getKey())) {
-                    multiplier = input.getLongValue() / (requireStack.amount() * processingPattern.getInputs()[0].getMultiplier());
-                    break;
-                }
-            }
+        for (var requirement : processingPattern.getInputs()) {
+            var stack = requirement.getPossibleInputs()[0];
+            long needed;
+            try { needed = Math.multiplyExact(stack.amount(), requirement.getMultiplier()); }
+            catch (ArithmeticException overflow) { return false; }
+            long provided = supplied.removeLong(stack.what());
+            if (needed <= 0 || provided <= 0 || provided % needed != 0) return false;
+            long crafts = provided / needed;
+            if (multiplier == 0) multiplier = crafts;
+            else if (multiplier != crafts) return false;
         }
-        if (multiplier == 0) return false;
-
-        outputItems.addTo(output, multiplier);
+        long queued = outputItems.getLong(output);
+        if (!supplied.isEmpty() || multiplier == 0 || queued < 0 || output.amount() <= 0 ||
+                multiplier > Long.MAX_VALUE / output.amount() - queued) return false;
+        outputItems.put(output, queued + multiplier);
         maHandler.notifyListeners();
         return true;
     }
@@ -232,7 +248,7 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
     @Override
     public long gtlcore$graphCapacity(IPatternDetails pattern, Map<AEKey, Long> inputPerRun, long requested) {
         if (!gtlcore$canProduceGraphPattern(pattern)) return 0;
-        GenericStack output = pattern.getOutputs()[0];
+        GenericStack output = pattern.getOutputs().getFirst();
         long queued = outputItems.getLong(output);
         if (queued < 0 || output.amount() <= 0) return 0;
         return Math.max(0, Math.min(requested, Long.MAX_VALUE / output.amount() - queued));
@@ -254,6 +270,7 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
         } else {
             shouldOpen = false;
         }
+        syncDataHolder.markClientSyncFieldDirty("proxies");
         needPatternSync = true;
     }
 
@@ -263,24 +280,32 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
     }
 
     @Override
-    public boolean canShared() {
+    public void notifyOutputBufferChanged() {
+        this.meTrait.notifySelfIO();
+    }
+
+    @Override
+    public boolean canShared(MultiblockControllerMachine controller, String substructureName) {
         return false;
     }
 
     protected void clear() {
+        patternBindingRevision++;
         this.mutableItemTransferList.clear();
         this.patternSlotMap.clear();
         this.toolsSlotMap.clear();
         this.proxies.clear();
+        this.proxyStackTransfers.clear();
+        syncDataHolder.markClientSyncFieldDirty("proxies");
         shouldOpen = false;
     }
 
     private @Nullable IPatternDetails getPatternDetailsAsProcessing(ItemStack stack, int slotIndex) {
         if (!stack.isEmpty()) {
             if (stack.getItem() instanceof EncodedPatternItem encodedPatternItem) {
-                final var decodePattern = encodedPatternItem.decode(stack, getLevel(), false);
+                final var decodePattern = encodedPatternItem.decode(stack, getLevel());
                 if (decodePattern instanceof IMolecularAssemblerSupportedPattern molecularAssemblerSupportedPattern) {
-                    final var pair = AEUtils.createProcessingFromCraftPattern(molecularAssemblerSupportedPattern, getLevel());
+                    final var pair = MolecularAssemblerPatternHelper.createProcessingFromCraftPattern(molecularAssemblerSupportedPattern, getLevel());
                     final var remainingStacks = pair.getRight();
                     final var pattern = pair.getLeft();
                     if (!(pattern instanceof AEProcessingPattern)) return null;
@@ -293,25 +318,20 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
         return null;
     }
 
-    protected ReferenceSortedSet<IItemTransfer> getProxies() {
+    protected ReferenceSortedSet<IItemHandlerModifiable> getProxies() {
         if (proxyStackTransfers.size() != proxies.size()) {
             proxyStackTransfers.clear();
-            ObjectList<IItemTransfer> patternInventories = new ObjectArrayList<>();
+            ObjectList<IItemHandlerModifiable> patternInventories = new ObjectArrayList<>();
             for (var pos : proxies) {
                 if (MetaMachine.getMachine(Objects.requireNonNull(getLevel()), BlockPos.of(pos)) instanceof MECraftPatternContainerPartMachine proxy) {
                     patternInventories.add(proxy.getPatternInventory());
                 }
             }
-            patternInventories.sort(Comparator.comparingInt(IMECraftPatternContainer::sumNonEmpty).reversed()
-                    .thenComparingInt(IItemTransfer::getSlots));
+            patternInventories.sort(Comparator.<IItemHandlerModifiable>comparingInt(IMECraftPatternContainer::sumNonEmpty).reversed()
+                    .thenComparingInt(IItemHandlerModifiable::getSlots));
             proxyStackTransfers.addAll(patternInventories);
         }
         return ReferenceSortedSets.unmodifiable(proxyStackTransfers);
-    }
-
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
     }
 
     // ========================================
@@ -330,19 +350,21 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
     @Override
     public void onUnload() {
         super.onUnload();
+        updateSubs = null;
         clear();
     }
 
     @Override
-    public void removedFromController(@NotNull IMultiController controller) {
+    public void removedFromController(@NotNull MultiblockControllerMachine controller) {
         super.removedFromController(controller);
         clear();
         needPatternSync = true;
     }
 
     @Override
-    public void onMachineRemoved() {
-        clearInventory(sharedToolsInventory);
+    public void onMachineDestroyed() {
+        if (!isRemote()) sharedToolsInventory.dropInventoryInWorld(getLevel(), getBlockPos());
+        super.onMachineDestroyed();
     }
 
     protected void updateSubscription() {
@@ -377,85 +399,77 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
     // GUI
     // ========================================
 
-    @Override
-    public @NotNull Widget createUIWidget() {
-        var tempmutableItemTransferList = new MutableItemTransferList(getProxies());
+    public void setCustomName(String name) {
+        customName = Objects.requireNonNull(name);
+        markAsChanged();
+        syncDataHolder.markClientSyncFieldDirty("customName");
+    }
 
-        final int totalCount = tempmutableItemTransferList.getSlots();
-        final int colSize = 9;
-        final int uiWidth = Math.max(PATTERNS_PER_ROW * 18 + 16, 106);
-        final int uiHeight = ROWS_PER_PAGE * 18 + 28;
-
-        this.paginationUIManager = new PaginationUIManager(9, ROWS_PER_PAGE, totalCount,
-                uiWidth, uiHeight,
-                this::onPatternChange,
-                tempmutableItemTransferList);
-
-        var group = new WidgetGroup(0, 0, paginationUIManager.getUiWidth(), paginationUIManager.getUiHeight());
-
-        // ME Network status indicator
-        group.addWidget(new LabelWidget(8, 2,
-                () -> this.isOnline ? "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline"));
-
-        // Custom name input widget
-        group.addWidget(new AETextInputButtonWidget(18 * colSize + 8 - 70, 2, 70, 10)
-                .setText(customName)
-                .setOnConfirm(this::setCustomName)
-                .setButtonTooltips(Component.translatable("gui.gtlcore.rename.desc")));
-
-        group.addWidget(paginationUIManager.createPaginationUI(null));
-
-        return group;
+    public void setHiddenTerminal(boolean hidden) {
+        isHiddenTerminal = hidden;
+        markAsChanged();
+        syncDataHolder.markClientSyncFieldDirty("isHiddenTerminal");
     }
 
     @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        // Share inventory configurator
-        configuratorPanel.attachConfigurators(new FancyInvConfigurator(
-                sharedToolsInventory, Component.translatable("gui.gtceu.share_inventory.title"))
-                .setTooltips(List.of(
-                        Component.translatable("gui.gtceu.share_inventory.desc.0"),
-                        Component.translatable("gui.gtceu.share_inventory.desc.1"))));
+    public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager syncManager, UISettings settings) {
+        var tools = syncManager.syncedPanel("molecularSharedTools", true, (manager, handler) -> {
+            var group = new SlotGroup("molecularTools", 3, false);
+            return PopupPanel.createPopupPanel("molecularSharedToolsPanel", 92, 90)
+                    .child(Text.lang("gui.gtceu.share_inventory.title").asWidget().margin(4))
+                    .child(new Grid().top(26).left(16).size(54, 54).minElementMargin(0, 0).minColWidth(18).minRowHeight(18)
+                            .gridOfSizeWidth(9, 3, (x, y, index) -> new ItemSlot().slot(SyncHandlers.itemSlot(sharedToolsInventory, index)
+                                    .slotGroup(group).accessibility(true, true))));
+        });
+        var hidden = new BooleanSyncValue(() -> isHiddenTerminal, this::setHiddenTerminal).allowC2S();
+        syncManager.syncValue("molecularHidden", hidden);
+        var visibleTexture = UITexture.builder().location(ResourceLocation.fromNamespaceAndPath("gtlcore", "textures/guis/button_visible.png"))
+                .imageSize(18, 36).build();
+        return MachineUIPanelBuilder.panelBuilder(this).leftConfigurators(flow -> flow
+                .child(new ButtonWidget<>().size(18).overlay(GTGuiTextures.BUTTON_ITEM_OUTPUT)
+                        .onMousePressed((context, button) -> { tools.openPanel(); return true; })
+                        .tooltipDynamic(t -> {
+                            t.addLine(Component.translatable("gui.gtceu.share_inventory.desc.0"));
+                            t.addLine(Component.translatable("gui.gtceu.share_inventory.desc.1"));
+                        }))
+                .child(new ToggleButton().size(18).value(hidden)
+                        .overlay(false, visibleTexture.getSubArea(0, 0, 1, .5f))
+                        .overlay(true, visibleTexture.getSubArea(0, .5f, 1, 1))
+                        .tooltipDynamic(t -> t.addLine(Component.translatable(hidden.getBoolValue() ?
+                                "gui.gtlcore.hidden_in_terminal" : "gui.gtlcore.visible_in_terminal")))));
+    }
 
-        // Visibility in ME Pattern Access Terminal
-        configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                GuiTextures.BUTTON_VISIBLE.getSubTexture(0, 0, 1, 0.5),
-                GuiTextures.BUTTON_VISIBLE.getSubTexture(0, 0.5, 1, 0.5),
-                () -> this.isHiddenTerminal, (clickData, pressed) -> this.isHiddenTerminal = pressed)
-                .setTooltipsSupplier(pressed -> List.of(
-                        Component.translatable(pressed ? "gui.gtlcore.hidden_in_terminal" : "gui.gtlcore.visible_in_terminal"))));
+    @Override
+    public void buildMainUI(ParentWidget<?> mainWidget, PosGuiData data, PanelSyncManager syncManager, UISettings settings) {
+        var online = new BooleanSyncValue(this::isOnline);
+        var name = new StringSyncValue(() -> customName, this::setCustomName).allowC2S();
+        syncManager.syncValue("molecularOnline", online); syncManager.syncValue("molecularName", name);
+        mainWidget.child(Flow.col().coverChildren().margin(4)
+                .child(Flow.row().coverChildren()
+                        .child(Text.dynamic(() -> Component.translatable(online.getBoolValue() ?
+                                "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline")).asWidget().width(92).height(16))
+                        .child(new TextFieldWidget().size(70, 16).value(name)
+                                .tooltipDynamic(t -> t.addLine(Component.translatable("gui.gtlcore.rename.desc")))))
+                .child(MolecularPatternPagination.build(new MutableItemTransferList(getProxies()),
+                        data instanceof MolecularAssemblerUIFactory.Data molecular ? molecular.slotCount() : mutableItemTransferList.getSlots(),
+                        syncManager, this::onPatternChange)));
     }
 
     @Override
     public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
-        return shouldOpen;
+        return hasPatternMenu();
+    }
+
+    @Override
+    public InteractionResult tryToOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!hasPatternMenu()) return InteractionResult.PASS;
+        if (player instanceof ServerPlayer serverPlayer) MolecularAssemblerUIFactory.INSTANCE.open(serverPlayer, this);
+        return InteractionResult.sidedSuccess(player.level().isClientSide);
     }
 
     // ========================================
     // Persist
     // ========================================
-
-    @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        super.saveCustomPersistedData(tag, forDrop);
-        if (buffer.isEmpty() && outputItems.isEmpty()) return;
-        ListTag bufferTag = AEUtils.createListTag(AEKey::toTagGeneric, buffer);
-        if (!bufferTag.isEmpty()) tag.put("buffer", bufferTag);
-
-        ListTag outputTag = AEUtils.createListTag(GenericStack::writeTag, outputItems);
-        if (!outputTag.isEmpty()) tag.put("outputItems", outputTag);
-    }
-
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        buffer.clear();
-        ListTag bufferTag = tag.getList("buffer", Tag.TAG_COMPOUND);
-        AEUtils.loadInventory(bufferTag, AEKey::fromTagGeneric, buffer);
-
-        ListTag outputTag = tag.getList("outputItems", Tag.TAG_COMPOUND);
-        AEUtils.loadInventory(outputTag, GenericStack::readTag, outputItems);
-    }
 
     // ========================================
     // Pattern
@@ -483,12 +497,12 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
 
     @Override
     public PatternContainerGroup getTerminalGroup() {
-        List<IMultiController> controllers = getControllers();
+        var controllers = getControllers();
 
         // Handle multiblock controller grouping
         if (!controllers.isEmpty()) {
-            IMultiController controller = controllers.get(0);
-            MultiblockMachineDefinition controllerDefinition = controller.self().getDefinition();
+            var controller = controllers.first();
+            MachineDefinition controllerDefinition = controller.getDefinition();
 
             if (!customName.isEmpty()) {
                 return new PatternContainerGroup(
@@ -502,23 +516,28 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
         } else {
             if (!customName.isEmpty()) {
                 return new PatternContainerGroup(
-                        AEItemKey.of(GTLMachines.GTAEMachines.ME_EXTEND_PATTERN_BUFFER.getItem()),
+                        AEItemKey.of(getFallbackTerminalIcon()),
                         Component.literal(customName),
                         Collections.emptyList());
             } else {
                 return new PatternContainerGroup(
-                        AEItemKey.of(GTLMachines.GTAEMachines.ME_EXTEND_PATTERN_BUFFER.getItem()),
-                        GTLMachines.GTAEMachines.ME_EXTEND_PATTERN_BUFFER.get().getDefinition().getItem().getDescription(),
+                        AEItemKey.of(getFallbackTerminalIcon()),
+                        getFallbackTerminalIcon().getDescription(),
                         Collections.emptyList());
             }
         }
+    }
+
+    private Item getFallbackTerminalIcon() {
+        return BuiltInRegistries.ITEM.getOptional(ResourceLocation.fromNamespaceAndPath("gtceu", "me_extend_pattern_buffer"))
+                .orElseThrow(() -> new IllegalStateException("Required Core ME pattern-buffer icon is not registered"));
     }
 
     protected class Ticker implements IGridTickable {
 
         @Override
         public TickingRequest getTickingRequest(IGridNode node) {
-            return new TickingRequest(MEExtendedOutputPartMachineBase.MIN_FREQUENCY, MEExtendedOutputPartMachineBase.MAX_FREQUENCY, false, true);
+            return new TickingRequest(ConfigHolder.INSTANCE.MEPatternOutputMin, ConfigHolder.INSTANCE.MEPatternOutputMax, false);
         }
 
         @Override
@@ -529,11 +548,17 @@ public class MEMolecularAssemblerIOPartMachine extends MEIOPartMachine implement
             }
 
             if (buffer.isEmpty()) {
-                if (ticksSinceLastCall >= MEExtendedOutputPartMachineBase.MAX_FREQUENCY) {
+                if (ticksSinceLastCall >= ConfigHolder.INSTANCE.MEPatternOutputMax) {
                     isSleeping = true;
                     return TickRateModulation.SLEEP;
                 } else return TickRateModulation.SLOWER;
-            } else return reFunds(buffer, getMainNode().getGrid(), actionSource) ? TickRateModulation.URGENT : TickRateModulation.SLOWER;
+            } else {
+                if (AEBufferedOutput.flush(buffer, getMainNode().getGrid(), actionSource)) {
+                    markAsChanged();
+                    return TickRateModulation.URGENT;
+                }
+                return TickRateModulation.SLOWER;
+            }
         }
     }
 }

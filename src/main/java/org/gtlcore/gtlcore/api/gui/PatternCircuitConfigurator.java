@@ -1,102 +1,50 @@
 package org.gtlcore.gtlcore.api.gui;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
-
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-
-import net.minecraft.network.chat.Component;
-
-import java.util.List;
-import java.util.function.BiConsumer;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
+import java.util.function.IntSupplier;
+import java.util.function.IntConsumer;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-public class PatternCircuitConfigurator implements IFancyConfigurator {
+public final class PatternCircuitConfigurator {
+    private final IntSupplier circuit;
+    private final IntConsumer setCircuit;
+    private final BooleanSupplier skipExisting;
+    private final Consumer<Boolean> setSkipExisting;
+    private final Runnable apply, clear;
 
-    private final Supplier<Integer> circuitSupplier;
-    private final Consumer<Integer> circuitSetter;
-    private final Supplier<Boolean> skipExistingSupplier;
-    private final BiConsumer<ClickData, Boolean> skipExistingSetter;
-    private final Consumer<ClickData> applyCircuit;
-    private final Consumer<ClickData> clearCircuits;
-
-    public PatternCircuitConfigurator(Supplier<Integer> circuitSupplier, Consumer<Integer> circuitSetter,
-                                      Supplier<Boolean> skipExistingSupplier,
-                                      BiConsumer<ClickData, Boolean> skipExistingSetter,
-                                      Consumer<ClickData> applyCircuit, Consumer<ClickData> clearCircuits) {
-        this.circuitSupplier = circuitSupplier;
-        this.circuitSetter = circuitSetter;
-        this.skipExistingSupplier = skipExistingSupplier;
-        this.skipExistingSetter = skipExistingSetter;
-        this.applyCircuit = applyCircuit;
-        this.clearCircuits = clearCircuits;
+    public PatternCircuitConfigurator(IntSupplier circuit, IntConsumer setCircuit, BooleanSupplier skipExisting,
+                                       Consumer<Boolean> setSkipExisting, Runnable apply, Runnable clear) {
+        this.circuit = circuit; this.setCircuit = setCircuit; this.skipExisting = skipExisting;
+        this.setSkipExisting = setSkipExisting; this.apply = apply; this.clear = clear;
     }
 
-    @Override
-    public Component getTitle() {
-        return Component.translatable("gui.gtlcore.pattern_buffer_circuit_config");
-    }
-
-    @Override
-    public IGuiTexture getIcon() {
-        return new GuiTextureGroup(GuiTextures.BUTTON, GuiTextures.INT_CIRCUIT_OVERLAY);
-    }
-
-    @Override
-    public List<Component> getTooltips() {
-        return List.of(Component.translatable("tooltip.gtlcore.pattern_buffer_circuit_config"));
-    }
-
-    @Override
-    public Widget createConfigurator() {
-        var group = new WidgetGroup(0, 0, 190, 104);
-        var display = new WidgetGroup(4, 4, 182, 96);
-        display.setBackground(GuiTextures.DISPLAY);
-
-        display.addWidget(new LabelWidget(8, 6,
-                "gui.gtlcore.pattern_buffer_circuit_config").setTextColor(0xFAF9F6));
-        display.addWidget(new LabelWidget(10, 27,
-                "gui.gtlcore.pattern_buffer_circuit_number"));
-        display.addWidget(new IntInputWidget(96, 24, 78, 14, circuitSupplier, circuitSetter)
-                .setMin(1)
-                .setMax(IntCircuitBehaviour.CIRCUIT_MAX)
-                .setHoverTooltips(Component.translatable("tooltip.gtlcore.pattern_buffer_circuit_number",
-                        IntCircuitBehaviour.CIRCUIT_MAX)));
-
-        display.addWidget(new LabelWidget(10, 49,
-                "gui.gtlcore.pattern_buffer_skip_existing_circuit"));
-        display.addWidget(new SwitchWidget(138, 46, 36, 14, skipExistingSetter)
-                .setSupplier(skipExistingSupplier)
-                .setPressed(skipExistingSupplier.get())
-                .setTexture(
-                        new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture("OFF")),
-                        new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture("ON")))
-                .setHoverTooltips(Component.translatable("tooltip.gtlcore.pattern_buffer_skip_existing_circuit")));
-
-        display.addWidget(new ButtonWidget(10, 72, 78, 18,
-                new GuiTextureGroup(GuiTextures.BUTTON,
-                        new TextTexture(() -> Component.translatable("gui.gtlcore.pattern_buffer_apply_circuit").getString())),
-                applyCircuit)
-                .setHoverTooltips(Component.translatable("tooltip.gtlcore.pattern_buffer_apply_circuit")));
-        display.addWidget(new ButtonWidget(96, 72, 78, 18,
-                new GuiTextureGroup(GuiTextures.BUTTON,
-                        new TextTexture(() -> Component.translatable("gui.gtlcore.pattern_buffer_clear_circuits").getString())),
-                clearCircuits)
-                .setHoverTooltips(Component.translatable("tooltip.gtlcore.pattern_buffer_clear_circuits")));
-
-        group.addWidget(display);
-        group.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        return group;
+    public PopupPanel createPanel(PanelSyncManager sync) {
+        var number = SyncHandlers.string(() -> Integer.toString(circuit.getAsInt()), text -> {
+            try { setCircuit.accept(Math.clamp(Integer.parseInt(text), 1, IntCircuitBehaviour.CIRCUIT_MAX)); }
+            catch (NumberFormatException ignored) {}
+        }).allowC2S();
+        var skip = SyncHandlers.bool(skipExisting::getAsBoolean, setSkipExisting::accept).allowC2S();
+        sync.syncValue("embeddedPatternCircuit", number);
+        sync.syncValue("skipExistingPatternCircuit", skip);
+        sync.registerServerSyncedAction("applyPatternCircuit", buffer -> apply.run());
+        sync.registerServerSyncedAction("clearPatternCircuits", buffer -> clear.run());
+        return PopupPanel.createPopupPanel("patternCircuitConfigPanel", 190, 104)
+                .child(Text.lang("gui.gtlcore.pattern_buffer_circuit_config").asWidget().pos(8, 6))
+                .child(Text.lang("gui.gtlcore.pattern_buffer_circuit_number").asWidget().pos(10, 28))
+                .child(new TextFieldWidget().value(number).size(70, 16).pos(110, 24))
+                .child(Text.lang("gui.gtlcore.pattern_buffer_skip_existing_circuit").asWidget().pos(10, 50))
+                .child(new ToggleButton().value(skip).size(20, 16).pos(158, 46).overlay(Text.str("#")))
+                .child(new ButtonWidget<>().size(78, 18).pos(10, 72).overlay(Text.lang("gui.gtlcore.pattern_buffer_apply_circuit"))
+                        .onMousePressed((context, button) -> { if (button != 0) return false; sync.callSyncedAction("applyPatternCircuit"); return true; }))
+                .child(new ButtonWidget<>().size(78, 18).pos(96, 72).overlay(Text.lang("gui.gtlcore.pattern_buffer_clear_circuits"))
+                        .onMousePressed((context, button) -> { if (button != 0) return false; sync.callSyncedAction("clearPatternCircuits"); return true; }));
     }
 }

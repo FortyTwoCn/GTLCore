@@ -2,15 +2,20 @@ package org.gtlcore.gtlcore.client.ae2.wireless;
 
 import org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAeNetworkRuntime;
 import org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets;
-import org.gtlcore.gtlcore.integration.wildcard.WildcardPatternCompat;
 
-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
-import com.gregtechceu.gtceu.api.gui.fancy.TabsWidget;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanel;
+import brachy.modularui.api.IMuiScreen;
+import brachy.modularui.api.IPanelHandler;
+import brachy.modularui.api.widget.Interactable;
+import brachy.modularui.drawable.UITexture;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.ModularContainerMenu;
+import brachy.modularui.screen.ModularPanel;
+import brachy.modularui.screen.viewport.ModularGuiContext;
+import brachy.modularui.theme.WidgetThemeEntry;
+import brachy.modularui.widget.Widget;
+import brachy.modularui.widgets.ButtonWidget;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUIGuiContainer;
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -27,9 +32,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -50,17 +55,14 @@ final class WirelessAeScreenHooks {
     private static final long CLICK_REFRESH_DELAY_MILLIS = 250L;
     private static final int UI_REFRESH_TICKS = 20;
     private static int ticksUntilUiRefresh;
-    private static final int FANCY_PAGE_WIDTH = 168;
-    private static final int FANCY_PAGE_HEIGHT = 158;
+    private static final int WIRELESS_PAGE_WIDTH = 168;
+    private static final int WIRELESS_PAGE_HEIGHT = 158;
     private static final int PANEL_MARGIN = 6;
-    private static final int FANCY_HEADER_HEIGHT = 24;
+    private static final int WIRELESS_HEADER_HEIGHT = 24;
     private static final int NETWORK_ROW_HEIGHT = 24;
-    private static final int FANCY_SCROLLBAR_WIDTH = 6;
-    private static final int FANCY_SCROLLBAR_GAP = 4;
-    private static final IGuiTexture WIRELESS_TAB_ICON = WirelessAeScreenHooks::drawWirelessTabIcon;
-    private static final ResourceLocation WIRELESS_TAB_TEXTURE = new ResourceLocation("gtlcore", "textures/gui/wireless/tab_wireless_selected.png");
-    private static final String WILDCARD_HELD_ITEM_UI_CLASS = "org.leodreamer.wildcard_pattern.wildcard.gui.WildcardHeldItemUI";
-    private static final String WILDCARD_FANCY_PROVIDER_CLASS = "org.leodreamer.wildcard_pattern.wildcard.gui.WildcardFancyUIProvider";
+    private static final int WIRELESS_SCROLLBAR_WIDTH = 6;
+    private static final int WIRELESS_SCROLLBAR_GAP = 4;
+    private static final ResourceLocation WIRELESS_TAB_TEXTURE = ResourceLocation.fromNamespaceAndPath("gtlcore", "textures/gui/wireless/tab_wireless_selected.png");
 
     private static final String[] POSITION_METHODS = {
             "getBlockPos",
@@ -68,6 +70,7 @@ final class WirelessAeScreenHooks {
             "pos"
     };
     private static final String[] TARGET_METHODS = {
+            "getGuiData",
             "getBlockEntity",
             "getTarget",
             "getModularUI",
@@ -117,23 +120,22 @@ final class WirelessAeScreenHooks {
     private static boolean embeddedDraggingScrollbar;
     private static long embeddedRequestAtMillis;
     private static long embeddedRefreshAfterMillis;
-    private static Screen fancyScreen;
-    private static BlockPos fancyTargetPos;
-    private static IFancyUIProvider fancyMainPage;
-    private static WirelessAeFancyPageProvider fancyProvider;
+    private static Screen installedScreen;
+    private static MachineUIPanel installedPanel;
+    private static BlockPos installedTargetPos;
 
     private WirelessAeScreenHooks() {}
 
     static void register() {
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onRightClickBlock);
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onLeftClickEmpty);
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onScreenInit);
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onClientTick);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onRightClickBlock);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onLeftClickEmpty);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onScreenInit);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(WirelessAeScreenHooks::onClientTick);
     }
 
     private static void onLeftClickEmpty(PlayerInteractEvent.LeftClickEmpty event) {
         if (event.getEntity().getMainHandItem().getItem() instanceof org.gtlcore.gtlcore.integration.ae2.wireless.WirelessNetworkBindingToolItem) {
-            WirelessAePackets.CHANNEL.sendToServer(new WirelessAePackets.ClearBindingToolPacket());
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new WirelessAePackets.ClearBindingToolPacket());
         }
     }
 
@@ -153,11 +155,10 @@ final class WirelessAeScreenHooks {
         ticksUntilUiRefresh = UI_REFRESH_TICKS;
     }
 
-    private static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    private static void onClientTick(ClientTickEvent.Post event) {
         Screen screen = Minecraft.getInstance().screen;
         closeEmbeddedPanelIfScreenChanged(screen);
-        if (!(screen instanceof ModularUIGuiContainer)) {
+        if (!(screen instanceof IMuiScreen) || !(screen instanceof AbstractContainerScreen<?>)) {
             ticksUntilUiRefresh = 0;
             return;
         }
@@ -170,7 +171,7 @@ final class WirelessAeScreenHooks {
 
     private static void installWirelessUiForScreen(Screen screen) {
         closeEmbeddedPanelIfScreenChanged(screen);
-        if (!(screen instanceof ModularUIGuiContainer modularScreen)) {
+        if (!(screen instanceof IMuiScreen modularScreen) || !(screen instanceof AbstractContainerScreen<?> containerScreen)) {
             return;
         }
 
@@ -179,9 +180,9 @@ final class WirelessAeScreenHooks {
             return;
         }
 
-        BlockPos targetPos = findAcceptedTargetPos(screen, modularScreen, level);
+        BlockPos targetPos = findAcceptedTargetPos(screen, containerScreen, level);
         if (targetPos != null) {
-            installNativeWirelessWidgets(modularScreen, targetPos);
+            installNativeWirelessWidgets(screen, modularScreen, targetPos);
         }
     }
 
@@ -212,6 +213,9 @@ final class WirelessAeScreenHooks {
 
     private static List<BlockPos> findScreenTargetPositions(Screen screen, AbstractContainerScreen<?> containerScreen) {
         List<BlockPos> candidates = new ArrayList<>();
+        if (containerScreen.getMenu() instanceof ModularContainerMenu menu && menu.getGuiData() instanceof PosGuiData data) {
+            addCandidate(candidates, data.getBlockPos());
+        }
         addCandidate(candidates, getRecentClickedPos());
         addCandidate(candidates, getCrosshairBlockPos());
 
@@ -240,103 +244,40 @@ final class WirelessAeScreenHooks {
         return cachedStaticTargetPositions;
     }
 
-    private static void installNativeWirelessWidgets(ModularUIGuiContainer screen, BlockPos targetPos) {
-        FancyMachineUIWidget fancy = findFancyMachineUI(screen);
-        if (fancy == null) {
-            return;
-        }
-        if (isWildcardPatternHeldItemUi(fancy)) {
-            return;
-        }
-
-        WirelessAeFancyPageProvider provider = getOrCreateFancyProvider(screen, targetPos, fancy);
-        ensureFancyPageList(fancy, provider);
-        ensureWirelessSideTab(fancy.getSideTabsWidget(), provider);
-    }
-
-    private static boolean isWildcardPatternHeldItemUi(FancyMachineUIWidget fancy) {
-        if (!WildcardPatternCompat.isLoaded()) {
-            return false;
-        }
-        return hasTypeName(fancy, WILDCARD_HELD_ITEM_UI_CLASS) ||
-                hasTypeName(fancy.getMainPage(), WILDCARD_FANCY_PROVIDER_CLASS);
-    }
-
-    private static boolean hasTypeName(Object target, String typeName) {
-        if (target == null) {
-            return false;
-        }
-        for (Class<?> type = target.getClass(); type != null; type = type.getSuperclass()) {
-            if (type.getName().equals(typeName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static FancyMachineUIWidget findFancyMachineUI(ModularUIGuiContainer screen) {
-        List<FancyMachineUIWidget> widgets = screen.modularUI.mainGroup.getWidgetsByType(FancyMachineUIWidget.class);
-        return widgets.isEmpty() ? null : widgets.get(0);
-    }
-
-    private static WirelessAeFancyPageProvider getOrCreateFancyProvider(AbstractContainerScreen<?> screen,
-                                                                        BlockPos targetPos,
-                                                                        FancyMachineUIWidget fancy) {
-        IFancyUIProvider mainPage = fancy.getMainPage();
-        if (fancyScreen != screen || fancyProvider == null || fancyMainPage != mainPage || fancyTargetPos == null || !fancyTargetPos.equals(targetPos)) {
-            fancyScreen = screen;
-            fancyTargetPos = targetPos.immutable();
-            fancyMainPage = mainPage;
-            fancyProvider = new WirelessAeFancyPageProvider(
-                    screen,
-                    fancyTargetPos,
-                    mainPage);
-        } else {
-            fancyProvider.updateTarget(screen, targetPos);
-        }
-        return fancyProvider;
-    }
-
-    private static void ensureFancyPageList(FancyMachineUIWidget fancy, WirelessAeFancyPageProvider provider) {
-        List<IFancyUIProvider> pages = fancy.getAllPages();
-        if (hasOnlyCurrentProvider(pages, provider)) return;
-        boolean hasProvider = false;
-        List<IFancyUIProvider> updated = new ArrayList<>(pages.size() + 1);
-        for (IFancyUIProvider page : pages) {
-            if (page instanceof WirelessAeFancyPageProvider) {
-                if (page == provider && !hasProvider) {
-                    updated.add(page);
-                    hasProvider = true;
-                }
-            } else {
-                updated.add(page);
-            }
-        }
-        if (!hasProvider) {
-            updated.add(provider);
-        }
-        if (!updated.equals(pages)) {
-            writeField(fancy, List.copyOf(updated));
-        }
-    }
-
-    private static void ensureWirelessSideTab(TabsWidget tabsWidget, WirelessAeFancyPageProvider provider) {
-        List<IFancyUIProvider> subTabs = tabsWidget.getSubTabs();
-        if (hasOnlyCurrentProvider(subTabs, provider)) return;
-        subTabs.removeIf(tab -> tab instanceof WirelessAeFancyPageProvider);
-        subTabs.add(provider);
-    }
-
-    private static boolean hasOnlyCurrentProvider(List<IFancyUIProvider> pages,
-                                                  WirelessAeFancyPageProvider provider) {
-        boolean found = false;
-        for (IFancyUIProvider page : pages) {
-            if (page instanceof WirelessAeFancyPageProvider) {
-                if (page != provider || found) return false;
-                found = true;
-            }
-        }
-        return found;
+    private static void installNativeWirelessWidgets(Screen screen, IMuiScreen ui, BlockPos targetPos) {
+        if (!(ui.screen().getMainPanel() instanceof MachineUIPanel panel)) return;
+        if (installedScreen == screen && installedPanel == panel && targetPos.equals(installedTargetPos)) return;
+        var sidebar = panel.getRightConfiguratorPanel();
+        if (sidebar.getChildren().stream().anyMatch(child -> "gtlcoreWirelessNetworksButton".equals(child.getName()))) return;
+        var position = targetPos.immutable();
+        var popup = IPanelHandler.simple(panel, (parent, player) -> {
+            var networks = new ModularPanel<>("gtlcoreWirelessNetworks")
+                .size(WIRELESS_PAGE_WIDTH + 12, WIRELESS_PAGE_HEIGHT + WIRELESS_HEADER_HEIGHT + 6)
+                .disablePanelsBelow(true)
+                .child(brachy.modularui.api.drawable.Text.lang("screen.gtlcore.wireless_target")
+                        .asWidget().pos(6, 6).width(WIRELESS_PAGE_WIDTH - 18))
+                .child(new WirelessNetworkPageWidget(screen, position).pos(6, WIRELESS_HEADER_HEIGHT))
+                .onOpenAction(opened -> openEmbeddedPanel(screen, position))
+                .onCloseAction(closed -> closeEmbeddedPanel());
+            networks.child(new ButtonWidget<>().name("gtlcoreWirelessNetworksClose").right(4).top(4).size(16)
+                    .overlay(brachy.modularui.api.drawable.Text.str("x"))
+                    .onMousePressed((context, button) -> {
+                        if (button != 0) return false;
+                        networks.closeIfOpen(); return true;
+                    }));
+            return networks;
+        }, true);
+        sidebar.child(new ButtonWidget<>().name("gtlcoreWirelessNetworksButton").size(18)
+                .overlay(UITexture.fullImage(WIRELESS_TAB_TEXTURE))
+                .tooltip(tooltip -> tooltip.addLine(Component.translatable("tooltip.gtlcore.wireless_target.entry")))
+                .onMousePressed((context, button) -> {
+                    if (button != 0) return false;
+                    popup.togglePanel(); return true;
+                }));
+        sidebar.scheduleResize();
+        installedScreen = screen;
+        installedPanel = panel;
+        installedTargetPos = position;
     }
 
     private static boolean isEmbeddedPanelActive(Screen screen, BlockPos targetPos) {
@@ -384,11 +325,10 @@ final class WirelessAeScreenHooks {
         if (embeddedScreen != null && embeddedScreen != screen) {
             closeEmbeddedPanel();
         }
-        if (fancyScreen != null && fancyScreen != screen) {
-            fancyScreen = null;
-            fancyTargetPos = null;
-            fancyMainPage = null;
-            fancyProvider = null;
+        if (installedScreen != null && installedScreen != screen) {
+            installedScreen = null;
+            installedPanel = null;
+            installedTargetPos = null;
         }
     }
 
@@ -408,7 +348,7 @@ final class WirelessAeScreenHooks {
         embeddedLoading = true;
         embeddedRequestAtMillis = System.currentTimeMillis();
         TargetHit hit = getEmbeddedTargetHit(targetPos);
-        WirelessAePackets.CHANNEL.sendToServer(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                 new WirelessAePackets.RequestTargetNetworksPacket(targetPos, hit.side(), hit.location()));
     }
 
@@ -431,9 +371,9 @@ final class WirelessAeScreenHooks {
         WirelessAeStyle.drawInsetPanel(
                 graphics,
                 x + PANEL_MARGIN,
-                y + FANCY_HEADER_HEIGHT,
+                y + WIRELESS_HEADER_HEIGHT,
                 width - PANEL_MARGIN * 2,
-                height - FANCY_HEADER_HEIGHT - PANEL_MARGIN);
+                height - WIRELESS_HEADER_HEIGHT - PANEL_MARGIN);
 
         graphics.drawString(
                 font,
@@ -444,7 +384,7 @@ final class WirelessAeScreenHooks {
                 false);
 
         int contentX = x + PANEL_MARGIN + 6;
-        int contentY = y + FANCY_HEADER_HEIGHT + 8;
+        int contentY = y + WIRELESS_HEADER_HEIGHT + 8;
         int contentWidth = width - (PANEL_MARGIN + 6) * 2;
         WirelessAePackets.TargetNetworkEntry connected = getConnectedEntry();
         WirelessAePackets.TargetNetworkEntry disconnectable = getDisconnectableEntry();
@@ -488,7 +428,7 @@ final class WirelessAeScreenHooks {
         int maxRows = Math.max(1, (y + height - bottomReserve - listY) / NETWORK_ROW_HEIGHT);
         embeddedScrollOffset = WirelessAeStyle.clampScrollOffset(embeddedScrollOffset, embeddedEntries.size(), maxRows);
         boolean hasScrollbar = WirelessAeStyle.needsScrollbar(embeddedEntries.size(), maxRows);
-        int rowWidth = contentWidth - (hasScrollbar ? FANCY_SCROLLBAR_WIDTH + FANCY_SCROLLBAR_GAP : 0);
+        int rowWidth = contentWidth - (hasScrollbar ? WIRELESS_SCROLLBAR_WIDTH + WIRELESS_SCROLLBAR_GAP : 0);
         int rows = Math.min(maxRows, Math.max(0, embeddedEntries.size() - embeddedScrollOffset));
         boolean lockedByCableConnection = isLockedByCableConnection();
         for (int i = 0; i < rows; i++) {
@@ -501,7 +441,7 @@ final class WirelessAeScreenHooks {
         if (hasScrollbar) {
             WirelessAeStyle.drawScrollbar(
                     graphics,
-                    contentX + contentWidth - FANCY_SCROLLBAR_WIDTH,
+                    contentX + contentWidth - WIRELESS_SCROLLBAR_WIDTH,
                     listY,
                     maxRows * NETWORK_ROW_HEIGHT - 4,
                     embeddedEntries.size(),
@@ -555,7 +495,7 @@ final class WirelessAeScreenHooks {
         }
 
         int contentX = x + PANEL_MARGIN + 6;
-        int contentY = y + FANCY_HEADER_HEIGHT + 8;
+        int contentY = y + WIRELESS_HEADER_HEIGHT + 8;
         int contentWidth = width - (PANEL_MARGIN + 6) * 2;
         int listY = contentY + 18;
         WirelessAePackets.TargetNetworkEntry connected = getConnectedEntry();
@@ -564,13 +504,13 @@ final class WirelessAeScreenHooks {
         int maxRows = Math.max(1, (y + height - bottomReserve - listY) / NETWORK_ROW_HEIGHT);
         embeddedScrollOffset = WirelessAeStyle.clampScrollOffset(embeddedScrollOffset, embeddedEntries.size(), maxRows);
         boolean hasScrollbar = WirelessAeStyle.needsScrollbar(embeddedEntries.size(), maxRows);
-        if (hasScrollbar && isInsideRect(mouseX, mouseY, contentX + contentWidth - FANCY_SCROLLBAR_WIDTH, listY, FANCY_SCROLLBAR_WIDTH, maxRows * NETWORK_ROW_HEIGHT - 4)) {
+        if (hasScrollbar && isInsideRect(mouseX, mouseY, contentX + contentWidth - WIRELESS_SCROLLBAR_WIDTH, listY, WIRELESS_SCROLLBAR_WIDTH, maxRows * NETWORK_ROW_HEIGHT - 4)) {
             embeddedDraggingScrollbar = true;
             updateEmbeddedScrollOffsetFromMouse(mouseY, listY, maxRows * NETWORK_ROW_HEIGHT - 4, maxRows);
             return;
         }
 
-        int rowWidth = contentWidth - (hasScrollbar ? FANCY_SCROLLBAR_WIDTH + FANCY_SCROLLBAR_GAP : 0);
+        int rowWidth = contentWidth - (hasScrollbar ? WIRELESS_SCROLLBAR_WIDTH + WIRELESS_SCROLLBAR_GAP : 0);
         int rows = Math.min(maxRows, Math.max(0, embeddedEntries.size() - embeddedScrollOffset));
         boolean lockedByCableConnection = isLockedByCableConnection();
         for (int i = 0; i < rows; i++) {
@@ -598,7 +538,7 @@ final class WirelessAeScreenHooks {
             return false;
         }
 
-        int listY = y + FANCY_HEADER_HEIGHT + 8 + 18;
+        int listY = y + WIRELESS_HEADER_HEIGHT + 8 + 18;
         WirelessAePackets.TargetNetworkEntry disconnectable = getDisconnectableEntry();
         int bottomReserve = disconnectable == null ? 8 : 36;
         int visibleRows = Math.max(1, (y + height - bottomReserve - listY) / NETWORK_ROW_HEIGHT);
@@ -617,7 +557,7 @@ final class WirelessAeScreenHooks {
         if (!embeddedDraggingScrollbar) {
             return false;
         }
-        int listY = y + FANCY_HEADER_HEIGHT + 8 + 18;
+        int listY = y + WIRELESS_HEADER_HEIGHT + 8 + 18;
         WirelessAePackets.TargetNetworkEntry disconnectable = getDisconnectableEntry();
         int bottomReserve = disconnectable == null ? 8 : 36;
         int visibleRows = Math.max(1, (y + height - bottomReserve - listY) / NETWORK_ROW_HEIGHT);
@@ -638,7 +578,7 @@ final class WirelessAeScreenHooks {
     private static void connectEmbeddedEntry(BlockPos targetPos, WirelessAePackets.TargetNetworkEntry entry) {
         if (!entry.connected()) {
             TargetHit hit = getEmbeddedTargetHit(targetPos);
-            WirelessAePackets.CHANNEL.sendToServer(
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                     new WirelessAePackets.ConnectTargetPacket(
                             targetPos,
                             hit.side(),
@@ -652,7 +592,7 @@ final class WirelessAeScreenHooks {
 
     private static void disconnectEmbeddedEntry(BlockPos targetPos, WirelessAePackets.TargetNetworkEntry entry) {
         TargetHit hit = getEmbeddedTargetHit(targetPos);
-        WirelessAePackets.CHANNEL.sendToServer(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                 new WirelessAePackets.ConnectTargetPacket(
                         targetPos,
                         hit.side(),
@@ -868,23 +808,6 @@ final class WirelessAeScreenHooks {
         }
     }
 
-    private static void writeField(Object target, Object value) {
-        if (target == null) {
-            return;
-        }
-
-        Field field = findField(target.getClass(), "allPages");
-        if (field == null) {
-            return;
-        }
-
-        try {
-            field.set(target, value);
-        } catch (IllegalAccessException | RuntimeException ignored) {
-            // Keep the UI usable even if a future GT version changes this field.
-        }
-    }
-
     private static Field findField(Class<?> type, String fieldName) {
         return FIELD_CACHE.computeIfAbsent(
                 new ReflectionKey(type, fieldName),
@@ -911,110 +834,50 @@ final class WirelessAeScreenHooks {
 
     private record ReflectionKey(Class<?> type, String name) {}
 
-    private static final class WirelessAeFancyPageProvider implements IFancyUIProvider {
-
-        private AbstractContainerScreen<?> screen;
-        private BlockPos targetPos;
-        private final IFancyUIProvider mainPage;
-
-        private WirelessAeFancyPageProvider(AbstractContainerScreen<?> screen, BlockPos targetPos,
-                                            IFancyUIProvider mainPage) {
-            this.screen = screen;
-            this.targetPos = targetPos.immutable();
-            this.mainPage = mainPage;
-        }
-
-        private void updateTarget(AbstractContainerScreen<?> screen, BlockPos targetPos) {
-            this.screen = screen;
-            this.targetPos = targetPos.immutable();
-        }
-
-        @Override
-        public Widget createMainPage(FancyMachineUIWidget widget) {
-            openEmbeddedPanel(screen, targetPos);
-            return new WirelessAeFancyPageWidget(screen, targetPos);
-        }
-
-        @Override
-        public IGuiTexture getTabIcon() {
-            return WIRELESS_TAB_ICON;
-        }
-
-        @Override
-        public Component getTitle() {
-            return Component.translatable("screen.gtlcore.wireless_target");
-        }
-
-        @Override
-        public void attachSideTabs(TabsWidget tabsWidget) {
-            tabsWidget.setMainTab(mainPage);
-            mainPage.attachSideTabs(tabsWidget);
-            ensureWirelessSideTab(tabsWidget, this);
-        }
-
-        @Override
-        public boolean hasPlayerInventory() {
-            return false;
-        }
-
-        @Override
-        public List<Component> getTabTooltips() {
-            return List.of(Component.translatable("tooltip.gtlcore.wireless_target.entry"));
-        }
-    }
-
-    private static final class WirelessAeFancyPageWidget extends Widget {
-
-        private final AbstractContainerScreen<?> screen;
+    private static final class WirelessNetworkPageWidget extends Widget<WirelessNetworkPageWidget> implements Interactable {
+        private final Screen screen;
         private final BlockPos targetPos;
 
-        private WirelessAeFancyPageWidget(AbstractContainerScreen<?> screen, BlockPos targetPos) {
-            super(0, 0, FANCY_PAGE_WIDTH, FANCY_PAGE_HEIGHT);
+        private WirelessNetworkPageWidget(Screen screen, BlockPos targetPos) {
             this.screen = screen;
             this.targetPos = targetPos.immutable();
-            setClientSideWidget();
+            name("gtlcoreWirelessNetworksPage");
+            size(WIRELESS_PAGE_WIDTH, WIRELESS_PAGE_HEIGHT);
         }
 
         @Override
-        public void drawInBackground(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-            if (Minecraft.getInstance().screen != this.screen) {
-                return;
-            }
+        public void draw(ModularGuiContext context, WidgetThemeEntry<?> theme) {
+            if (Minecraft.getInstance().screen != screen) return;
             ensureEmbeddedData(targetPos);
-            drawWirelessPage(graphics, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight(), mouseX, mouseY);
+            drawWirelessPage(context.getGraphics(), 0, 0, getArea().width, getArea().height,
+                    context.getMouseX(), context.getMouseY());
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button != 0 || Minecraft.getInstance().screen != this.screen || !isMouseOverElement(mouseX, mouseY)) {
-                return false;
-            }
-            handleWirelessPageClick(targetPos, getPositionX(), getPositionY(),
-                    getSizeWidth(), getSizeHeight(), mouseX, mouseY);
-            playButtonClickSound();
+        public Result onMousePressed(int button) {
+            if (button != 0 || Minecraft.getInstance().screen != screen) return Result.IGNORE;
+            handleWirelessPageClick(targetPos, 0, 0, getArea().width, getArea().height,
+                    getContext().getMouseX(), getContext().getMouseY());
+            Interactable.playButtonClickSound();
+            return Result.SUCCESS;
+        }
+
+        @Override
+        public void onMouseDrag(int button, double dragX, double dragY) {
+            updateEmbeddedScrollbarDrag(getContext().getMouseY(), 0, 0, getArea().width, getArea().height);
+        }
+
+        @Override
+        public boolean onMouseReleased(int button) {
+            embeddedDraggingScrollbar = false;
             return true;
         }
 
         @Override
-        public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-            if (updateEmbeddedScrollbarDrag(mouseY, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight())) {
-                return true;
-            }
-            return isMouseOverElement(mouseX, mouseY);
-        }
-
-        @Override
-        public boolean mouseReleased(double mouseX, double mouseY, int button) {
-            embeddedDraggingScrollbar = false;
-            return isMouseOverElement(mouseX, mouseY);
-        }
-
-        @Override
-        public boolean mouseWheelMove(double mouseX, double mouseY, double wheelDelta) {
-            if (scrollEmbedded(wheelDelta, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight(), mouseX, mouseY)) {
-                return true;
-            }
-            return isMouseOverElement(mouseX, mouseY);
+        public boolean onMouseScrolled(double horizontalDelta, double delta) {
+            scrollEmbedded(delta, 0, 0, getArea().width, getArea().height,
+                    getContext().getMouseX(), getContext().getMouseY());
+            return true;
         }
     }
 
@@ -1023,11 +886,4 @@ final class WirelessAeScreenHooks {
         private static final TargetHit EMPTY = new TargetHit(null, null);
     }
 
-    private static void drawWirelessTabIcon(GuiGraphics graphics, int mouseX, int mouseY, float x, float y,
-                                            int width, int height) {
-        int iconSize = 24;
-        int originX = Math.round(x) + (width - iconSize) / 2;
-        int originY = Math.round(y) + (height - iconSize) / 2;
-        graphics.blit(WIRELESS_TAB_TEXTURE, originX, originY, 0.0F, 0.0F, iconSize, iconSize, iconSize, iconSize);
-    }
 }

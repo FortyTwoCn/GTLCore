@@ -1,60 +1,49 @@
 package org.gtlcore.gtlcore.mixin.gtm.ae.machine;
 
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IModifiableSyncOffset;
-
+import org.gtlcore.gtlcore.integration.ae2.AEGridMachineSettings;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.FluidHatchPartMachine;
+import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEHatchPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.feature.IGridConnectedMachine;
-
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-
-import org.jetbrains.annotations.NotNull;
-import org.spongepowered.asm.mixin.Implements;
-import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.EnumSet;
-
-@Implements(@Interface(
-                       iface = IModifiableSyncOffset.class,
-                       prefix = "gTLCore$"))
 @Mixin(MEHatchPartMachine.class)
-public abstract class MEHatchPartMachineMixin extends FluidHatchPartMachine implements IGridConnectedMachine {
+public abstract class MEHatchPartMachineMixin extends FluidHatchPartMachine implements IGridConnectedMachine, IModifiableSyncOffset {
+    @Unique @SaveField
+    private int gtlcore$syncOffset;
 
-    @Unique
-    @Persisted
-    protected int gTLCore$syncOffset = 0;
+    public MEHatchPartMachineMixin(BlockEntityCreationInfo info, int tier, IO io, int initialCapacity, int slots) { super(info, tier, io, initialCapacity, slots); }
 
-    public MEHatchPartMachineMixin(IMachineBlockEntity holder, int tier, IO io, long initialCapacity, int slots, Object... args) {
-        super(holder, tier, io, initialCapacity, slots, args);
+    @Override public void onLoad() {
+        AEGridMachineSettings.applyExposedSides(this, getFrontFacing());
+        super.onLoad();
     }
 
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        if (tag.getCompound("ForgeData").getBoolean("isAllFacing")) {
-            getMainNode().setExposedOnSides(EnumSet.allOf(Direction.class));
-        }
+    @Inject(method = "onRotated(Lnet/minecraft/core/Direction;Lnet/minecraft/core/Direction;)V",
+            at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$restoreExposedSides(Direction oldFacing, Direction newFacing, CallbackInfo ci) {
+        AEGridMachineSettings.applyExposedSides(this, newFacing);
     }
 
-    @Override
-    public boolean shouldSyncME() {
-        return this.self().getOffsetTimer() % (gTLCore$syncOffset == 0 ? ME_UPDATE_INTERVAL : gTLCore$syncOffset) == 0L;
+    @Override public boolean shouldSyncME() {
+        int interval = gtlcore$syncOffset == 0 ? ConfigHolder.INSTANCE.compat.ae2.updateIntervals : gtlcore$syncOffset;
+        return getOffsetTimer() % Math.max(1, interval) == 0;
     }
 
-    @Unique
-    public int gTLCore$getOffset() {
-        return gTLCore$syncOffset;
-    }
+    @Override public int getMEUpdateInterval() { return gtlcore$syncOffset; }
 
-    @Unique
-    public void gTLCore$setOffset(int offset) {
-        this.gTLCore$syncOffset = offset;
+    @Override public void setMEUpdateInterval(int offset) {
+        if (offset < 0) throw new IllegalArgumentException("ME refresh interval must not be negative");
+        gtlcore$syncOffset = offset;
+        markAsChanged();
     }
 }

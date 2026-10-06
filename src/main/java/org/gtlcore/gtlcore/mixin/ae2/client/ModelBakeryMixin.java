@@ -2,50 +2,24 @@ package org.gtlcore.gtlcore.mixin.ae2.client;
 
 import org.gtlcore.gtlcore.GTLCore;
 
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 
+import appeng.hooks.BuiltInModelHooks;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(ModelBakery.class)
+/** Let AE2's native model loader resolve the Core models in its built-in registry. */
+@Mixin(BuiltInModelHooks.class)
 public abstract class ModelBakeryMixin {
 
-    @Inject(method = "loadModel", at = @At("HEAD"), cancellable = true)
-    private void loadModelHook(ResourceLocation id, CallbackInfo ci) {
-        var model = gtceu$getUnbakedModel(id);
-
-        if (model != null) {
-            cacheAndQueueDependencies(id, model);
-            ci.cancel();
+    @Inject(method = "getBuiltInModel", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private static void gtlcore$builtInModel(ResourceLocation id, CallbackInfoReturnable<UnbakedModel> cir) {
+        if (id.getNamespace().equals(GTLCore.MOD_ID)) {
+            var model = BuiltInModelHooksAccessor.getBuiltInModels().get(id);
+            if (model != null) cir.setReturnValue(model);
         }
     }
-
-    @Unique
-    private UnbakedModel gtceu$getUnbakedModel(ResourceLocation variantId) {
-        if (!variantId.getNamespace().equals(GTLCore.MOD_ID)) {
-            return null;
-        }
-
-        if (variantId instanceof ModelResourceLocation modelId) {
-            if ("inventory".equals(modelId.getVariant())) {
-                var itemModelId = new ResourceLocation(modelId.getNamespace(),
-                        "item/" + modelId.getPath());
-                return BuiltInModelHooksAccessor.getBuiltInModels().get(itemModelId);
-            }
-
-            return null;
-        } else {
-            return BuiltInModelHooksAccessor.getBuiltInModels().get(variantId);
-        }
-    }
-
-    @Shadow
-    protected abstract void cacheAndQueueDependencies(ResourceLocation id, UnbakedModel unbakedModel);
 }

@@ -30,8 +30,8 @@ final class WirelessAeStyle {
     private static final int PANEL_SHADE = 0xFF8A8A8A;
     private static final int PANEL_BACKGROUND_FILL = 0xFFCBCCD4;
 
-    private static final ResourceLocation AE2_BACKGROUND = new ResourceLocation("ae2", "textures/guis/background.png");
-    private static final ResourceLocation AE2_TEXT_FIELD = new ResourceLocation("ae2", "textures/guis/text_field.png");
+    private static final ResourceLocation AE2_BACKGROUND = ResourceLocation.fromNamespaceAndPath("ae2", "textures/guis/background.png");
+    private static final ResourceLocation AE2_TEXT_FIELD = ResourceLocation.fromNamespaceAndPath("ae2", "textures/guis/text_field.png");
     /** AE2's {@code guis/text_field.png} is a 128x128 sheet sliced horizontally: 1px edges, stretched centre. */
     private static final int AE2_TEXT_FIELD_TEXTURE_SIZE = 128;
     private static final int AE2_TEXT_FIELD_EDGE = 1;
@@ -168,7 +168,8 @@ final class WirelessAeStyle {
         int thumbHeight = getAe2ScrollbarThumbHeight(height);
         int thumbY = getScrollbarThumbY(y, height, thumbHeight, totalRows, visibleRows, scrollOffset);
         drawAe2ScrollbarTrack(graphics, x, y, height, totalRows, visibleRows);
-        AE2_SCROLLBAR_STYLE.enabledBlitter().copy().dest(x, thumbY).blit(graphics);
+        graphics.blitSprite(AE2_SCROLLBAR_STYLE.enabledSprite(), x, thumbY,
+                AE2_SCROLLBAR_STYLE.handleWidth(), AE2_SCROLLBAR_STYLE.handleHeight());
     }
 
     static void drawAe2ScrollbarTrack(GuiGraphics graphics, int x, int y, int height, int totalRows,
@@ -278,7 +279,7 @@ final class WirelessAeStyle {
     }
 
     private static ResourceLocation wirelessTexture(String name) {
-        return new ResourceLocation("gtlcore", "textures/gui/wireless/" + name);
+        return ResourceLocation.fromNamespaceAndPath("gtlcore", "textures/gui/wireless/" + name);
     }
 
     private static void drawPanelBackground(GuiGraphics graphics, int x, int y, int width, int height) {

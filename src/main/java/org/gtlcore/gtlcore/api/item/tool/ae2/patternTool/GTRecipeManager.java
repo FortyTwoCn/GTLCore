@@ -1,115 +1,62 @@
 package org.gtlcore.gtlcore.api.item.tool.ae2.patternTool;
 
-import org.gtlcore.gtlcore.utils.Registries;
-
-import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
-import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.api.recipe.content.Content;
+import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
-
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-
-import net.minecraft.server.MinecraftServer;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraftforge.server.ServerLifecycleHooks;
-
-import lombok.Getter;
-
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
-@Getter
 public class GTRecipeManager {
-
-    private List<GTRecipe> recipes = new ArrayList<>();
-
+    private List<GTRecipe> recipes;
     public GTRecipeManager() {
-        MinecraftServer currentServer = ServerLifecycleHooks.getCurrentServer();
-        RecipeManager recipeManager = currentServer.getRecipeManager();
-        recipeManager.getRecipes().forEach(recipe -> {
-            if (recipe instanceof GTRecipe gtRecipe) {
-                recipes.add(gtRecipe);
-            }
-        });
+        this(Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer(), "Recipe tools require an active server")
+                .getRecipeManager().getRecipes());
     }
-
-    public void filterRecipesByType(GTRecipeType recipeType) {
-        recipes = recipes.stream().filter(gtRecipe -> gtRecipe.getType().equals(recipeType)).toList();
+    public GTRecipeManager(Collection<? extends RecipeHolder<?>> holders) {
+        recipes = new ArrayList<>();
+        for (var holder : holders) if (holder.value() instanceof GTRecipe recipe) recipes.add(recipe);
     }
-
-    public boolean isItemStackMatchByStringArray(String[] matchList, ItemStack itemStack) {
-        boolean isMatch = false;
-        for (String match : matchList) {
-            if (Registries.getItemId(itemStack).contains(match)) {
-                isMatch = true;
-            }
+    public List<GTRecipe> getRecipes() { return List.copyOf(recipes); }
+    public void filterRecipesByType(GTRecipeType type) {
+        recipes = recipes.stream().filter(recipe -> recipe.getType() == type).toList();
+    }
+    public boolean isItemStackMatchByStringArray(String[] matches, ItemStack stack) {
+        return matches(matches, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+    }
+    public boolean isFluidStackMatchByStringArray(String[] matches, FluidStack stack) {
+        return matches(matches, BuiltInRegistries.FLUID.getKey(stack.getFluid()).toString());
+    }
+    private static boolean matches(String[] matches, String id) {
+        for (String match : matches) if (!match.isEmpty() && id.contains(match)) return true;
+        return false;
+    }
+    public void filterRecipesByInputsIdArray(String[] matches, boolean white) {
+        recipes = recipes.stream().filter(recipe -> white ==
+                (RecipeStackHelper.getInputItemStacksFromRecipe(recipe).stream().anyMatch(stack -> isItemStackMatchByStringArray(matches, stack)) ||
+                 RecipeStackHelper.getInputFluidStacksFromRecipe(recipe).stream().anyMatch(stack -> isFluidStackMatchByStringArray(matches, stack)))).toList();
+    }
+    public void filterRecipesByOutputsIdArray(String[] matches, boolean white) {
+        recipes = recipes.stream().filter(recipe -> white ==
+                (RecipeStackHelper.getOutputItemStacksFromRecipe(recipe).stream().anyMatch(stack -> isItemStackMatchByStringArray(matches, stack)) ||
+                 RecipeStackHelper.getOutputFluidStacksFromRecipe(recipe).stream().anyMatch(stack -> isFluidStackMatchByStringArray(matches, stack)))).toList();
+    }
+    public static int circuit(GTRecipe recipe) {
+        for (var content : recipe.getInputContents(ItemRecipeCapability.CAP)) {
+            var stack = RecipeStackHelper.itemStack(content);
+            if (GTItems.PROGRAMMED_CIRCUIT.isIn(stack)) return IntCircuitBehaviour.getCircuitConfiguration(stack);
         }
-        return isMatch;
+        return 0;
     }
-
-    public boolean isFluidStackMatchByStringArray(String[] matchList, FluidStack fluidStack) {
-        boolean isMatch = false;
-        for (String match : matchList) {
-            if (match.isEmpty()) continue;
-            if (Registries.getFluidId(fluidStack).contains(match)) {
-                isMatch = true;
-            }
-        }
-        return isMatch;
-    }
-
-    public void filterRecipesByInputsIdArray(String[] matchList, boolean white) {
-        this.recipes = this.recipes.stream().filter(gtRecipe -> {
-            boolean isAnyoneMatch = false;
-            for (ItemStack inputItem : RecipeHelper.getInputItems(gtRecipe)) {
-                if (isItemStackMatchByStringArray(matchList, inputItem)) isAnyoneMatch = true;
-            }
-            for (FluidStack fluidStack : RecipeHelper.getInputFluids(gtRecipe)) {
-                if (isFluidStackMatchByStringArray(matchList, fluidStack)) isAnyoneMatch = true;
-            }
-            if (white) {
-                return isAnyoneMatch;
-            } else {
-                return !isAnyoneMatch;
-            }
-        }).toList();
-    }
-
-    public void filterRecipesByOutputsIdArray(String[] matchList, boolean white) {
-        this.recipes = this.recipes.stream().filter(gtRecipe -> {
-            boolean isAnyoneMatch = false;
-            for (ItemStack inputItem : RecipeHelper.getOutputItems(gtRecipe)) {
-                if (isItemStackMatchByStringArray(matchList, inputItem)) isAnyoneMatch = true;
-            }
-            for (FluidStack fluidStack : RecipeHelper.getOutputFluids(gtRecipe)) {
-                if (isFluidStackMatchByStringArray(matchList, fluidStack)) isAnyoneMatch = true;
-            }
-            if (white) {
-                return isAnyoneMatch;
-            } else {
-                return !isAnyoneMatch;
-            }
-        }).toList();
-    }
-
     public void filterRecipesByCircuit(int circuit) {
-        List<GTRecipe> filedRecipes = new ArrayList<>();
-        for (GTRecipe recipe : recipes) {
-            int circuitConfiguration = 0;
-            for (Content inputContent : recipe.getInputContents(ItemRecipeCapability.CAP)) {
-                ItemStack itemStack = ItemRecipeCapability.CAP.of(inputContent.getContent()).kjs$getFirst();
-                if (itemStack.getItem().equals(GTItems.INTEGRATED_CIRCUIT.asItem())) {
-                    circuitConfiguration = IntCircuitBehaviour.getCircuitConfiguration(itemStack);
-                }
-            }
-            if (circuitConfiguration == circuit) {
-                filedRecipes.add(recipe);
-            }
-        }
-        recipes = filedRecipes;
+        recipes = recipes.stream().filter(recipe -> circuit(recipe) == circuit).toList();
     }
 }

@@ -1,6 +1,5 @@
 package org.gtlcore.gtlcore.config;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.CraftingCostModel;
 
 import dev.toma.configuration.Configuration;
@@ -8,7 +7,7 @@ import dev.toma.configuration.config.Config;
 import dev.toma.configuration.config.Configurable;
 import dev.toma.configuration.config.format.ConfigFormats;
 
-@Config(id = GTLCore.MOD_ID)
+@Config(id = "gtlcore")
 public class ConfigHolder {
 
     public static ConfigHolder INSTANCE;
@@ -47,6 +46,9 @@ public class ConfigHolder {
     @Configurable
     @Configurable.Range(min = 1)
     public int travelStaffCD = 2;
+    @Configurable
+    @Configurable.Comment("Validate extractable ME inventory on the server thread before crafting simulation.")
+    public boolean ae2CraftingSimulatedExtraction = false;
     @Configurable
     @Configurable.Comment("config.gtlcore.option.exPatternProvider.comment")
     @Configurable.Range(min = 36, max = 360)

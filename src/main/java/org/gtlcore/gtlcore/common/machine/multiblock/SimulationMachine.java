@@ -1,172 +1,72 @@
 package org.gtlcore.gtlcore.common.machine.multiblock;
 
 import org.gtlcore.gtlcore.common.machine.multiblock.electric.StorageMachine;
-
-import com.gregtechceu.gtceu.api.block.IMachineBlock;
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineModifyDrops;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.pattern.BlockPattern;
-import com.gregtechceu.gtceu.client.renderer.MultiblockInWorldPreviewRenderer;
-import com.gregtechceu.gtceu.config.ConfigHolder;
-
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.InteractionHand;
+import com.gregtechceu.gtceu.api.multiblock.pattern.IBlockPattern;
+import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-/**
- * @author EasterFG on 2024/10/22
- */
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
-public class SimulationMachine extends StorageMachine implements IMachineModifyDrops {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            SimulationMachine.class, StorageMachine.MANAGED_FIELD_HOLDER);
-
-    // private static final ExecutorService POLL = Executors.newFixedThreadPool(1);
-
-    // private State formedState = State.IDLE;
-    // private PatternError error;
+/** A one-item blueprint holder. Its virtual controller uses GT's native schema and preview renderer. */
+public class SimulationMachine extends StorageMachine {
+    public SimulationMachine(BlockEntityCreationInfo info, Object... args) { super(info, 1); }
 
     @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
-    public SimulationMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, 1);
+    protected boolean filter(@NotNull ItemStack stack) {
+        return stack.getItem() instanceof MetaMachineItem item && item.getDefinition() instanceof MultiblockMachineDefinition;
     }
 
     @Override
-    protected boolean filter(@NotNull ItemStack itemStack) {
-        if (itemStack.getItem() instanceof MetaMachineItem item) {
-            return item.getDefinition() instanceof MultiblockMachineDefinition;
-        }
-        return false;
+    public void checkAndFormStructure() {
+        // A simulator presents another controller's structure and must never form that structure itself.
     }
 
     @Override
-    public boolean checkPattern() {
-        return false;
+    public boolean isFormed() { return false; }
+
+    private @Nullable MultiblockMachineDefinition blueprint() {
+        var stack = getMachineStorageItem();
+        return !stack.isEmpty() && stack.getItem() instanceof MetaMachineItem item &&
+                item.getDefinition() instanceof MultiblockMachineDefinition definition ? definition : null;
     }
 
     @Override
-    public void asyncCheckPattern(long periodID) {
-        // nothing
+    public IBlockPattern getDefaultStructurePattern() {
+        var definition = blueprint();
+        if (definition != null && definition.getStructurePatterns().containsKey(DEFAULT_STRUCTURE))
+            return definition.getStructurePatterns().get(DEFAULT_STRUCTURE).get();
+        return super.getDefaultStructurePattern();
+    }
+
+    public MultiblockControllerMachine getRealController() {
+        var definition = blueprint();
+        if (definition == null) return this;
+        var blockState = definition.getBlock().withPropertiesOf(getBlockState());
+        var entity = definition.getBlockEntityType().create(getBlockPos(), blockState);
+        if (!(entity instanceof MultiblockControllerMachine controller)) return this;
+        controller.setFrontFacing(getFrontFacing());
+        controller.setUpwardsFacing(getUpwardsFacing());
+        controller.setFlipped(isFlipped());
+        // Rotate before assigning a level so a virtual object cannot publish server structure mappings.
+        if (getLevel() != null) controller.setLevel(getLevel());
+        return controller;
     }
 
     @Override
-    public BlockPattern getPattern() {
-        var stack = this.getMachineStorageItem();
-        if (stack.isEmpty()) {
-            return super.getPattern();
-        }
-        if (stack.getItem() instanceof MetaMachineItem item) {
-            if (item.getDefinition() instanceof MultiblockMachineDefinition definition) {
-                return definition.getPatternFactory().get();
+    public InteractionResult onUse(ExtendedUseOnContext context) {
+        var player = context.getPlayer();
+        if (player != null && player.isShiftKeyDown() && player.getItemInHand(context.getHand()).isEmpty()) {
+            if (isRemote()) {
+                var controller = getRealController();
+                if (controller != this) return controller.onUse(context);
             }
+            return InteractionResult.sidedSuccess(isRemote());
         }
-        return super.getPattern();
+        return super.onUse(context);
     }
-
-    @Override
-    public boolean isFormed() {
-        return false;
-    }
-
-    private MultiblockControllerMachine getRealController() {
-        var stack = this.getMachineStorageItem();
-        if (stack.isEmpty()) {
-            return self();
-        }
-        MetaMachineBlockEntity be = null;
-        MetaMachineItem machineItem = (MetaMachineItem) stack.getItem();
-        if (machineItem.getBlock() instanceof IMachineBlock machineBlock) {
-            var bs = machineBlock.self().withPropertiesOf(getBlockState());
-            // 旋转虚拟控制器
-            be = (MetaMachineBlockEntity) machineBlock.newBlockEntity(getPos(), bs);
-        }
-        if (be == null) return self();
-        return (MultiblockControllerMachine) be.getMetaMachine().self();
-    }
-
-    // @Override
-    // public void addDisplayText(List<Component> textList) {
-    // super.addDisplayText(textList);
-    // textList.add(Component.translatable("gtceu.machine.simulation_machine.tooltip.1"));
-    // textList.add(Component.translatable("gtceu.machine.simulation_machine.tooltip.3",
-    // Component.literal(formedState.getName()).withStyle(formedState.getColor())
-    // .append(ComponentPanelWidget.withButton(
-    // Component.translatable("gtceu.machine.simulation_machine.tooltip.2"), "check"))
-    // ));
-    // if (error != null) {
-    // if (error instanceof PatternError) {
-    // textList.add(Component.translatable("gtceu.machine.simulation_machine.tooltip.4", error.getPos()));
-    // textList.addAll(getError(error));
-    // } else {
-    // textList.add(error.getErrorInfo());
-    // }
-    // }
-    // }
-
-    @Override
-    public InteractionResult onUse(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (player.isShiftKeyDown() && player.getItemInHand(hand).isEmpty()) {
-            if (world.isClientSide()) {
-                MultiblockInWorldPreviewRenderer.showPreview(pos, getRealController(),
-                        ConfigHolder.INSTANCE.client.inWorldPreviewDuration * 20);
-            }
-            return InteractionResult.SUCCESS;
-        }
-        return super.onUse(state, world, pos, player, hand, hit);
-    }
-
-    // @Override
-    // public void handleDisplayClick(String componentData, ClickData clickData) {
-    // if ("check".equals(componentData)) {
-    // if (getMachineStorageItem().isEmpty()) return;
-    // POLL.submit(() -> {
-    // error = null;
-    // var state = new MultiblockState(getLevel(), getPos()) {
-    // @Override
-    // public IMultiController getController() {
-    // return getRealController();
-    // }
-    // };
-    // formedState = State.RUNNING;
-    // var result = getPattern().checkPatternAt(state, false);
-    // formedState = result ? State.SUCCESS : State.FAILED;
-    // if (!result) {
-    // error = state.error;
-    // }
-    // });
-    // }
-    // }
-
-    // @Getter
-    // @AllArgsConstructor
-    // enum State {
-    // IDLE("未检测", ChatFormatting.GRAY),
-    // RUNNING("检测中", ChatFormatting.YELLOW),
-    // FAILED("未成型", ChatFormatting.RED),
-    // SUCCESS("已成型", ChatFormatting.GREEN);
-    // private final String name;
-    // private final ChatFormatting color;
-    // }
 }

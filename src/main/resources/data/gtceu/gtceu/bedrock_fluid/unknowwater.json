@@ -1,0 +1,14 @@
+{
+  "weight": 20,
+  "yield": {
+    "min": 40,
+    "max": 60
+  },
+  "depletion_amount": 1,
+  "depletion_chance": 100,
+  "depleted_yield": 40,
+  "fluid": "gtceu:unknowwater",
+  "dimension_filter": [
+    "kubejs:barnarda"
+  ]
+}

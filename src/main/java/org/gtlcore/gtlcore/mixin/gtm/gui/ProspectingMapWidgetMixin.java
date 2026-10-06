@@ -1,54 +1,31 @@
 package org.gtlcore.gtlcore.mixin.gtm.gui;
 
 import org.gtlcore.gtlcore.client.gui.IProspectingTextureMixin;
-
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.misc.ProspectorMode;
-import com.gregtechceu.gtceu.api.gui.texture.ProspectingTexture;
-import com.gregtechceu.gtceu.api.gui.widget.ProspectingMapWidget;
-
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SearchComponentWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-
-import com.llamalad7.mixinextras.sugar.Local;
+import org.gtlcore.gtlcore.integration.ftb.NativeProspectorCoordinates;
+import com.gregtechceu.gtceu.common.mui.widgets.prospector.ProspectorMapHandler;
+import com.gregtechceu.gtceu.common.mui.widgets.prospector.ProspectorMapTexture;
+import brachy.modularui.api.widget.Interactable;
+import brachy.modularui.widget.Widget;
+import net.neoforged.fml.ModList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * @author EasterFG on 2024/9/16
- */
-@Mixin(ProspectingMapWidget.class)
-public abstract class ProspectingMapWidgetMixin extends WidgetGroup implements SearchComponentWidget.IWidgetSearch<Object> {
+@Mixin(ProspectorMapHandler.class)
+public abstract class ProspectingMapWidgetMixin extends Widget<ProspectingMapWidgetMixin> {
+    @Shadow(remap = false) private ProspectorMapTexture<?> texture;
 
-    @Shadow(remap = false)
-    private ProspectingTexture texture;
-
-    @Inject(method = "<init>", at = @At("TAIL"), remap = false)
-    public void intiHooks(int xPosition, int yPosition, int width, int height, int chunkRadius,
-                          ProspectorMode<?> mode, int scanTick, CallbackInfo ci,
-                          @Local(ordinal = 6) int imageWidth, @Local(ordinal = 7) int imageHeight) {
-        // remove
-        this.widgets.remove(0);
-        this.addWidget(0, new ImageWidget(0, (height - imageHeight) / 2 - 4, imageWidth + 8, imageHeight + 8,
-                GuiTextures.BACKGROUND_INVERSE) {
-
-            @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                if (isMouseOverElement(mouseX, mouseY)) {
-                    if (button == 0) {
-                        ((IProspectingTextureMixin) texture)
-                                .gTLCore$teleportWayPoint(gui.entityPlayer, mouseX - getPositionX() - 4, mouseY - getPositionY() - 4);
-                    } else if (button == 1) {
-                        ((IProspectingTextureMixin) texture)
-                                .gTLCore$addWayPoint(gui.entityPlayer, mouseX - getPositionX() - 4, mouseY - getPositionY() - 4);
-                    }
-                }
-                return false;
-            }
-        });
+    @Inject(method = "onMousePressed", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$waypointButtons(int button, CallbackInfoReturnable<Interactable.Result> cir) {
+        if (texture == null || !ModList.get().isLoaded("ftbchunks") || (button != 0 && button != 1)) return;
+        var map = (ProspectorMapHandler<?>) (Object) this;
+        int x = getContext().getMouseX(), z = getContext().getMouseY();
+        if (NativeProspectorCoordinates.point(map.getPlayerChunkPos(), map.getChunkRadius(), x, z).isEmpty()) return;
+        var waypoints = (IProspectingTextureMixin) texture;
+        if (button == 0) waypoints.gTLCore$teleportWayPoint(map.getPlayer(), x, z);
+        else waypoints.gTLCore$addWayPoint(map.getPlayer(), x, z);
+        cir.setReturnValue(Interactable.Result.SUCCESS);
     }
 }

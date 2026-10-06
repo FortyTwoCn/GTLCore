@@ -1,7 +1,5 @@
 package org.gtlcore.gtlcore.client.ae2.wireless;
 
-import org.gtlcore.gtlcore.api.gui.AdvancedMEConfigurator;
-import org.gtlcore.gtlcore.api.gui.TagFilterConfigurator;
 import org.gtlcore.gtlcore.client.ae2.JeiTerminalSearchTarget;
 import org.gtlcore.gtlcore.client.renderer.BlockHighlightHandler;
 import org.gtlcore.gtlcore.integration.ae2.chamber.MEChamberConfigurator;
@@ -10,14 +8,16 @@ import org.gtlcore.gtlcore.integration.ae2.chamber.MEChamberManagerTerminalMenu;
 import org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets;
 import org.gtlcore.gtlcore.integration.jei.JeiMissingIngredientBookmarks;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CircuitFancyConfigurator;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
+
+import com.gregtechceu.gtceu.common.data.GTItems;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
+import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
+import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -31,10 +31,11 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -44,8 +45,8 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.BackgroundGenerator;
 import appeng.client.gui.style.ScreenStyle;
-import de.mari_023.ae2wtlib.wut.CycleTerminalButton;
-import de.mari_023.ae2wtlib.wut.IUniversalTerminalCapable;
+import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
+import de.mari_023.ae2wtlib.api.terminal.IUniversalTerminalCapable;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.runtime.IClickableIngredient;
@@ -61,6 +62,16 @@ import java.util.Optional;
 public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamberManagerTerminalMenu>
                                                   implements IUniversalTerminalCapable, JeiTerminalSearchTarget {
 
+    private static final ResourceTexture POWER_ICON = new ResourceTexture("gtceu:textures/gui/widget/button_power.png");
+    private static final ResourceTexture DISTINCT_ICON = new ResourceTexture("gtceu:textures/gui/widget/button_distinct_buses.png");
+    private static final ResourceTexture AUTO_PULL_ICON = new ResourceTexture("gtceu:textures/gui/widget/button_me_auto_pull.png");
+    private static final ResourceTexture BLACKLIST_ICON = new ResourceTexture("gtceu:textures/gui/widget/button_blacklist.png");
+    private static final ResourceTexture NBT_ICON = new ResourceTexture("gtceu:textures/gui/widget/button_filter_nbt.png");
+    private static final ResourceTexture TAG_ICON = new ResourceTexture("gtceu:textures/gui/widget/button_list.png");
+    private static final ResourceTexture FLUID_SLOT = new ResourceTexture("gtceu:textures/gui/base/fluid_slot.png");
+    private static final ResourceTexture ITEM_SLOT = new ResourceTexture("gtceu:textures/gui/base/slot.png");
+    private static final IGuiTexture BUTTON_BACKGROUND = new ResourceBorderTexture("gtceu:textures/gui/widget/button.png", 32, 32, 2, 2);
+    private static final IGuiTexture REFRESH_ICON = new ItemStackTexture(GTItems.TOOL_DATA_STICK.asStack());
     private static final int SEARCH_MAX_LENGTH = 80;
     private static final int SLOT_BACKGROUND_OFFSET = 1;
     private static final int ICON_Y_OFFSET = 3;
@@ -113,7 +124,7 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
                                           ScreenStyle style) {
         super(menu, inventory, title, style);
         if (menu.isUniversalTerminal()) {
-            addToLeftToolbar(new CycleTerminalButton(ignored -> cycleTerminal()));
+            addToLeftToolbar(cycleTerminalButton());
         }
         this.configuratorOverlay = new MEChamberConfiguratorOverlay(menu);
     }
@@ -174,28 +185,28 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
         addRenderableWidget(nextPageButton);
         workingButton = addControlButton(
                 MEChamberManagerTerminalLayout.WORKING_BUTTON_X,
-                GuiTextures.BUTTON_POWER,
+                POWER_ICON,
                 true,
                 false,
                 "tooltip.gtlcore.me_chamber_manager_terminal.working",
                 () -> toggleControl(MEChamberManagerTerminalMenu.ControlKind.WORKING));
         distinctButton = addControlButton(
                 MEChamberManagerTerminalLayout.DISTINCT_BUTTON_X,
-                GuiTextures.BUTTON_DISTINCT_BUSES,
+                DISTINCT_ICON,
                 true,
                 true,
                 "tooltip.gtlcore.me_chamber_manager_terminal.distinct",
                 () -> toggleControl(MEChamberManagerTerminalMenu.ControlKind.DISTINCT));
         autoPullButton = addControlButton(
                 MEChamberManagerTerminalLayout.AUTO_PULL_BUTTON_X,
-                GuiTextures.BUTTON_AUTO_PULL,
+                AUTO_PULL_ICON,
                 true,
                 false,
                 "tooltip.gtlcore.me_chamber_manager_terminal.auto_pull",
                 () -> toggleControl(MEChamberManagerTerminalMenu.ControlKind.AUTO_PULL));
         circuitButton = addControlButton(
                 MEChamberManagerTerminalLayout.CIRCUIT_BUTTON_X,
-                circuitConfigurator(menu.getSelectedDetails()).getIcon(),
+                circuitIcon(menu.getSelectedDetails()),
                 false,
                 false,
                 null,
@@ -209,42 +220,42 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
                 () -> toggleControl(MEChamberManagerTerminalMenu.ControlKind.COUNT_SORT));
         tagFilterButton = addControlButton(
                 MEChamberManagerTerminalLayout.TAG_FILTER_BUTTON_X,
-                TagFilterConfigurator.ICON,
+                TAG_ICON,
                 false,
                 false,
                 null,
                 this::openTagFilterConfigurator);
         syncOffsetButton = addControlButton(
                 MEChamberManagerTerminalLayout.OFFSET_BUTTON_X,
-                advancedMEConfigurator(menu.getSelectedDetails().syncOffset()).getIcon(),
+                REFRESH_ICON,
                 false,
                 false,
                 null,
                 this::openAdvancedMEConfigurator);
         itemBlacklistButton = addControlButton(
                 MEChamberManagerTerminalLayout.WORKING_BUTTON_X,
-                GuiTextures.BUTTON_BLACKLIST,
+                BLACKLIST_ICON,
                 true,
                 false,
                 null,
                 () -> toggleControl(MEChamberManagerTerminalMenu.ControlKind.ITEM_BLACKLIST));
         itemNbtButton = addControlButton(
                 MEChamberManagerTerminalLayout.DISTINCT_BUTTON_X,
-                GuiTextures.BUTTON_FILTER_NBT,
+                NBT_ICON,
                 true,
                 false,
                 null,
                 () -> toggleControl(MEChamberManagerTerminalMenu.ControlKind.ITEM_NBT));
         fluidBlacklistButton = addControlButton(
                 MEChamberManagerTerminalLayout.WORKING_BUTTON_X,
-                GuiTextures.BUTTON_BLACKLIST,
+                BLACKLIST_ICON,
                 true,
                 false,
                 null,
                 () -> toggleControl(MEChamberManagerTerminalMenu.ControlKind.FLUID_BLACKLIST));
         fluidNbtButton = addControlButton(
                 MEChamberManagerTerminalLayout.DISTINCT_BUTTON_X,
-                GuiTextures.BUTTON_FILTER_NBT,
+                NBT_ICON,
                 true,
                 false,
                 null,
@@ -391,7 +402,6 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
     @Override
     public void containerTick() {
         super.containerTick();
-        configuratorOverlay.tick();
     }
 
     @Override
@@ -410,6 +420,11 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public WTMenuHost getHost() {
+        return (WTMenuHost) this.menu.getTarget();
     }
 
     @Override
@@ -492,8 +507,8 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (configuratorOverlay.mouseScrolled(mouseX, mouseY, delta)) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double delta) {
+        if (configuratorOverlay.mouseScrolled(mouseX, mouseY, horizontal, delta)) {
             return true;
         }
         if (WirelessTerminalScreenSupport.isInside(mouseX, mouseY, leftPos + MEChamberManagerTerminalLayout.DETAIL_PANEL_X,
@@ -513,7 +528,7 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
                     MEChamberManagerTerminalLayout.VISIBLE_ROWS);
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, horizontal, delta);
     }
 
     private void drawEntry(GuiGraphics graphics, MEChamberManagerTerminalMenu.Entry entry, int rowY) {
@@ -545,8 +560,8 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
                 leftPos + MEChamberManagerTerminalLayout.DETAIL_PANEL_X,
                 topPos + MEChamberManagerTerminalLayout.DETAIL_PANEL_Y);
         IGuiTexture slotTexture = page.storage() == MEChamberManagerTerminalMenu.StorageKind.FLUID ?
-                GuiTextures.FLUID_SLOT :
-                GuiTextures.SLOT;
+                FLUID_SLOT :
+                ITEM_SLOT;
         for (int row = 0; row < page.rows(); row++) {
             for (int column = 0; column < page.columns(); column++) {
                 slotTexture.draw(
@@ -747,7 +762,7 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
             selectedSlot = -1;
             menu.setSelectedContents(
                     entry.address(), List.of(), MEChamberManagerTerminalMenu.ChamberDetails.EMPTY);
-            WirelessAePackets.CHANNEL.sendToServer(
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                     new WirelessAePackets.SelectMEChamberPacket(menu.containerId, entry.address()));
             return true;
         }
@@ -1022,18 +1037,18 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
                 Component.translatable("gtlcore.machine.me_dual_hatch_stock.turns." + details.autoPullMode()) :
                 Component.translatable("gtceu.gui.me_bus.auto_pull_button"));
         circuitButton.visible = details.circuitSupported();
-        circuitButton.setSelected(details.circuitConfiguration() > 0);
-        CircuitFancyConfigurator circuitConfigurator = circuitConfigurator(details);
-        circuitButton.setIcon(circuitConfigurator.getIcon());
-        circuitButton.setTooltipText(circuitConfigurator.getTooltips());
+        circuitButton.setSelected(details.circuitSet());
+        circuitButton.setIcon(circuitIcon(details));
+        circuitButton.setTooltipText(Component.translatable("metaitem.int_circuit.configuration",
+                details.circuitSet() ? details.circuitConfiguration() : -1));
         countSortButton.visible = details.tagFilterSupported();
         countSortButton.setSelected(details.countSort());
         countSortButton.setIcon(details.countSort() ? TAG_SORT_AMOUNT_TEXTURE : TAG_SORT_NAME_TEXTURE);
         countSortButton.setTooltipText(Component.translatable("tooltip.gtlcore.auto_pull_sort_mode"));
         tagFilterButton.visible = details.tagFilterSupported();
-        tagFilterButton.setTooltipText(tagFilterConfigurator(details).getTooltips());
+        tagFilterButton.setTooltipText(Component.translatable("gui.gtlcore.tag_filter_config"));
         syncOffsetButton.visible = details.syncOffsetSupported();
-        syncOffsetButton.setTooltipText(advancedMEConfigurator(details.syncOffset()).getTooltips());
+        syncOffsetButton.setTooltipText(Component.translatable("gtceu.gui.adv_me_config.title"));
         ContentPage page = currentContentPage();
         boolean itemFilterPage = details.outputFilterSupported() &&
                 page.mode() == MEChamberManagerTerminalMenu.SlotMode.FILTER &&
@@ -1125,27 +1140,9 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
         }
     }
 
-    private static CircuitFancyConfigurator circuitConfigurator(
-                                                                MEChamberManagerTerminalMenu.ChamberDetails details) {
-        ItemStackTransfer circuit = new ItemStackTransfer(1);
-        if (details.circuitSet()) {
-            circuit.setStackInSlot(0, IntCircuitBehaviour.stack(details.circuitConfiguration()));
-        }
-        return new CircuitFancyConfigurator(circuit);
-    }
-
-    private static AdvancedMEConfigurator advancedMEConfigurator(int initialOffset) {
-        int[] offset = { initialOffset };
-        return new AdvancedMEConfigurator(value -> offset[0] = value, () -> offset[0]);
-    }
-
-    private static TagFilterConfigurator tagFilterConfigurator(
-                                                               MEChamberManagerTerminalMenu.ChamberDetails details) {
-        String[] whitelist = { details.tagWhite() };
-        String[] blacklist = { details.tagBlack() };
-        return new TagFilterConfigurator(
-                () -> whitelist[0], value -> whitelist[0] = value,
-                () -> blacklist[0], value -> blacklist[0] = value);
+    private static IGuiTexture circuitIcon(MEChamberManagerTerminalMenu.ChamberDetails details) {
+        var circuit = new ItemStackTexture(IntCircuitBehaviour.stack(details.circuitSet() ? details.circuitConfiguration() : 0));
+        return details.circuitSet() ? circuit : new GuiTextureGroup(circuit, new ItemStackTexture(new ItemStack(Items.BARRIER)));
     }
 
     private void openCircuitConfigurator() {
@@ -1225,7 +1222,7 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
 
     private void sendControl(MEChamberManagerTerminalMenu.Address address,
                              MEChamberManagerTerminalMenu.ControlKind control, int value) {
-        WirelessAePackets.CHANNEL.sendToServer(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                 new WirelessAePackets.SetMEChamberControlPacket(menu.containerId, address, control, value));
     }
 
@@ -1245,7 +1242,7 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
     private void sendSlotConfig(MEChamberManagerTerminalMenu.SlotContent content, @Nullable AEKey key) {
         MEChamberManagerTerminalMenu.Address address = menu.getSelectedAddress();
         if (address != null) {
-            WirelessAePackets.CHANNEL.sendToServer(new WirelessAePackets.SetMEChamberSlotConfigPacket(
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new WirelessAePackets.SetMEChamberSlotConfigPacket(
                     menu.containerId,
                     address,
                     content.storage(),
@@ -1384,7 +1381,7 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
         try {
             long amount = Long.parseLong(amountField.getValue());
             if (amount > 0L) {
-                WirelessAePackets.CHANNEL.sendToServer(new WirelessAePackets.SetMEChamberSlotAmountPacket(
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(new WirelessAePackets.SetMEChamberSlotAmountPacket(
                         menu.containerId,
                         address,
                         content.storage(),
@@ -1468,7 +1465,7 @@ public final class MEChamberManagerTerminalScreen extends AEBaseScreen<MEChamber
             if (stateTexture) {
                 renderedIcon.draw(graphics, mouseX, mouseY, getX(), getY(), getWidth(), getHeight());
             } else {
-                GuiTextures.BUTTON.draw(
+                BUTTON_BACKGROUND.draw(
                         graphics,
                         mouseX,
                         mouseY,

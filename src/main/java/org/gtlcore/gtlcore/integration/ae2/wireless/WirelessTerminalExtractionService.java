@@ -5,7 +5,7 @@ import org.gtlcore.gtlcore.utils.FluidBucketUtil;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -65,8 +65,7 @@ public final class WirelessTerminalExtractionService {
 
     private static boolean extractFluid(ServerPlayer player, WirelessTerminalGridResolver.Connection connection,
                                         MEStorage storage, IActionSource source, AEFluidKey key) {
-        ItemStack filledBucket = FluidBucketUtil.getFilledBucket(new FluidStack(
-                key.getFluid(), AEFluidKey.AMOUNT_BUCKET, key.copyTag()));
+        ItemStack filledBucket = FluidBucketUtil.getFilledBucket(key.toStack(AEFluidKey.AMOUNT_BUCKET));
         if (filledBucket.isEmpty()) {
             return false;
         }

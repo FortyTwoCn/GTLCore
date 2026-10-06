@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.client.renderer.machine;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.gtlcore.gtlcore.api.GTLConstants;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -12,22 +12,24 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.event.ModelEvent;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
 
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -65,9 +67,9 @@ public final class HarmonyAnimationRenderer {
         modBus.addListener(HarmonyAnimationRenderer::reload);
         modBus.addListener(HarmonyAnimationRenderer::modelsBaked);
         modBus.addListener(HarmonyAnimationRenderer::loadShader);
-        MinecraftForge.EVENT_BUS.addListener(HarmonyAnimationRenderer::stage);
-        MinecraftForge.EVENT_BUS.addListener(HarmonyAnimationRenderer::frame);
-        MinecraftForge.EVENT_BUS.addListener(HarmonyAnimationRenderer::unload);
+        NeoForge.EVENT_BUS.addListener(HarmonyAnimationRenderer::stage);
+        NeoForge.EVENT_BUS.addListener(HarmonyAnimationRenderer::frame);
+        NeoForge.EVENT_BUS.addListener(HarmonyAnimationRenderer::unload);
     }
 
     /** Called by ClientUtil without changing its public return type or existing addon linkage. */
@@ -89,12 +91,12 @@ public final class HarmonyAnimationRenderer {
         animationShader = null;
         animationTransform = null;
         try {
-            event.registerShader(new ShaderInstance(event.getResourceProvider(), GTLCore.id("harmony_animation"), DefaultVertexFormat.BLOCK), shader -> {
+            event.registerShader(new ShaderInstance(event.getResourceProvider(), GTLConstants.id("harmony_animation"), DefaultVertexFormat.BLOCK), shader -> {
                 animationShader = shader;
                 animationTransform = shader.getUniform("AnimationTransform");
             });
         } catch (IOException exception) {
-            GTLCore.LOGGER.warn("Could not load the harmony animation shader; using the regular model renderer", exception);
+            GTLConstants.LOGGER.warn("Could not load the harmony animation shader; using the regular model renderer", exception);
         }
     }
 
@@ -102,12 +104,11 @@ public final class HarmonyAnimationRenderer {
         if (event.getLevel().isClientSide()) resourceVersion++;
     }
 
-    private static void frame(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            // Interrupted frames and world changes can never leave instances in the next frame.
-            reset();
-            if (builtVersion != resourceVersion) dispose();
-        }
+    private static void frame(RenderFrameEvent.Pre event) {
+        // Interrupted frames and world changes can never leave instances in the next frame.
+        reset();
+        if (builtVersion != resourceVersion) dispose();
+
     }
 
     private static void stage(RenderLevelStageEvent event) {
@@ -136,7 +137,7 @@ public final class HarmonyAnimationRenderer {
             standardShaders = true;
             for (String name : new String[] { "solid", "translucent" }) {
                 for (String extension : new String[] { "json", "vsh", "fsh" }) {
-                    var location = new ResourceLocation("minecraft", "shaders/core/rendertype_" + name + "." + extension);
+                    var location = ResourceLocation.fromNamespaceAndPath("minecraft", "shaders/core/rendertype_" + name + "." + extension);
                     standardShaders &= resources.getResource(location)
                             .map(resource -> resource.sourcePackId().equals("vanilla")).orElse(false);
                 }
@@ -175,7 +176,7 @@ public final class HarmonyAnimationRenderer {
         var manager = Minecraft.getInstance().getModelManager();
         for (int i = 0; i < ORDER.length; i++) {
             String name = HarmonyModelCache.NAMES[i];
-            BakedModel model = manager.getModel(GTLCore.id("obj/" + name));
+            BakedModel model = manager.getModel(ModelResourceLocation.standalone(GTLConstants.id("obj/" + name)));
             if (model == manager.getMissingModel()) continue;
             ORDER[i] = new HarmonyModelCache(name, model);
             MODELS.put(model, ORDER[i]);
@@ -230,23 +231,7 @@ public final class HarmonyAnimationRenderer {
 
     /** The same uniforms as VertexBuffer.drawWithShader, applied once per model batch. */
     private static void setupShader(ShaderInstance shader, Matrix4f pose) {
-        for (int i = 0; i < 12; i++) shader.setSampler("Sampler" + i, RenderSystem.getShaderTexture(i));
-        if (shader.MODEL_VIEW_MATRIX != null) shader.MODEL_VIEW_MATRIX.set(pose);
-        if (shader.PROJECTION_MATRIX != null) shader.PROJECTION_MATRIX.set(projection);
-        if (shader.INVERSE_VIEW_ROTATION_MATRIX != null) shader.INVERSE_VIEW_ROTATION_MATRIX.set(RenderSystem.getInverseViewRotationMatrix());
-        if (shader.COLOR_MODULATOR != null) shader.COLOR_MODULATOR.set(RenderSystem.getShaderColor());
-        if (shader.GLINT_ALPHA != null) shader.GLINT_ALPHA.set(RenderSystem.getShaderGlintAlpha());
-        if (shader.FOG_START != null) shader.FOG_START.set(RenderSystem.getShaderFogStart());
-        if (shader.FOG_END != null) shader.FOG_END.set(RenderSystem.getShaderFogEnd());
-        if (shader.FOG_COLOR != null) shader.FOG_COLOR.set(RenderSystem.getShaderFogColor());
-        if (shader.FOG_SHAPE != null) shader.FOG_SHAPE.set(RenderSystem.getShaderFogShape().getIndex());
-        if (shader.TEXTURE_MATRIX != null) shader.TEXTURE_MATRIX.set(RenderSystem.getTextureMatrix());
-        if (shader.GAME_TIME != null) shader.GAME_TIME.set(RenderSystem.getShaderGameTime());
-        if (shader.SCREEN_SIZE != null) {
-            var window = Minecraft.getInstance().getWindow();
-            shader.SCREEN_SIZE.set((float) window.getWidth(), (float) window.getHeight());
-        }
-        RenderSystem.setupShaderLights(shader);
+        shader.setDefaultUniforms(VertexFormat.Mode.TRIANGLES, pose, projection, Minecraft.getInstance().getWindow());
         shader.apply();
     }
 

@@ -4,21 +4,24 @@ import org.gtlcore.gtlcore.common.machine.multiblock.part.maintenance.IAutoConfi
 import org.gtlcore.gtlcore.common.machine.multiblock.part.maintenance.IAutoConfigurationMaintenanceHatch;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.maintenance.IGravityPartMachine;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.item.component.ICustomDescriptionId;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
-import com.gregtechceu.gtceu.api.item.tool.behavior.IToolBehavior;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.SimpleTieredMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
+import com.gregtechceu.gtceu.common.machine.trait.ProgrammableCircuitSlotTrait;
+import org.gtlcore.gtlcore.mixin.gtm.machine.QuantumChestMachineAccessor;
+import org.gtlcore.gtlcore.mixin.gtm.machine.QuantumTankMachineAccessor;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.FluidHatchPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.ItemBusPartMachine;
 import com.gregtechceu.gtceu.common.machine.storage.QuantumChestMachine;
 import com.gregtechceu.gtceu.common.machine.storage.QuantumTankMachine;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -29,9 +32,8 @@ import net.minecraft.world.item.context.UseOnContext;
 
 import java.util.Objects;
 
-import static com.gregtechceu.gtceu.api.item.tool.ToolHelper.getBehaviorsTag;
 
-public class ConfigurationCopyBehavior implements IToolBehavior, IInteractionItem, ICustomDescriptionId {
+public class ConfigurationCopyBehavior implements IInteractionItem, ICustomDescriptionId {
 
     public static final ConfigurationCopyBehavior INSTANCE = new ConfigurationCopyBehavior();
 
@@ -40,7 +42,6 @@ public class ConfigurationCopyBehavior implements IToolBehavior, IInteractionIte
     private static final String FLUID_OUTPUT_HATCH_CONFIGURATION = "FluidOutputHatchConfiguration";
     private static final String COPIED_CONFIGURATION_TYPE = "CopiedConfigurationType";
     private static final String COPIED_NAME_SUFFIX = "item.gtlcore.cfg_copy.copied_suffix";
-    private static final int CONFIGURATION_SLOT = 0;
 
     private static final String[] LEGACY_CONFIGURATION_KEYS = {
             "Configuration",
@@ -70,9 +71,12 @@ public class ConfigurationCopyBehavior implements IToolBehavior, IInteractionIte
 
     @Override
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
+        var metaMachine = MetaMachine.getMachine(context.getLevel(), context.getClickedPos());
+        if (context.getPlayer() == null || metaMachine == null) return InteractionResult.PASS;
+        if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
+        stack = context.getItemInHand();
         CompoundTag tags = getBehaviorsTag(stack);
-        if (context.getLevel().getBlockEntity(context.getClickedPos()) instanceof MetaMachineBlockEntity machineBlock) {
-            MetaMachine metaMachine = machineBlock.getMetaMachine();
+        if (metaMachine != null) {
             if (metaMachine instanceof SimpleTieredMachine simpleTieredMachine) {
                 if (Objects.requireNonNull(context.getPlayer()).isShiftKeyDown()) {
                     prepareCopy(tags, CopiedConfiguration.SIMPLE_MACHINE);
@@ -108,7 +112,7 @@ public class ConfigurationCopyBehavior implements IToolBehavior, IInteractionIte
                 } else {
                     context.getPlayer().displayClientMessage(Component.translatable("message.gtlcore.machine_data_not_found"), true);
                 }
-            } else if (metaMachine instanceof FluidHatchPartMachine fluidHatchPartMachine && fluidHatchPartMachine.tank.handlerIO == IO.OUT) {
+            } else if (metaMachine instanceof FluidHatchPartMachine fluidHatchPartMachine && fluidHatchPartMachine.tank.getHandlerIO() == IO.OUT) {
                 if (Objects.requireNonNull(context.getPlayer()).isShiftKeyDown()) {
                     prepareCopy(tags, CopiedConfiguration.FLUID_OUTPUT_HATCH);
                     tags.put(FLUID_OUTPUT_HATCH_CONFIGURATION, getFluidOutputHatchCfg(fluidHatchPartMachine));
@@ -177,6 +181,7 @@ public class ConfigurationCopyBehavior implements IToolBehavior, IInteractionIte
                     }
                 }
             }
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tags));
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;
@@ -224,157 +229,101 @@ public class ConfigurationCopyBehavior implements IToolBehavior, IInteractionIte
         return tags.contains("hasAutoOutputItem") ? CopiedConfiguration.SIMPLE_MACHINE : null;
     }
 
-    private CompoundTag getQuantumChestCfg(QuantumChestMachine metaMachine) {
-        CompoundTag configuration = new CompoundTag();
-        configuration.putBoolean("autoOutputItems", metaMachine.isAutoOutputItems());
-        configuration.putString("outputFacingItems", metaMachine.getOutputFacingItems().getName());
-        configuration.putBoolean("allowInputFromOutputSideItems", metaMachine.isAllowInputFromOutputSideItems());
-        configuration.putBoolean("isVoiding", metaMachine.isVoiding());
-        configuration.putBoolean("isLocked", metaMachine.isLocked());
-        if (metaMachine.isLocked()) {
-            ItemStack lockedItem = metaMachine.getLockedItem().getStackInSlot(CONFIGURATION_SLOT).copy();
-            lockedItem.setCount(1);
-            configuration.put("lockedItem", lockedItem.save(new CompoundTag()));
-        }
-        return configuration;
+    private static CompoundTag getBehaviorsTag(ItemStack stack) {
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
     }
 
-    private void setQuantumChestCfg(CompoundTag configuration, QuantumChestMachine metaMachine) {
-        metaMachine.setAutoOutputItems(configuration.getBoolean("autoOutputItems"));
-        metaMachine.setOutputFacingItems(Direction.byName(configuration.getString("outputFacingItems")));
-        metaMachine.setAllowInputFromOutputSideItems(configuration.getBoolean("allowInputFromOutputSideItems"));
-        metaMachine.setVoiding(configuration.getBoolean("isVoiding"));
-        ItemStack lockedItem = configuration.getBoolean("isLocked") ?
-                ItemStack.of(configuration.getCompound("lockedItem")) : ItemStack.EMPTY;
-        metaMachine.getLockedItem().setStackInSlot(CONFIGURATION_SLOT, lockedItem);
+    private CompoundTag getQuantumChestCfg(QuantumChestMachine machine) {
+        var tag = new CompoundTag(); copyOutput(tag, machine.autoOutput);
+        tag.putBoolean("isVoiding", machine.isVoiding());
+        tag.putBoolean("isLocked", machine.isLocked());
+        if (machine.isLocked()) tag.put("lockedItem", machine.getLockedItem().copyWithCount(1).save(machine.getLevel().registryAccess()));
+        return tag;
     }
 
-    private CompoundTag getQuantumTankCfg(QuantumTankMachine metaMachine) {
-        CompoundTag configuration = new CompoundTag();
-        configuration.putBoolean("autoOutputFluids", metaMachine.isAutoOutputFluids());
-        configuration.putString("outputFacingFluids", metaMachine.getOutputFacingFluids().getName());
-        configuration.putBoolean("allowInputFromOutputSideFluids", metaMachine.isAllowInputFromOutputSideFluids());
-        configuration.putBoolean("isVoiding", metaMachine.isVoiding());
-        configuration.putBoolean("isLocked", metaMachine.isLocked());
-        if (metaMachine.isLocked()) {
-            configuration.put("lockedFluid", saveFluid(metaMachine.getCache().getLockedFluid().getFluid()));
-        }
-        return configuration;
+    private void setQuantumChestCfg(CompoundTag tag, QuantumChestMachine machine) {
+        pasteOutput(tag, machine.autoOutput); machine.setVoiding(tag.getBoolean("isVoiding"));
+        var item = tag.getBoolean("isLocked") ? ItemStack.parse(machine.getLevel().registryAccess(), tag.getCompound("lockedItem")).orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
+        ((QuantumChestMachineAccessor) machine).gtlcore$getLockedInventory().setStackInSlot(0, item.copyWithCount(1));
     }
 
-    private void setQuantumTankCfg(CompoundTag configuration, QuantumTankMachine metaMachine) {
-        metaMachine.setAutoOutputFluids(configuration.getBoolean("autoOutputFluids"));
-        metaMachine.setOutputFacingFluids(Direction.byName(configuration.getString("outputFacingFluids")));
-        metaMachine.setAllowInputFromOutputSideFluids(configuration.getBoolean("allowInputFromOutputSideFluids"));
-        metaMachine.setVoiding(configuration.getBoolean("isVoiding"));
-        metaMachine.getCache().setLocked(false);
-        if (configuration.getBoolean("isLocked")) {
-            metaMachine.getCache().setLocked(true, FluidStack.loadFromTag(configuration.getCompound("lockedFluid")));
-        }
+    private CompoundTag getQuantumTankCfg(QuantumTankMachine machine) {
+        var tag = new CompoundTag(); copyOutput(tag, machine.autoOutput);
+        tag.putBoolean("isVoiding", machine.isVoiding()); tag.putBoolean("isLocked", machine.isLocked());
+        if (machine.isLocked()) tag.put("lockedFluid", machine.getLockedFluid().copyWithAmount(1).save(machine.getLevel().registryAccess()));
+        return tag;
     }
 
-    private CompoundTag getFluidOutputHatchCfg(FluidHatchPartMachine metaMachine) {
-        CompoundTag configuration = new CompoundTag();
-        configuration.putBoolean("isWorkingEnabled", metaMachine.isWorkingEnabled());
-        configuration.putInt("circuit", getCircuitConfiguration(metaMachine.getCircuitInventory()));
-        configuration.putBoolean("isLocked", metaMachine.tank.isLocked());
-        if (metaMachine.tank.isLocked()) {
-            configuration.put("lockedFluid", saveFluid(metaMachine.tank.getLockedFluid().getFluid()));
-        }
-        return configuration;
+    private void setQuantumTankCfg(CompoundTag tag, QuantumTankMachine machine) {
+        pasteOutput(tag, machine.autoOutput); machine.setVoiding(tag.getBoolean("isVoiding"));
+        var access = (QuantumTankMachineAccessor) machine;
+        access.gtlcore$setLocked(false);
+        if (tag.getBoolean("isLocked")) access.gtlcore$setLockedFluid(FluidStack.parseOptional(machine.getLevel().registryAccess(), tag.getCompound("lockedFluid")));
     }
 
-    private void setFluidOutputHatchCfg(CompoundTag configuration, FluidHatchPartMachine metaMachine) {
-        metaMachine.setWorkingEnabled(configuration.getBoolean("isWorkingEnabled"));
-        setCircuitConfiguration(metaMachine.getCircuitInventory(), configuration.getInt("circuit"));
-        metaMachine.tank.setLocked(false);
-        if (configuration.getBoolean("isLocked")) {
-            metaMachine.tank.setLocked(true, FluidStack.loadFromTag(configuration.getCompound("lockedFluid")));
-        }
+    private CompoundTag getFluidOutputHatchCfg(FluidHatchPartMachine machine) {
+        var tag = new CompoundTag();
+        tag.putBoolean("isWorkingEnabled", machine.isWorkingEnabled()); copyCircuit(tag, machine);
+        tag.putBoolean("isLocked", machine.tank.isLocked());
+        if (machine.tank.isLocked()) tag.put("lockedFluid", machine.tank.getLockedFluid().getFluid().copyWithAmount(1).save(machine.getLevel().registryAccess()));
+        return tag;
     }
 
-    private CompoundTag saveFluid(FluidStack fluid) {
-        FluidStack copy = fluid.copy();
-        copy.setAmount(1);
-        return copy.saveToTag(new CompoundTag());
+    private void setFluidOutputHatchCfg(CompoundTag tag, FluidHatchPartMachine machine) {
+        machine.setWorkingEnabled(tag.getBoolean("isWorkingEnabled")); pasteCircuit(tag, machine);
+        machine.tank.setLocked(false);
+        if (tag.getBoolean("isLocked")) machine.tank.setLocked(true, FluidStack.parseOptional(machine.getLevel().registryAccess(), tag.getCompound("lockedFluid")));
     }
 
-    private int getCircuitConfiguration(NotifiableItemStackHandler circuitInventory) {
-        return circuitInventory.handlerIO.support(IO.IN) ?
-                IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(CONFIGURATION_SLOT)) : 0;
+    private static void copyOutput(CompoundTag tag, AutoOutputTrait output) {
+        if (output == null) return;
+        tag.putBoolean("autoOutputItems", output.isAutoOutputItems());
+        tag.putBoolean("autoOutputFluids", output.isAutoOutputFluids());
+        if (output.getItemOutputDirection() != null) tag.putString("outputFacingItems", output.getItemOutputDirection().getName());
+        if (output.getFluidOutputDirection() != null) tag.putString("outputFacingFluids", output.getFluidOutputDirection().getName());
+        tag.putBoolean("allowInputFromOutputSideItems", output.allowsItemInputFromOutputSide());
+        tag.putBoolean("allowInputFromOutputSideFluids", output.allowsFluidInputFromOutputSide());
     }
 
-    private void setCircuitConfiguration(NotifiableItemStackHandler circuitInventory, int configuration) {
-        if (circuitInventory.handlerIO.support(IO.IN)) {
-            circuitInventory.setStackInSlot(CONFIGURATION_SLOT,
-                    configuration > 0 ? IntCircuitBehaviour.stack(configuration) : ItemStack.EMPTY);
-        }
+    private static void pasteOutput(CompoundTag tag, AutoOutputTrait output) {
+        if (output == null) return;
+        output.setAllowAutoOutputItems(tag.getBoolean("autoOutputItems"));
+        output.setAllowAutoOutputFluids(tag.getBoolean("autoOutputFluids"));
+        var itemDirection = Direction.byName(tag.getString("outputFacingItems"));
+        var fluidDirection = Direction.byName(tag.getString("outputFacingFluids"));
+        if (itemDirection != null) output.setItemOutputDirection(itemDirection);
+        if (fluidDirection != null) output.setFluidOutputDirection(fluidDirection);
+        output.setAllowItemInputFromOutputSide(tag.getBoolean("allowInputFromOutputSideItems"));
+        output.setAllowFluidInputFromOutputSide(tag.getBoolean("allowInputFromOutputSideFluids"));
     }
 
-    private void getBusCfg(CompoundTag tags, ItemBusPartMachine metaMachine) {
-        tags.putBoolean("Configuration", true);
-        tags.putBoolean("isDistinct", metaMachine.isDistinct());
-        tags.putBoolean("isWorkingEnabled", metaMachine.isWorkingEnabled());
-        NotifiableItemStackHandler circuitInventory = metaMachine.getCircuitInventory();
-        if (circuitInventory.handlerIO.support(IO.IN)) {
-            int c = IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0));
-            if (c > 0) {
-                tags.putInt("circuit", c);
-            }
-        }
+    private static void copyCircuit(CompoundTag tag, MetaMachine machine) {
+        var circuit = machine.getTrait(ProgrammableCircuitSlotTrait.class);
+        if (circuit != null && circuit.isEnabled()) tag.putInt("circuit", circuit.getCurrentCircuit());
     }
 
-    private void setBusCfg(CompoundTag tags, ItemBusPartMachine metaMachine) {
-        metaMachine.setDistinct(tags.getBoolean("isDistinct"));
-        metaMachine.setWorkingEnabled(tags.getBoolean("isWorkingEnabled"));
-        int c = tags.getInt("circuit");
-        NotifiableItemStackHandler circuitInventory = metaMachine.getCircuitInventory();
-        if (c > 0 && circuitInventory.handlerIO.support(IO.IN)) {
-            circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(c));
-        }
+    private static void pasteCircuit(CompoundTag tag, MetaMachine machine) {
+        var circuit = machine.getTrait(ProgrammableCircuitSlotTrait.class);
+        if (circuit == null || !circuit.isEnabled() || !tag.contains("circuit")) return;
+        int value = Math.clamp(tag.getInt("circuit"), 0, 32);
+        circuit.storage.setStackInSlot(0, value == 0 ? ItemStack.EMPTY : IntCircuitBehaviour.stack(value));
     }
 
-    private void getSTMCfg(CompoundTag tags, SimpleTieredMachine metaMachine) {
-        tags.putBoolean("Configuration", true);
-        boolean hasAutoOutputItem = metaMachine.hasAutoOutputItem();
-        boolean hasAutoOutputFluid = metaMachine.hasAutoOutputFluid();
-        tags.putBoolean("hasAutoOutputItem", hasAutoOutputItem);
-        tags.putBoolean("hasAutoOutputFluid", hasAutoOutputFluid);
-        if (hasAutoOutputItem) {
-            tags.putString("outputFacingItems", metaMachine.getOutputFacingItems().toString());
-        }
-        if (hasAutoOutputFluid) {
-            tags.putString("outputFacingFluids", metaMachine.getOutputFacingFluids().toString());
-        }
-        tags.putBoolean("allowInputFromOutputSideItems", metaMachine.isAllowInputFromOutputSideItems());
-        tags.putBoolean("allowInputFromOutputSideFluids", metaMachine.isAllowInputFromOutputSideFluids());
-        NotifiableItemStackHandler circuitInventory = metaMachine.getCircuitInventory();
-        if (circuitInventory.handlerIO.support(IO.IN)) {
-            int c = IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0));
-            if (c > 0) {
-                tags.putInt("circuit", c);
-            }
-        }
+    private void getBusCfg(CompoundTag tag, ItemBusPartMachine machine) {
+        tag.putBoolean("Configuration", true); tag.putBoolean("isDistinct", machine.isDistinct());
+        tag.putBoolean("isWorkingEnabled", machine.isWorkingEnabled()); copyCircuit(tag, machine);
     }
 
-    private void setSTMCfg(CompoundTag tags, SimpleTieredMachine metaMachine) {
-        boolean hasAutoOutputItem = tags.getBoolean("hasAutoOutputItem");
-        boolean hasAutoOutputFluid = tags.getBoolean("hasAutoOutputFluid");
-        metaMachine.setAutoOutputItems(hasAutoOutputItem);
-        metaMachine.setAutoOutputFluids(hasAutoOutputFluid);
-        if (hasAutoOutputItem) {
-            metaMachine.setOutputFacingItems(Direction.byName(tags.getString("outputFacingItems")));
-        }
-        if (hasAutoOutputFluid) {
-            metaMachine.setOutputFacingFluids(Direction.byName(tags.getString("outputFacingFluids")));
-        }
-        metaMachine.setAllowInputFromOutputSideItems(tags.getBoolean("allowInputFromOutputSideItems"));
-        metaMachine.setAllowInputFromOutputSideFluids(tags.getBoolean("allowInputFromOutputSideFluids"));
-        int c = tags.getInt("circuit");
-        NotifiableItemStackHandler circuitInventory = metaMachine.getCircuitInventory();
-        if (c > 0 && circuitInventory.handlerIO.support(IO.IN)) {
-            circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(c));
-        }
+    private void setBusCfg(CompoundTag tag, ItemBusPartMachine machine) {
+        machine.setDistinct(tag.getBoolean("isDistinct")); machine.setWorkingEnabled(tag.getBoolean("isWorkingEnabled")); pasteCircuit(tag, machine);
+    }
+
+    private void getSTMCfg(CompoundTag tag, SimpleTieredMachine machine) {
+        tag.putBoolean("Configuration", true); copyOutput(tag, machine.getTrait(AutoOutputTrait.class)); copyCircuit(tag, machine);
+    }
+
+    private void setSTMCfg(CompoundTag tag, SimpleTieredMachine machine) {
+        pasteOutput(tag, machine.getTrait(AutoOutputTrait.class)); pasteCircuit(tag, machine);
     }
 
     private enum CopiedConfiguration {

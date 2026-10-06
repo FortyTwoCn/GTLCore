@@ -1,0 +1,16 @@
+{
+  "source_url": "https://www.curseforge.com/minecraft/modpacks/gregtech-leisure/files/8903963",
+  "version": "1.4.5.2",
+  "bundled_core": "1.2.3.1-fix9",
+  "target_core": "1.2.3.2-fix3 (gtl-1431-skyblock)",
+  "archive_sha256": "e147d72e8c18613139d46ba7647cf5ec2bd10dce67b5be4c7ab9e325b2943997",
+  "license": "CC-BY-NC-SA-4.0",
+  "original_files": {
+    "startup_scripts/block.js": "07d1941f5ec73e5b00973e380254ad535e64913811a62ac4711732aacdbda568",
+    "startup_scripts/item.js": "0cb5aff9117870a93c543b0f566c5fed1e2e10195040ae310340cf4b239c5e06"
+  },
+  "native_files": {
+    "startup_scripts/block.js": "fa0833fadc54be954ae68d0f3fc3f2ff009019561353d37a279e4f38675558f4",
+    "startup_scripts/item.js": "da34f768a7678930f0f4c5105c332c270023facc3178575e58268f94fe754044"
+  }
+}

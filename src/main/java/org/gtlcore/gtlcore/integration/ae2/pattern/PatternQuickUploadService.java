@@ -1,6 +1,7 @@
 package org.gtlcore.gtlcore.integration.ae2.pattern;
 
-import org.gtlcore.gtlcore.GTLCore;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 import org.gtlcore.gtlcore.api.machine.trait.IRecipeCapabilityMachine;
 import org.gtlcore.gtlcore.api.machine.trait.MEPatternRecipeHandlePart;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEIOPartMachine;
@@ -10,11 +11,11 @@ import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferProx
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
-import com.gregtechceu.gtceu.api.pattern.MultiblockState;
-import com.gregtechceu.gtceu.api.pattern.MultiblockWorldSavedData;
+import com.gregtechceu.gtceu.api.multiblock.pattern.PatternState;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockWorldSavedData;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 
 import net.minecraft.core.BlockPos;
@@ -43,6 +44,7 @@ import java.util.*;
 
 public final class PatternQuickUploadService {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final String LOG_PREFIX = "[PatternQuickUpload]";
     private static final String MULTI_RECIPE_TYPE_METHOD = "getMultiRecipeType";
     private static final String COMPOSITE_RECIPE_TYPES_METHOD = "getTypeList";
@@ -50,18 +52,18 @@ public final class PatternQuickUploadService {
     private PatternQuickUploadService() {}
 
     public static SearchResult findTargets(ServerPlayer player, @Nullable IGridNode node, ItemStack patternStack) {
-        GTLCore.LOGGER.debug("{} findTargets stack={}", LOG_PREFIX, patternStack.getHoverName().getString());
+        LOGGER.debug("{} findTargets stack={}", LOG_PREFIX, patternStack.getHoverName().getString());
         if (patternStack.isEmpty()) {
-            GTLCore.LOGGER.debug("{} rejected: empty pattern stack", LOG_PREFIX);
+            LOGGER.debug("{} rejected: empty pattern stack", LOG_PREFIX);
             return SearchResult.fail(Component.translatable("message.gtlcore.pattern_quick_upload_invalid_pattern"));
         }
         IPatternDetails patternDetails = PatternDetailsHelper.decodePattern(patternStack, player.level());
         if (!isQuickUploadPattern(patternDetails)) {
-            GTLCore.LOGGER.debug("{} rejected: unsupported pattern", LOG_PREFIX);
+            LOGGER.debug("{} rejected: unsupported pattern", LOG_PREFIX);
             return SearchResult.fail(Component.translatable("message.gtlcore.pattern_quick_upload_processing_only"));
         }
         if (node == null || node.getGrid() == null) {
-            GTLCore.LOGGER.debug("{} rejected: missing ME network node", LOG_PREFIX);
+            LOGGER.debug("{} rejected: missing ME network node", LOG_PREFIX);
             return SearchResult.fail(Component.translatable("message.gtlcore.pattern_quick_upload_no_network"));
         }
 
@@ -69,13 +71,13 @@ public final class PatternQuickUploadService {
         if (recipeTypeIds.isEmpty()) {
             recipeTypeIds.addAll(PatternQuickUploadRecipeTypeResolver.findRecipeTypeIds(player, patternStack));
         }
-        GTLCore.LOGGER.debug("{} pattern recipe types={}", LOG_PREFIX, recipeTypeIds);
+        LOGGER.debug("{} pattern recipe types={}", LOG_PREFIX, recipeTypeIds);
         if (recipeTypeIds.isEmpty()) {
             return SearchResult.fail(Component.translatable("message.gtlcore.pattern_quick_upload_no_recipe_type"));
         }
 
         List<Target> targets = findTargets(player, node.getGrid(), patternStack, patternDetails, recipeTypeIds);
-        GTLCore.LOGGER.debug("{} target count={}", LOG_PREFIX, targets.size());
+        LOGGER.debug("{} target count={}", LOG_PREFIX, targets.size());
         if (targets.isEmpty()) {
             return SearchResult.fail(Component.translatable("message.gtlcore.pattern_quick_upload_no_target"));
         }
@@ -99,7 +101,7 @@ public final class PatternQuickUploadService {
         for (BlockPos bufferPos : target.bufferPositions()) {
             PatternContainer container = resolveVisiblePatternContainer(player, target.levelKey(), bufferPos);
             if (container != null && containsPattern(container, patternStack)) {
-                GTLCore.LOGGER.debug("{} upload skipped: duplicate pattern in target={} {}",
+                LOGGER.debug("{} upload skipped: duplicate pattern in target={} {}",
                         LOG_PREFIX,
                         target.levelKey().location(),
                         bufferPos);
@@ -148,14 +150,14 @@ public final class PatternQuickUploadService {
         }
         PatternContainer container = resolveVisiblePatternContainer(player, targetLevelKey, targetPos);
         if (container == null) {
-            GTLCore.LOGGER.debug("{} insert rejected: no pattern container at {} {}",
+            LOGGER.debug("{} insert rejected: no pattern container at {} {}",
                     LOG_PREFIX,
                     targetLevelKey.location(),
                     targetPos);
             return -1;
         }
         int slot = insertPattern(container, patternStack.copy());
-        GTLCore.LOGGER.debug("{} insert slot={} target={} {}",
+        LOGGER.debug("{} insert slot={} target={} {}",
                 LOG_PREFIX,
                 slot,
                 targetLevelKey.location(),
@@ -170,14 +172,14 @@ public final class PatternQuickUploadService {
         }
         PatternContainer container = resolvePatternContainer(player.server.getLevel(targetLevelKey), targetPos);
         if (container == null) {
-            GTLCore.LOGGER.debug("{} undo rejected: no pattern container at {} {}",
+            LOGGER.debug("{} undo rejected: no pattern container at {} {}",
                     LOG_PREFIX,
                     targetLevelKey.location(),
                     targetPos);
             return false;
         }
         boolean removed = removePattern(container, patternStack.copy());
-        GTLCore.LOGGER.debug("{} undo result={} target={} {}",
+        LOGGER.debug("{} undo result={} target={} {}",
                 LOG_PREFIX,
                 removed,
                 targetLevelKey.location(),
@@ -192,14 +194,14 @@ public final class PatternQuickUploadService {
         }
         PatternContainer container = resolvePatternContainer(player.server.getLevel(targetLevelKey), targetPos);
         if (container == null) {
-            GTLCore.LOGGER.debug("{} undo rejected: no pattern container at {} {}",
+            LOGGER.debug("{} undo rejected: no pattern container at {} {}",
                     LOG_PREFIX,
                     targetLevelKey.location(),
                     targetPos);
             return false;
         }
         boolean removed = removePattern(container, patternStack.copy(), slot);
-        GTLCore.LOGGER.debug("{} undo result={} target={} {} slot={}",
+        LOGGER.debug("{} undo result={} target={} {} slot={}",
                 LOG_PREFIX,
                 removed,
                 targetLevelKey.location(),
@@ -212,9 +214,9 @@ public final class PatternQuickUploadService {
                                             IPatternDetails patternDetails, Set<ResourceLocation> recipeTypeIds) {
         List<Target> targets = new ArrayList<>();
         Set<TargetKey> seen = new HashSet<>();
-        GTLCore.LOGGER.debug("{} scanning grid machine classes", LOG_PREFIX);
+        LOGGER.debug("{} scanning grid machine classes", LOG_PREFIX);
         collectTargetsFromGrid(grid, patternStack, patternDetails, recipeTypeIds, targets, seen);
-        GTLCore.LOGGER.debug("{} scanning loaded multiblocks in {}", LOG_PREFIX, player.serverLevel().dimension().location());
+        LOGGER.debug("{} scanning loaded multiblocks in {}", LOG_PREFIX, player.serverLevel().dimension().location());
         collectTargetsFromLoadedMultiblocks(player.serverLevel(), grid, patternStack, patternDetails, recipeTypeIds,
                 targets, seen);
         return targets;
@@ -250,7 +252,7 @@ public final class PatternQuickUploadService {
         for (List<Target> groupTargets : orderedGroups) {
             Target collapsedTarget = groupTargets.size() == 1 ? groupTargets.get(0) : mergeTargets(groupTargets);
             if (groupTargets.size() > 1) {
-                GTLCore.LOGGER.debug("{} collapsed {} equivalent targets into {} buffer positions for recipeType={} name={}",
+                LOGGER.debug("{} collapsed {} equivalent targets into {} buffer positions for recipeType={} name={}",
                         LOG_PREFIX,
                         groupTargets.size(),
                         collapsedTarget.bufferPositions().size(),
@@ -327,10 +329,10 @@ public final class PatternQuickUploadService {
         if (patternDetails instanceof AEProcessingPattern && container instanceof MEPatternBufferPartMachineBase buffer) {
             Level level = buffer.getLevel();
             if (level == null) {
-                GTLCore.LOGGER.debug("{} skipped grid buffer with no level at {}", LOG_PREFIX, buffer.getPos());
+                LOGGER.debug("{} skipped grid buffer with no level at {}", LOG_PREFIX, buffer.getBlockPos());
                 return;
             }
-            GTLCore.LOGGER.debug("{} found grid buffer at {} {}", LOG_PREFIX, level.dimension().location(), buffer.getPos());
+            LOGGER.debug("{} found grid buffer at {} {}", LOG_PREFIX, level.dimension().location(), buffer.getBlockPos());
             collectTargetsFromBuffer(grid, level.dimension(), buffer, buffer.getControllers(),
                     patternStack, recipeTypeIds, targets, seen);
             return;
@@ -341,15 +343,15 @@ public final class PatternQuickUploadService {
         if (container instanceof MEMolecularAssemblerIOPartMachine molecularAssembler) {
             Level level = molecularAssembler.getLevel();
             if (level == null) {
-                GTLCore.LOGGER.debug("{} skipped grid molecular assembler with no level at {}",
+                LOGGER.debug("{} skipped grid molecular assembler with no level at {}",
                         LOG_PREFIX,
-                        molecularAssembler.getPos());
+                        molecularAssembler.getBlockPos());
                 return;
             }
-            GTLCore.LOGGER.debug("{} found grid molecular assembler at {} {}",
+            LOGGER.debug("{} found grid molecular assembler at {} {}",
                     LOG_PREFIX,
                     level.dimension().location(),
-                    molecularAssembler.getPos());
+                    molecularAssembler.getBlockPos());
             collectTargetsFromMolecularAssembler(grid, level.dimension(), molecularAssembler,
                     patternStack, recipeTypeIds, targets, seen);
             return;
@@ -357,12 +359,12 @@ public final class PatternQuickUploadService {
         if (container instanceof TileAssemblerMatrixPattern matrixPattern) {
             Level level = matrixPattern.getLevel();
             if (level == null) {
-                GTLCore.LOGGER.debug("{} skipped grid assembler matrix with no level at {}",
+                LOGGER.debug("{} skipped grid assembler matrix with no level at {}",
                         LOG_PREFIX,
                         matrixPattern.getBlockPos());
                 return;
             }
-            GTLCore.LOGGER.debug("{} found grid assembler matrix at {} {}",
+            LOGGER.debug("{} found grid assembler matrix at {} {}",
                     LOG_PREFIX,
                     level.dimension().location(),
                     matrixPattern.getBlockPos());
@@ -376,25 +378,25 @@ public final class PatternQuickUploadService {
                                                             Set<ResourceLocation> recipeTypeIds, List<Target> targets,
                                                             Set<TargetKey> seen) {
         MultiblockWorldSavedData savedData = MultiblockWorldSavedData.getOrCreate(level);
-        for (MultiblockState state : List.copyOf(savedData.mapping.values())) {
-            IMultiController controller = state.getController();
+        for (PatternState state : savedData.mapping.values().stream().flatMap(Set::stream).toList()) {
+            MultiblockControllerMachine controller = state.getController();
             if (controller == null || !controller.isFormed()) {
                 continue;
             }
-            GTLCore.LOGGER.debug("{} found formed controller {} in {}",
+            LOGGER.debug("{} found formed controller {} in {}",
                     LOG_PREFIX,
-                    controller.self().getPos(),
+                    controller.getBlockPos(),
                     level.dimension().location());
             collectTargetsFromController(level.dimension(), grid, controller, patternStack, patternDetails, recipeTypeIds,
                     targets, seen);
         }
     }
 
-    private static void collectTargetsFromController(ResourceKey<Level> levelKey, IGrid grid, IMultiController controller,
+    private static void collectTargetsFromController(ResourceKey<Level> levelKey, IGrid grid, MultiblockControllerMachine controller,
                                                      ItemStack patternStack, IPatternDetails patternDetails,
                                                      Set<ResourceLocation> recipeTypeIds,
                                                      List<Target> targets, Set<TargetKey> seen) {
-        for (IMultiPart part : controller.getParts()) {
+        for (MultiblockPartMachine part : controller.getParts()) {
             collectTargetsFromPart(levelKey, grid, controller, part, patternStack, patternDetails, recipeTypeIds, targets,
                     seen);
         }
@@ -403,7 +405,7 @@ public final class PatternQuickUploadService {
     }
 
     private static void collectTargetsFromRecipeCapabilityCache(ResourceKey<Level> levelKey, IGrid grid,
-                                                                IMultiController controller,
+                                                                MultiblockControllerMachine controller,
                                                                 ItemStack patternStack,
                                                                 IPatternDetails patternDetails,
                                                                 Set<ResourceLocation> recipeTypeIds,
@@ -422,19 +424,19 @@ public final class PatternQuickUploadService {
         }
     }
 
-    private static void collectTargetsFromPart(ResourceKey<Level> levelKey, IGrid grid, IMultiController controller,
-                                               IMultiPart part, ItemStack patternStack,
+    private static void collectTargetsFromPart(ResourceKey<Level> levelKey, IGrid grid, MultiblockControllerMachine controller,
+                                               MultiblockPartMachine part, ItemStack patternStack,
                                                IPatternDetails patternDetails,
                                                Set<ResourceLocation> recipeTypeIds, List<Target> targets,
                                                Set<TargetKey> seen) {
         if (part == null || !part.isFormed()) {
             return;
         }
-        collectTargetsFromMachine(levelKey, grid, controller, part.self(), patternStack, patternDetails, recipeTypeIds,
+        collectTargetsFromMachine(levelKey, grid, controller, part, patternStack, patternDetails, recipeTypeIds,
                 targets, seen);
     }
 
-    private static void collectTargetsFromMachine(ResourceKey<Level> levelKey, IGrid grid, IMultiController controller,
+    private static void collectTargetsFromMachine(ResourceKey<Level> levelKey, IGrid grid, MultiblockControllerMachine controller,
                                                   MetaMachine machine, ItemStack patternStack,
                                                   IPatternDetails patternDetails,
                                                   Set<ResourceLocation> recipeTypeIds, List<Target> targets,
@@ -457,66 +459,66 @@ public final class PatternQuickUploadService {
     }
 
     private static void collectTargetsFromBuffer(IGrid grid, ResourceKey<Level> levelKey, MEPatternBufferPartMachineBase buffer,
-                                                 Iterable<IMultiController> controllers, ItemStack patternStack,
+                                                 Iterable<MultiblockControllerMachine> controllers, ItemStack patternStack,
                                                  Set<ResourceLocation> recipeTypeIds, List<Target> targets,
                                                  Set<TargetKey> seen) {
         if (!isOnCurrentGrid(grid, levelKey, buffer)) {
             return;
         }
         if (!buffer.isVisibleInTerminal()) {
-            GTLCore.LOGGER.debug("{} skipped buffer {} {}: hidden in terminal",
+            LOGGER.debug("{} skipped buffer {} {}: hidden in terminal",
                     LOG_PREFIX,
                     levelKey.location(),
-                    buffer.getPos());
+                    buffer.getBlockPos());
             return;
         }
         if (!hasFormedController(controllers)) {
-            GTLCore.LOGGER.debug("{} skipped buffer {} {}: no formed controller",
+            LOGGER.debug("{} skipped buffer {} {}: no formed controller",
                     LOG_PREFIX,
                     levelKey.location(),
-                    buffer.getPos());
+                    buffer.getBlockPos());
             return;
         }
         if (!canAcceptPattern(buffer, patternStack)) {
-            GTLCore.LOGGER.debug("{} skipped buffer {} {}: no insertable pattern slot",
+            LOGGER.debug("{} skipped buffer {} {}: no insertable pattern slot",
                     LOG_PREFIX,
                     levelKey.location(),
-                    buffer.getPos());
+                    buffer.getBlockPos());
             return;
         }
         Set<GTRecipeType> supportedRecipeTypes = getSupportedRecipeTypes(controllers);
-        GTLCore.LOGGER.debug("{} buffer {} {} supports recipe types {}",
+        LOGGER.debug("{} buffer {} {} supports recipe types {}",
                 LOG_PREFIX,
                 levelKey.location(),
-                buffer.getPos(),
+                buffer.getBlockPos(),
                 supportedRecipeTypes.stream()
-                        .map(recipeType -> recipeType.registryName)
+                        .map(recipeType -> recipeType.id)
                         .filter(Objects::nonNull)
                         .toList());
         for (GTRecipeType recipeType : supportedRecipeTypes) {
-            if (recipeType.registryName == null) {
+            if (recipeType.id == null) {
                 continue;
             }
             if (!recipeTypeMatches(recipeType, recipeTypeIds)) {
                 continue;
             }
-            TargetKey key = new TargetKey(levelKey, buffer.getPos(), recipeType.registryName);
+            TargetKey key = new TargetKey(levelKey, buffer.getBlockPos(), recipeType.id);
             if (seen.add(key)) {
                 var terminalGroup = buffer.getTerminalGroup();
                 ResourceLocation targetMachineId = targetMachineId(controllers, terminalGroup.icon());
                 targets.add(new Target(
                         levelKey,
-                        buffer.getPos(),
+                        buffer.getBlockPos(),
                         terminalGroup.name(),
-                        recipeType.registryName,
+                        recipeType.id,
                         recipeTypeName(recipeType),
                         terminalGroup.icon(),
                         targetMachineId));
-                GTLCore.LOGGER.debug("{} accepted target {} {} recipeType={} name={}",
+                LOGGER.debug("{} accepted target {} {} recipeType={} name={}",
                         LOG_PREFIX,
                         levelKey.location(),
-                        buffer.getPos(),
-                        recipeType.registryName,
+                        buffer.getBlockPos(),
+                        recipeType.id,
                         terminalGroup.name().getString());
             }
         }
@@ -532,47 +534,47 @@ public final class PatternQuickUploadService {
             return;
         }
         if (!molecularAssembler.isVisibleInTerminal()) {
-            GTLCore.LOGGER.debug("{} skipped molecular assembler {} {}: hidden in terminal",
+            LOGGER.debug("{} skipped molecular assembler {} {}: hidden in terminal",
                     LOG_PREFIX,
                     levelKey.location(),
-                    molecularAssembler.getPos());
+                    molecularAssembler.getBlockPos());
             return;
         }
-        List<IMultiController> controllers = molecularAssembler.getControllers();
+        var controllers = molecularAssembler.getControllers();
         if (!hasFormedController(controllers)) {
-            GTLCore.LOGGER.debug("{} skipped molecular assembler {} {}: no formed controller",
+            LOGGER.debug("{} skipped molecular assembler {} {}: no formed controller",
                     LOG_PREFIX,
                     levelKey.location(),
-                    molecularAssembler.getPos());
+                    molecularAssembler.getBlockPos());
             return;
         }
         if (!canAcceptPattern(molecularAssembler, patternStack)) {
-            GTLCore.LOGGER.debug("{} skipped molecular assembler {} {}: no insertable pattern slot",
+            LOGGER.debug("{} skipped molecular assembler {} {}: no insertable pattern slot",
                     LOG_PREFIX,
                     levelKey.location(),
-                    molecularAssembler.getPos());
+                    molecularAssembler.getBlockPos());
             return;
         }
         for (ResourceLocation recipeTypeId : recipeTypeIds) {
             if (!PatternQuickUploadRecipeTypeResolver.isMolecularRecipeTypeId(recipeTypeId)) {
                 continue;
             }
-            TargetKey key = new TargetKey(levelKey, molecularAssembler.getPos(), recipeTypeId);
+            TargetKey key = new TargetKey(levelKey, molecularAssembler.getBlockPos(), recipeTypeId);
             if (seen.add(key)) {
                 var terminalGroup = molecularAssembler.getTerminalGroup();
                 ResourceLocation targetMachineId = targetMachineId(controllers, terminalGroup.icon());
                 targets.add(new Target(
                         levelKey,
-                        molecularAssembler.getPos(),
+                        molecularAssembler.getBlockPos(),
                         terminalGroup.name(),
                         recipeTypeId,
                         PatternQuickUploadMetadata.recipeTypeName(recipeTypeId),
                         terminalGroup.icon(),
                         targetMachineId));
-                GTLCore.LOGGER.debug("{} accepted molecular assembler target {} {} recipeType={} name={}",
+                LOGGER.debug("{} accepted molecular assembler target {} {} recipeType={} name={}",
                         LOG_PREFIX,
                         levelKey.location(),
-                        molecularAssembler.getPos(),
+                        molecularAssembler.getBlockPos(),
                         recipeTypeId,
                         terminalGroup.name().getString());
             }
@@ -591,21 +593,21 @@ public final class PatternQuickUploadService {
                                                           Set<TargetKey> seen) {
         BlockPos matrixPos = matrixPattern.getBlockPos();
         if (!matrixPattern.isVisibleInTerminal()) {
-            GTLCore.LOGGER.debug("{} skipped assembler matrix {} {}: hidden in terminal",
+            LOGGER.debug("{} skipped assembler matrix {} {}: hidden in terminal",
                     LOG_PREFIX,
                     levelKey.location(),
                     matrixPos);
             return;
         }
         if (!matrixPattern.isFormed()) {
-            GTLCore.LOGGER.debug("{} skipped assembler matrix {} {}: not formed",
+            LOGGER.debug("{} skipped assembler matrix {} {}: not formed",
                     LOG_PREFIX,
                     levelKey.location(),
                     matrixPos);
             return;
         }
         if (!canAcceptPattern(matrixPattern, patternStack)) {
-            GTLCore.LOGGER.debug("{} skipped assembler matrix {} {}: no insertable pattern slot",
+            LOGGER.debug("{} skipped assembler matrix {} {}: no insertable pattern slot",
                     LOG_PREFIX,
                     levelKey.location(),
                     matrixPos);
@@ -627,7 +629,7 @@ public final class PatternQuickUploadService {
                         PatternQuickUploadMetadata.recipeTypeName(recipeTypeId),
                         icon,
                         icon == null ? null : icon.getId()));
-                GTLCore.LOGGER.debug("{} accepted assembler matrix target {} {} recipeType={} name={}",
+                LOGGER.debug("{} accepted assembler matrix target {} {} recipeType={} name={}",
                         LOG_PREFIX,
                         levelKey.location(),
                         matrixPos,
@@ -642,16 +644,16 @@ public final class PatternQuickUploadService {
      * resolved against the small type also belongs on machines of the large type.
      */
     private static boolean recipeTypeMatches(GTRecipeType machineRecipeType, Set<ResourceLocation> recipeTypeIds) {
-        if (recipeTypeIds.contains(machineRecipeType.registryName)) {
+        if (recipeTypeIds.contains(machineRecipeType.id)) {
             return true;
         }
-        GTRecipeType smallRecipeMap = machineRecipeType.getSmallRecipeMap();
-        return smallRecipeMap != null && smallRecipeMap.registryName != null &&
-                recipeTypeIds.contains(smallRecipeMap.registryName);
+        GTRecipeType smallRecipeMap = NativeCopiedRecipeTypes.smallType(machineRecipeType);
+        return smallRecipeMap != null && smallRecipeMap.id != null &&
+                recipeTypeIds.contains(smallRecipeMap.id);
     }
 
-    private static boolean hasFormedController(Iterable<IMultiController> controllers) {
-        for (IMultiController controller : controllers) {
+    private static boolean hasFormedController(Iterable<MultiblockControllerMachine> controllers) {
+        for (MultiblockControllerMachine controller : controllers) {
             if (controller != null && controller.isFormed()) {
                 return true;
             }
@@ -660,11 +662,11 @@ public final class PatternQuickUploadService {
     }
 
     @Nullable
-    private static ResourceLocation targetMachineId(Iterable<IMultiController> controllers,
+    private static ResourceLocation targetMachineId(Iterable<MultiblockControllerMachine> controllers,
                                                     @Nullable AEItemKey fallbackIcon) {
-        for (IMultiController controller : controllers) {
+        for (MultiblockControllerMachine controller : controllers) {
             if (controller != null && controller.isFormed()) {
-                return controller.self().getDefinition().getId();
+                return controller.getDefinition().getId();
             }
         }
         return fallbackIcon == null ? null : fallbackIcon.getId();
@@ -673,38 +675,38 @@ public final class PatternQuickUploadService {
     private static boolean isOnCurrentGrid(IGrid grid, ResourceKey<Level> levelKey, MEIOPartMachine machine) {
         var mainNode = machine.getMainNode();
         if (!mainNode.isActive()) {
-            GTLCore.LOGGER.debug("{} skipped target {} {}: ME node inactive",
+            LOGGER.debug("{} skipped target {} {}: ME node inactive",
                     LOG_PREFIX,
                     levelKey.location(),
-                    machine.getPos());
+                    machine.getBlockPos());
             return false;
         }
         if (mainNode.getGrid() != grid) {
-            GTLCore.LOGGER.debug("{} skipped target {} {}: not on current ME network",
+            LOGGER.debug("{} skipped target {} {}: not on current ME network",
                     LOG_PREFIX,
                     levelKey.location(),
-                    machine.getPos());
+                    machine.getBlockPos());
             return false;
         }
         return true;
     }
 
-    private static Set<GTRecipeType> getSupportedRecipeTypes(Iterable<IMultiController> controllers) {
+    private static Set<GTRecipeType> getSupportedRecipeTypes(Iterable<MultiblockControllerMachine> controllers) {
         Set<GTRecipeType> recipeTypes = new LinkedHashSet<>();
-        for (IMultiController controller : controllers) {
+        for (MultiblockControllerMachine controller : controllers) {
             if (controller == null || !controller.isFormed()) {
                 continue;
             }
             if (addRuntimeRecipeTypes(recipeTypes, controller)) {
                 continue;
             }
-            addRecipeTypes(recipeTypes, controller.self().getDefinition().getRecipeTypes());
+            addRecipeTypes(recipeTypes, controller.getDefinition().getRecipeTypes());
         }
         return recipeTypes;
     }
 
-    private static boolean addRuntimeRecipeTypes(Set<GTRecipeType> recipeTypes, IMultiController controller) {
-        if (!(controller.self() instanceof IRecipeLogicMachine recipeLogicMachine)) {
+    private static boolean addRuntimeRecipeTypes(Set<GTRecipeType> recipeTypes, MultiblockControllerMachine controller) {
+        if (!(controller instanceof IRecipeLogicMachine recipeLogicMachine)) {
             return false;
         }
         GTRecipeType multiRecipeType = getReflectedRecipeType(recipeLogicMachine, MULTI_RECIPE_TYPE_METHOD);
@@ -781,7 +783,7 @@ public final class PatternQuickUploadService {
      */
     @Nullable
     private static PatternContainer resolvePatternContainer(@Nullable ServerLevel level, BlockPos pos) {
-        if (level == null) {
+        if (level == null || !level.hasChunkAt(pos)) {
             return null;
         }
         if (MetaMachine.getMachine(level, pos) instanceof PatternContainer container) {
@@ -827,7 +829,7 @@ public final class PatternQuickUploadService {
         PatternQuickUploadMetadata.removeRecipeTypes(secondDefinition);
         PatternEncoderMetadata.removeEncoder(firstDefinition);
         PatternEncoderMetadata.removeEncoder(secondDefinition);
-        return ItemStack.isSameItemSameTags(firstDefinition, secondDefinition);
+        return ItemStack.isSameItemSameComponents(firstDefinition, secondDefinition);
     }
 
     private static int insertPattern(PatternContainer container, ItemStack patternStack) {
@@ -860,7 +862,7 @@ public final class PatternQuickUploadService {
             return false;
         }
         ItemStack storedStack = inventory.getStackInSlot(slot);
-        if (!ItemStack.isSameItemSameTags(storedStack, patternStack) ||
+        if (!ItemStack.isSameItemSameComponents(storedStack, patternStack) ||
                 storedStack.getCount() < patternStack.getCount()) {
             return false;
         }
@@ -873,7 +875,7 @@ public final class PatternQuickUploadService {
     }
 
     private static Component recipeTypeName(GTRecipeType recipeType) {
-        return PatternQuickUploadMetadata.recipeTypeName(recipeType.registryName);
+        return PatternQuickUploadMetadata.recipeTypeName(recipeType.id);
     }
 
     private static boolean isQuickUploadPattern(@Nullable IPatternDetails patternDetails) {

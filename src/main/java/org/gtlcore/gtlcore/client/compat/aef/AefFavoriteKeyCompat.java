@@ -5,9 +5,9 @@ import org.gtlcore.gtlcore.GTLCore;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.neoforged.fml.ModList;
 
 import appeng.api.stacks.AEKey;
 import com.mojang.blaze3d.platform.InputConstants;

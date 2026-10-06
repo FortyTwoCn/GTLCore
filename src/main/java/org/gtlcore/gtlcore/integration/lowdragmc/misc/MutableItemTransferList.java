@@ -1,395 +1,128 @@
 package org.gtlcore.gtlcore.integration.lowdragmc.misc;
 
-import com.lowdragmc.lowdraglib.LDLib;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
-import com.lowdragmc.lowdraglib.syncdata.IContentChangeAware;
-import com.lowdragmc.lowdraglib.syncdata.ITagSerializable;
-
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
-
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * 可变的 ItemTransferList，但支持动态添加/删除IItemTransfer，提供统一的物品操作接口
- */
-public class MutableItemTransferList implements IItemTransfer, ITagSerializable<CompoundTag>, IContentChangeAware {
+/** Mutable native inventory view. Its source inventories retain ownership and persistence of every item. */
+public class MutableItemTransferList implements IItemHandlerModifiable {
+    @Getter @Setter private Runnable onContentsChanged = () -> {};
+    @Getter @Setter protected Predicate<ItemStack> filter = item -> true;
+    private final List<IItemHandlerModifiable> transfers;
+    private int totalSlots;
 
-    @Getter
-    @Setter
-    private Runnable onContentsChanged = () -> {};
-    private final ObjectArrayList<@NotNull IItemTransfer> transfers = new ObjectArrayList<>();
-    private volatile int totalSlots = 0;
-    private volatile boolean slotsCacheDirty = true;
-    @Getter
-    protected Predicate<ItemStack> filter = item -> true;
-
-    public MutableItemTransferList() {}
-
-    public MutableItemTransferList(int initialCapacity) {
-        transfers.ensureCapacity(initialCapacity);
+    public MutableItemTransferList() { this(0); }
+    public MutableItemTransferList(int initialCapacity) { transfers = new ArrayList<>(initialCapacity); }
+    public MutableItemTransferList(Collection<? extends IItemHandlerModifiable> initialTransfers) {
+        this(); addTransfers(initialTransfers);
     }
 
-    public MutableItemTransferList(Set<IItemTransfer> initialTransfers) {
-        if (initialTransfers != null && !initialTransfers.isEmpty()) {
-            transfers.addAll(initialTransfers);
-            invalidateSlotsCache();
-        }
-    }
-
-    // ==================== IItemTransfer Change ====================
-
-    /**
-     * 添加一个IItemTransfer
-     * 
-     * @param transfer 要添加的传输对象
-     * @return 是否成功添加
-     */
-    public boolean addTransfer(@Nullable IItemTransfer transfer) {
+    public boolean addTransfer(@Nullable IItemHandlerModifiable transfer) {
         if (transfer == null) return false;
-        boolean added = transfers.add(transfer);
-        if (added) {
-            invalidateSlotsCache();
-        }
-        return added;
+        transfers.add(transfer); updateSlots(); return true;
     }
-
-    /**
-     * 添加多个IItemTransfer
-     * 
-     * @param transfers 要添加的传输对象列表
-     * @return 是否成功添加
-     */
-    public boolean addTransfers(@Nullable Set<IItemTransfer> transfers) {
-        if (transfers == null) return false;
-        boolean added = this.transfers.addAll(transfers);
-        if (added) {
-            invalidateSlotsCache();
-        }
-        return added;
+    public boolean addTransfers(@Nullable Collection<? extends IItemHandlerModifiable> additions) {
+        if (additions == null || additions.isEmpty()) return false;
+        for (var transfer : additions) if (transfer != null) transfers.add(transfer);
+        updateSlots(); return true;
     }
-
-    /**
-     * 在指定位置插入IItemTransfer
-     * 
-     * @param index    插入位置
-     * @param transfer 要插入的传输对象
-     * @throws IndexOutOfBoundsException 如果索引越界
-     */
-    public void addTransfer(int index, @NotNull IItemTransfer transfer) {
-        transfers.add(index, transfer);
-        invalidateSlotsCache();
+    public void addTransfer(int index, @NotNull IItemHandlerModifiable transfer) {
+        transfers.add(index, transfer); updateSlots();
     }
-
-    /**
-     * 移除指定的IItemTransfer
-     * 
-     * @param transfer 要移除的传输对象
-     * @return 是否成功移除
-     */
-    public boolean removeTransfer(@Nullable IItemTransfer transfer) {
-        boolean removed = transfers.remove(transfer);
-        if (removed) {
-            invalidateSlotsCache();
-        }
-        return removed;
+    public boolean removeTransfer(@Nullable IItemHandlerModifiable transfer) {
+        boolean changed = transfers.remove(transfer); if (changed) updateSlots(); return changed;
     }
-
-    /**
-     * 移除指定位置的IItemTransfer
-     * 
-     * @param index 要移除的位置
-     * @return 被移除的传输对象
-     * @throws IndexOutOfBoundsException 如果索引越界
-     */
-    public IItemTransfer removeTransfer(int index) {
-        IItemTransfer removed = transfers.remove(index);
-        invalidateSlotsCache();
-        return removed;
+    public IItemHandlerModifiable removeTransfer(int index) {
+        var removed = transfers.remove(index); updateSlots(); return removed;
     }
-
-    /**
-     * 移除所有满足条件的IItemTransfer
-     * 
-     * @param filter 过滤条件
-     * @return 是否有移除操作
-     */
-    public boolean removeTransfersIf(@NotNull Predicate<IItemTransfer> filter) {
-        boolean removed = transfers.removeIf(filter);
-        if (removed) {
-            invalidateSlotsCache();
-        }
-        return removed;
+    public boolean removeTransfersIf(Predicate<IItemHandlerModifiable> predicate) {
+        boolean changed = transfers.removeIf(predicate); if (changed) updateSlots(); return changed;
     }
+    public void clear() { transfers.clear(); totalSlots = 0; }
+    public int getTransferCount() { return transfers.size(); }
+    public boolean isEmpty() { return transfers.isEmpty(); }
+    @Override public int getSlots() { return totalSlots; }
 
-    /**
-     * 清空所有IItemTransfer
-     */
-    public void clear() {
-        if (!transfers.isEmpty()) {
-            transfers.clear();
-            totalSlots = 0;
-            slotsCacheDirty = false;
-        }
+    @Override public @NotNull ItemStack getStackInSlot(int slot) {
+        var pair = find(slot); return pair == null ? ItemStack.EMPTY : pair.handler.getStackInSlot(pair.slot);
     }
-
-    /**
-     * 获取传输对象的数量
-     * 
-     * @return 传输对象数量
-     */
-    public int getTransferCount() {
-        return transfers.size();
+    @Override public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+        var pair = find(slot);
+        if (pair == null) throw new IndexOutOfBoundsException("Composite inventory slot " + slot);
+        pair.handler.setStackInSlot(pair.slot, stack); onContentsChanged();
     }
-
-    /**
-     * 检查是否为空
-     * 
-     * @return 是否为空
-     */
-    public boolean isEmpty() {
-        return transfers.isEmpty();
+    @Override public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+        var pair = find(slot);
+        if (pair == null || stack.isEmpty() || !filter.test(stack)) return stack;
+        var remainder = pair.handler.insertItem(pair.slot, stack, simulate);
+        if (!simulate && remainder.getCount() != stack.getCount()) onContentsChanged();
+        return remainder;
     }
-
-    // ==================== IItemTransfer Interface ====================
-
-    @Override
-    public int getSlots() {
-        if (slotsCacheDirty) {
-            updateSlotsCache();
-        }
-        return totalSlots;
+    @Override public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+        var pair = find(slot);
+        if (pair == null || amount <= 0) return ItemStack.EMPTY;
+        var extracted = pair.handler.extractItem(pair.slot, amount, simulate);
+        if (!simulate && !extracted.isEmpty()) onContentsChanged();
+        return extracted;
     }
-
-    @Override
-    public @NotNull ItemStack getStackInSlot(int slot) {
-        if (transfers.isEmpty()) {
-            return ItemStack.EMPTY;
-        }
-
-        TransferSlotPair pair = findTransferForSlot(slot);
-        return pair != null ? pair.transfer.getStackInSlot(pair.localSlot) : ItemStack.EMPTY;
+    @Override public int getSlotLimit(int slot) {
+        var pair = find(slot); return pair == null ? 0 : pair.handler.getSlotLimit(pair.slot);
     }
-
-    @Override
-    public void setStackInSlot(int slot, @NotNull ItemStack stack) {
-        if (transfers.isEmpty()) {
-            return;
-        }
-
-        TransferSlotPair pair = findTransferForSlot(slot);
-        if (pair != null) {
-            pair.transfer.setStackInSlot(pair.localSlot, stack);
-        }
+    @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+        var pair = find(slot); return pair != null && filter.test(stack) && pair.handler.isItemValid(pair.slot, stack);
     }
+    public void onContentsChanged() { onContentsChanged.run(); }
 
-    @Override
-    public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate, boolean notifyChanges) {
-        if (transfers.isEmpty() || stack.isEmpty() || !filter.test(stack)) {
-            return stack;
-        }
-
-        TransferSlotPair pair = findTransferForSlot(slot);
-        return pair != null ?
-                pair.transfer.insertItem(pair.localSlot, stack, simulate, notifyChanges) :
-                stack;
-    }
-
-    @Override
-    public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate, boolean notifyChanges) {
-        if (transfers.isEmpty() || amount <= 0) {
-            return ItemStack.EMPTY;
-        }
-
-        TransferSlotPair pair = findTransferForSlot(slot);
-        return pair != null ?
-                pair.transfer.extractItem(pair.localSlot, amount, simulate, notifyChanges) :
-                ItemStack.EMPTY;
-    }
-
-    @Override
-    public int getSlotLimit(int slot) {
-        if (transfers.isEmpty()) {
-            return 0;
-        }
-
-        TransferSlotPair pair = findTransferForSlot(slot);
-        return pair != null ? pair.transfer.getSlotLimit(pair.localSlot) : 0;
-    }
-
-    @Override
-    public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-        if (transfers.isEmpty() || !filter.test(stack)) {
-            return false;
-        }
-
-        TransferSlotPair pair = findTransferForSlot(slot);
-        return pair != null && pair.transfer.isItemValid(pair.localSlot, stack);
-    }
-
-    @Override
-    public void onContentsChanged() {
-        for (IItemTransfer transfer : transfers) {
-            transfer.onContentsChanged();
-        }
-    }
-
-    @SuppressWarnings("all")
-    @NotNull
-    @Override
-    public Object createSnapshot() {
-        return transfers.stream().map(IItemTransfer::createSnapshot).toArray(Object[]::new);
-    }
-
-    @SuppressWarnings("all")
-    @Override
-    public void restoreFromSnapshot(Object snapshot) {
-        if (snapshot instanceof Object[] array && array.length == transfers.size()) {
-            for (int i = 0; i < array.length; i++) {
-                IItemTransfer transfer = transfers.get(i);
-                if (array[i] != null) {
-                    transfer.restoreFromSnapshot(array[i]);
-                }
-            }
-        }
-    }
-
-    // ==================== Filter ====================
-
-    /**
-     * 设置物品过滤器
-     * 
-     * @param filter 过滤器函数
-     */
-    public void setFilter(@NotNull Predicate<ItemStack> filter) {
-        this.filter = filter;
-    }
-
-    // ==================== Utils ====================
-
-    private void updateSlotsCache() {
+    private void updateSlots() {
         int slots = 0;
-        for (IItemTransfer transfer : transfers) {
-            slots += transfer.getSlots();
-        }
+        for (var transfer : transfers) slots = Math.addExact(slots, transfer.getSlots());
         totalSlots = slots;
-        slotsCacheDirty = false;
     }
-
-    private void invalidateSlotsCache() {
-        slotsCacheDirty = true;
-    }
-
-    /**
-     * 查找指定槽位对应的传输对象和本地槽位
-     * 
-     * @param globalSlot 全局槽位索引
-     * @return 传输对象和本地槽位的配对，如果未找到返回null
-     */
-    @Nullable
-    private TransferSlotPair findTransferForSlot(int globalSlot) {
-        int index = 0;
-        for (IItemTransfer transfer : transfers) {
-            if (globalSlot - index < transfer.getSlots()) {
-                return new TransferSlotPair(transfer, globalSlot - index);
-            }
-            index += transfer.getSlots();
+    private @Nullable TransferSlotPair find(int globalSlot) {
+        if (globalSlot < 0 || globalSlot >= totalSlots) return null;
+        for (var transfer : transfers) {
+            int count = transfer.getSlots();
+            if (globalSlot < count) return new TransferSlotPair(transfer, globalSlot);
+            globalSlot -= count;
         }
         return null;
     }
+    private record TransferSlotPair(IItemHandlerModifiable handler, int slot) {}
 
-    protected record TransferSlotPair(IItemTransfer transfer, int localSlot) {}
-
-    // ==================== Factory ====================
-
-    /**
-     * 创建空的ItemTransferList
-     * 
-     * @return 空的列表实例
-     */
-    public static MutableItemTransferList empty() {
-        return new MutableItemTransferList();
-    }
-
-    /**
-     * 从单个传输对象创建列表
-     * 
-     * @param transfer 传输对象
-     * @return 包含单个传输对象的列表
-     */
-    public static MutableItemTransferList of(@NotNull IItemTransfer transfer) {
-        MutableItemTransferList list = new MutableItemTransferList(1);
-        list.addTransfer(transfer);
-        return list;
-    }
-
-    /**
-     * 从多个传输对象创建列表
-     * 
-     * @param transfers 传输对象数组
-     * @return 包含所有传输对象的列表
-     */
-    public static MutableItemTransferList of(@NotNull IItemTransfer... transfers) {
-        MutableItemTransferList list = new MutableItemTransferList(transfers.length);
-        for (IItemTransfer transfer : transfers) {
-            list.addTransfer(transfer);
-        }
-        return list;
-    }
-
-    // ==================== ITagSerializable ====================
-
-    @Override
-    public CompoundTag serializeNBT() {
-        var tag = new CompoundTag();
-        var list = new ListTag();
+    public Object createSnapshot() {
+        var inventories = new ArrayList<List<ItemStack>>();
         for (var transfer : transfers) {
-            if (transfer instanceof ItemStackTransfer serializable) {
-                list.add(serializable.serializeNBT());
-            } else {
-                LDLib.LOGGER.warn("[ItemTransferList] internal container doesn't support serialization");
-            }
+            var items = new ArrayList<ItemStack>();
+            for (int slot = 0; slot < transfer.getSlots(); slot++) items.add(transfer.getStackInSlot(slot).copy());
+            inventories.add(items);
         }
-        tag.put("slots", list);
-        return tag;
+        return new Snapshot(List.copyOf(transfers), inventories);
     }
-
-    @Override
-    public void deserializeNBT(CompoundTag nbt) {
-        var list = nbt.getList("slots", Tag.TAG_COMPOUND);
-        transfers.clear();
-        for (Tag tag : list) {
-            if (tag instanceof CompoundTag compoundTag) {
-                var itemStackTransfer = new ItemStackTransfer();
-                itemStackTransfer.deserializeNBT(compoundTag);
-                this.addTransfer(itemStackTransfer);
-            } else {
-                LDLib.LOGGER.warn("[ItemTransferList] internal container doesn't support serialization");
-            }
+    public void restoreFromSnapshot(Object snapshot) {
+        if (!(snapshot instanceof Snapshot saved) || saved.handlers.size() != transfers.size())
+            throw new IllegalArgumentException("Snapshot does not match the composite inventory");
+        for (int i = 0; i < transfers.size(); i++) {
+            if (saved.handlers.get(i) != transfers.get(i) || saved.items.get(i).size() != transfers.get(i).getSlots())
+                throw new IllegalArgumentException("Snapshot source inventory changed");
         }
+        for (int i = 0; i < transfers.size(); i++) {
+            var transfer = transfers.get(i); var items = saved.items.get(i);
+            for (int slot = 0; slot < items.size(); slot++) transfer.setStackInSlot(slot, items.get(slot).copy());
+        }
+        onContentsChanged();
     }
+    private record Snapshot(List<IItemHandlerModifiable> handlers, List<List<ItemStack>> items) {}
 
-    // ==================== Object ====================
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof MutableItemTransferList other)) return false;
-        return transfers.equals(other.transfers);
-    }
-
-    @Override
-    public int hashCode() {
-        return transfers.hashCode();
+    public static MutableItemTransferList empty() { return new MutableItemTransferList(); }
+    public static MutableItemTransferList of(IItemHandlerModifiable... handlers) {
+        return new MutableItemTransferList(List.of(handlers));
     }
 }

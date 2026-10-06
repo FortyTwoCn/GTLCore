@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.gtladd.gtladditions.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "neoforge.FluidStackDisplayMixin",
+    "gtmtings.WirelessEnergyManagerMixin",
+    "gtmtings.WirelessEnergyMonitorMixin",
+    "gtceu.registry.QueuedMachineBuilderMixin",
+    "gtceu.registry.DefaultRecipeLogicMixin",
+    "gtceu.api.recipe.GTRecipeLookupMixin",
+    "gtceu.recipe.GTRecipeTypeMixin",
+    "gtceu.recipe.RecipeLogicProviderMixin",
+    "gtceu.recipe.NativeWirelessRecipeSerializerMixin",
+    "gtlcore.machine.trait.MECraftHandlerMixin",
+    "gtlcore.machine.part.MEPatternBufferPartMachineBaseMixin",
+    "gtlcore.machine.part.MEPatternBufferPartMachineMixin",
+    "gtceu.common.item.DataItemBehaviorMixin",
+    "gtceu.recipe.NativeWirelessRecipeTickMixin",
+    "gtlcore.machine.trait.MultipleRecipesLogicMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

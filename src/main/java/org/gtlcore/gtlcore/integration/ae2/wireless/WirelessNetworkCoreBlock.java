@@ -1,12 +1,9 @@
 package org.gtlcore.gtlcore.integration.ae2.wireless;
 
-import org.gtlcore.gtlcore.client.ae2.wireless.WirelessNetworkCoreRenderer;
-
 import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.data.RotationState;
+import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
-
-import com.lowdragmc.lowdraglib.client.renderer.IRenderer;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -14,12 +11,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
@@ -36,12 +33,7 @@ public class WirelessNetworkCoreBlock extends MetaMachineBlock {
 
     public WirelessNetworkCoreBlock() {
         super(prepareProperties(), WirelessNetworkCoreBlockEntity.definition());
-        RotationState.clear();
-    }
-
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new WirelessNetworkCoreBlockEntity(pos, state);
+        MachineDefinition.clearBuilt();
     }
 
     @Override
@@ -50,18 +42,18 @@ public class WirelessNetworkCoreBlock extends MetaMachineBlock {
     }
 
     @Override
-    public IRenderer getRenderer(@NotNull BlockState state) {
-        return WirelessNetworkCoreRenderer.INSTANCE;
+    public @NotNull ItemInteractionResult useItemOn(ItemStack heldStack, @NotNull BlockState state, @NotNull Level level,
+                                                    @NotNull BlockPos pos, Player player, @NotNull InteractionHand hand,
+                                                    @NotNull BlockHitResult hit) {
+        if (!ToolHelper.getToolTypes(heldStack).isEmpty()) {
+            return super.useItemOn(heldStack, state, level, pos, player, hand, hit);
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, Player player, @NotNull InteractionHand hand,
-                                          @NotNull BlockHitResult hit) {
-        ItemStack heldStack = player.getItemInHand(hand);
-        if (!ToolHelper.getToolTypes(heldStack).isEmpty()) {
-            return super.use(state, level, pos, player, hand, hit);
-        }
-
+    public @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level level,
+                                                     @NotNull BlockPos pos, Player player, @NotNull BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof WirelessNetworkCoreBlockEntity core) {
             WirelessNetworkCoreMenu.open(serverPlayer, core);
         }
@@ -90,7 +82,7 @@ public class WirelessNetworkCoreBlock extends MetaMachineBlock {
     }
 
     private static BlockBehaviour.Properties prepareProperties() {
-        RotationState.set(RotationState.ALL);
+        MachineDefinition.setBuilt(WirelessNetworkCoreBlockEntity.definition());
         return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.COLOR_PURPLE)
                 .strength(5.0F)

@@ -1,44 +1,47 @@
 package org.gtlcore.gtlcore.client.renderer.machine;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.gtlcore.gtlcore.api.GTLConstants;
 import org.gtlcore.gtlcore.client.ClientUtil;
 import org.gtlcore.gtlcore.client.renderer.RenderBufferHelper;
-import org.gtlcore.gtlcore.common.machine.multiblock.electric.SpaceElevatorMachine;
 import org.gtlcore.gtlcore.utils.RenderUtil;
 
-import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.client.renderer.GTRenderTypes;
-import com.gregtechceu.gtceu.client.renderer.machine.WorkableCasingMachineRenderer;
 
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.serialization.MapCodec;
+import com.gregtechceu.gtceu.client.renderer.machine.DynamicRender;
+import com.gregtechceu.gtceu.client.renderer.machine.DynamicRenderType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.function.Consumer;
 
-public class SpaceElevatorRenderer extends WorkableCasingMachineRenderer {
+public class SpaceElevatorRenderer extends DynamicRender<WorkableMultiblockMachine, SpaceElevatorRenderer> {
 
-    private static final ResourceLocation CLIMBER_MODEL = GTLCore.id("obj/climber");
+    public static final ResourceLocation CLIMBER_MODEL = GTLConstants.id("obj/climber");
 
-    public SpaceElevatorRenderer() {
-        super(GTLCore.id("block/space_elevator_mechanical_casing"), GTCEu.id("block/multiblock/data_bank"));
+    public static final MapCodec<SpaceElevatorRenderer> CODEC = MapCodec.unit(SpaceElevatorRenderer::new);
+    public static final DynamicRenderType<WorkableMultiblockMachine, SpaceElevatorRenderer> TYPE = new DynamicRenderType<>(CODEC);
+
+    @Override
+    public DynamicRenderType<WorkableMultiblockMachine, SpaceElevatorRenderer> getType() {
+        return TYPE;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void render(BlockEntity blockEntity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer,
+    public void render(WorkableMultiblockMachine machine, float partialTicks, PoseStack poseStack, MultiBufferSource buffer,
                        int combinedLight, int combinedOverlay) {
-        if (blockEntity instanceof IMachineBlockEntity machineBlockEntity &&
-                machineBlockEntity.getMetaMachine() instanceof SpaceElevatorMachine machine && machine.isFormed()) {
+        if (machine.isFormed()) {
             float tick = RenderUtil.getSmoothTick(machine, partialTicks);
             double x = 0.5, y = 1, z = 0.5;
             switch (machine.getFrontFacing()) {
@@ -48,7 +51,7 @@ public class SpaceElevatorRenderer extends WorkableCasingMachineRenderer {
                 case EAST -> x = -2.5;
             }
             poseStack.pushPose();
-            RenderBufferHelper.renderCylinder(poseStack, buffer.getBuffer(GTRenderTypes.getLightRing()), (float) x, (float) (y - 2), (float) z, 0.3F, 360, 10, 0, 0, 0, 255);
+            RenderBufferHelper.renderCylinder(poseStack, buffer.getBuffer(GTRenderTypes.lightRing()), (float) x, (float) (y - 2), (float) z, 0.3F, 360, 10, 0, 0, 0, 1);
             poseStack.translate(x, y + 180 + (140 * Math.sin(tick / 160)), z);
             renderClimber(poseStack, buffer);
             poseStack.popPose();
@@ -64,21 +67,18 @@ public class SpaceElevatorRenderer extends WorkableCasingMachineRenderer {
     }
 
     @Override
-    public void onAdditionalModel(Consumer<ResourceLocation> registry) {
-        super.onAdditionalModel(registry);
-        registry.accept(CLIMBER_MODEL);
+    public boolean shouldRender(WorkableMultiblockMachine machine, Vec3 cameraPos) {
+        return machine.isFormed() && super.shouldRender(machine, cameraPos);
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean hasTESR(BlockEntity blockEntity) {
-        return true;
+    public boolean shouldRenderOffScreen(WorkableMultiblockMachine machine) {
+        return machine.isFormed();
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean isGlobalRenderer(BlockEntity blockEntity) {
-        return true;
+    public AABB getRenderBoundingBox(WorkableMultiblockMachine machine) {
+        return new AABB(machine.getBlockPos()).inflate(getViewDistance());
     }
 
     @Override

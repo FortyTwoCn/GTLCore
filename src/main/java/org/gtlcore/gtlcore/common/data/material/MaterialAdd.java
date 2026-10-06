@@ -46,7 +46,7 @@ public class MaterialAdd {
         Europium.addFlags(MaterialFlags.GENERATE_SPRING_SMALL);
         Germanium.setProperty(PropertyKey.INGOT, new IngotProperty());
         Germanium.addFlags(MaterialFlags.GENERATE_PLATE);
-        Germanium.setProperty(PropertyKey.BLAST, new BlastProperty(3800, BlastProperty.GasTier.MID, GTValues.VA[GTValues.HV], 700));
+        Germanium.setProperty(PropertyKey.BLAST, new BlastProperty(3800, BlastProperty.GasTier.MID, GTValues.VA[GTValues.HV], 700, -1, -1));
         Sodium.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
         Seaborgium.setProperty(PropertyKey.INGOT, new IngotProperty());
         Seaborgium.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
@@ -56,7 +56,7 @@ public class MaterialAdd {
         Dubnium.addFlags(MaterialFlags.GENERATE_FINE_WIRE);
         Rhenium.setProperty(PropertyKey.INGOT, new IngotProperty());
         Rhenium.addFlags(MaterialFlags.GENERATE_PLATE);
-        Rhenium.setProperty(PropertyKey.BLAST, new BlastProperty(7400, BlastProperty.GasTier.MID, GTValues.VA[GTValues.EV], 900));
+        Rhenium.setProperty(PropertyKey.BLAST, new BlastProperty(7400, BlastProperty.GasTier.MID, GTValues.VA[GTValues.EV], 900, -1, -1));
         Calcium.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
         Calcium.setProperty(PropertyKey.INGOT, new IngotProperty());
         Praseodymium.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
@@ -83,10 +83,10 @@ public class MaterialAdd {
         Promethium.setProperty(PropertyKey.DUST, new DustProperty());
         Polonium.setProperty(PropertyKey.INGOT, new IngotProperty());
         Polonium.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
-        Polonium.setProperty(PropertyKey.BLAST, new BlastProperty(3700, BlastProperty.GasTier.MID, GTValues.VA[GTValues.IV], 400));
+        Polonium.setProperty(PropertyKey.BLAST, new BlastProperty(3700, BlastProperty.GasTier.MID, GTValues.VA[GTValues.IV], 400, -1, -1));
         Hafnium.setProperty(PropertyKey.INGOT, new IngotProperty());
         Hafnium.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
-        Hafnium.setProperty(PropertyKey.BLAST, new BlastProperty(6800, BlastProperty.GasTier.MID, GTValues.VA[GTValues.HV], 1100));
+        Hafnium.setProperty(PropertyKey.BLAST, new BlastProperty(6800, BlastProperty.GasTier.MID, GTValues.VA[GTValues.HV], 1100, -1, -1));
         EnderEye.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
         EnderPearl.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
         Protactinium.setProperty(PropertyKey.DUST, new DustProperty());
@@ -120,7 +120,7 @@ public class MaterialAdd {
         Rubidium.setProperty(PropertyKey.DUST, new DustProperty());
         Rubidium.setProperty(PropertyKey.FLUID, new FluidProperty(FluidStorageKeys.LIQUID, new FluidBuilder()));
         Technetium.setProperty(PropertyKey.INGOT, new IngotProperty());
-        Technetium.setProperty(PropertyKey.BLAST, new BlastProperty(5600, BlastProperty.GasTier.MID, GTValues.VA[GTValues.HV], 800));
+        Technetium.setProperty(PropertyKey.BLAST, new BlastProperty(5600, BlastProperty.GasTier.MID, GTValues.VA[GTValues.HV], 800, -1, -1));
         Technetium.addFlags(MaterialFlags.GENERATE_PLATE);
         Francium.setProperty(PropertyKey.DUST, new DustProperty());
         Strontium.setProperty(PropertyKey.DUST, new DustProperty());

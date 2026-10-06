@@ -2,7 +2,7 @@ package org.gtlcore.gtlcore.integration.ae2.crafting;
 
 import org.gtlcore.gtlcore.config.ConfigHolder;
 
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import appeng.api.networking.crafting.ICraftingSubmitResult;
 import appeng.api.networking.security.IActionSource;

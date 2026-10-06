@@ -10,7 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.network.NetworkHooks;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -51,9 +50,7 @@ public class WirelessNetworkBookmarkMenu extends AbstractContainerMenu {
                 .map(network -> new Entry(network.frequency(), network.name()))
                 .toList();
         UUID favoriteNetwork = data.getFavoriteNetwork(player);
-        NetworkHooks.openScreen(
-                player,
-                new MenuProvider() {
+        player.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {

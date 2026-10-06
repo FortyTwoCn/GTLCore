@@ -1,0 +1,44 @@
+{
+  "gtceu_reference_commit": "c72dc16b52795cbb0456b6e15e13cc4a85c0ed1b",
+  "native_hpca": {
+    "component": "HPCAComponentPartMachine",
+    "computation_trait": "HPCAComputationProviderTrait",
+    "normal_cwut": 8,
+    "advanced_cwut": 32,
+    "damaged_cwut": 0,
+    "persistent_trait_key": "gtlcore_hpca_component",
+    "preserved": "Native cooling, upkeep/max EU, structure validation, damage warnings and repair behavior"
+  },
+  "native_sync_fixes": [
+    "Native HPCAComponentTrait.setDamaged must dirty isDamaged rather than damaged",
+    "The attached component trait is also registered for native persistence; changing it dirties the owner traitHolder packet",
+    "invalidateStructure(String) clears the stale native pattern entity cache and resets its check state before reformation"
+  ],
+  "optical_computation_provider": {
+    "production_source": "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/electric/ComputationProviderMachine.java",
+    "finite_capacity_by_tier": {
+      "UIV": 1024,
+      "UXV": 2048,
+      "OpV": 4096,
+      "MAX": 8192
+    },
+    "required_mainframes": 8,
+    "generation_per_request": "1 << tier, bounded by capacity; requires real native tick energy",
+    "infinite_request_eu": 2147483647,
+    "direct_overloads": "Start an empty traversal to preserve repeated-visit rejection with native convenience methods",
+    "reservation": "Subtract allocations already made this tick from the finite buffer; simulations reserve nothing and use the same native energy budget checks",
+    "persistence": "Native SaveField totalCWU; transient allocations clear at invalidation and each server tick",
+    "fixture_limits": "Reduced structures use actual native GT energy/input hatches. The finite test registers a stand-in kubejs:optical_mainframe; it does not validate the entire pack or original structure registration."
+  },
+  "machine_tooltips": "Twelve original machine definitions are adjusted before native builder freeze while preserving inherited callbacks; native HPCA quantities and steam/EBF/LCR/research text are checked in FML",
+  "verified_scope": [
+    "Four JUnit tests using actual native HPCA production entries/traits, damage NBT/client packets and native machine tooltip builders",
+    "One actual native powered nine-component HPCA world test including damage, entity replacement, correct controller-part rebinding and repair",
+    "Two reduced-structure optical provider world tests covering direct/traversed requests, pure simulation, exact energy draw, finite reservations, mainframe removal, power-button pause/resume and entity recreation"
+  ],
+  "not_verified": [
+    "Full Core/Additions build/startup",
+    "Full production super_computation/create_computation structures and pack item definitions",
+    "Full AE transfinite CPU job submission, graph executor and controller/interface GUI; those classes remain work in progress"
+  ]
+}

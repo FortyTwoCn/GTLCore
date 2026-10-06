@@ -5,6 +5,7 @@ import org.gtlcore.gtlcore.api.data.chemical.material.info.GTLMaterialIconSet;
 import org.gtlcore.gtlcore.api.item.tool.GTLToolType;
 import org.gtlcore.gtlcore.common.data.GTLElements;
 import org.gtlcore.gtlcore.config.ConfigHolder;
+import org.gtlcore.gtlcore.common.data.GTLCallbackMaterials;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
@@ -25,6 +26,7 @@ import static org.gtlcore.gtlcore.common.data.GTLMaterials.*;
 public class MaterialBuilder {
 
     public static void init() {
+        GTLCallbackMaterials.init();
         BarnardaAir = new Material.Builder(GTCEu.id("barnarda_air"))
                 .gas()
                 .color(0x563a24)
@@ -2560,11 +2562,8 @@ public class MaterialBuilder {
                 .iconSet(DULL)
                 .buildAndRegister();
 
-        UnknowWater = new Material.Builder(GTCEu.id("unknowwater"))
-                .fluid()
-                .color(0x3322aa)
-                .iconSet(DULL)
-                .buildAndRegister().setFormula("?");
+        org.gtlcore.gtlcore.common.data.GTLWorldgenMaterials.init();
+        UnknowWater = org.gtlcore.gtlcore.common.data.GTLWorldgenMaterials.UnknowWater;
 
         UnknownNutrientAgar = new Material.Builder(GTCEu.id("unknownnutrientagar"))
                 .fluid()
@@ -2759,17 +2758,9 @@ public class MaterialBuilder {
                 .iconSet(BRIGHT)
                 .buildAndRegister();
 
-        Photoresist = new Material.Builder(GTCEu.id("photoresist"))
-                .fluid()
-                .color(0x2f4f4f)
-                .iconSet(BRIGHT)
-                .buildAndRegister();
+        Photoresist = GTLCallbackMaterials.Photoresist;
 
-        EuvPhotoresist = new Material.Builder(GTCEu.id("euv_photoresist"))
-                .fluid()
-                .color(0x4b0082)
-                .iconSet(BRIGHT)
-                .buildAndRegister();
+        EuvPhotoresist = GTLCallbackMaterials.EuvPhotoresist;
 
         GammaRaysPhotoresist = new Material.Builder(GTCEu.id("gamma_rays_photoresist"))
                 .fluid()
@@ -3484,13 +3475,7 @@ public class MaterialBuilder {
                 .flags(DISABLE_DECOMPOSITION)
                 .buildAndRegister();
 
-        GradePurifiedWater8 = new Material.Builder(GTCEu.id("grade_8_purified_water"))
-                .fluid()
-                .components(Water, 1)
-                .color(0x0058cd)
-                .iconSet(FLUID)
-                .flags(DISABLE_DECOMPOSITION)
-                .buildAndRegister();
+        GradePurifiedWater8 = GTLCallbackMaterials.GradePurifiedWater8;
 
         GradePurifiedWater9 = new Material.Builder(GTCEu.id("grade_9_purified_water"))
                 .fluid()
@@ -3548,13 +3533,7 @@ public class MaterialBuilder {
                 .flags(DISABLE_DECOMPOSITION)
                 .buildAndRegister();
 
-        GradePurifiedWater16 = new Material.Builder(GTCEu.id("grade_16_purified_water"))
-                .fluid()
-                .components(Water, 1)
-                .color(0x0058cd)
-                .iconSet(FLUID)
-                .flags(DISABLE_DECOMPOSITION)
-                .buildAndRegister();
+        GradePurifiedWater16 = GTLCallbackMaterials.GradePurifiedWater16;
 
         Antimatter = new Material.Builder(GTCEu.id("antimatter"))
                 .fluid()
@@ -4435,17 +4414,9 @@ public class MaterialBuilder {
                 .color(0xF9F6CF).iconSet(SAND)
                 .buildAndRegister();
 
-        MutatedLivingSolder = new Material.Builder(GTCEu.id("mutated_living_solder"))
-                .fluid()
-                .color(0xC18FCC).iconSet(METALLIC)
-                .radioactiveHazard(1)
-                .buildAndRegister();
+        MutatedLivingSolder = GTLCallbackMaterials.MutatedLivingSolder;
 
-        SuperMutatedLivingSolder = new Material.Builder(GTCEu.id("super_mutated_living_solder"))
-                .fluid()
-                .color(0xB662FF).iconSet(METALLIC)
-                .radioactiveHazard(2)
-                .buildAndRegister();
+        SuperMutatedLivingSolder = GTLCallbackMaterials.SuperMutatedLivingSolder;
 
         HexafluorideEnrichedNaquadahSolution = new Material.Builder(GTCEu.id("hexafluoride_enriched_naquadah_solution"))
                 .fluid()
@@ -4566,12 +4537,7 @@ public class MaterialBuilder {
                 .flags(DISABLE_DECOMPOSITION)
                 .buildAndRegister().setFormula("*Nq*F2CsF(SO4)2", true);
 
-        SupercriticalSteam = new Material.Builder(GTCEu.id("supercritical_steam"))
-                .gas(new FluidBuilder().temperature(1000))
-                .color(0xC4C4C4)
-                .components(Water, 1)
-                .flags(DISABLE_DECOMPOSITION)
-                .buildAndRegister();
+        SupercriticalSteam = GTLCallbackMaterials.SupercriticalSteam;
 
         WaterAgarMix = new Material.Builder(GTCEu.id("water_agar_mix"))
                 .fluid()
@@ -5118,12 +5084,8 @@ public class MaterialBuilder {
                 .flags(DISABLE_DECOMPOSITION)
                 .buildAndRegister();
 
-        HydrogenPeroxide = new Material.Builder(GTCEu.id("hydrogen_peroxide"))
-                .fluid()
-                .components(Hydrogen, 2, Oxygen, 2)
-                .color(0xC8FFFF).iconSet(GTLMaterialIconSet.LIMPID)
-                .flags(DISABLE_DECOMPOSITION)
-                .buildAndRegister();
+        org.gtlcore.gtlcore.common.data.GTLMaterials.HydrogenPeroxide = com.gregtechceu.gtceu.common.data.GTMaterials.HydrogenPeroxide;
+        org.gtlcore.gtlcore.common.data.GTLMaterials.HydrogenPeroxide.addFlags(DISABLE_DECOMPOSITION);
 
         RareEarthChlorides = new Material.Builder(GTCEu.id("rare_earth_chlorides"))
                 .fluid()
@@ -5395,6 +5357,8 @@ public class MaterialBuilder {
         SamariumChlorideSodiumChlorideMixturePowder = new Material.Builder(GTCEu.id("samarium_chloride_sodium_chloride_mixture_powder"))
                 .dust()
                 .components(Samarium, 1, Chlorine, 3, Sodium, 1, Chlorine, 1)
+                // The rare-earth process supplies its explicit 7680 EU/t electrolysis route.
+                .flags(DISABLE_DECOMPOSITION)
                 .color(0xC0C0C0)
                 .iconSet(SAND)
                 .buildAndRegister();

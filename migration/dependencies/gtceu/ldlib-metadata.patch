@@ -1,0 +1,14 @@
+diff --git a/src/main/templates/META-INF/neoforge.mods.toml b/src/main/templates/META-INF/neoforge.mods.toml
+index e55da157d..6b3dd5f1d 100644
+--- a/src/main/templates/META-INF/neoforge.mods.toml
++++ b/src/main/templates/META-INF/neoforge.mods.toml
+@@ -22,9 +22,6 @@ enumExtensions = "META-INF/enum_extensions.json"
+ [[mixins]]
+     config = "mixin_configs/${mod_id}-neoforge.mixins.json"
+     requiredMods = ["neoforge"]
+-[[mixins]]
+-    config = "mixin_configs/${mod_id}-ldlib.mixins.json"
+-    requiredMods = ["ldlib"]
+ [[mixins]]
+     config = "mixin_configs/${mod_id}-sodium.mixins.json"
+     requiredMods = ["sodium"]

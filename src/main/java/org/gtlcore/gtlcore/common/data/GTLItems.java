@@ -1,6 +1,5 @@
 package org.gtlcore.gtlcore.common.data;
 
-import org.gtlcore.gtlcore.client.renderer.item.VirtualIngredientRenderer;
 import org.gtlcore.gtlcore.common.item.*;
 import org.gtlcore.gtlcore.integration.ae2.FastInfinityCell;
 import org.gtlcore.gtlcore.integration.ae2.InfinityCell;
@@ -10,11 +9,10 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.item.ComponentItem;
 import com.gregtechceu.gtceu.api.item.component.ElectricStats;
-import com.gregtechceu.gtceu.api.item.component.ICustomRenderer;
 import com.gregtechceu.gtceu.client.util.TooltipHelper;
 import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.common.item.CoverPlaceBehavior;
-import com.gregtechceu.gtceu.common.item.TooltipBehavior;
+import com.gregtechceu.gtceu.common.item.behavior.CoverPlaceBehavior;
+import com.gregtechceu.gtceu.common.item.behavior.TooltipBehavior;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -63,8 +61,6 @@ public class GTLItems {
         return REGISTRATE
                 .item((isItem ? "item" : "fluid") + "_storage_cell_" + tier + "m", p -> new BasicStorageCell(
                         p.stacksTo(1),
-                        StorageComponent,
-                        CELL_HOUSING,
                         3 + 0.5 * Math.log(tier) / Math.log(4),
                         1024 * tier,
                         1,
@@ -113,6 +109,11 @@ public class GTLItems {
     public static final ItemEntry<InfinityCell> FLUID_INFINITY_CELL = REGISTRATE.item("fluid_infinity_cell", p -> new InfinityCell(AEKeyType.fluids())).register();
     public static final ItemEntry<FastInfinityCell> FAST_INFINITY_CELL = REGISTRATE.item("fast_infinity_cell", p -> new FastInfinityCell()).register();
 
+    public static final ItemEntry<net.minecraft.world.item.Item> CIRCUIT_INFINITY_CELL =
+            net.neoforged.fml.ModList.get().isLoaded("extendedae") ?
+                    REGISTRATE.item("infinite_circuit_cell", org.gtlcore.gtlcore.integration.extendedae.NativeInfiniteCircuitCell::create)
+                            .register() : null;
+
     public static void InitUpgrades() {
         String storageCellGroup = GuiText.StorageCells.getTranslationKey();
         String portableCellGroup = GuiText.PortableCells.getTranslationKey();
@@ -149,28 +150,28 @@ public class GTLItems {
     }
 
     public static ItemEntry<ComponentItem> REALLY_ULTIMATE_BATTERY = REGISTRATE
-            .item("really_max_battery", ComponentItem::create)
+            .item("really_max_battery", ComponentItem::new)
             .onRegister(
                     attach(new TooltipBehavior(lines -> lines.add(Component.translatable("tooltip.gtlcore.complete_gtceu_modern").withStyle(ChatFormatting.GRAY)))))
             .onRegister(modelPredicate(GTCEu.id("battery"), ElectricStats::getStoredPredicate))
             .onRegister(attach(ElectricStats.createRechargeableBattery(Long.MAX_VALUE, GTValues.UEV)))
             .register();
     public static ItemEntry<ComponentItem> TRANSCENDENT_ULTIMATE_BATTERY = REGISTRATE
-            .item("transcendent_max_battery", ComponentItem::create)
+            .item("transcendent_max_battery", ComponentItem::new)
             .onRegister(
                     attach(new TooltipBehavior(lines -> lines.add(Component.translatable("tooltip.gtlcore.complete_gt_leisure").withStyle(ChatFormatting.GRAY)))))
             .onRegister(modelPredicate(GTCEu.id("battery"), ElectricStats::getStoredPredicate))
             .onRegister(attach(ElectricStats.createRechargeableBattery(Long.MAX_VALUE, GTValues.UIV)))
             .register();
     public static ItemEntry<ComponentItem> EXTREMELY_ULTIMATE_BATTERY = REGISTRATE
-            .item("extremely_max_battery", ComponentItem::create)
+            .item("extremely_max_battery", ComponentItem::new)
             .onRegister(
                     attach(new TooltipBehavior(lines -> lines.add(Component.translatable("tooltip.gtlcore.fill_in_lifetime").withStyle(ChatFormatting.GRAY)))))
             .onRegister(modelPredicate(GTCEu.id("battery"), ElectricStats::getStoredPredicate))
             .onRegister(attach(ElectricStats.createRechargeableBattery(Long.MAX_VALUE, GTValues.UXV)))
             .register();
     public static ItemEntry<ComponentItem> INSANELY_ULTIMATE_BATTERY = REGISTRATE
-            .item("insanely_max_battery", ComponentItem::create)
+            .item("insanely_max_battery", ComponentItem::new)
             .onRegister(
                     attach(new TooltipBehavior(
                             lines -> lines.add(Component.literal(TextUtil.dark_purplish_red(Component.translatable("tooltip.gtlcore.fill_for_fun").getString()))))))
@@ -178,7 +179,7 @@ public class GTLItems {
             .onRegister(attach(ElectricStats.createRechargeableBattery(Long.MAX_VALUE, GTValues.OpV)))
             .register();
     public static ItemEntry<ComponentItem> MEGA_ULTIMATE_BATTERY = REGISTRATE
-            .item("mega_max_battery", ComponentItem::create)
+            .item("mega_max_battery", ComponentItem::new)
             .onRegister(
                     attach(new TooltipBehavior(
                             lines -> lines.add(Component.literal(TextUtil.full_color(Component.translatable("tooltip.gtlcore.fill_battery_ascension").getString()))))))
@@ -189,7 +190,7 @@ public class GTLItems {
     public static ItemEntry<Item> ELECTRIC_MOTOR_MAX = REGISTRATE.item("max_electric_motor", Item::new).register();
 
     public static ItemEntry<ComponentItem> FLUID_REGULATOR_MAX = REGISTRATE
-            .item("max_fluid_regulator", ComponentItem::create)
+            .item("max_fluid_regulator", ComponentItem::new)
             .onRegister(attach(new CoverPlaceBehavior(GTLCovers.FLUID_REGULATOR_MAX)))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("item.gtceu.fluid.regulator.tooltip"));
@@ -198,7 +199,7 @@ public class GTLItems {
             .register();
 
     public static ItemEntry<ComponentItem> ELECTRIC_PUMP_MAX = REGISTRATE
-            .item("max_electric_pump", ComponentItem::create)
+            .item("max_electric_pump", ComponentItem::new)
             .onRegister(attach(new CoverPlaceBehavior(GTLCovers.ELECTRIC_PUMP_MAX)))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("item.gtceu.electric.pump.tooltip"));
@@ -208,7 +209,7 @@ public class GTLItems {
             .register();
 
     public static ItemEntry<ComponentItem> CONVEYOR_MODULE_MAX = REGISTRATE
-            .item("max_conveyor_module", ComponentItem::create)
+            .item("max_conveyor_module", ComponentItem::new)
             .onRegister(attach(new CoverPlaceBehavior(GTLCovers.CONVEYOR_MODULE_MAX)))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("item.gtceu.conveyor.module.tooltip"));
@@ -216,7 +217,7 @@ public class GTLItems {
             })))
             .register();
 
-    public static ItemEntry<ComponentItem> ROBOT_ARM_MAX = REGISTRATE.item("max_robot_arm", ComponentItem::create)
+    public static ItemEntry<ComponentItem> ROBOT_ARM_MAX = REGISTRATE.item("max_robot_arm", ComponentItem::new)
             .onRegister(attach(new CoverPlaceBehavior(GTLCovers.ROBOT_ARM_MAX)))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("item.gtceu.robot.arm.tooltip"));
@@ -230,7 +231,7 @@ public class GTLItems {
     public static ItemEntry<Item> SENSOR_MAX = register("max_sensor", true);
 
     public static ItemEntry<ComponentItem> PRIMITIVE_ROBOT_ARM = REGISTRATE
-            .item("primitive_robot_arm", ComponentItem::create)
+            .item("primitive_robot_arm", ComponentItem::new)
             .onRegister(attach(new CoverPlaceBehavior(GTLCovers.ROBOT_ARM_ULV)))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("item.gtceu.robot.arm.tooltip"));
@@ -239,7 +240,7 @@ public class GTLItems {
             .register();
 
     public static ItemEntry<ComponentItem> PRIMITIVE_FLUID_REGULATOR = REGISTRATE
-            .item("primitive_fluid_regulator", ComponentItem::create)
+            .item("primitive_fluid_regulator", ComponentItem::new)
             .onRegister(attach(new CoverPlaceBehavior(GTLCovers.FLUID_REGULATORS_ULV)))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("item.gtceu.fluid.regulator.tooltip"));
@@ -250,7 +251,7 @@ public class GTLItems {
     private static ItemEntry<ComponentItem> registerTieredCover(int amperage) {
         ItemEntry<ComponentItem> cover = GTMTHINGS_REGISTRATE
                 .item(GTValues.VN[GTValues.MAX].toLowerCase(Locale.ROOT) + "_" +
-                        (amperage == 1 ? "" : amperage + "a_") + "wireless_energy_receive_cover", ComponentItem::create)
+                        (amperage == 1 ? "" : amperage + "a_") + "wireless_energy_receive_cover", ComponentItem::new)
                 .onRegister(attach(new TooltipBehavior(lines -> {
                     lines.add(Component.translatable("item.gtmthings.wireless_energy_receive_cover.tooltip.1"));
                     lines.add(Component.translatable("item.gtmthings.wireless_energy_receive_cover.tooltip.2"));
@@ -268,28 +269,28 @@ public class GTLItems {
     public static ItemEntry<ComponentItem> WIRELESS_ENERGY_RECEIVE_COVER_MAX_4A = registerTieredCover(4);
 
     public static final ItemEntry<ComponentItem> DEBUG_STRUCTURE_WRITER = REGISTRATE
-            .item("debug_structure_writer", ComponentItem::create)
+            .item("debug_structure_writer", ComponentItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(GTItems.attach(StructureWriteBehavior.INSTANCE))
             .model(NonNullBiConsumer.noop())
             .register();
 
     public static final ItemEntry<ComponentItem> DEBUG_PATTERN_TEST = REGISTRATE
-            .item("debug_pattern_test", ComponentItem::create)
+            .item("debug_pattern_test", ComponentItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(GTItems.attach(PatternTestBehavior.INSTANCE))
             .model(NonNullBiConsumer.noop())
             .register();
 
     public static final ItemEntry<ComponentItem> PATTERN_MODIFIER = REGISTRATE
-            .item("pattern_modifier", ComponentItem::create)
+            .item("pattern_modifier", ComponentItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(GTItems.attach(PatternModifier.INSTANCE))
             .model(NonNullBiConsumer.noop())
             .register();
 
     public static ItemEntry<ComponentItem> CFG_COPY = REGISTRATE
-            .item("cfg_copy", ComponentItem::create)
+            .item("cfg_copy", ComponentItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(attach(ConfigurationCopyBehavior.INSTANCE, new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("tooltip.gtlcore.cfg_copy"));
@@ -298,14 +299,14 @@ public class GTLItems {
             .register();
 
     public static ItemEntry<ComponentItem> STRUCTURE_DETECT = REGISTRATE
-            .item("structure_detect", ComponentItem::create)
+            .item("structure_detect", ComponentItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(attach(StructureDetectBehavior.INSTANCE))
             .model(NonNullBiConsumer.noop())
             .register();
 
     public static ItemEntry<ComponentItem> ME_PATTERN_BUFFER_COPY = REGISTRATE
-            .item("me_pattern_buffer_copy", ComponentItem::create)
+            .item("me_pattern_buffer_copy", ComponentItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(attach(MEPatternBufferCopyBehavior.INSTANCE))
             .model(NonNullBiConsumer.noop())
@@ -319,7 +320,7 @@ public class GTLItems {
             .register();
 
     public static ItemEntry<ComponentItem> PATTERN_BOX = REGISTRATE
-            .item("pattern_box", ComponentItem::create)
+            .item("pattern_box", ComponentItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(attach(PatternBoxBehavior.INSTANCE, new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("tooltip.gtlcore.pattern_box_open", PatternBoxBehavior.getSlotCount())
@@ -330,11 +331,10 @@ public class GTLItems {
             .model(NonNullBiConsumer.noop())
             .register();
 
-    public static ItemEntry<ComponentItem> VIRTUAL_INGREDIENT = REGISTRATE
-            .item("virtual_ingredient", ComponentItem::create)
+    public static ItemEntry<VirtualIngredientItem> VIRTUAL_INGREDIENT = REGISTRATE
+            .item("virtual_ingredient", VirtualIngredientItem::new)
             .properties(stack -> stack.stacksTo(1))
             .onRegister(attach(VirtualIngredientBehavior.INSTANCE,
-                    (ICustomRenderer) () -> VirtualIngredientRenderer.INSTANCE,
                     new TooltipBehavior(lines -> {
                         lines.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.usage")
                                 .withStyle(ChatFormatting.GRAY));
@@ -370,28 +370,28 @@ public class GTLItems {
 
     public static ItemEntry<Item> COMPRESSED_PUFFERFISH = register("compressed_pufferfish", true);
     public static ItemEntry<ComponentItem> MIRACLE_CRYSTAL = REGISTRATE
-            .item("miracle_crystal", ComponentItem::create)
+            .item("miracle_crystal", ComponentItem::new)
             .properties(stack -> stack.stacksTo(16))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("gtlcore.item.miracle_crystal.tooltip").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD, ChatFormatting.ITALIC));
             })))
             .register();
     public static ItemEntry<ComponentItem> MINING_CRYSTAL = REGISTRATE
-            .item("mining_crystal", ComponentItem::create)
+            .item("mining_crystal", ComponentItem::new)
             .properties(stack -> stack.stacksTo(16))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("gtlcore.item.mining_crystal.tooltip").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.BOLD, ChatFormatting.ITALIC));
             })))
             .register();
     public static ItemEntry<ComponentItem> TREASURES_CRYSTAL = REGISTRATE
-            .item("treasures_crystal", ComponentItem::create)
+            .item("treasures_crystal", ComponentItem::new)
             .properties(stack -> stack.stacksTo(16))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("gtlcore.item.treasures_crystal.tooltip").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD, ChatFormatting.ITALIC));
             })))
             .register();
     public static ItemEntry<ComponentItem> SUPER_GLUE = REGISTRATE
-            .item("super_glue", ComponentItem::create)
+            .item("super_glue", ComponentItem::new)
             .properties(stack -> stack.stacksTo(16))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("gtlcore.item.super_glue.tooltip1").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD, ChatFormatting.ITALIC));
@@ -399,7 +399,7 @@ public class GTLItems {
             })))
             .register();
     public static ItemEntry<ComponentItem> ULTIMATE_TEA = REGISTRATE
-            .item("ultimate_tea", ComponentItem::create)
+            .item("ultimate_tea", ComponentItem::new)
             .properties(stack -> stack.stacksTo(16))
             .onRegister(attach(new TooltipBehavior(lines -> {
                 lines.add(Component.translatable("gtlcore.item.ultimate_tea.tooltip").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD, ChatFormatting.ITALIC));
@@ -407,7 +407,7 @@ public class GTLItems {
             .register();
 
     public static ItemEntry<ComponentItem> ULTIMATE_TERMINAL = REGISTRATE
-            .item("ultimate_terminal", ComponentItem::create)
+            .item("ultimate_terminal", ComponentItem::new)
             .properties((p) -> p.stacksTo(1))
             .onRegister(GTItems.attach(new UltimateTerminalBehavior()))
             .register();

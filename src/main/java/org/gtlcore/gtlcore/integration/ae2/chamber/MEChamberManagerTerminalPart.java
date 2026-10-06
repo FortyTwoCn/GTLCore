@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import appeng.api.parts.IPartItem;
@@ -32,12 +33,22 @@ public final class MEChamberManagerTerminalPart extends AbstractDisplayPart {
     }
 
     @Override
-    public boolean onPartActivate(Player player, InteractionHand hand, Vec3 pos) {
-        if (!super.onPartActivate(player, hand, pos) && !isClientSide() && player instanceof ServerPlayer serverPlayer &&
+    public boolean onUseWithoutItem(Player player, Vec3 pos) {
+        if (!super.onUseWithoutItem(player, pos)) openMenu(player);
+        return true;
+    }
+
+    @Override
+    public boolean onUseItemOn(ItemStack heldItem, Player player, InteractionHand hand, Vec3 pos) {
+        if (!super.onUseItemOn(heldItem, player, hand, pos)) openMenu(player);
+        return true;
+    }
+
+    private void openMenu(Player player) {
+        if (!isClientSide() && player instanceof ServerPlayer serverPlayer &&
                 getMainNode().isActive() && Platform.hasPermissions(getHost().getLocation(), player)) {
             MEChamberManagerTerminalMenu.open(serverPlayer, this);
         }
-        return true;
     }
 
     @Override

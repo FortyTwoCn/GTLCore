@@ -2,23 +2,24 @@ package org.gtlcore.gtlcore.common.item;
 
 import org.gtlcore.gtlcore.config.ConfigHolder;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
+import com.gregtechceu.gtceu.api.mui.IItemUIHolder;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import org.gtlcore.gtlcore.integration.ae2.gui.MolecularPatternPagination;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PlayerInventoryGuiData;
+import brachy.modularui.factory.PlayerInventoryUIFactory;
+import brachy.modularui.screen.ModularPanel;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widgets.SlotGroupWidget;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -26,9 +27,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -58,112 +57,62 @@ import java.util.List;
 /**
  * Stores encoded patterns and moves them to or from AE pattern containers.
  */
-public class PatternBoxBehavior implements IItemUIFactory {
+public class PatternBoxBehavior implements IItemUIHolder {
 
     public static final PatternBoxBehavior INSTANCE = new PatternBoxBehavior();
 
     private static final String INV_TAG = "PatternInv";
 
-    private static final int COLS = 9;
     private static final int SLOTS_PER_PAGE = 36;
-    private static final int ROWS = SLOTS_PER_PAGE / COLS;
-    private static final int SLOT_SIZE = 18;
-    private static final int LEFT = 7;
-    private static final int PATTERN_TOP = 42;
-    // Pattern grid bottom plus spacing before the player inventory.
-    private static final int INV_TOP = PATTERN_TOP + ROWS * SLOT_SIZE + 8;
-    private static final int WIDTH = 176;
-    private static final int HEIGHT = INV_TOP + 82;
-    private static final int PAGE_BUTTON_Y = 24;
-    private static final int PREVIOUS_PAGE_BUTTON_X = 136;
-    private static final int PAGE_LABEL_X = 104;
-    private static final int PAGE_LABEL_Y = 29;
-    private static final int NEXT_PAGE_BUTTON_X = 154;
-    private static final int PAGE_BUTTON_SIZE = 16;
+    private static final int MAX_SLOTS = 360;
 
     public static int getPageCount() {
-        return ConfigHolder.INSTANCE.patternBoxPages;
+        return Math.clamp(ConfigHolder.INSTANCE.patternBoxPages, 1, 10);
     }
 
     public static int getSlotCount() {
         return getPageCount() * SLOTS_PER_PAGE;
     }
 
-    /**
-     * Reads the box inventory. Only encoded patterns are accepted.
-     */
-    public static ItemStackTransfer getInventory(ItemStack pouch) {
-        ItemStackTransfer transfer = new ItemStackTransfer(getSlotCount());
-        transfer.setFilter(stack -> stack.isEmpty() || PatternDetailsHelper.isEncodedPattern(stack));
-        if (pouch.getTag() != null && pouch.hasTag() && pouch.getTag().contains(INV_TAG)) {
-            transfer.deserializeNBT(pouch.getTag().getCompound(INV_TAG));
-        }
-        return transfer;
+    /** The native registry codec preserves pattern components and previously allocated pages. */
+    public static CustomItemStackHandler getInventory(ItemStack pouch, HolderLookup.Provider registries) {
+        var saved = pouch.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getCompound(INV_TAG);
+        int savedSize = saved.contains("Size") ? saved.getInt("Size") : 0;
+        if (savedSize < 0 || savedSize > MAX_SLOTS) throw new IllegalArgumentException("Invalid pattern box inventory size");
+        var inventory = new CustomItemStackHandler(Math.max(getSlotCount(), savedSize));
+        inventory.setFilter(stack -> stack.isEmpty() || PatternDetailsHelper.isEncodedPattern(stack));
+        if (savedSize > 0) inventory.deserializeNBT(registries, saved);
+        return inventory;
     }
 
-    /**
-     * Writes the inventory back into the box NBT.
-     */
-    public static void saveInventory(ItemStack pouch, ItemStackTransfer transfer) {
-        pouch.getOrCreateTag().put(INV_TAG, transfer.serializeNBT());
+    public static void saveInventory(ItemStack pouch, CustomItemStackHandler inventory, HolderLookup.Provider registries) {
+        var tag = pouch.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        tag.put(INV_TAG, inventory.serializeNBT(registries));
+        pouch.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
     @Override
-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder holder, Player player) {
-        ItemStack pouch = holder.getHeld();
-        ItemStackTransfer inventory = getInventory(pouch);
+    public ModularPanel<?> buildUI(PlayerInventoryGuiData<?> data, PanelSyncManager sync, UISettings settings) {
+        var pouch = data.getUsedItemStack();
+        var registries = data.getPlayer().registryAccess();
+        var inventory = getInventory(pouch, registries);
         inventory.setOnContentsChanged(() -> {
-            saveInventory(pouch, inventory);
-            holder.markAsDirty();
+            saveInventory(pouch, inventory, registries);
+            data.setUsedItemStack(pouch);
         });
-
-        WidgetGroup group = new WidgetGroup(0, 0, WIDTH, HEIGHT);
-        group.addWidget(new LabelWidget(LEFT, 6, () -> Component.translatable("item.gtlcore.pattern_box").getString()));
-
-        // One page of pattern slots: 4 rows x 9 columns.
-        int[] page = { 0 };
-        WidgetGroup patternPage = new WidgetGroup(0, 0, WIDTH, PATTERN_TOP + ROWS * SLOT_SIZE);
-        rebuildPatternPage(patternPage, inventory, page);
-        group.addWidget(patternPage);
-
-        // Build the player inventory manually so it aligns with the pattern grid.
-        Inventory playerInv = player.getInventory();
-        // Lock the slot that currently holds this box while its UI is open.
-        int heldSlot = holder.getHand() == InteractionHand.MAIN_HAND ? playerInv.selected : -1;
-        // Main inventory: 3 rows x 9 columns, slots 9..35.
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < COLS; col++) {
-                int index = col + (row + 1) * COLS;
-                group.addWidget(new SlotWidget(playerInv, index,
-                        LEFT + col * SLOT_SIZE, INV_TOP + row * SLOT_SIZE, true, true)
-                        .setBackgroundTexture(GuiTextures.SLOT));
-            }
-        }
-        // Hotbar: 1 row x 9 columns, slots 0..8.
-        int hotbarY = INV_TOP + 3 * SLOT_SIZE + 4;
-        for (int col = 0; col < COLS; col++) {
-            boolean locked = col == heldSlot;
-            group.addWidget(new SlotWidget(playerInv, col,
-                    LEFT + col * SLOT_SIZE, hotbarY, !locked, !locked)
-                    .setBackgroundTexture(GuiTextures.SLOT));
-        }
-
-        return new ModularUI(WIDTH, HEIGHT, holder, player)
-                .widget(group)
-                .background(GuiTextures.BACKGROUND);
+        var pages = MolecularPatternPagination.build(inventory, inventory.getSlots(), sync, slot -> {}, 4);
+        pages.resizer().left(7).top(20);
+        return ModularPanel.defaultPanel("patternBox", 176, 194).background(GTGuiTextures.BACKGROUND)
+                .child(Text.lang("item.gtlcore.pattern_box").asWidget().pos(7, 6))
+                .child(pages)
+                .child(SlotGroupWidget.playerInventory(false, (index, slot) -> slot.background(GTGuiTextures.SLOT)).pos(7, 112).disableSortButtons());
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Item item, Level level, Player player, InteractionHand usedHand) {
-        ItemStack stack = player.getItemInHand(usedHand);
-        // Sneak-use is reserved for pushing patterns into a target container.
-        if (player.isShiftKeyDown()) {
-            return new InteractionResultHolder<>(InteractionResult.PASS, stack);
-        }
-        if (player instanceof ServerPlayer serverPlayer) {
-            HeldItemUIFactory.INSTANCE.openUI(serverPlayer, usedHand);
-        }
-        return new InteractionResultHolder<>(InteractionResult.SUCCESS, stack);
+    public InteractionResultHolder<ItemStack> use(ItemStack stack, Level level, Player player, InteractionHand usedHand) {
+        if (player.isShiftKeyDown()) return InteractionResultHolder.pass(stack);
+        if (!level.isClientSide) PlayerInventoryUIFactory.INSTANCE.openFromHand(player, usedHand);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
     @Override
@@ -192,13 +141,13 @@ public class PatternBoxBehavior implements IItemUIFactory {
             return InteractionResult.PASS;
         }
 
-        ItemStackTransfer pouchInv = getInventory(itemStack);
+        CustomItemStackHandler pouchInv = getInventory(itemStack, context.getLevel().registryAccess());
         boolean changed;
         if (serverPlayer.isShiftKeyDown()) {
             // Sneak right-click: box -> target container.
             changed = movePouchToProvider(pouchInv, providerInv);
             if (changed) {
-                saveInventory(itemStack, pouchInv);
+                saveInventory(itemStack, pouchInv, context.getLevel().registryAccess());
                 serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.pattern_box_inserted"), true);
             } else {
                 serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.pattern_box_insert_failed"), true);
@@ -207,7 +156,7 @@ public class PatternBoxBehavior implements IItemUIFactory {
             // Right-click: target container -> box.
             changed = moveProviderToPouch(providerInv, pouchInv);
             if (changed) {
-                saveInventory(itemStack, pouchInv);
+                saveInventory(itemStack, pouchInv, context.getLevel().registryAccess());
                 serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.pattern_box_extracted"), true);
             } else {
                 serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.pattern_box_extract_failed"), true);
@@ -220,7 +169,7 @@ public class PatternBoxBehavior implements IItemUIFactory {
      * Resolves AE pattern providers, pattern buffers, and multiblock pattern containers.
      */
     @Nullable
-    private static InternalInventory resolveProviderInventory(UseOnContext context) {
+    public static InternalInventory resolveProviderInventory(UseOnContext context) {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         BlockEntity tile = level.getBlockEntity(pos);
@@ -234,13 +183,13 @@ public class PatternBoxBehavior implements IItemUIFactory {
         if (metaMachine instanceof PatternContainer patternContainer) {
             return patternContainer.getTerminalPatternInventory();
         }
-        if (metaMachine instanceof IMultiController controller) {
+        if (metaMachine instanceof MultiblockControllerMachine controller) {
             InternalInventory inventory = resolvePatternContainerInventory(controller);
             if (inventory != null) {
                 return inventory;
             }
         }
-        if (metaMachine instanceof IMultiPart part) {
+        if (metaMachine instanceof MultiblockPartMachine part) {
             InternalInventory inventory = resolvePatternContainerInventory(part);
             if (inventory != null) {
                 return inventory;
@@ -259,18 +208,6 @@ public class PatternBoxBehavior implements IItemUIFactory {
         if (tile instanceof PatternProviderLogicHost providerBlock) {
             return providerBlock.getLogic().getPatternInv();
         }
-        if (tile instanceof MetaMachineBlockEntity mmbe) {
-            Object machine = mmbe.getMetaMachine();
-            if (machine instanceof PatternContainer patternContainer) {
-                return patternContainer.getTerminalPatternInventory();
-            }
-            if (machine instanceof IMultiController controller) {
-                return resolvePatternContainerInventory(controller);
-            }
-            if (machine instanceof IMultiPart part) {
-                return resolvePatternContainerInventory(part);
-            }
-        }
         return null;
     }
 
@@ -286,15 +223,9 @@ public class PatternBoxBehavior implements IItemUIFactory {
             return true;
         }
         if (metaMachine instanceof PatternContainer ||
-                metaMachine instanceof IMultiController ||
-                metaMachine instanceof IMultiPart) {
+                metaMachine instanceof MultiblockControllerMachine ||
+                metaMachine instanceof MultiblockPartMachine) {
             return true;
-        }
-        if (tile instanceof MetaMachineBlockEntity mmbe) {
-            Object machine = mmbe.getMetaMachine();
-            return machine instanceof PatternContainer ||
-                    machine instanceof IMultiController ||
-                    machine instanceof IMultiPart;
         }
         return false;
     }
@@ -340,7 +271,7 @@ public class PatternBoxBehavior implements IItemUIFactory {
     }
 
     @Nullable
-    private static InternalInventory resolvePatternContainerInventory(IMultiController controller) {
+    private static InternalInventory resolvePatternContainerInventory(MultiblockControllerMachine controller) {
         if (!controller.isFormed()) {
             return null;
         }
@@ -348,11 +279,11 @@ public class PatternBoxBehavior implements IItemUIFactory {
     }
 
     @Nullable
-    private static InternalInventory resolvePatternContainerInventory(IMultiPart part) {
+    private static InternalInventory resolvePatternContainerInventory(MultiblockPartMachine part) {
         if (!part.isFormed()) {
             return null;
         }
-        for (IMultiController controller : part.getControllers()) {
+        for (MultiblockControllerMachine controller : part.getControllers()) {
             InternalInventory inventory = resolvePatternContainerInventory(controller);
             if (inventory != null) {
                 return inventory;
@@ -362,8 +293,8 @@ public class PatternBoxBehavior implements IItemUIFactory {
     }
 
     @Nullable
-    private static InternalInventory resolvePatternContainerInventory(Iterable<IMultiPart> parts) {
-        for (IMultiPart part : parts) {
+    private static InternalInventory resolvePatternContainerInventory(Iterable<MultiblockPartMachine> parts) {
+        for (MultiblockPartMachine part : parts) {
             if (part instanceof PatternContainer patternContainer) {
                 return patternContainer.getTerminalPatternInventory();
             }
@@ -371,42 +302,10 @@ public class PatternBoxBehavior implements IItemUIFactory {
         return null;
     }
 
-    private static void rebuildPatternPage(WidgetGroup patternPage, ItemStackTransfer inventory, int[] page) {
-        patternPage.clearAllWidgets();
-        int pageCount = getPageCount();
-        page[0] = Math.min(page[0], pageCount - 1);
-        int startSlot = page[0] * SLOTS_PER_PAGE;
-        int endSlot = Math.min(startSlot + SLOTS_PER_PAGE, inventory.getSlots());
-        for (int i = startSlot; i < endSlot; i++) {
-            int slotInPage = i - startSlot;
-            int row = slotInPage / COLS;
-            int col = slotInPage % COLS;
-            patternPage.addWidget(new SlotWidget(inventory, i,
-                    LEFT + col * SLOT_SIZE, PATTERN_TOP + row * SLOT_SIZE, true, true)
-                    .setBackgroundTexture(GuiTextures.SLOT)
-                    .setIngredientIO(IngredientIO.INPUT));
-        }
-        patternPage.addWidget(new ButtonWidget(PREVIOUS_PAGE_BUTTON_X, PAGE_BUTTON_Y, PAGE_BUTTON_SIZE, PAGE_BUTTON_SIZE,
-                new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture("<<")), clickData -> {
-                    if (page[0] > 0) {
-                        page[0]--;
-                        rebuildPatternPage(patternPage, inventory, page);
-                    }
-                }));
-        patternPage.addWidget(new LabelWidget(PAGE_LABEL_X, PAGE_LABEL_Y, (page[0] + 1) + " / " + pageCount));
-        patternPage.addWidget(new ButtonWidget(NEXT_PAGE_BUTTON_X, PAGE_BUTTON_Y, PAGE_BUTTON_SIZE, PAGE_BUTTON_SIZE,
-                new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture(">>")), clickData -> {
-                    if (page[0] < pageCount - 1) {
-                        page[0]++;
-                        rebuildPatternPage(patternPage, inventory, page);
-                    }
-                }));
-    }
-
     /**
      * Moves encoded patterns from the target container into the box.
      */
-    private static boolean moveProviderToPouch(InternalInventory providerInv, ItemStackTransfer pouchInv) {
+    public static boolean moveProviderToPouch(InternalInventory providerInv, CustomItemStackHandler pouchInv) {
         boolean changed = false;
         for (int slot = 0; slot < providerInv.size(); slot++) {
             ItemStack stack = providerInv.getStackInSlot(slot);
@@ -430,7 +329,7 @@ public class PatternBoxBehavior implements IItemUIFactory {
     /**
      * Moves compatible patterns from the box into the target container.
      */
-    private static boolean movePouchToProvider(ItemStackTransfer pouchInv, InternalInventory providerInv) {
+    public static boolean movePouchToProvider(CustomItemStackHandler pouchInv, InternalInventory providerInv) {
         boolean changed = false;
         for (int slot = 0; slot < pouchInv.getSlots(); slot++) {
             ItemStack stack = pouchInv.getStackInSlot(slot);
@@ -442,13 +341,15 @@ public class PatternBoxBehavior implements IItemUIFactory {
                 continue;
             }
             ItemStack remainder = providerInv.insertItem(providerSlot, stack.copy(), false);
-            pouchInv.setStackInSlot(slot, remainder);
-            changed = true;
+            if (remainder.getCount() < stack.getCount()) {
+                pouchInv.setStackInSlot(slot, remainder);
+                changed = true;
+            }
         }
         return changed;
     }
 
-    private static int findEmptyPouchSlot(ItemStackTransfer pouchInv) {
+    private static int findEmptyPouchSlot(CustomItemStackHandler pouchInv) {
         for (int slot = 0; slot < pouchInv.getSlots(); slot++) {
             if (pouchInv.getStackInSlot(slot).isEmpty()) {
                 return slot;

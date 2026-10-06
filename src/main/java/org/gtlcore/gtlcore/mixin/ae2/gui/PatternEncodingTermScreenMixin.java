@@ -142,7 +142,7 @@ public abstract class PatternEncodingTermScreenMixin<T extends AEBaseMenu> exten
     }
 
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
-    private void gtlcore$handlePatternQuickUploadSelectionScroll(double mouseX, double mouseY, double delta,
+    private void gtlcore$handlePatternQuickUploadSelectionScroll(double mouseX, double mouseY, double horizontal, double delta,
                                                                  CallbackInfoReturnable<Boolean> cir) {
         if (gtlcore$isPatternEncodingTermScreen() &&
                 PatternQuickUploadSelectionOverlay.mouseScrolled(mouseX, mouseY, delta, this.width, this.height)) {

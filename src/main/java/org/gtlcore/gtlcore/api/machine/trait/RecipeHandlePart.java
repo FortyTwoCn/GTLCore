@@ -4,11 +4,16 @@ import org.gtlcore.gtlcore.api.machine.trait.MEStock.IOptimizedMEList;
 
 import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.utils.FluidStackHashStrategy;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidParallelLogic;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableFluidTank;
+import com.gregtechceu.gtceu.common.machine.trait.ProgrammableCircuitSlotTrait;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -20,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public class RecipeHandlePart implements IRecipeHandlePart {
 
@@ -33,10 +37,12 @@ public class RecipeHandlePart implements IRecipeHandlePart {
     };
 
     private final Reference2ObjectMap<RecipeCapability<?>, List<IRecipeHandler<?>>> handlerMap = new Reference2ObjectOpenHashMap<>();
-    private final List<IRecipeHandler<FluidIngredient>> sharedFluidHandlers = new ObjectArrayList<>();
+    private final List<IRecipeHandler<SizedFluidIngredient>> sharedFluidHandlers = new ObjectArrayList<>();
 
     public RecipeHandlePart(Iterable<IRecipeHandler<?>> handlers) {
+        Set<IRecipeHandler<?>> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         for (var handler : handlers) {
+            if (!visited.add(handler)) continue;
             handlerMap.computeIfAbsent(handler.getCapability(), c -> new ObjectArrayList<>()).add(handler);
         }
     }
@@ -51,7 +57,7 @@ public class RecipeHandlePart implements IRecipeHandlePart {
         return rhl;
     }
 
-    public void addSharedFluidHandlers(Iterable<IRecipeHandler<FluidIngredient>> handlers) {
+    public void addSharedFluidHandlers(Iterable<IRecipeHandler<SizedFluidIngredient>> handlers) {
         for (var handler : handlers) {
             if (handler.getCapability() == FluidRecipeCapability.CAP) sharedFluidHandlers.add(handler);
         }
@@ -62,21 +68,21 @@ public class RecipeHandlePart implements IRecipeHandlePart {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Predicate<S>, S> Object2LongMap<S> getSelfContent(RecipeCapability<T> cap, boolean confirmMEStock) {
+    public <S> Object2LongMap<S> getSelfContent(RecipeCapability<?> cap, boolean confirmMEStock) {
         if (cap == ItemRecipeCapability.CAP) {
-            return (Object2LongMap<S>) createItemMap(this.getCapability(cap), new Object2LongOpenHashMap<>(), confirmMEStock);
+            return (Object2LongMap<S>) createItemMap(this.getCapability(cap), new Object2LongOpenCustomHashMap<>(ItemStackHashStrategy.comparingAllButCount()), confirmMEStock);
         } else if (cap == FluidRecipeCapability.CAP) {
-            return (Object2LongMap<S>) createFluidMap(this.getCapability(cap), new Object2LongOpenHashMap<>(), confirmMEStock);
+            return (Object2LongMap<S>) createFluidMap(this.getCapability(cap), LongFluidParallelLogic.newFluidAmountMap(), confirmMEStock);
         }
         return Object2LongMaps.EMPTY_MAP;
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Predicate<S>, S> Object2LongMap<S> getContentWithShared(RecipeCapability<T> cap, boolean confirmMEStock) {
+    public <S> Object2LongMap<S> getContentWithShared(RecipeCapability<?> cap, boolean confirmMEStock) {
         if (cap == ItemRecipeCapability.CAP) {
-            return (Object2LongMap<S>) createItemMap(this.getCapability(ItemRecipeCapability.CAP), new Object2LongOpenHashMap<>(), confirmMEStock);
+            return (Object2LongMap<S>) createItemMap(this.getCapability(ItemRecipeCapability.CAP), new Object2LongOpenCustomHashMap<>(ItemStackHashStrategy.comparingAllButCount()), confirmMEStock);
         } else if (cap == FluidRecipeCapability.CAP) {
-            return (Object2LongMap<S>) createFluidMap(Iterables.concat(this.getCapability(FluidRecipeCapability.CAP), this.sharedFluidHandlers), new Object2LongOpenHashMap<>(), confirmMEStock);
+            return (Object2LongMap<S>) createFluidMap(Iterables.concat(this.getCapability(FluidRecipeCapability.CAP), this.sharedFluidHandlers), LongFluidParallelLogic.newFluidAmountMap(), confirmMEStock);
         }
         return Object2LongMaps.EMPTY_MAP;
     }
@@ -96,8 +102,8 @@ public class RecipeHandlePart implements IRecipeHandlePart {
                 var entry = it.next();
                 var handlerList = getCapability(entry.getKey());
                 for (var handler : handlerList) {
-                    var left = handler.handleRecipe(io, recipe, entry.getValue(), null, simulate);
-                    if (left == null) {
+                    var left = handler.handleRecipe(io, recipe, entry.getValue(), simulate);
+                    if (left.isEmpty()) {
                         it.remove();
                         break;
                     } else entry.setValue(new ArrayList<>(left));
@@ -107,71 +113,100 @@ public class RecipeHandlePart implements IRecipeHandlePart {
         return copy;
     }
 
+    /** Core cache wrapper retains its nullable completion marker; native handlers always return a list. */
     @Nullable
     public List<?> handleRecipe(IO io, GTRecipe recipe, RecipeCapability<?> cap, List<?> contents, boolean simulate) {
         var handlerList = getCapability(cap);
         for (var handler : handlerList) {
-            contents = handler.handleRecipe(io, recipe, contents, null, simulate);
-            if (contents == null) return null;
+            contents = handler.handleRecipe(io, recipe, contents, simulate);
+            if (contents.isEmpty()) return null;
         }
         return contents;
     }
 
-    private static <T> Object2LongOpenHashMap<ItemStack> createItemMap(Iterable<IRecipeHandler<T>> handlers, Object2LongOpenHashMap<ItemStack> itemContent, boolean confirmME) {
-        var meAddedKeys = confirmME ? new ObjectOpenCustomHashSet<>(ItemStackHashStrategy.comparingAllButCount()) : null;
+    private static <T> Object2LongMap<ItemStack> createItemMap(Iterable<IRecipeHandler<T>> handlers,
+                                                               Object2LongMap<ItemStack> itemContent, boolean confirmME) {
+        var stockedKeys = new ObjectOpenCustomHashSet<>(ItemStackHashStrategy.comparingAllButCount());
+        Set<IRecipeHandler<?>> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         for (var handler : handlers) {
-            if (handler instanceof CatalystItemStackHandler || handler instanceof NotifiableCircuitItemStackHandler) continue;
-            if (handler instanceof IOptimizedMEList aeItemHandler) {
-                final var map = aeItemHandler.getMEItemMap();
-                if (map != null) {
-                    if (confirmME && aeItemHandler.isStocking()) {
-                        for (var entry : Object2LongMaps.fastIterable(map)) {
-                            var key = entry.getKey();
-                            if (!meAddedKeys.add(key)) continue;
-                            itemContent.addTo(key, entry.getLongValue());
-                        }
-                    } else {
-                        for (var entry : Object2LongMaps.fastIterable(map)) {
-                            itemContent.addTo(entry.getKey(), entry.getLongValue());
-                        }
-                    }
+            if (!visited.add(handler) || handler instanceof CatalystItemStackHandler ||
+                    handler instanceof NotifiableCircuitItemStackHandler || handler instanceof ProgrammableCircuitSlotTrait ||
+                    !handler.shouldSearchContent()) continue;
+            if (handler instanceof IOptimizedMEList optimized && optimized.getMEItemMap() != null) {
+                for (var entry : optimized.getMEItemMap().object2LongEntrySet()) {
+                    if (confirmME && optimized.isStocking() && !stockedKeys.add(entry.getKey())) continue;
+                    addItem(itemContent, entry.getKey(), entry.getLongValue());
+                }
+            } else if (handler instanceof IItemHandler items) {
+                var adapter = LongStorageAdapterRegistry.findItemStorage(items);
+                var storage = LongItemStorageLookup.find(items);
+                if (adapter == null && storage == null && handler instanceof NotifiableItemStackHandler notifiable) {
+                    adapter = LongStorageAdapterRegistry.findItemStorage(notifiable.storage);
+                    storage = LongItemStorageLookup.find(notifiable.storage);
+                }
+                for (int slot = 0; slot < items.getSlots(); slot++) {
+                    var stack = items.getStackInSlot(slot);
+                    long count = adapter != null ? adapter.getAmount(slot) :
+                            storage != null ? storage.gtlcore$getStoredAmount(slot) : stack.getCount();
+                    addItem(itemContent, stack, count);
                 }
             } else {
-                for (var o : handler.getContents()) {
-                    if (o instanceof ItemStack stack) {
-                        itemContent.addTo(stack, stack.getCount());
-                    }
+                for (var content : handler.getContents()) if (content instanceof ItemStack stack) {
+                    addItem(itemContent, stack, stack.getCount());
                 }
             }
         }
         return itemContent;
     }
 
-    private static <T> Object2LongOpenHashMap<FluidStack> createFluidMap(Iterable<IRecipeHandler<T>> handlers, Object2LongOpenHashMap<FluidStack> fluidContent, boolean confirmMEStock) {
-        var meAddedKeys = confirmMEStock ? new ObjectOpenCustomHashSet<>(FluidStackHashStrategy.comparingAllButAmount()) : null;
-        for (var fluid : handlers) {
-            if (fluid instanceof CatalystFluidStackHandler) continue;
-            if (fluid instanceof IOptimizedMEList aeFluidHandler) {
-                final var list = aeFluidHandler.getMEFluidList();
-                if (confirmMEStock && aeFluidHandler.isStocking()) {
-                    for (FluidStack fluidStack : list) {
-                        if (!meAddedKeys.add(fluidStack)) continue;
-                        fluidContent.addTo(fluidStack, fluidStack.getAmount());
+    private static <T> Object2LongMap<FluidStack> createFluidMap(Iterable<IRecipeHandler<T>> handlers,
+                                                                Object2LongMap<FluidStack> fluidContent, boolean confirmME) {
+        Object2LongMap<FluidStack> stockedKeys = LongFluidParallelLogic.newFluidAmountMap();
+        Set<IRecipeHandler<?>> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (var handler : handlers) {
+            if (!visited.add(handler) || handler instanceof CatalystFluidStackHandler || !handler.shouldSearchContent()) continue;
+            if (handler instanceof IOptimizedMEList optimized && optimized.getMEFluidMap() != null) {
+                for (var entry : optimized.getMEFluidMap().object2LongEntrySet()) {
+                    if (confirmME && optimized.isStocking() && stockedKeys.containsKey(entry.getKey())) continue;
+                    stockedKeys.put(entry.getKey(), 1);
+                    addFluid(fluidContent, entry.getKey(), entry.getLongValue());
+                }
+            } else if (handler instanceof IOptimizedMEList optimized) {
+                for (var stack : optimized.getMEFluidList()) {
+                    if (confirmME && optimized.isStocking() && stockedKeys.containsKey(stack)) continue;
+                    stockedKeys.put(stack, 1);
+                    addFluid(fluidContent, stack, stack.getAmount());
+                }
+            } else if (handler instanceof IFluidHandler fluids) {
+                var adapter = LongStorageAdapterRegistry.findFluidStorage(fluids);
+                for (int tank = 0; tank < fluids.getTanks(); tank++) {
+                    var stack = fluids.getFluidInTank(tank);
+                    long count = adapter == null ? stack.getAmount() : adapter.getAmount(tank);
+                    if (adapter == null && handler instanceof NotifiableFluidTank notifiable) {
+                        var tankAdapter = LongStorageAdapterRegistry.findFluidStorage(notifiable.getStorages()[tank]);
+                        if (tankAdapter != null) count = tankAdapter.getAmount(0);
                     }
-                } else {
-                    for (FluidStack fluidStack : list) {
-                        fluidContent.addTo(fluidStack, fluidStack.getAmount());
-                    }
+                    addFluid(fluidContent, stack, count);
                 }
             } else {
-                for (var o : fluid.getContents()) {
-                    if (o instanceof FluidStack stack) {
-                        fluidContent.addTo(stack, stack.getAmount());
-                    }
+                for (var content : handler.getContents()) if (content instanceof FluidStack stack) {
+                    addFluid(fluidContent, stack, stack.getAmount());
                 }
             }
         }
         return fluidContent;
+    }
+
+    private static void addItem(Object2LongMap<ItemStack> amounts, ItemStack stack, long count) {
+        if (stack.isEmpty() || count <= 0) return;
+        amounts.put(stack.copyWithCount(1), saturatedAdd(amounts.getLong(stack), count));
+    }
+    private static void addFluid(Object2LongMap<FluidStack> amounts, FluidStack stack, long count) {
+        if (stack.isEmpty() || count <= 0) return;
+        amounts.put(stack.copyWithAmount(1), saturatedAdd(amounts.getLong(stack), count));
+    }
+    private static long saturatedAdd(long first, long second) {
+        return first > Long.MAX_VALUE - second ? Long.MAX_VALUE : first + second;
     }
 
     private long getPriority() {

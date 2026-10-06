@@ -1,248 +1,154 @@
 package org.gtlcore.gtlcore.common.item;
 
-import org.gtlcore.gtlcore.common.data.GTLItems;
-
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.item.component.IAddInformation;
-import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
-
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TankWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.misc.FluidStorage;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-import com.lowdragmc.lowdraglib.side.fluid.FluidHelper;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-
+import com.gregtechceu.gtceu.api.mui.IItemUIHolder;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
+import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import net.minecraft.ChatFormatting;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
-
-import appeng.api.stacks.AEFluidKey;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemContainerContents;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEFluidKey;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PlayerInventoryGuiData;
+import brachy.modularui.screen.ModularPanel;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.value.sync.FluidSlotSyncHandler;
+import brachy.modularui.value.sync.ItemSlotSyncHandler;
+import brachy.modularui.widgets.SlotGroupWidget;
+import brachy.modularui.widgets.slot.ItemSlot;
+import brachy.modularui.widgets.slot.FluidSlot;
+import brachy.modularui.widgets.slot.SlotGroup;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 
-/**
- * Wraps one real item or fluid so an AE network can hand the wrapper around in place of the material itself.
- * <p>
- * Once published to a network a wrapper is marked and can no longer give its payload back, otherwise one locked copy
- * could be released and re-locked indefinitely while the supply machine kept publishing it.
- * <p>
- * Stateless singleton shared by every player, so nothing player- or hand-specific may be cached here; it all comes
- * from the {@link HeldItemUIFactory.HeldItemHolder}.
- * <p>
- * Item texture adapted from GTMThings (com.hepdd.gtmthings, {@code virtual_ingredient_provider}).
- */
-public class VirtualIngredientBehavior implements IItemUIFactory, IAddInformation {
-
+/** A sealed supply token whose real payload uses native, registry-aware data components. */
+public class VirtualIngredientBehavior implements IItemUIHolder, IAddInformation {
     public static final VirtualIngredientBehavior INSTANCE = new VirtualIngredientBehavior();
-
-    private static final String ITEM_TAG = "VirtualItem";
-    private static final String FLUID_TAG = "VirtualFluid";
-    /** Same key GTMThings uses upstream. */
+    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("gtlcore", "virtual_ingredient");
     private static final String MARKED_TAG = "marked";
 
-    private static final long FLUID_CAPACITY = FluidHelper.getBucket();
-
-    private static final int WIDTH = 176;
-    private static final int HEIGHT = 166;
-    private static final int LEFT = 7;
-    private static final int COLS = 9;
-    private static final int SLOT_SIZE = 18;
-    private static final int BOUND_ROW_Y = 30;
-    private static final int ITEM_SLOT_X = 53;
-    private static final int FLUID_SLOT_X = 105;
-    private static final int INV_TOP = 84;
-    private static final int HOTBAR_TOP = INV_TOP + 3 * SLOT_SIZE + 4;
-
-    /** Detached copy; write it back with {@link #saveItemStorage}. */
-    public static ItemStackTransfer getItemStorage(ItemStack wrapper) {
-        ItemStackTransfer transfer = new ItemStackTransfer(1);
-        // Nesting would let a wrapper claim a payload it does not lock.
-        transfer.setFilter(stack -> stack.isEmpty() || !GTLItems.VIRTUAL_INGREDIENT.isIn(stack));
-        CompoundTag tag = wrapper.getTag();
-        if (tag != null && tag.contains(ITEM_TAG)) {
-            transfer.deserializeNBT(tag.getCompound(ITEM_TAG));
-        }
-        return transfer;
+    public static boolean isVirtualIngredient(ItemStack stack) {
+        return !stack.isEmpty() && ID.equals(BuiltInRegistries.ITEM.getKey(stack.getItem()));
     }
 
-    public static void saveItemStorage(ItemStack wrapper, ItemStackTransfer transfer) {
-        wrapper.getOrCreateTag().put(ITEM_TAG, transfer.serializeNBT());
+    private static Item registeredItem() {
+        return BuiltInRegistries.ITEM.getOptional(ID).orElseThrow(() -> new IllegalStateException("Virtual ingredient item is not registered"));
     }
 
-    /** Detached copy; write it back with {@link #saveFluidStorage}. */
-    public static FluidStorage getFluidStorage(ItemStack wrapper) {
-        FluidStorage storage = new FluidStorage(FLUID_CAPACITY);
-        CompoundTag tag = wrapper.getTag();
-        if (tag != null && tag.contains(FLUID_TAG)) {
-            storage.deserializeNBT(tag.getCompound(FLUID_TAG));
-        }
+    /** Detached storage; changes must be written back into the wrapper. */
+    public static CustomItemStackHandler getItemStorage(ItemStack wrapper) {
+        var storage = new CustomItemStackHandler(1);
+        storage.setFilter(stack -> stack.isEmpty() || !isVirtualIngredient(stack));
+        storage.setStackInSlot(0, wrapper.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyOne());
         return storage;
     }
 
-    public static void saveFluidStorage(ItemStack wrapper, FluidStorage storage) {
-        wrapper.getOrCreateTag().put(FLUID_TAG, storage.serializeNBT());
+    public static void saveItemStorage(ItemStack wrapper, CustomItemStackHandler storage) {
+        wrapper.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(storage.getStackInSlot(0))));
     }
 
-    @Nullable
-    public static AEItemKey payloadItemKey(ItemStack wrapper) {
-        ItemStack locked = getItemStorage(wrapper).getStackInSlot(0);
-        return locked.isEmpty() ? null : AEItemKey.of(locked);
+    public static CustomFluidTank getFluidStorage(ItemStack wrapper) {
+        var storage = new CustomFluidTank(FluidType.BUCKET_VOLUME);
+        storage.setFluid(wrapper.getOrDefault(GTDataComponents.FLUID_CONTENT, SimpleFluidContent.EMPTY).copy());
+        return storage;
     }
 
-    @Nullable
-    public static AEFluidKey payloadFluidKey(ItemStack wrapper) {
-        FluidStack locked = getFluidStorage(wrapper).getFluidInTank(0);
-        return locked.isEmpty() ? null : AEFluidKey.of(locked.getFluid());
+    public static void saveFluidStorage(ItemStack wrapper, CustomFluidTank storage) {
+        wrapper.set(GTDataComponents.FLUID_CONTENT, SimpleFluidContent.copyOf(storage.getFluid()));
+    }
+
+    @Nullable public static AEItemKey payloadItemKey(ItemStack wrapper) {
+        var payload = getItemStorage(wrapper).getStackInSlot(0);
+        return payload.isEmpty() || isVirtualIngredient(payload) ? null : AEItemKey.of(payload);
+    }
+
+    @Nullable public static AEFluidKey payloadFluidKey(ItemStack wrapper) {
+        var payload = getFluidStorage(wrapper).getFluid();
+        return payload.isEmpty() ? null : AEFluidKey.of(payload);
     }
 
     public static boolean isBound(ItemStack wrapper) {
-        return payloadItemKey(wrapper) != null || payloadFluidKey(wrapper) != null;
+        return (payloadItemKey(wrapper) != null) != (payloadFluidKey(wrapper) != null);
     }
 
-    /** The published token depends on its payload, not unused UI storage tags or its display name. */
+    /** The published key depends on the payload, rather than unused UI state or a custom wrapper name. */
     public static ItemStack canonicalStack(ItemStack wrapper) {
-        if (!GTLItems.VIRTUAL_INGREDIENT.isIn(wrapper)) return ItemStack.EMPTY;
-        ItemStack item = getItemStorage(wrapper).getStackInSlot(0);
-        FluidStack fluid = getFluidStorage(wrapper).getFluidInTank(0);
-        // Do not turn a malformed wrapper carrying two payloads into two supplies.
-        if (item.isEmpty() == fluid.isEmpty()) return ItemStack.EMPTY;
-        return item.isEmpty() ? wrap(fluid) : wrap(item);
+        if (!isVirtualIngredient(wrapper) || !isBound(wrapper)) return ItemStack.EMPTY;
+        var item = getItemStorage(wrapper).getStackInSlot(0);
+        return item.isEmpty() ? wrap(getFluidStorage(wrapper).getFluid()) : wrap(item);
     }
 
-    /** Sealed on creation: built for publishing, not for the player to edit. */
     public static ItemStack wrap(ItemStack payload) {
-        ItemStack wrapper = new ItemStack(GTLItems.VIRTUAL_INGREDIENT.asItem());
-        if (!payload.isEmpty()) {
-            ItemStackTransfer transfer = new ItemStackTransfer(1);
-            transfer.setStackInSlot(0, payload.copyWithCount(1));
-            saveItemStorage(wrapper, transfer);
-        }
+        if (payload.isEmpty() || isVirtualIngredient(payload)) throw new IllegalArgumentException("Invalid virtual item payload");
+        var wrapper = new ItemStack(registeredItem());
+        var storage = new CustomItemStackHandler(1);
+        storage.setStackInSlot(0, payload.copyWithCount(1));
+        saveItemStorage(wrapper, storage);
         mark(wrapper);
         return wrapper;
     }
 
     public static ItemStack wrap(FluidStack payload) {
-        ItemStack wrapper = new ItemStack(GTLItems.VIRTUAL_INGREDIENT.asItem());
-        if (!payload.isEmpty()) {
-            FluidStorage storage = new FluidStorage(FLUID_CAPACITY);
-            storage.setFluidInTank(0, payload.copy(FLUID_CAPACITY));
-            saveFluidStorage(wrapper, storage);
-        }
+        if (payload.isEmpty()) throw new IllegalArgumentException("Empty virtual fluid payload");
+        var wrapper = new ItemStack(registeredItem());
+        var storage = new CustomFluidTank(FluidType.BUCKET_VOLUME);
+        storage.setFluid(payload.copyWithAmount(FluidType.BUCKET_VOLUME));
+        saveFluidStorage(wrapper, storage);
         mark(wrapper);
         return wrapper;
     }
 
-    /** Marked means published to a network, and so no longer able to give its payload back. */
     public static boolean isMarked(ItemStack wrapper) {
-        CompoundTag tag = wrapper.getTag();
-        return tag != null && tag.getBoolean(MARKED_TAG);
+        return wrapper.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean(MARKED_TAG);
     }
 
     public static void mark(ItemStack wrapper) {
-        wrapper.getOrCreateTag().putBoolean(MARKED_TAG, true);
+        var tag = wrapper.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        tag.putBoolean(MARKED_TAG, true);
+        wrapper.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
-    @Override
-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder holder, Player player) {
-        ItemStack wrapper = holder.getHeld();
+    @Override public ModularPanel<?> buildUI(PlayerInventoryGuiData<?> data, PanelSyncManager sync, UISettings settings) {
+        var wrapper = data.getUsedItemStack();
         boolean editable = !isMarked(wrapper);
-
-        ItemStackTransfer itemStorage = getItemStorage(wrapper);
-        FluidStorage fluidStorage = getFluidStorage(wrapper);
-
-        // Item xor fluid: AE keys a wrapper by its whole NBT, so carrying both yields a third key matching neither.
-        itemStorage.setFilter(stack -> stack.isEmpty() ||
-                (!GTLItems.VIRTUAL_INGREDIENT.isIn(stack) && fluidStorage.getFluidInTank(0).isEmpty()));
-        fluidStorage.setValidator(fluid -> fluid.isEmpty() || itemStorage.getStackInSlot(0).isEmpty());
-
-        itemStorage.setOnContentsChanged(() -> {
-            saveItemStorage(wrapper, itemStorage);
-            holder.markAsDirty();
-        });
-        fluidStorage.setOnContentsChanged(() -> {
-            saveFluidStorage(wrapper, fluidStorage);
-            holder.markAsDirty();
-        });
-
-        WidgetGroup group = new WidgetGroup(0, 0, WIDTH, HEIGHT);
-        group.addWidget(new LabelWidget(LEFT, 6,
-                () -> Component.translatable("item.gtlcore.virtual_ingredient").getString()));
-        group.addWidget(new LabelWidget(LEFT, 18, () -> Component
-                .translatable(editable ? "gui.gtlcore.virtual_ingredient.hint" : "gui.gtlcore.virtual_ingredient.sealed")
-                .getString()));
-
-        group.addWidget(new SlotWidget(itemStorage, 0, ITEM_SLOT_X, BOUND_ROW_Y, editable, editable)
-                .setBackgroundTexture(GuiTextures.SLOT));
-        group.addWidget(new TankWidget(fluidStorage, 0, FLUID_SLOT_X, BOUND_ROW_Y, editable, editable)
-                .setBackground(GuiTextures.FLUID_SLOT));
-
-        Inventory playerInv = player.getInventory();
-        // Held wrapper must stay put while its own UI edits it.
-        int heldSlot = holder.getHand() == InteractionHand.MAIN_HAND ? playerInv.selected : -1;
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < COLS; col++) {
-                int index = col + (row + 1) * COLS;
-                group.addWidget(new SlotWidget(playerInv, index,
-                        LEFT + col * SLOT_SIZE, INV_TOP + row * SLOT_SIZE, true, true)
-                        .setBackgroundTexture(GuiTextures.SLOT));
-            }
-        }
-        for (int col = 0; col < COLS; col++) {
-            boolean locked = col == heldSlot;
-            group.addWidget(new SlotWidget(playerInv, col,
-                    LEFT + col * SLOT_SIZE, HOTBAR_TOP, !locked, !locked)
-                    .setBackgroundTexture(GuiTextures.SLOT));
-        }
-
-        return new ModularUI(WIDTH, HEIGHT, holder, player)
-                .widget(group)
-                .background(GuiTextures.BACKGROUND);
+        var item = getItemStorage(wrapper);
+        var fluid = getFluidStorage(wrapper);
+        item.setFilter(stack -> editable && !isVirtualIngredient(stack) && fluid.isEmpty());
+        fluid.setValidator(stack -> editable && item.getStackInSlot(0).isEmpty());
+        item.setOnContentsChanged(() -> { saveItemStorage(wrapper, item); data.setUsedItemStack(wrapper); });
+        fluid.setOnContentsChanged(() -> { saveFluidStorage(wrapper, fluid); data.setUsedItemStack(wrapper); });
+        var itemSync = new ItemSlotSyncHandler(SyncHandlers.itemSlot(item, 0).slotGroup(new SlotGroup("virtualPayload", 1, false)).accessibility(editable, editable));
+        sync.syncValue("virtualItemPayload", itemSync);
+        var fluidSync = new FluidSlotSyncHandler(fluid).canFillSlot(editable).canDrainSlot(editable);
+        sync.syncValue("virtualFluidPayload", fluidSync);
+        return ModularPanel.defaultPanel("virtualIngredient", 176, 166)
+                .child(Text.lang("item.gtlcore.virtual_ingredient").asWidget().pos(7, 6))
+                .child(Text.lang(editable ? "gui.gtlcore.virtual_ingredient.hint" : "gui.gtlcore.virtual_ingredient.sealed").asWidget().pos(7, 18))
+                .child(new ItemSlot().syncHandler(itemSync).pos(53, 30))
+                .child(new FluidSlot().syncHandler(fluidSync).pos(105, 30))
+                .child(SlotGroupWidget.playerInventory(false).pos(7, 84).disableSortButtons());
     }
 
-    @Override
-    public InteractionResultHolder<ItemStack> use(Item item, Level level, Player player, InteractionHand usedHand) {
-        ItemStack stack = player.getItemInHand(usedHand);
-        if (player instanceof ServerPlayer serverPlayer) {
-            HeldItemUIFactory.INSTANCE.openUI(serverPlayer, usedHand);
-        }
-        return new InteractionResultHolder<>(InteractionResult.SUCCESS, stack);
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        AEItemKey itemKey = payloadItemKey(stack);
-        if (itemKey != null) {
-            tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.payload",
-                    itemKey.getDisplayName()).withStyle(ChatFormatting.AQUA));
-        }
-        AEFluidKey fluidKey = payloadFluidKey(stack);
-        if (fluidKey != null) {
-            tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.payload",
-                    fluidKey.getDisplayName()).withStyle(ChatFormatting.AQUA));
-        }
-        if (itemKey == null && fluidKey == null) {
-            tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.empty")
-                    .withStyle(ChatFormatting.GRAY));
-        } else if (isMarked(stack)) {
-            tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.sealed")
-                    .withStyle(ChatFormatting.DARK_GRAY));
-        }
+    @Override public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        var item = payloadItemKey(stack);
+        var fluid = payloadFluidKey(stack);
+        if (item != null) tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.payload", item.getDisplayName()).withStyle(ChatFormatting.AQUA));
+        if (fluid != null) tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.payload", fluid.getDisplayName()).withStyle(ChatFormatting.AQUA));
+        if (item == null && fluid == null) tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.empty").withStyle(ChatFormatting.GRAY));
+        else if (isMarked(stack)) tooltip.add(Component.translatable("tooltip.gtlcore.virtual_ingredient.sealed").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

@@ -1,9 +1,7 @@
 package org.gtlcore.gtlcore.integration.ae2.throughput;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.utils.NumberUtils;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.integration.ae2.machine.feature.IGridConnectedMachine;
@@ -13,10 +11,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.IActionHost;
@@ -47,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = "gtlcore", bus = EventBusSubscriber.Bus.GAME)
 public final class ThroughputMonitorStorageTracker {
 
     private static final Object LOCK = new Object();
@@ -81,15 +79,16 @@ public final class ThroughputMonitorStorageTracker {
     }
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            if (diagnostic != null) {
-                diagnostic.monitoredStorages = LISTENERS.size() + ALL_LISTENERS.size();
-                diagnostic.commit();
-                diagnostic = null;
-            }
-            return;
+    public static void onServerTickEnd(ServerTickEvent.Post event) {
+        if (diagnostic != null) {
+            diagnostic.monitoredStorages = LISTENERS.size() + ALL_LISTENERS.size();
+            diagnostic.commit();
+            diagnostic = null;
         }
+    }
+
+    @SubscribeEvent
+    public static void onServerTickStart(ServerTickEvent.Pre event) {
         diagnostic = DIAGNOSTIC_TYPE.isEnabled() ? new ThroughputTickEvent() : null;
         synchronized (LOCK) {
             DISPATCHES.clear();
@@ -368,7 +367,7 @@ public final class ThroughputMonitorStorageTracker {
                     listener.recordThroughput(amountDelta, tick);
                 } catch (RuntimeException failure) {
                     unregister(listener);
-                    GTLCore.LOGGER.error("Disabled failing throughput listener", failure);
+                    org.apache.logging.log4j.LogManager.getLogger(ThroughputMonitorStorageTracker.class).error("Disabled failing throughput listener", failure);
                 }
             }
         }
@@ -386,7 +385,7 @@ public final class ThroughputMonitorStorageTracker {
                     listener.recordThroughput(what, amountDelta, tick, source);
                 } catch (RuntimeException failure) {
                     unregisterAll(listener);
-                    GTLCore.LOGGER.error("Disabled failing throughput collector", failure);
+                    org.apache.logging.log4j.LogManager.getLogger(ThroughputMonitorStorageTracker.class).error("Disabled failing throughput collector", failure);
                 }
             }
         }
@@ -485,20 +484,14 @@ public final class ThroughputMonitorStorageTracker {
                     part.getHost().getLocation().getPos(),
                     part.getSide());
         }
-        if (owner instanceof BlockEntity blockEntity && blockEntity.getLevel() != null) {
-            return new SourceLocation(
-                    blockEntity.getLevel().dimension().location(),
-                    blockEntity.getBlockPos(),
-                    null);
-        }
         if (owner instanceof MetaMachine machine && machine.getLevel() != null) {
             return new SourceLocation(
                     machine.getLevel().dimension().location(),
-                    machine.getPos(),
+                    machine.getBlockPos(),
                     machine.getFrontFacing());
         }
-        if (owner instanceof IMachineBlockEntity machineBlockEntity) {
-            return resolveOwner(machineBlockEntity.self());
+        if (owner instanceof BlockEntity blockEntity && blockEntity.getLevel() != null) {
+            return new SourceLocation(blockEntity.getLevel().dimension().location(), blockEntity.getBlockPos(), null);
         }
         if (owner instanceof IGridConnectedMachine gridConnectedMachine) {
             return resolveOwner(gridConnectedMachine.self());

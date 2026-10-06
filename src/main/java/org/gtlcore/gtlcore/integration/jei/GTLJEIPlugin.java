@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.integration.jei;
 
+import com.gregtechceu.gtceu.common.data.GTMaterialBlocks;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.client.ae2.graph.CraftingRingScreen;
 import org.gtlcore.gtlcore.client.ae2.graph.GraphViewSettingsScreen;
@@ -14,7 +15,7 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 
 import com.lowdragmc.lowdraglib.LDLib;
 
@@ -26,8 +27,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraftforge.common.Tags;
+import net.neoforged.neoforge.common.Tags;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -38,7 +38,6 @@ import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
-import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IClickableIngredient;
 import mezz.jei.api.runtime.IJeiRuntime;
 import org.jetbrains.annotations.NotNull;
@@ -66,12 +65,8 @@ public class GTLJEIPlugin implements IModPlugin {
         registration.addRecipeCatalyst(MultiBlockMachineA.DIMENSIONALLY_TRANSCENDENT_STEAM_OVEN.asStack(), RecipeTypes.SMELTING);
     }
 
-    @Override
-    public void registerItemSubtypes(@NotNull ISubtypeRegistration registration) {
-        if (LDLib.isReiLoaded() || LDLib.isEmiLoaded()) return;
-        registration.useNbtForSubtypes(GTItems.TURBINE_ROTOR.asItem());
-        registration.useNbtForSubtypes(GTItems.INTEGRATED_CIRCUIT.asItem());
-    }
+    // GT's native JEI plugin registers circuit configuration and rotor material data components.
+    // Registering the same items here would replace its typed subtype interpreters.
 
     @Override
     public void registerGuiHandlers(@NotNull IGuiHandlerRegistration registration) {
@@ -159,17 +154,22 @@ public class GTLJEIPlugin implements IModPlugin {
     }
 
     private static Set<Item> getObtainableOres() {
+        var minecraft = Minecraft.getInstance();
+        var registries = minecraft.level != null ? minecraft.level.registryAccess() :
+                minecraft.getConnection() != null ? minecraft.getConnection().registryAccess() : null;
+        if (registries == null) return null;
         Set<Item> obtainableOres = new HashSet<>();
 
-        for (GTOreDefinition oreDefinition : GTRegistries.ORE_VEINS.values()) {
+        for (var holder : registries.lookupOrThrow(GTRegistries.Keys.ORE_VEIN).listElements().toList()) {
+            GTOreDefinition oreDefinition = holder.value();
             Set<TagPrefix> hostPrefixes = getHostPrefixes(oreDefinition);
             for (var entry : oreDefinition.veinGenerator().getAllEntries()) {
-                entry.getKey().map(
+                entry.vein().map(
                         blockState -> obtainableOres.add(blockState.getBlock().asItem()),
                         material -> {
                             if (material != null) {
                                 for (TagPrefix prefix : hostPrefixes) {
-                                    var oreBlock = GTBlocks.MATERIAL_BLOCKS.get(prefix, material);
+                                    var oreBlock = GTMaterialBlocks.MATERIAL_BLOCKS.get(prefix, material);
                                     if (oreBlock != null) {
                                         obtainableOres.add(oreBlock.asItem());
                                     }
@@ -196,7 +196,7 @@ public class GTLJEIPlugin implements IModPlugin {
         }
 
         for (var recipe : recipeManager.getRecipes()) {
-            if (!(recipe instanceof GTRecipe gtRecipe)) {
+            if (!(recipe.value() instanceof GTRecipe gtRecipe)) {
                 continue;
             }
             addOreItemsFromContents(gtRecipe.getOutputContents(ItemRecipeCapability.CAP), obtainableOres);
@@ -208,7 +208,7 @@ public class GTLJEIPlugin implements IModPlugin {
     private static void addOreItemsFromContents(List<com.gregtechceu.gtceu.api.recipe.content.Content> contents,
                                                 Set<Item> obtainableOres) {
         for (var content : contents) {
-            Ingredient ingredient = ItemRecipeCapability.CAP.of(content.getContent());
+            var ingredient = ItemRecipeCapability.CAP.of(content.content()).ingredient();
             for (ItemStack stack : ingredient.getItems()) {
                 if (isOreItem(stack)) {
                     obtainableOres.add(stack.getItem());

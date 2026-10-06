@@ -1,60 +1,35 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part;
 
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.IInteractedMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineModifyDrops;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.common.item.TurbineRotorBehaviour;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.common.item.behavior.TurbineRotorBehaviour;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.slot.ItemSlot;
+import brachy.modularui.widgets.slot.SlotGroup;
+import net.minecraft.network.chat.Component;
 
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
-import net.minecraft.world.item.ItemStack;
-
-import lombok.Getter;
-
-import java.util.List;
-
-import javax.annotation.ParametersAreNonnullByDefault;
-
-@Getter
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
-public class RotorHatchPartMachine extends MultiblockPartMachine implements IMachineModifyDrops, IInteractedMachine {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            RotorHatchPartMachine.class, MultiblockPartMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
-    private final NotifiableItemStackHandler inventory;
-
-    public RotorHatchPartMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder);
-        this.inventory = createMachineStorage(args);
+/** Native accessible reserve rotor inventory. The attached trait saves and drops its contents once. */
+public class RotorHatchPartMachine extends MultiblockPartMachine implements IMuiMachine {
+    @SaveField private final NotifiableItemStackHandler inventory;
+    public RotorHatchPartMachine(BlockEntityCreationInfo info, Object... args) {
+        super(info);
+        inventory = attachTrait(new NotifiableItemStackHandler(1, IO.NONE, IO.BOTH)
+                .setFilter(stack -> TurbineRotorBehaviour.getBehaviour(stack) != null));
     }
-
-    protected NotifiableItemStackHandler createMachineStorage(Object... args) {
-        var storage = new NotifiableItemStackHandler(this, 1, IO.NONE, IO.BOTH);
-        storage.setFilter(i -> TurbineRotorBehaviour.getBehaviour(i) != null);
-        return storage;
-    }
-
-    @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
-    @Override
-    public Widget createUIWidget() {
-        return BallHatchPartMachine.createSLOTWidget(inventory);
-    }
-
-    @Override
-    public void onDrops(List<ItemStack> list) {
-        clearInventory(this.inventory.storage);
+    public NotifiableItemStackHandler getInventory() { return inventory; }
+    @Override public void buildMainUI(ParentWidget<?> main, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        main.child(new ItemSlot().center().background(GTGuiTextures.SLOT, GTGuiTextures.TURBINE_OVERLAY)
+                .slot(SyncHandlers.itemSlot(inventory.storage, 0).slotGroup(new SlotGroup("reserve_rotor", 1, 0, true)).accessibility(true, true))
+                .tooltip(tooltip -> tooltip.add(Text.comp(Component.translatable("tooltip.gtlcore.turbine_rotor_only")))));
     }
 }

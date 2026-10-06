@@ -319,7 +319,7 @@ public final class PatternQuickUploadSelectionOverlay {
         }
         int index = scrollOffset + (int) (relativeY / ROW_HEIGHT);
         if (index >= 0 && index < entries.size()) {
-            WirelessAePackets.CHANNEL.sendToServer(new WirelessAePackets.SelectPatternQuickUploadTargetPacket(index));
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new WirelessAePackets.SelectPatternQuickUploadTargetPacket(index));
             close();
         }
     }

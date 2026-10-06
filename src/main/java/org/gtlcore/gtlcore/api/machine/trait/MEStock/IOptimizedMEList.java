@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.api.machine.trait.MEStock;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -15,6 +15,11 @@ import javax.annotation.Nullable;
 public interface IOptimizedMEList {
 
     default @Nullable Object2LongMap<ItemStack> getMEItemMap() {
+        return null;
+    }
+
+    /** Native fluid stacks expose an int display amount; AE quantities remain in the map value. */
+    default @Nullable Object2LongMap<FluidStack> getMEFluidMap() {
         return null;
     }
 

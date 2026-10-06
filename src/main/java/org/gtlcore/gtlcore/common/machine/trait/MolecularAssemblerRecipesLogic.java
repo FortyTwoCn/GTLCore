@@ -1,120 +1,147 @@
 package org.gtlcore.gtlcore.common.machine.trait;
 
 import org.gtlcore.gtlcore.api.machine.ISuspendableMachine;
-import org.gtlcore.gtlcore.api.machine.multiblock.MolecularAssemblerMultiblockMachine;
-import org.gtlcore.gtlcore.api.machine.multiblock.ParallelMachine;
-import org.gtlcore.gtlcore.mixin.gtm.api.recipe.RecipeLogicAccessor;
+import org.gtlcore.gtlcore.api.machine.multiblock.MolecularAssemblerMultiblockMachineBase;
 
-import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 
 import org.jetbrains.annotations.Nullable;
 
+/** A queued craft is persisted as a pending output recipe until its entire buffer transaction succeeds. */
 public class MolecularAssemblerRecipesLogic extends RecipeLogic {
+    @SaveField
+    protected boolean craftStarted;
 
-    private final ParallelMachine parallel;
-
-    public MolecularAssemblerRecipesLogic(ParallelMachine machine) {
-        super((IRecipeLogicMachine) machine);
-        this.parallel = machine;
+    public MolecularAssemblerRecipesLogic() {
+        super();
     }
 
     @Override
-    public MolecularAssemblerMultiblockMachine getMachine() {
-        return (MolecularAssemblerMultiblockMachine) super.getMachine();
+    public MolecularAssemblerMultiblockMachineBase getMachine() {
+        return (MolecularAssemblerMultiblockMachineBase) super.getMachine();
     }
 
-    private @Nullable GTRecipe getRecipe() {
+    protected @Nullable GTRecipe getRecipe() {
         var handler = getMachine().getMAHandler();
-        if (handler != null) return handler.extractGTRecipe(parallel.getMaxParallel(), getMachine().getTickDuration());
-        else return null;
-    }
-
-    @Override
-    public void updateTickSubscription() {
-        if (!this.isSuspend() && this.machine.isRecipeLogicAvailable()) {
-            this.subscription = this.getMachine().subscribeServerTick(this.subscription, this::serverTick);
-        } else if (this.subscription != null) {
-            this.subscription.unsubscribe();
-            this.subscription = null;
-        }
+        return handler == null ? null : handler.extractGTRecipe(getMachine().getMaxParallel(), getMachine().getTickDuration());
     }
 
     @Override
     public void serverTick() {
-        if (!this.isSuspend()) {
-            if (!this.isIdle() && this.lastRecipe != null) {
-                if (this.progress < this.duration) {
-                    this.handleRecipeWorking();
-                }
-                if (this.progress >= this.duration) {
-                    this.onRecipeFinish();
-                }
-            } else if (this.lastRecipe != null || !this.machine.keepSubscribing() || this.getMachine().getOffsetTimer() % 5L == 0L) {
-                this.findAndHandleRecipe();
+        if (!isSuspend() && getRLMachine().isRecipeLogicAvailable()) {
+            if (lastRecipe != null) {
+                if (progress < duration) handleRecipeWorking();
+                if (!isSuspend() && craftStarted && progress >= duration) onRecipeFinish();
+            } else {
+                findAndHandleRecipe();
             }
         }
-
-        boolean unsubscribe = false;
-        if (this.isSuspend()) {
-            unsubscribe = true;
-        } else if (this.lastRecipe == null && this.isIdle() && !this.machine.keepSubscribing()) {
-            unsubscribe = true;
-        }
-
-        if (unsubscribe && this.subscription != null) {
-            this.subscription.unsubscribe();
-            this.subscription = null;
+        if (isSuspend() || !getRLMachine().isRecipeLogicAvailable() || (lastRecipe == null && isIdle() && !keepSubscribing)) {
+            if (subscription != null) {
+                subscription.unsubscribe();
+                subscription = null;
+            }
         }
     }
 
     @Override
     public void handleRecipeWorking() {
-        ++this.progress;
-        ++this.totalContinuousRunningTime;
+        if (lastRecipe == null || !getRLMachine().isRecipeLogicAvailable()) return;
+        if (!craftStarted) {
+            if (!getRLMachine().beforeWorking(lastRecipe)) {
+                setWaiting(null);
+                return;
+            }
+            craftStarted = true;
+        }
+        if (!getRLMachine().onWorking()) {
+            setWaiting(null);
+            return;
+        }
+        setStatus(Status.WORKING);
+        ++progress;
+        ++totalContinuousRunningTime;
+        markAsChanged();
     }
 
     @Override
     public void findAndHandleRecipe() {
-        lastRecipe = null;
+        if (lastRecipe != null || isSuspend() || !getRLMachine().isRecipeLogicAvailable()) return;
         var match = getRecipe();
-        if (match != null) {
-            setupRecipe(match);
-        }
+        if (match != null) setupRecipe(match);
     }
 
     @Override
     public void setupRecipe(GTRecipe recipe) {
-        this.lastRecipe = recipe;
-        this.setStatus(RecipeLogic.Status.WORKING);
-        this.progress = 0;
-        this.duration = recipe.duration;
-        ((RecipeLogicAccessor) this).setIsActive(true);
+        if (lastRecipe != null) throw new IllegalStateException("Molecular assembler already has a pending craft");
+        lastRecipe = recipe;
+        lastUnrolledRecipe = recipe.copy();
+        lastOriginRecipe = null;
+        progress = 0;
+        duration = Math.max(1, recipe.duration);
+        craftStarted = false;
+        isActive = true;
+        // The queue has already been consumed; a rejected callback must keep this recipe pending.
+        if (getRLMachine().beforeWorking(recipe)) {
+            craftStarted = true;
+            setStatus(Status.WORKING);
+        } else {
+            setWaiting(null);
+        }
+        markAsChanged();
+        syncDataHolder.resyncAllFields();
     }
 
     @Override
     public void onRecipeFinish() {
-        if (this.lastRecipe != null) {
-            var handler = getMachine().getMAHandler();
-            if (handler != null) handler.handleRecipeOutput(this.lastRecipe);
+        if (lastRecipe == null || !craftStarted || progress < duration || isSuspend() || !getRLMachine().isRecipeLogicAvailable()) return;
+        var handler = getMachine().getMAHandler();
+        if (handler == null || !handler.tryHandleRecipeOutput(lastRecipe)) {
+            setWaiting(null);
+            return;
+        }
+        // Clear the committed output before callbacks or prefetching another queued craft.
+        lastRecipe = null;
+        lastUnrolledRecipe = null;
+        lastOriginRecipe = null;
+        progress = 0;
+        duration = 0;
+        craftStarted = false;
+        isActive = false;
+        consecutiveRecipes++;
+        boolean suspend = suspendAfterFinish;
+        suspendAfterFinish = false;
+        if (getMachine() instanceof ISuspendableMachine legacy && legacy.gtlcore$isSuspendAfterFinish()) {
+            suspend = true;
+            legacy.gtlcore$setSuspendAfterFinish(false);
+        }
+        setStatus(suspend ? Status.SUSPEND : Status.IDLE);
+        markAsChanged();
+        syncDataHolder.resyncAllFields();
+        getRLMachine().afterWorking();
+        if (!suspend) findAndHandleRecipe();
+    }
 
-            if (this.machine instanceof ISuspendableMachine suspendableMachine && suspendableMachine.gtlcore$isSuspendAfterFinish()) {
-                this.setStatus(RecipeLogic.Status.SUSPEND);
-                suspendableMachine.gtlcore$setSuspendAfterFinish(false);
-            } else {
-                var match = getRecipe();
-                if (match != null) {
-                    setupRecipe(match);
-                    return;
-                } else {
-                    lastRecipe = null;
-                    this.setStatus(RecipeLogic.Status.IDLE);
-                    ((RecipeLogicAccessor) this).setIsActive(false);
-                }
-            }
-            this.progress = 0;
-            this.duration = 0;
+    @Override
+    public void resetRecipeLogic() {
+        if (lastRecipe != null) {
+            // Unforming a structure must not discard crafts already extracted from the IO queue.
+            updateTickSubscription();
+            syncDataHolder.resyncAllFields();
+        } else {
+            craftStarted = false;
+            super.resetRecipeLogic();
+        }
+    }
+
+    @Override
+    public void interruptRecipe() {
+        if (lastRecipe != null) {
+            // The IO queue cannot recover the original AE inputs; retain its accepted craft for resume.
+            setStatus(Status.SUSPEND);
+            markAsChanged();
         }
     }
 }

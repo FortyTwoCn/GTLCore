@@ -1,26 +1,25 @@
 package org.gtlcore.gtlcore.integration.ae2.chamber;
 
-import org.gtlcore.gtlcore.integration.ae2.wireless.GTLWirelessAeContent;
-
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import appeng.menu.ISubMenu;
-import de.mari_023.ae2wtlib.terminal.WTMenuHost;
-import org.jetbrains.annotations.Nullable;
+import appeng.menu.locator.ItemMenuHostLocator;
+import de.mari_023.ae2wtlib.api.terminal.ItemWT;
+import de.mari_023.ae2wtlib.api.registration.WTDefinition;
+import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
 
 import java.util.function.BiConsumer;
 
 public final class WirelessMEChamberManagerMenuHost extends WTMenuHost {
 
-    public WirelessMEChamberManagerMenuHost(Player player, @Nullable Integer inventorySlot, ItemStack stack,
+    public WirelessMEChamberManagerMenuHost(ItemWT item, Player player, ItemMenuHostLocator locator,
                                             BiConsumer<Player, ISubMenu> returnToMainMenu) {
-        super(player, inventorySlot, stack, returnToMainMenu);
-        readFromNbt();
+        super(item, player, locator, returnToMainMenu);
     }
 
     @Override
     public ItemStack getMainMenuIcon() {
-        return new ItemStack(GTLWirelessAeContent.WIRELESS_ME_CHAMBER_MANAGER_TERMINAL.get());
+        return new ItemStack(WTDefinition.of(WirelessMEChamberManagerTerminalItem.TERMINAL_NAME).item());
     }
 }

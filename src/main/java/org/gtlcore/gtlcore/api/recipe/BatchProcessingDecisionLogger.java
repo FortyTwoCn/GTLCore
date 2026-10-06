@@ -1,13 +1,14 @@
 package org.gtlcore.gtlcore.api.recipe;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.gtlcore.gtlcore.api.machine.trait.IBatchMachine;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -26,6 +27,7 @@ import java.util.WeakHashMap;
 
 public final class BatchProcessingDecisionLogger {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("GTLCore/BatchProcessing");
     private static final String LOG_DIRECTORY = "logs/gtlcore/batch-processing";
     private static final String LOG_FILE_EXTENSION = ".jsonl";
     private static final String UNKNOWN = "unknown";
@@ -68,7 +70,7 @@ public final class BatchProcessingDecisionLogger {
                 entry.addProperty("machine_id", machine.getDefinition().getId().toString());
                 entry.addProperty("machine_name_key", machine.getDefinition().getDescriptionId());
                 entry.addProperty("dimension", dimension(machine));
-                entry.addProperty("position", machine.getPos().toShortString());
+                entry.addProperty("position", machine.getBlockPos().toShortString());
                 entry.addProperty("game_time", gameTime);
                 entry.addProperty("recipe_id", recipeId);
                 entry.addProperty("recipe_duration_ticks", recipe.duration);
@@ -104,13 +106,13 @@ public final class BatchProcessingDecisionLogger {
             String timestamp = FILE_TIMESTAMP_FORMATTER.format(LocalDateTime.now());
             String machineName = sanitize(machine.getDefinition().getId().toString());
             String dimension = sanitize(dimension(machine));
-            String position = sanitize(machine.getPos().toShortString());
+            String position = sanitize(machine.getBlockPos().toShortString());
             Path path = directory.resolve(String.join("-", timestamp, machineName, dimension, position) +
                     LOG_FILE_EXTENSION);
             return new MachineLog(path, false);
         } catch (Throwable exception) {
-            GTLCore.LOGGER.error("Failed to initialize a batch-processing decision log for machine {} at {}",
-                    machine.getDefinition().getId(), machine.getPos(), exception);
+            LOGGER.error("Failed to initialize a batch-processing decision log for machine {} at {}",
+                    machine.getDefinition().getId(), machine.getBlockPos(), exception);
             return MachineLog.FAILED;
         }
     }
@@ -119,8 +121,8 @@ public final class BatchProcessingDecisionLogger {
         synchronized (MACHINE_LOGS) {
             MACHINE_LOGS.put(machine, MachineLog.FAILED);
         }
-        GTLCore.LOGGER.error("Batch-processing decision logging failed for machine {} at {}; disabling its log",
-                machine.getDefinition().getId(), machine.getPos(), exception);
+        LOGGER.error("Batch-processing decision logging failed for machine {} at {}; disabling its log",
+                machine.getDefinition().getId(), machine.getBlockPos(), exception);
     }
 
     private static String dimension(MetaMachine machine) {

@@ -1,0 +1,66 @@
+// Compile the complete, unchanged common and NeoForge sources of the pinned
+// native releases. Neither release has @ExpectPlatform methods or non-empty
+// access wideners, so no Architectury bytecode transformation is needed.
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty(nativeFtbId + '_source'))
+def upstreamProperties = new Properties()
+new File(nativeSource, 'gradle.properties').withInputStream { upstreamProperties.load(it) }
+group = upstreamProperties.getProperty('maven_group')
+version = upstreamProperties.getProperty('mod_version')
+base { archivesName = upstreamProperties.getProperty('archives_base_name') + '-neoforge' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.withSourcesJar()
+sourceSets.main {
+    java.setSrcDirs([new File(nativeSource, 'common/src/main/java'),
+                     new File(nativeSource, 'neoforge/src/main/java')])
+    resources.setSrcDirs([new File(nativeSource, 'common/src/main/resources'),
+                          new File(nativeSource, 'neoforge/src/main/resources')])
+    resources.exclude('fabric.mod.json', '*.accesswidener', '.cache/**')
+}
+apply from: '../../../gradle/repositories.gradle'
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+    mods { "${nativeFtbId}" { sourceSet(sourceSets.main) } }
+}
+def architecturyVersion = upstreamProperties.getProperty('architectury_api_version',
+        upstreamProperties.getProperty('architectury_version'))
+dependencies {
+    api("dev.architectury:architectury-neoforge:${architecturyVersion}")
+    api(forge.ftblibrary)
+}
+tasks.register('verifyNativeSource') {
+    doLast {
+        def git = { List<String> args -> providers.exec {
+            commandLine(['git', '-C', nativeSource.absolutePath] + args)
+        }.standardOutput.asText.get() }
+        if (git(['rev-parse', 'HEAD']).trim() != coreProperties.getProperty(nativeFtbId + '_revision') ||
+                !git(['diff', 'HEAD', '--binary']).isEmpty() ||
+                !git(['ls-files', '--others', '--exclude-standard']).trim().isEmpty()) {
+            throw new GradleException("${nativeFtbId} checkout differs from its pinned native source")
+        }
+        if (upstreamProperties.getProperty('minecraft_version') != libs.versions.minecraft.get()) {
+            throw new GradleException("${nativeFtbId} source does not target the Minecraft baseline")
+        }
+    }
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+    dependsOn 'verifyNativeSource'
+}
+tasks.named('processResources') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    def metadata = [version: project.version,
+                    archversion: architecturyVersion,
+                    neoforgeversionrange: upstreamProperties.getProperty('neoforge_version_range'),
+                    neoforgeloaderversion: libs.versions.loader.get(),
+                    mcversion: libs.versions.minecraft.get(),
+                    ftblibraryversion: forge.versions.ftblibrary.get()]
+    inputs.properties(metadata)
+    filesMatching('META-INF/neoforge.mods.toml') { expand(metadata) }
+}

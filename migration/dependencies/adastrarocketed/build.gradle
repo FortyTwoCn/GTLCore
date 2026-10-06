@@ -1,0 +1,48 @@
+plugins { id 'java-library'; alias libs.plugins.modDevGradle }
+group = 'org.gtlcore.dependencies'
+version = '1.0.5-gtl.1'
+base { archivesName = 'ad_astra_rocketed-neoforge' }
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty('adastrarocketed_source'))
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.withSourcesJar()
+sourceSets.main {
+    java.setSrcDirs([new File(nativeSource, 'src/main/java')])
+    resources.setSrcDirs([new File(nativeSource, 'src/main/resources')])
+}
+apply from: '../../../gradle/repositories.gradle'
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+    mods { ad_astra_rocketed { sourceSet(sourceSets.main) } }
+}
+dependencies {
+    implementation('maven.modrinth:ad-astra:9pnKHdCG')
+    implementation(forge.resourcefullib)
+    implementation('maven.modrinth:common-storage-lib:SCkdlli6')
+    implementation('maven.modrinth:resourceful-config:lSbyRD6v')
+}
+// Use the unchanged bundled native APIs, with the same artifact checks as Core.
+configurations { nativeCommonStorageArtifact { transitive = false } }
+dependencies { nativeCommonStorageArtifact('maven.modrinth:common-storage-lib:SCkdlli6') }
+def apiDir = layout.buildDirectory.dir('native-dependencies/common-storage-lib')
+def extractApis = tasks.register('extractNativeCommonStorageApis', Sync) {
+    from({ zipTree(configurations.nativeCommonStorageArtifact.singleFile) })
+    include 'META-INF/jars/common-storage-lib-*-neoforge-1.21.1-0.0.10.jar'
+    into apiDir
+    doFirst {
+        def profile = new groovy.json.JsonSlurper().parse(file('../../native-adastra-api.json'))
+        def actual = java.security.MessageDigest.getInstance('SHA-256')
+                .digest(configurations.nativeCommonStorageArtifact.singleFile.bytes).encodeHex().toString()
+        if (actual != profile.common_storage.sha256) throw new GradleException('Pinned native storage artifact changed')
+    }
+}
+dependencies {
+    compileOnly(files(provider { fileTree(apiDir.get().asFile) { include '**/*.jar' } }).builtBy(extractApis))
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 21 }
+apply from: '../native-source.gradle'

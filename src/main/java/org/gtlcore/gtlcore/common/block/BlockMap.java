@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.common.block;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.common.util.Lazy;
+import net.neoforged.neoforge.common.util.Lazy;
 
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.*;

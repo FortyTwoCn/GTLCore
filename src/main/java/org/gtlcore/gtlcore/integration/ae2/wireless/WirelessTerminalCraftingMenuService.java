@@ -11,7 +11,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.stacks.AEKey;
 import appeng.helpers.WirelessTerminalMenuHost;
 import appeng.items.tools.powered.WirelessTerminalItem;
-import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.ItemMenuHostLocator;
 import appeng.menu.locator.MenuLocators;
 import appeng.menu.me.crafting.CraftAmountMenu;
 
@@ -29,16 +29,16 @@ public final class WirelessTerminalCraftingMenuService {
         Inventory inventory = player.getInventory();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             ItemStack stack = inventory.getItem(slot);
-            MenuLocator locator = MenuLocators.forInventorySlot(slot);
-            if (tryOpen(player, stack, locator, slot, key)) {
+            ItemMenuHostLocator locator = MenuLocators.forInventorySlot(slot);
+            if (tryOpen(player, stack, locator, key)) {
                 return true;
             }
         }
 
         CuriosCompat.TerminalSlot curiosSlot = CuriosCompat.findWirelessTerminal(player);
         if (curiosSlot != null) {
-            MenuLocator locator = new CuriosTerminalLocator(curiosSlot.identifier(), curiosSlot.index());
-            if (tryOpen(player, curiosSlot.stack(), locator, null, key)) {
+            ItemMenuHostLocator locator = new CuriosTerminalLocator(curiosSlot.identifier(), curiosSlot.index());
+            if (tryOpen(player, curiosSlot.stack(), locator, key)) {
                 return true;
             }
         }
@@ -46,7 +46,7 @@ public final class WirelessTerminalCraftingMenuService {
         return false;
     }
 
-    private static boolean tryOpen(ServerPlayer player, ItemStack stack, MenuLocator locator, Integer hostSlot,
+    private static boolean tryOpen(ServerPlayer player, ItemStack stack, ItemMenuHostLocator locator,
                                    AEKey key) {
         if (!(stack.getItem() instanceof WirelessTerminalItem terminal)) {
             return false;
@@ -57,8 +57,9 @@ public final class WirelessTerminalCraftingMenuService {
             return false;
         }
 
-        ItemMenuHost menuHost = terminal.getMenuHost(player, hostSlot != null ? hostSlot : -1, stack, null);
-        if (!(menuHost instanceof WirelessTerminalMenuHost host) || !host.rangeCheck()) {
+        ItemMenuHost<?> menuHost = terminal.getMenuHost(player, locator, null);
+        if (!(menuHost instanceof WirelessTerminalMenuHost<?> host) ||
+                !host.isValid() || !host.getLinkStatus().connected()) {
             return false;
         }
 

@@ -1,0 +1,553 @@
+{
+  "gtceu_reference_commit": "c72dc16b52795cbb0456b6e15e13cc4a85c0ed1b",
+  "gtlcore_baseline_commit": "5b6cd0ec6a9d2be99d9031404176e84b9cd342ea",
+  "native_registry": "gtceu:bedrock_fluid",
+  "resource_directory": "data/gtceu/gtceu/bedrock_fluid",
+  "entries": [
+    {
+      "field": "VOID_HEAVY_OIL",
+      "id": "gtceu:void_heavy_oil_deposit",
+      "native": {
+        "weight": 15,
+        "yield": {
+          "min": 100,
+          "max": 200
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 20,
+        "fluid": "gtceu:heavy_oil",
+        "dimension_filter": [
+          "kubejs:void"
+        ]
+      }
+    },
+    {
+      "field": "VOID_LIGHT_OIL",
+      "id": "gtceu:void_light_oil_deposit",
+      "native": {
+        "weight": 25,
+        "yield": {
+          "min": 175,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 25,
+        "fluid": "gtceu:light_oil",
+        "dimension_filter": [
+          "kubejs:void"
+        ]
+      }
+    },
+    {
+      "field": "VOID_NATURAL_GAS",
+      "id": "gtceu:void_natural_gas_deposit",
+      "native": {
+        "weight": 15,
+        "yield": {
+          "min": 100,
+          "max": 175
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 20,
+        "fluid": "gtceu:natural_gas",
+        "dimension_filter": [
+          "kubejs:void"
+        ]
+      }
+    },
+    {
+      "field": "VOID_OIL",
+      "id": "gtceu:void_oil_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 175,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 25,
+        "fluid": "gtceu:oil",
+        "dimension_filter": [
+          "kubejs:void"
+        ]
+      }
+    },
+    {
+      "field": "VOID_RAW_OIL",
+      "id": "gtceu:void_raw_oil_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 200,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 25,
+        "fluid": "gtceu:raw_oil",
+        "dimension_filter": [
+          "kubejs:void"
+        ]
+      }
+    },
+    {
+      "field": "VOID_ALT_WATER",
+      "id": "gtceu:void_salt_water_deposit",
+      "native": {
+        "weight": 10,
+        "yield": {
+          "min": 50,
+          "max": 100
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 15,
+        "fluid": "gtceu:salt_water",
+        "dimension_filter": [
+          "kubejs:void"
+        ]
+      }
+    },
+    {
+      "field": "FLAT_HEAVY_OIL",
+      "id": "gtceu:flat_heavy_oil_deposit",
+      "native": {
+        "weight": 15,
+        "yield": {
+          "min": 100,
+          "max": 200
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 20,
+        "fluid": "gtceu:heavy_oil",
+        "dimension_filter": [
+          "kubejs:flat"
+        ]
+      }
+    },
+    {
+      "field": "FLAT_LIGHT_OIL",
+      "id": "gtceu:flat_light_oil_deposit",
+      "native": {
+        "weight": 25,
+        "yield": {
+          "min": 175,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 25,
+        "fluid": "gtceu:light_oil",
+        "dimension_filter": [
+          "kubejs:flat"
+        ]
+      }
+    },
+    {
+      "field": "FLAT_NATURAL_GAS",
+      "id": "gtceu:flat_natural_gas_deposit",
+      "native": {
+        "weight": 15,
+        "yield": {
+          "min": 100,
+          "max": 175
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 20,
+        "fluid": "gtceu:natural_gas",
+        "dimension_filter": [
+          "kubejs:flat"
+        ]
+      }
+    },
+    {
+      "field": "FLAT_OIL",
+      "id": "gtceu:flat_oil_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 175,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 25,
+        "fluid": "gtceu:oil",
+        "dimension_filter": [
+          "kubejs:flat"
+        ]
+      }
+    },
+    {
+      "field": "FLAT_RAW_OIL",
+      "id": "gtceu:flat_raw_oil_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 200,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 25,
+        "fluid": "gtceu:raw_oil",
+        "dimension_filter": [
+          "kubejs:flat"
+        ]
+      }
+    },
+    {
+      "field": "FLAT_ALT_WATER",
+      "id": "gtceu:flat_salt_water_deposit",
+      "native": {
+        "weight": 10,
+        "yield": {
+          "min": 50,
+          "max": 100
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 15,
+        "fluid": "gtceu:salt_water",
+        "dimension_filter": [
+          "kubejs:flat"
+        ]
+      }
+    },
+    {
+      "field": "HELIUM_3",
+      "id": "gtceu:helium3_deposit",
+      "native": {
+        "weight": 10,
+        "yield": {
+          "min": 50,
+          "max": 180
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:helium_3",
+        "dimension_filter": [
+          "ad_astra:moon"
+        ]
+      }
+    },
+    {
+      "field": "HELIUM",
+      "id": "gtceu:helium_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 50,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:helium",
+        "dimension_filter": [
+          "ad_astra:moon"
+        ]
+      }
+    },
+    {
+      "field": "SULFURIC_ACID",
+      "id": "gtceu:sulfuric_acid_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 100,
+          "max": 250
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:sulfuric_acid",
+        "dimension_filter": [
+          "ad_astra:venus"
+        ]
+      }
+    },
+    {
+      "field": "DEUTERIUM",
+      "id": "gtceu:deuterium_deposit",
+      "native": {
+        "weight": 15,
+        "yield": {
+          "min": 80,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:deuterium",
+        "dimension_filter": [
+          "ad_astra:mercury"
+        ]
+      }
+    },
+    {
+      "field": "RADON",
+      "id": "gtceu:radon_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 50,
+          "max": 80
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:radon",
+        "dimension_filter": [
+          "ad_astra:mars"
+        ]
+      }
+    },
+    {
+      "field": "CERES_RADON",
+      "id": "gtceu:ceres_radon_deposit",
+      "native": {
+        "weight": 15,
+        "yield": {
+          "min": 100,
+          "max": 250
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:radon",
+        "dimension_filter": [
+          "kubejs:ceres"
+        ]
+      }
+    },
+    {
+      "field": "METHANE",
+      "id": "gtceu:methane_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 100,
+          "max": 250
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:methane",
+        "dimension_filter": [
+          "kubejs:titan"
+        ]
+      }
+    },
+    {
+      "field": "BENZENE",
+      "id": "gtceu:benzene_deposit",
+      "native": {
+        "weight": 15,
+        "yield": {
+          "min": 60,
+          "max": 160
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:benzene",
+        "dimension_filter": [
+          "kubejs:titan"
+        ]
+      }
+    },
+    {
+      "field": "CHARCOAL_BYPRODUCTS",
+      "id": "gtceu:charcoal_byproducts",
+      "native": {
+        "weight": 10,
+        "yield": {
+          "min": 80,
+          "max": 260
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:charcoal_byproducts",
+        "dimension_filter": [
+          "kubejs:titan"
+        ]
+      }
+    },
+    {
+      "field": "COAL_GAS",
+      "id": "gtceu:coal_gas_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 100,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:coal_gas",
+        "dimension_filter": [
+          "kubejs:io"
+        ]
+      }
+    },
+    {
+      "field": "NITRIC_ACID",
+      "id": "gtceu:nitric_acid_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 80,
+          "max": 300
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:nitric_acid",
+        "dimension_filter": [
+          "kubejs:pluto"
+        ]
+      }
+    },
+    {
+      "field": "HYDROCHLORIC_ACID",
+      "id": "gtceu:hydrochloric_acid_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 100,
+          "max": 350
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:hydrochloric_acid",
+        "dimension_filter": [
+          "kubejs:ganymede"
+        ]
+      }
+    },
+    {
+      "field": "CERES_XENON",
+      "id": "gtceu:ceres_xenon_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 100,
+          "max": 250
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:xenon",
+        "dimension_filter": [
+          "kubejs:ceres"
+        ]
+      }
+    },
+    {
+      "field": "CERES_KRYPTON",
+      "id": "gtceu:ceres_krypton_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 100,
+          "max": 250
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:krypton",
+        "dimension_filter": [
+          "kubejs:ceres"
+        ]
+      }
+    },
+    {
+      "field": "CERES_NEON",
+      "id": "gtceu:ceres_neon_deposit",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 100,
+          "max": 250
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:neon",
+        "dimension_filter": [
+          "kubejs:ceres"
+        ]
+      }
+    },
+    {
+      "field": "FLUORINE",
+      "id": "gtceu:fluorine",
+      "native": {
+        "weight": 10,
+        "yield": {
+          "min": 180,
+          "max": 320
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:fluorine",
+        "dimension_filter": [
+          "kubejs:enceladus"
+        ]
+      }
+    },
+    {
+      "field": "CHLORINE",
+      "id": "gtceu:chlorine",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 180,
+          "max": 420
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:chlorine",
+        "dimension_filter": [
+          "kubejs:enceladus"
+        ]
+      }
+    },
+    {
+      "field": "UNKNOWWATER",
+      "id": "gtceu:unknowwater",
+      "native": {
+        "weight": 20,
+        "yield": {
+          "min": 40,
+          "max": 60
+        },
+        "depletion_amount": 1,
+        "depletion_chance": 100,
+        "depleted_yield": 40,
+        "fluid": "gtceu:unknowwater",
+        "dimension_filter": [
+          "kubejs:barnarda"
+        ]
+      }
+    }
+  ],
+  "material_api_moves": {
+    "OilHeavy": "HeavyOil",
+    "OilLight": "LightOil"
+  },
+  "scope": "Native registry resources and native bootstrap; old-save conversion is out of scope."
+}

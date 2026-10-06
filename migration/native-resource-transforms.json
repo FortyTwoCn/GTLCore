@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "baseline_revision": "5b6cd0ec6a9d2be99d9031404176e84b9cd342ea",
+  "scope": "Explicit reviewed native resource transformations; missing resources and registration literals still fail. These checksums do not prove runtime behavior.",
+  "resources": {
+    "src/main/resources/assets/gtceu/models/block/machine/part/me_mini_pattern_buffer.json": {
+      "original_normalized_sha256": "fef16d73bacd76d5759dc19f9c77600b30ddb1cf6102a4f8215ffa1f1a353110",
+      "native_normalized_sha256": "74c8dfc8ad666eed284066a5f3a6750c2973d543582a85efbabdd66cd474c4d9",
+      "reason": "Native GT 8 machine model includes the original overlay and a complete tintable casing; native face layers and light metadata preserve overlay/emissive behavior. Complete client model baking and every owned machine model checked."
+    },
+    "src/main/resources/assets/gtceu/models/block/machine/part/neutron_accelerator.json": {
+      "original_normalized_sha256": "1db59366b3a3d5255885d45e07338f31e327ce9d18fc1cab5f2a6423af800dee",
+      "native_normalized_sha256": "c7ff6d037fd0300e093f1cb0b4ff27bd722b036381c6762cfd0697ec74fc56d9",
+      "reason": "Native GT 8 machine model includes the original overlay and a complete tintable casing; native face layers and light metadata preserve overlay/emissive behavior. Complete client model baking and every owned machine model checked."
+    },
+    "src/main/resources/assets/gtceu/models/block/machine/part/neutron_sensor.json": {
+      "original_normalized_sha256": "60e20abb7790d9ae87daceba4c7e58de5ca065a8c4b87a038d0f2b7eea8a2d61",
+      "native_normalized_sha256": "531f43c0b686aba7cd7640411618a0081aab78da7637c08fe792d6f01b6851fc",
+      "reason": "Native GT 8 machine model includes the original overlay and a complete tintable casing; native face layers and light metadata preserve overlay/emissive behavior. Complete client model baking and every owned machine model checked."
+    },
+    "src/main/resources/assets/gtceu/models/block/machine/part/rotor_hatch.json": {
+      "original_normalized_sha256": "7a9b9435197f8446e827b6831134700742b93ab56f0914215e430cde28a14b25",
+      "native_normalized_sha256": "4f09327fa30d8587d92ca5ecf4047d83acdfdde9414cf6ddd49f980ad64706c5",
+      "reason": "Native GT 8 machine model includes the original overlay and a complete tintable casing; native face layers and light metadata preserve overlay/emissive behavior. Complete client model baking and every owned machine model checked."
+    },
+    "src/main/resources/assets/gtlcore/models/block/variant/advanced_assembly_line_unit.json": {
+      "original_normalized_sha256": "023baccf5ee612767510f976f355926945e189ce5acc8eb20251075938ed28f0",
+      "native_normalized_sha256": "f99c9a80de63fe6d2f24c50b5590c7a725bc502e2e038ed4c865cd83ae2db2ca",
+      "reason": "Use the native vanilla cube_all parent because GT 8 removed the legacy untinted cube/all parent; original all-face texture retained."
+    },
+    "src/main/resources/data/gtlcore/recipe/virtual_ingredient_supply_machine.json": {
+      "original_normalized_sha256": "2f4188d0d7b0c435bbcfd0848fa08d0e758137b904c4dfe7d4655c119d9bc431",
+      "native_normalized_sha256": "11d076193f759d6e74bb1240b0d1c037fc49153289f536f5ed28149453a1f10b",
+      "reason": "Original recipe ID, quantities, EU/t and duration retained. Native namespaced GT content codecs and fixed configuration-zero infinite circuit cell replace the removed Forge NBT ingredient and old ExtendedAE cell NBT format; actual native infinite-cell behavior tested separately."
+    },
+    "src/main/resources/assets/gtlcore/lang/en_us.json": {
+      "original_normalized_sha256": "3cfc03a675e9adeb2647d1ee0ccd0aabaf7887e411fa6d97a5934ed7c965bf44",
+      "native_normalized_sha256": "32a0b46b3a17b920d6f3301efd4eb7cf85663e6905a2cae40b2ddd2c9621736b",
+      "reason": "Use the same concise Search hint as the other native terminals; the emitter field is 154 logical pixels wide and its emitter/resource/position matching remains unchanged."
+    }
+  }
+}

@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.api.recipe;
 import org.gtlcore.gtlcore.api.machine.multiblock.ParallelMachine;
 import org.gtlcore.gtlcore.api.machine.trait.IBatchMachine;
 import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
-import org.gtlcore.gtlcore.common.machine.trait.MultipleRecipesLogic;
+import org.gtlcore.gtlcore.api.machine.trait.ICrossRecipeLogic;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
@@ -15,11 +15,9 @@ import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMa
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.api.recipe.ingredient.SizedIngredient;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
+import com.gregtechceu.gtceu.api.recipe.OverclockingLogic.OCResult;
 
-import net.minecraft.world.item.crafting.Ingredient;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -69,14 +67,14 @@ public final class BatchProcessing {
     }
 
     public static boolean isCrossRecipeParallel(IRecipeLogicMachine machine) {
-        if (!(machine.getRecipeLogic() instanceof MultipleRecipesLogic)) return false;
+        if (!(machine.getRecipeLogic() instanceof ICrossRecipeLogic)) return false;
 
         var modeGetter = MULTIPLE_RECIPE_MODE_ACCESS.get(machine.getClass()).modeGetter();
         return modeGetter.isEmpty() || invokeBoolean(modeGetter.get(), machine, true);
     }
 
     public static boolean canConfigureBatchProcessing(IRecipeLogicMachine machine) {
-        if (!(machine.getRecipeLogic() instanceof MultipleRecipesLogic)) return true;
+        if (!(machine.getRecipeLogic() instanceof ICrossRecipeLogic)) return true;
 
         var access = MULTIPLE_RECIPE_MODE_ACCESS.get(machine.getClass());
         if (access.modeGetter().isEmpty() || access.modeSetter().isEmpty()) return false;
@@ -117,7 +115,6 @@ public final class BatchProcessing {
                 timeLimit, decision.timeLimitedCycles(), decision.amountLimitedCycles(), batchSize);
         if (batchSize == 0) return null;
         GTRecipe result = batchSize > 1 ? scaleRecipe(recipe, batchSize) : recipe;
-        result = IParallelLogic.getRecipeOutputChance(recipeMachine, result);
         IGTRecipe.of(result).setBatchSize(batchSize);
         IGTRecipe.of(result).setBatchProcessed(true);
         return result;
@@ -154,7 +151,7 @@ public final class BatchProcessing {
         recipe.tickOutputs.clear();
         recipe.tickOutputs.putAll(tickOutputs);
         recipe.duration = result.duration;
-        recipe.ocTier = result.ocTier;
+        recipe.ocLevel = result.ocLevel;
         RecipeExtensionCopier.copy(result, recipe);
         return true;
     }
@@ -181,7 +178,7 @@ public final class BatchProcessing {
             regularParallelLimit = Math.min(regularParallelLimit, parallelMachine.getMaxParallel());
         }
         if (machine instanceof WorkableElectricMultiblockMachine electricMachine) {
-            long recipeEUt = RecipeHelper.getInputEUt(originalRecipe);
+            long recipeEUt = originalRecipe.getInputEUt().getTotalEU();
             if (recipeEUt > 0) {
                 regularParallelLimit = Math.min(regularParallelLimit,
                         electricMachine.getOverclockVoltage() / recipeEUt);
@@ -192,7 +189,7 @@ public final class BatchProcessing {
     }
 
     public static boolean canOverclockBelowOneTick(OCResult result) {
-        return ((IAdvancedOCResult) (Object) result).isSubTickOverclockAvailable();
+        return result.parallels() > 1 || (Object) result instanceof IAdvancedOCResult extra && extra.isSubTickOverclockAvailable();
     }
 
     private static BatchSizeDecision getBatchSize(IRecipeLogicMachine machine, GTRecipe recipe, int timeLimit) {
@@ -237,10 +234,8 @@ public final class BatchProcessing {
     private static long getMaximumItemAmount(List<Content> contents) {
         long maximum = 0;
         for (Content content : contents) {
-            Ingredient ingredient = ItemRecipeCapability.CAP.of(content.content);
-            long amount = ingredient instanceof LongIngredient longIngredient ?
-                    longIngredient.getActualAmount() :
-                    ingredient instanceof SizedIngredient sizedIngredient ? sizedIngredient.getAmount() : 1;
+            var ingredient = ItemRecipeCapability.CAP.of(content.content());
+            long amount = content.chance() == 0 ? 0 : LongIngredient.amount(ingredient);
             if (amount < 0) return -1;
             maximum = Math.max(maximum, amount);
         }
@@ -250,8 +245,8 @@ public final class BatchProcessing {
     private static long getMaximumFluidAmount(List<Content> contents) {
         long maximum = 0;
         for (Content content : contents) {
-            FluidIngredient ingredient = FluidRecipeCapability.CAP.of(content.content);
-            long amount = ingredient.getAmount();
+            var ingredient = FluidRecipeCapability.CAP.of(content.content());
+            long amount = content.chance() == 0 ? 0 : LongFluidIngredient.amount(ingredient);
             if (amount < 0) return -1;
             maximum = Math.max(maximum, amount);
         }
@@ -265,13 +260,13 @@ public final class BatchProcessing {
         for (RecipeCapability<?> capability : recipe.inputs.keySet()) {
             if (capability.doMatchInRecipe() && capability != ItemRecipeCapability.CAP &&
                     capability != FluidRecipeCapability.CAP) {
-                parallel = Math.min(parallel, capability.getMaxParallelRatio(machine, recipe, (int) parallel));
+                parallel = Math.min(parallel, capability.getMaxParallelByInput(machine, recipe, (int) parallel, false));
             }
         }
         for (RecipeCapability<?> capability : recipe.outputs.keySet()) {
             if (capability.doMatchInRecipe() && capability != ItemRecipeCapability.CAP &&
                     capability != FluidRecipeCapability.CAP && !machine.canVoidRecipeOutputs(capability)) {
-                parallel = Math.min(parallel, capability.limitParallel(recipe, machine, (int) parallel));
+                parallel = Math.min(parallel, capability.limitMaxParallelByOutput(machine, recipe, (int) parallel, false));
             }
         }
         return (int) parallel;
@@ -281,12 +276,13 @@ public final class BatchProcessing {
         GTRecipe batched = recipe.copy(preciseMultiplier(batchSize), false);
         RecipeExtensionCopier.copy(recipe, batched);
 
+        var unchangedTicks = recipe.copy();
         batched.tickInputs.clear();
-        batched.tickInputs.putAll(recipe.tickInputs);
+        batched.tickInputs.putAll(unchangedTicks.tickInputs);
         batched.tickOutputs.clear();
-        batched.tickOutputs.putAll(recipe.tickOutputs);
+        batched.tickOutputs.putAll(unchangedTicks.tickOutputs);
         batched.duration = recipe.duration * batchSize;
-        batched.ocTier = recipe.ocTier;
+        batched.ocLevel = recipe.ocLevel;
         IGTRecipe.of(batched).setRealParallels(IGTRecipe.of(recipe).getRealParallels() * batchSize);
         return batched;
     }

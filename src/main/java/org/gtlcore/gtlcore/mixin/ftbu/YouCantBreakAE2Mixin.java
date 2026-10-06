@@ -8,7 +8,7 @@ import dev.ftb.mods.ftbultimine.FTBUltiminePlayerData;
 import dev.ftb.mods.ftbultimine.shape.BlockMatcher;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 /**
  * @author EasterFG on 2024/10/10
@@ -16,7 +16,9 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(FTBUltiminePlayerData.class)
 public abstract class YouCantBreakAE2Mixin {
 
-    @ModifyVariable(method = "updateBlocks", at = @At(value = "STORE", ordinal = 2), remap = false, name = "matcher")
+    @ModifyArg(method = "updateBlocks", at = @At(value = "INVOKE",
+            target = "Ldev/ftb/mods/ftbultimine/shape/ShapeContext;<init>(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/block/state/BlockState;Ldev/ftb/mods/ftbultimine/shape/BlockMatcher;I)V"),
+            index = 4, remap = false, require = 1)
     public BlockMatcher modifyBlockMatcher(BlockMatcher matcher) {
         if (ConfigHolder.INSTANCE.blackBlockList == null || ConfigHolder.INSTANCE.blackBlockList.length < 1) {
             return matcher;

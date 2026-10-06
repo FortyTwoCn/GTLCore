@@ -1,0 +1,11 @@
+{
+  "revision": "c72dc16b52795cbb0456b6e15e13cc4a85c0ed1b",
+  "repository": "https://github.com/FortyTwoCn/GregTech-Modern",
+  "branch": "1.21",
+  "file": "src/main/templates/META-INF/neoforge.mods.toml",
+  "before_sha256": "f83160e139296d977c39cbbcb2e91ee141db1d5be6306743f5298bcc1e2c1012",
+  "after_sha256": "7654a875172aeaa7176970a6b022894c2eb2485230e2d619c18d3e9a817cdb97",
+  "patch_sha256": "90a9be3cd3623fd30c043eb441665edd7b83a580a3801cca00a0166b7b6c6b2d",
+  "reason": "The pinned native source no longer contains any LDLib integration classes or gtceu-ldlib.mixins.json, but declares this missing optional configuration. Loading native LDLib otherwise aborts FML before mod construction.",
+  "scope": "Remove only the absent optional configuration declaration. All Java source, API, existing mixin configuration, injection requirements and version choices remain those of the pinned reference."
+}

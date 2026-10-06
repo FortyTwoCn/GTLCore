@@ -1,10 +1,85 @@
 pluginManagement {
-    // when using additional gradle plugins like shadow,
-    // add their repositories to this list!
     repositories {
-        maven { url "https://maven.fabricmc.net/" }
-        maven { url "https://maven.architectury.dev/" }
-        maven { url "https://files.minecraftforge.net/maven/" }
         gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+    plugins {
+        id 'org.jetbrains.kotlin.jvm' version '2.0.21'
+    }
+}
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        forge { from(files('gradle/forge.versions.toml')) }
+    }
+}
+
+rootProject.name = providers.gradleProperty('mod_id').get()
+
+// Build the specified fork from source. A released upstream JAR is not an API-equivalent substitute.
+def gtceuSource = file(providers.gradleProperty('gtceu_source').get())
+if (!new File(gtceuSource, 'settings.gradle').isFile()) {
+    throw new GradleException("Clone the pinned GregTech 1.21 source into ${gtceuSource}; see migration/README.md")
+}
+includeBuild(gtceuSource) {
+    dependencySubstitution {
+        substitute module('com.gregtechceu.gtceu:gtceu-1.21.1') using project(':')
+    }
+}
+
+includeBuild('migration/dependencies/gtmthings') {
+    name = 'gtmthings-native'
+    dependencySubstitution {
+        substitute module('com.hepdd.gtmthings:gtmthings') using project(':')
+    }
+}
+
+includeBuild('migration/dependencies/ae2wtlib') {
+    name = 'ae2wtlib-native'
+    dependencySubstitution {
+        substitute module('maven.modrinth:applied-energistics-2-wireless-terminals') using project(':')
+        substitute module('de.mari_023:ae2wtlib_api') using project(':ae2wtlib_api')
+    }
+}
+
+includeBuild('migration/dependencies/ftbultimine') {
+    name = 'ftbultimine-native'
+    dependencySubstitution {
+        substitute module('dev.ftb.mods:ftb-ultimine-neoforge') using project(':')
+    }
+}
+
+includeBuild('migration/dependencies/ae2jei') {
+    name = 'ae2jei-native'
+    dependencySubstitution {
+        substitute module('tamaized.ae2jeiintegration:ae2jeiintegration') using project(':')
+    }
+}
+
+includeBuild('migration/dependencies/travelanchors') {
+    name = 'travelanchors-native'
+    dependencySubstitution {
+        substitute module('org.gtlcore.dependencies:travelanchors-neoforge') using project(':')
+    }
+}
+
+includeBuild('migration/dependencies/mae2') {
+    name = 'mae2-native'
+    dependencySubstitution {
+        substitute module('org.gtlcore.dependencies:mae2-neoforge') using project(':')
+    }
+}
+
+includeBuild('migration/dependencies/adastrarocketed') {
+    name = 'adastrarocketed-native'
+    dependencySubstitution {
+        substitute module('org.gtlcore.dependencies:ad_astra_rocketed-neoforge') using project(':')
+    }
+}
+
+includeBuild('migration/dependencies/wildcardpattern') {
+    name = 'wildcardpattern-native'
+    dependencySubstitution {
+        substitute module('org.gtlcore.dependencies:wildcard-pattern-neoforge') using project(':')
     }
 }

@@ -2,6 +2,7 @@ package org.gtlcore.gtlcore.utils;
 
 import org.gtlcore.gtlcore.integration.ae2.storage.InfinityCellDataStorage;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
@@ -14,10 +15,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.Objects;
 
 public class StorageManager extends SavedData {
 
     private final Object2ObjectMap<UUID, InfinityCellDataStorage> disks;
+    private HolderLookup.Provider registries;
 
     public StorageManager() {
         disks = new Object2ObjectOpenHashMap<>();
@@ -30,7 +33,8 @@ public class StorageManager extends SavedData {
     }
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag nbt) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag nbt, @NotNull HolderLookup.Provider registries) {
+        this.registries = registries;
         ListTag diskList = new ListTag();
         for (Map.Entry<UUID, InfinityCellDataStorage> entry : disks.entrySet()) {
             UUID uuid = entry.getKey();
@@ -56,6 +60,10 @@ public class StorageManager extends SavedData {
             disks.put(disk.getUUID("diskuuid"), InfinityCellDataStorage.fromNbt(disk.getCompound("diskdata")));
         }
         return new StorageManager(disks);
+    }
+
+    public HolderLookup.Provider getRegistries() {
+        return Objects.requireNonNull(registries, "Disk storage must be attached to a server before decoding AE2 keys");
     }
 
     public void updateDisk(UUID uuid, InfinityCellDataStorage infinityCellDataStorage) {
@@ -87,8 +95,12 @@ public class StorageManager extends SavedData {
     }
 
     public static StorageManager getInstance(MinecraftServer server) {
-        ServerLevel world = server.getLevel(ServerLevel.OVERWORLD);
-        return world.getDataStorage().computeIfAbsent(StorageManager::readNbt, StorageManager::new,
+        ServerLevel world = server.overworld();
+        // Preserve the old filename and NBT keys; these disks are not vanilla item stacks.
+        StorageManager manager = world.getDataStorage().computeIfAbsent(
+                new SavedData.Factory<>(StorageManager::new, (tag, registries) -> readNbt(tag)),
                 "disk_manager");
+        manager.registries = server.registryAccess();
+        return manager;
     }
 }

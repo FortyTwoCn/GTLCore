@@ -22,7 +22,7 @@ public abstract class CompositeStorageMixin implements ThroughputStorageView {
     @Shadow(remap = false)
     private Map<AEKeyType, MEStorage> storages;
 
-    @Inject(method = "setStorages", at = @At("RETURN"), remap = false)
+    @Inject(method = "setStorages", at = @At("RETURN"), remap = false, require = 1)
     private void gtlcore$invalidateThroughputTopology(Map<AEKeyType, MEStorage> storages, CallbackInfo ci) {
         ThroughputMonitorStorageTracker.onTopologyChanged((MEStorage) (Object) this);
     }

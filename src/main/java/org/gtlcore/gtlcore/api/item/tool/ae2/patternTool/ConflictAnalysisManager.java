@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.api.item.tool.ae2.patternTool;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.slf4j.LoggerFactory;
 
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 
@@ -46,7 +46,7 @@ public class ConflictAnalysisManager {
 
         // preprocessData
         List<ConflictAnalysisObj> conflictAnalysisObjList = this.conflictAnalysisObjs.stream()
-                .filter(conflictAnalysisObj -> (Objects.equals(conflictAnalysisObj.CIRCUIT, circuit) || conflictAnalysisObj.CIRCUIT.equals(0))) // 任何电路的机器都可以运行0号电路
+                .filter(object -> object.CIRCUIT.intValue() == circuit.intValue() || object.CIRCUIT.intValue() == 0)
                 .toList();
 
         // useConflictProcessLogic
@@ -61,6 +61,6 @@ public class ConflictAnalysisManager {
     }
 
     public void printAllObject() {
-        this.conflictAnalysisObjs.forEach(conflictAnalysisObj -> GTLCore.LOGGER.info(conflictAnalysisObj.toString()));
+        this.conflictAnalysisObjs.forEach(object -> LoggerFactory.getLogger("gtlcore.pattern_tool").info(object.toString()));
     }
 }

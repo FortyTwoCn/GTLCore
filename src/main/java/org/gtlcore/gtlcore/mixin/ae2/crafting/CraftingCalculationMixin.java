@@ -117,7 +117,7 @@ public abstract class CraftingCalculationMixin implements ICraftingCalculation {
         try {
             this.gTLCore$calculationMode = AEUtils.getCalculationMode();
             if (this.gTLCore$calculationMode == AE2CalculationMode.MAX_FAST) {
-                this.gTLCore$maxFastMetrics = new MaxFastMetrics();
+                this.gTLCore$maxFastMetrics = new MaxFastMetrics(this.level.registryAccess());
                 this.gTLCore$maxFastCompilationCache = new CompilationCache();
                 if (this.gTLCore$maxFastMetrics.isDiagnosticLoggingEnabled()) {
                     var gridNode = this.simRequester.getGridNode();
@@ -127,7 +127,7 @@ public abstract class CraftingCalculationMixin implements ICraftingCalculation {
                     this.gTLCore$maxFastMetrics.recordDiagnosticContext(
                             craftingProviderVersionTick,
                             ((IMaxFastNetworkInventoryFingerprint) this.networkInv)
-                                    .gtlcore$getMaxFastInventoryFingerprint());
+                                    .gtlcore$getMaxFastInventoryFingerprint(this.level.registryAccess()));
                 }
                 plan = gTLCore$computeMaxFastPlan();
             } else {

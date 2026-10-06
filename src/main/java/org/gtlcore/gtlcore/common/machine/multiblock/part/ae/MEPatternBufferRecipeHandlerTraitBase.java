@@ -1,6 +1,11 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 
-import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.integration.ae2.AEOutputIngredients;
+import org.gtlcore.gtlcore.integration.ae2.AEOutputBuffer;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
+import java.util.ArrayList;
+import java.util.function.Function;
 import org.gtlcore.gtlcore.integration.ae2.AEUtils;
 
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
@@ -9,13 +14,12 @@ import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.api.recipe.ingredient.IntProviderIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -36,15 +40,27 @@ import java.util.List;
 public abstract class MEPatternBufferRecipeHandlerTraitBase extends MachineTrait {
 
     @Getter
-    protected final MEItemInputHandlerBase meItemHandler;
+    protected MEItemInputHandlerBase meItemHandler;
 
     @Getter
-    protected final MEFluidHandlerBase meFluidHandler;
+    protected MEFluidHandlerBase meFluidHandler;
+
+    private final IO handlerIO;
 
     public MEPatternBufferRecipeHandlerTraitBase(MEPatternBufferPartMachineBase ioBuffer, IO io) {
-        super(ioBuffer);
-        meItemHandler = createMEItemHandler(io);
-        meFluidHandler = createMEFluidHandler(io);
+        handlerIO = io;
+    }
+
+    @Override
+    public void onTraitAttached() {
+        super.onTraitAttached();
+        meItemHandler = getMachine().attachTrait(createMEItemHandler(handlerIO));
+        meFluidHandler = getMachine().attachTrait(createMEFluidHandler(handlerIO));
+    }
+
+    public void notifyInputListeners() {
+        meItemHandler.notifyListeners();
+        meFluidHandler.notifyListeners();
     }
 
     protected abstract MEItemInputHandlerBase createMEItemHandler(IO io);
@@ -56,32 +72,29 @@ public abstract class MEPatternBufferRecipeHandlerTraitBase extends MachineTrait
         return (MEPatternBufferPartMachineBase) super.getMachine();
     }
 
-    @Override
-    public void onChanged() {}
-
-    protected abstract static class MEItemInputHandlerBase extends NotifiableMERecipeHandlerTrait<Ingredient, ItemStack> {
+    protected abstract static class MEItemInputHandlerBase extends NotifiableMERecipeHandlerTrait<SizedIngredient, ItemStack> {
 
         @Getter
         private final IO io;
 
         @Getter
         @Setter
-        private Object2LongMap<Ingredient> preparedMEHandleContents = new Object2LongOpenHashMap<>();
+        private Object2LongMap<SizedIngredient> preparedMEHandleContents = new Object2LongOpenHashMap<>();
 
         @Setter
         private int preparedCircuitConfig = -1;
 
         public MEItemInputHandlerBase(MEPatternBufferPartMachineBase machine, IO io) {
-            super(machine);
+            super();
             this.io = io;
         }
 
         public MEPatternBufferPartMachineBase getMachine() {
-            return (MEPatternBufferPartMachineBase) this.machine;
+            return (MEPatternBufferPartMachineBase) super.getMachine();
         }
 
         @Override
-        public RecipeCapability<Ingredient> getCapability() {
+        public RecipeCapability<SizedIngredient> getCapability() {
             return ItemRecipeCapability.CAP;
         }
 
@@ -126,10 +139,10 @@ public abstract class MEPatternBufferRecipeHandlerTraitBase extends MachineTrait
         }
 
         @Override
-        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<Ingredient> left, boolean simulate, int trySlot) {
+        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<SizedIngredient> left, boolean simulate, int trySlot) {
             var internalSlot = getMachine().getInternalSlotOrNull(trySlot);
             if (internalSlot != null && internalSlot.isItemActive(simulate)) {
-                Object2LongMap<Ingredient> remaining = left;
+                Object2LongMap<SizedIngredient> remaining = left;
                 if (simulate) {
                     if (!internalSlot.testCatalystItemInternal(recipe)) return false;
                     if (!internalSlot.testVirtualItemInternal(recipe)) return false;
@@ -142,12 +155,12 @@ public abstract class MEPatternBufferRecipeHandlerTraitBase extends MachineTrait
         }
 
         @Override
-        public void prepareMEHandleContents(GTRecipe recipe, List<Ingredient> left, boolean simulate) {
+        public void prepareMEHandleContents(GTRecipe recipe, List<SizedIngredient> left, boolean simulate) {
             preparedCircuitConfig = -1;
             if (simulate) {
-                getMachine().getSharedCircuitInventory().handleRecipeInner(IO.IN, recipe, left, null, true);
+                getMachine().getSharedCircuitInventory().handleRecipeInner(IO.IN, recipe, left, true);
 
-                getMachine().getSharedCatalystInventory().handleRecipeInner(IO.IN, recipe, left, null, true);
+                getMachine().getSharedCatalystInventory().handleRecipeInner(IO.IN, recipe, left, true);
 
                 // Circuit ingredients are captured separately from the prepared item map.
                 setPreparedMEHandleContents(AEUtils.ingredientsMapWithOutCircuit(left, this::setPreparedCircuitConfig));
@@ -157,47 +170,38 @@ public abstract class MEPatternBufferRecipeHandlerTraitBase extends MachineTrait
         }
 
         @Override
-        public List<Ingredient> meHandleRecipeOutputInner(List<Ingredient> left, boolean simulate) {
-            if (simulate) return List.of();
-            final var buffer = getMachine().buffer;
-            for (Ingredient ingredient : left) {
-                if (ingredient instanceof IntProviderIngredient intProvider) {
-                    intProvider.setItemStacks(null);
-                    intProvider.setSampledCount(null);
-                }
+        public List<SizedIngredient> meHandleRecipeOutput(List<?> contents, boolean simulate) {
+            var copy = new ArrayList<SizedIngredient>(contents.size());
+            for (var content : contents) copy.add(copyContent(content));
+            return meHandleRecipeOutputInner(copy, simulate);
+        }
 
-                ItemStack[] items = ingredient.getItems();
-                if (items.length != 0) {
-                    ItemStack output = items[0];
-                    if (!output.isEmpty()) {
-                        buffer.addTo(AEItemKey.of(output), ingredient instanceof LongIngredient longIngredient ? longIngredient.getActualAmount() : output.getCount());
-                    }
-                }
-            }
-            return List.of();
+        @Override
+        public List<SizedIngredient> meHandleRecipeOutputInner(List<SizedIngredient> left, boolean simulate) {
+            return acceptOutputs(getMachine(), left, ingredient -> AEOutputIngredients.item(ingredient, simulate), simulate);
         }
     }
 
-    protected abstract static class MEFluidHandlerBase extends NotifiableMERecipeHandlerTrait<FluidIngredient, FluidStack> {
+    protected abstract static class MEFluidHandlerBase extends NotifiableMERecipeHandlerTrait<SizedFluidIngredient, FluidStack> {
 
         @Getter
         private final IO io;
 
         @Getter
         @Setter
-        private Object2LongMap<FluidIngredient> preparedMEHandleContents = new Object2LongOpenHashMap<>();
+        private Object2LongMap<SizedFluidIngredient> preparedMEHandleContents = new Object2LongOpenHashMap<>();
 
         public MEFluidHandlerBase(MEPatternBufferPartMachineBase machine, IO io) {
-            super(machine);
+            super();
             this.io = io;
         }
 
         public MEPatternBufferPartMachineBase getMachine() {
-            return (MEPatternBufferPartMachineBase) this.machine;
+            return (MEPatternBufferPartMachineBase) super.getMachine();
         }
 
         @Override
-        public RecipeCapability<FluidIngredient> getCapability() {
+        public RecipeCapability<SizedFluidIngredient> getCapability() {
             return FluidRecipeCapability.CAP;
         }
 
@@ -236,10 +240,10 @@ public abstract class MEPatternBufferRecipeHandlerTraitBase extends MachineTrait
         }
 
         @Override
-        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<FluidIngredient> left, boolean simulate, int trySlot) {
+        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<SizedFluidIngredient> left, boolean simulate, int trySlot) {
             var internalSlot = getMachine().getInternalSlotOrNull(trySlot);
             if (internalSlot != null && internalSlot.isFluidActive(simulate)) {
-                Object2LongMap<FluidIngredient> remaining = left;
+                Object2LongMap<SizedFluidIngredient> remaining = left;
                 if (simulate) {
                     if (!internalSlot.testCatalystFluidInternal(recipe)) return false;
                     if (!internalSlot.testVirtualFluidInternal(recipe)) return false;
@@ -250,27 +254,41 @@ public abstract class MEPatternBufferRecipeHandlerTraitBase extends MachineTrait
         }
 
         @Override
-        public void prepareMEHandleContents(GTRecipe recipe, List<FluidIngredient> left, boolean simulate) {
+        public void prepareMEHandleContents(GTRecipe recipe, List<SizedFluidIngredient> left, boolean simulate) {
             if (simulate) {
-                getMachine().getSharedCatalystTank().handleRecipeInner(IO.IN, recipe, left, null, true);
+                getMachine().getSharedCatalystTank().handleRecipeInner(IO.IN, recipe, left, true);
             }
             setPreparedMEHandleContents(AEUtils.fluidIngredientsMap(left));
         }
 
         @Override
-        public List<FluidIngredient> meHandleRecipeOutputInner(List<FluidIngredient> left, boolean simulate) {
-            if (simulate) return List.of();
-            final var buffer = getMachine().buffer;
-            for (FluidIngredient fluidIngredient : left) {
-                if (!fluidIngredient.isEmpty()) {
-                    FluidStack[] fluids = fluidIngredient.getStacks();
-                    if (fluids.length != 0) {
-                        FluidStack output = fluids[0];
-                        buffer.addTo(AEFluidKey.of(output.getFluid()), output.getAmount());
-                    }
-                }
-            }
-            return List.of();
+        public List<SizedFluidIngredient> meHandleRecipeOutput(List<?> contents, boolean simulate) {
+            var copy = new ArrayList<SizedFluidIngredient>(contents.size());
+            for (var content : contents) copy.add(copyContent(content));
+            return meHandleRecipeOutputInner(copy, simulate);
         }
+
+        @Override
+        public List<SizedFluidIngredient> meHandleRecipeOutputInner(List<SizedFluidIngredient> left, boolean simulate) {
+            return acceptOutputs(getMachine(), left, ingredient -> AEOutputIngredients.fluid(ingredient, simulate), simulate);
+        }
+    }
+
+    private static <T> List<T> acceptOutputs(MEPatternBufferPartMachineBase machine, List<T> contents,
+                                            Function<T, GenericStack> resolve, boolean simulate) {
+        var accepted = new Object2LongOpenHashMap<AEKey>();
+        try {
+            for (T content : contents) {
+                var output = resolve.apply(content);
+                if (output != null) accepted.put(output.what(), Math.addExact(accepted.getLong(output.what()), output.amount()));
+            }
+            for (var entry : accepted.object2LongEntrySet()) Math.addExact(machine.buffer.getLong(entry.getKey()), entry.getLongValue());
+        } catch (ArithmeticException overflow) { return contents; }
+        if (!simulate && !accepted.isEmpty()) {
+            for (var entry : accepted.object2LongEntrySet()) machine.buffer.put(entry.getKey(), Math.addExact(machine.buffer.getLong(entry.getKey()), entry.getLongValue()));
+            machine.markAsChanged();
+            machine.getMETrait().notifySelfIO();
+        }
+        return List.of();
     }
 }

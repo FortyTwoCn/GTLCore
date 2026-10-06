@@ -1,125 +1,87 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
-import com.gregtechceu.gtceu.data.lang.LangHandler;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.utils.RedstoneUtil;
 
-import com.lowdragmc.lowdraglib.gui.widget.TextBoxWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
-import com.lowdragmc.lowdraglib.utils.Position;
-import com.lowdragmc.lowdraglib.utils.Size;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.value.sync.IntSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+public class NeutronSensorPartMachine extends TieredPartMachine implements IMuiMachine {
+    private static final int MAX_ENERGY_MEV = 1_200_000;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
-public class NeutronSensorPartMachine extends TieredPartMachine {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            NeutronSensorPartMachine.class, TieredPartMachine.MANAGED_FIELD_HOLDER);
-
-    @Setter
-    @Persisted
-    @DescSynced
+    @SaveField
+    @SyncToClient
     private int min, max;
 
-    @Persisted
-    @Setter
     @Getter
+    @SaveField
+    @SyncToClient
     private boolean isInverted;
 
     @Getter
-    @Persisted
-    protected int redstoneSignalOutput = 0;
+    @SaveField
+    @SyncToClient
+    protected int redstoneSignalOutput;
 
-    public NeutronSensorPartMachine(IMachineBlockEntity holder) {
-        super(holder, GTValues.IV);
+    public NeutronSensorPartMachine(BlockEntityCreationInfo info) {
+        super(info, GTValues.IV);
     }
 
+    public void setMin(int value) { min = Mth.clamp(value, 0, max); }
+    public void setMax(int value) { max = Mth.clamp(value, min, MAX_ENERGY_MEV); }
+    public void setInverted(boolean inverted) { isInverted = inverted; }
+
     @Override
-    public Widget createUIWidget() {
-        var group = new WidgetGroup(Position.ORIGIN, new Size(176, 112));
-
-        group.addWidget(new TextBoxWidget(8, 35, 65,
-                List.of(LocalizationUtils.format("gui.gtlcore.neutron_sensor.min_energy", "MeV"))));
-
-        group.addWidget(new TextBoxWidget(8, 80, 65,
-                List.of(LocalizationUtils.format("gui.gtlcore.neutron_sensor.max_energy", "MeV"))));
-
-        group.addWidget(new TextFieldWidget(80, 35, 85, 18, () -> toText(min),
-                stringValue -> setMin(Mth.clamp(fromText(stringValue), 0, max))).setNumbersOnly(0, max));
-
-        group.addWidget(new TextFieldWidget(80, 80, 85, 18, () -> toText(max),
-                stringValue -> setMax(Mth.clamp(fromText(stringValue), min, 1200000))).setNumbersOnly(min, 1200000));
-
-        group.addWidget(new ToggleButtonWidget(8, 8, 20, 20,
-                GuiTextures.INVERT_REDSTONE_BUTTON, this::isInverted, this::setInverted) {
-
-            @Override
-            public void updateScreen() {
-                super.updateScreen();
-                setHoverTooltips(List.copyOf(LangHandler.getMultiLang(
-                        "gui.gtceu.neutron_sensor.invert." + (isPressed ? "enabled" : "disabled"))));
-            }
-        });
-        return group;
+    public void buildMainUI(ParentWidget<?> mainWidget, PosGuiData guiData,
+                            PanelSyncManager syncManager, UISettings settings) {
+        var minimum = new IntSyncValue(() -> min, this::setMin).allowC2S();
+        var maximum = new IntSyncValue(() -> max, this::setMax).allowC2S();
+        var inverted = new BooleanSyncValue(this::isInverted, this::setInverted).allowC2S();
+        mainWidget.child(Flow.col().coverChildren()
+                .child(new ToggleButton().width(150).height(20).value(inverted)
+                        .overlay(Text.lang("gui.gtceu.neutron_sensor.invert.enabled")))
+                .child(Flow.row().coverChildren()
+                        .child(Text.lang("gui.gtlcore.neutron_sensor.min_energy", "MeV").asWidget().width(85))
+                        .child(new TextFieldWidget().width(85).height(18)
+                                .setNumbers(0, MAX_ENERGY_MEV).value(minimum)))
+                .child(Flow.row().coverChildren()
+                        .child(Text.lang("gui.gtlcore.neutron_sensor.max_energy", "MeV").asWidget().width(85))
+                        .child(new TextFieldWidget().width(85).height(18)
+                                .setNumbers(0, MAX_ENERGY_MEV).value(maximum))));
     }
 
     public void update(int energy) {
-        int output = RedstoneUtil.computeRedstoneBetweenValues(energy, max * 1000000, min * 1000000, isInverted());
+        int output = RedstoneUtil.computeRedstoneBetweenValues(energy,
+                max * 1_000_000F, min * 1_000_000F, isInverted());
         if (redstoneSignalOutput != output) {
-            setRedstoneSignalOutput(output);
+            redstoneSignalOutput = output;
+            notifyBlockUpdate();
         }
-    }
-
-    private void setRedstoneSignalOutput(int redstoneSignalOutput) {
-        this.redstoneSignalOutput = redstoneSignalOutput;
-        updateSignal();
     }
 
     @Override
     public int getOutputSignal(@Nullable Direction side) {
-        if (side == getFrontFacing().getOpposite()) {
-            return redstoneSignalOutput;
-        }
-        return 0;
+        return side == getFrontFacing().getOpposite() ? redstoneSignalOutput : 0;
     }
 
     @Override
-    public boolean canConnectRedstone(Direction side) {
-        return false;
-    }
-
-    private String toText(int num) {
-        return String.valueOf(num);
-    }
-
-    private int fromText(String num) {
-        return Integer.parseInt(num);
-    }
-
-    @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
+    public boolean canConnectRedstone(@Nullable Direction side) { return false; }
 }

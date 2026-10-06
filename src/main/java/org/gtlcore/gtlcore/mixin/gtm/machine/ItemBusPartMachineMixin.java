@@ -1,60 +1,36 @@
 package org.gtlcore.gtlcore.mixin.gtm.machine;
 
 import org.gtlcore.gtlcore.api.machine.trait.IRecipeCapabilityMachine;
-import org.gtlcore.gtlcore.api.machine.trait.NotifiableCircuitItemStackHandler;
-
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.ItemBusPartMachine;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import net.minecraft.world.item.ItemStack;
 
 @Mixin(ItemBusPartMachine.class)
-public abstract class ItemBusPartMachineMixin extends TieredIOPartMachine {
-
-    public ItemBusPartMachineMixin(IMachineBlockEntity holder, int tier, IO io) {
-        super(holder, tier, io);
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
+public abstract class ItemBusPartMachineMixin {
+    /** @author GTLCore @reason Preserve the original per-tier bus capacity. */
     @Overwrite(remap = false)
-    protected int getInventorySize() {
-        int sizeRoot = 1 + getTier();
-        return sizeRoot * sizeRoot;
+    protected static int getInventorySize(int tier) {
+        return Math.multiplyExact(tier + 1, tier + 1);
     }
 
-    @Inject(method = "createInventory", at = @At("HEAD"), remap = false, cancellable = true)
-    protected void createInventory(Object[] args, CallbackInfoReturnable<NotifiableItemStackHandler> cir) {
-        if (io == IO.IN) {
-            cir.setReturnValue(new NotifiableItemStackHandler(this, getInventorySize(), IO.IN)
-                    .setFilter((itemStack -> !IntCircuitBehaviour.isIntegratedCircuit(itemStack))));
-        }
+    // Keep the native non-consumable circuit trait and the native inventory filter.
+    @Inject(method = "matchesFilter", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$excludeCircuits(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        var bus = (ItemBusPartMachine) (Object) this;
+        if (bus.getInventory().handlerIO == IO.IN && IntCircuitBehaviour.isIntegratedCircuit(stack)) cir.setReturnValue(false);
     }
 
-    @Inject(method = "createCircuitItemHandler", at = @At("HEAD"), remap = false, cancellable = true)
-    protected void createCircuitItemHandler(Object[] args, CallbackInfoReturnable<NotifiableItemStackHandler> cir) {
-        if (args.length > 0 && args[0] instanceof IO io && io == IO.IN) {
-            cir.setReturnValue(new NotifiableCircuitItemStackHandler(this));
-        }
-    }
-
-    @Inject(method = "setDistinct", at = @At("RETURN"), remap = false)
-    public void setDistinct(boolean isDistinct, CallbackInfo ci) {
-        for (var controller : this.getControllers()) {
-            if (controller instanceof IRecipeCapabilityMachine machine && !machine.isDistinct()) {
-                machine.upDate();
-            }
+    @Inject(method = "setDistinct", at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$refreshCoreRoutes(boolean distinct, CallbackInfo ci) {
+        for (var controller : ((ItemBusPartMachine) (Object) this).getControllers()) {
+            if (controller instanceof IRecipeCapabilityMachine machine && !machine.isDistinct()) machine.upDate();
         }
     }
 }

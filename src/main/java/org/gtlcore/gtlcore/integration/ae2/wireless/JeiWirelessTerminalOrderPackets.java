@@ -1,10 +1,12 @@
 package org.gtlcore.gtlcore.integration.ae2.wireless;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.simple.SimpleChannel;
 
 import appeng.api.stacks.AEKey;
 
@@ -22,76 +24,74 @@ public final class JeiWirelessTerminalOrderPackets {
 
     private JeiWirelessTerminalOrderPackets() {}
 
-    public static void register(SimpleChannel channel, IntSupplier packetIds) {
-        channel.registerMessage(
-                packetIds.getAsInt(),
-                Request.class,
-                Request::encode,
-                Request::decode,
-                Request::handle,
-                Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        channel.registerMessage(
-                packetIds.getAsInt(),
-                ExtractionRequest.class,
-                ExtractionRequest::encode,
-                ExtractionRequest::decode,
-                ExtractionRequest::handle,
-                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+    public static void register(PayloadRegistrar registrar) {
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Request.TYPE, Request::encode, Request::decode, Request::handle, PacketFlow.SERVERBOUND);
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, ExtractionRequest.TYPE, ExtractionRequest::encode, ExtractionRequest::decode, ExtractionRequest::handle, PacketFlow.SERVERBOUND);
     }
 
     public static void sendRequest(AEKey key) {
         if (WirelessAeKeyPacketCodec.supports(key)) {
-            WirelessAePackets.CHANNEL.sendToServer(new Request(key));
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new Request(key));
         }
     }
 
     public static void sendExtractionRequest(AEKey key) {
         if (WirelessAeKeyPacketCodec.supports(key)) {
-            WirelessAePackets.CHANNEL.sendToServer(new ExtractionRequest(key));
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new ExtractionRequest(key));
         }
     }
 
-    public record Request(AEKey key) {
+    public record Request(AEKey key) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Request> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "jei_wireless_terminal_order/_request"));
 
-        private static void encode(Request packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<Request> type() { return TYPE; }
+
+
+        private static void encode(Request packet, RegistryFriendlyByteBuf buffer) {
             WirelessAeKeyPacketCodec.write(buffer, packet.key);
         }
 
-        private static Request decode(FriendlyByteBuf buffer) {
+        private static Request decode(RegistryFriendlyByteBuf buffer) {
             return new Request(WirelessAeKeyPacketCodec.read(buffer));
         }
 
-        private static void handle(Request packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(Request packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && REQUEST_LIMITER.tryAcquire(player, player.serverLevel().getGameTime())) {
                     WirelessTerminalCraftingMenuService.open(player, packet.key);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record ExtractionRequest(AEKey key) {
+    public record ExtractionRequest(AEKey key) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<ExtractionRequest> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "jei_wireless_terminal_order/_extraction_request"));
 
-        private static void encode(ExtractionRequest packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<ExtractionRequest> type() { return TYPE; }
+
+
+        private static void encode(ExtractionRequest packet, RegistryFriendlyByteBuf buffer) {
             WirelessAeKeyPacketCodec.write(buffer, packet.key);
         }
 
-        private static ExtractionRequest decode(FriendlyByteBuf buffer) {
+        private static ExtractionRequest decode(RegistryFriendlyByteBuf buffer) {
             return new ExtractionRequest(WirelessAeKeyPacketCodec.read(buffer));
         }
 
-        private static void handle(ExtractionRequest packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(ExtractionRequest packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && REQUEST_LIMITER.tryAcquire(player, player.serverLevel().getGameTime())) {
                     WirelessTerminalExtractionService.extractToCursor(player, packet.key);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 }

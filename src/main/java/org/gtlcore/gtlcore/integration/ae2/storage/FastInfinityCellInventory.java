@@ -1,6 +1,5 @@
 package org.gtlcore.gtlcore.integration.ae2.storage;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.integration.ae2.FastInfinityCell;
 import org.gtlcore.gtlcore.utils.StorageManager;
 import org.gtlcore.gtlcore.utils.datastructure.Int128;
@@ -9,6 +8,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongArrayTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -85,10 +85,7 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
         if (storedItemCount == 0) {
             if (hasDiskUUID()) {
                 getStorageInstance().removeDisk(getDiskUUID());
-                if (stack.getTag() != null) {
-                    stack.getTag().remove("diskuuid");
-                    stack.getTag().remove("count");
-                }
+                CellItemData.clearDisk(stack);
                 initData();
             }
             return;
@@ -102,7 +99,7 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
             var a = entry.getValue();
             if (a.isPositive()) {
                 sumInt128.add(a);
-                keys.add(entry.getKey().toTagGeneric());
+                keys.add(entry.getKey().toTagGeneric(getStorageInstance().getRegistries()));
                 // 使用LongArrayTag存储高低位，格式为[high, low]
                 amount.add(new LongArrayTag(new long[] { a.getHigh(), a.getLow() }));
             }
@@ -115,14 +112,14 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
         }
 
         this.storedItemCount = sumInt128.doubleValue();
-        stack.getOrCreateTag().putDouble("count", this.storedItemCount);
+        CellItemData.setStoredCount(stack, this.storedItemCount);
 
         this.isPersisted = true;
     }
 
     @Override
     public Component getDescription() {
-        return null;
+        return stack.getHoverName();
     }
 
     public static FastInfinityCellInventory createInventory(ItemStack stack, ISaveProvider saveProvider) {
@@ -136,19 +133,19 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
     }
 
     public boolean hasDiskUUID() {
-        return stack.hasTag() && stack.getOrCreateTag().contains("diskuuid");
+        return CellItemData.hasDiskUUID(stack);
     }
 
     public static boolean hasDiskUUID(ItemStack disk) {
         if (disk.getItem() instanceof FastInfinityCell) {
-            return disk.hasTag() && disk.getOrCreateTag().contains("diskuuid");
+            return CellItemData.hasDiskUUID(disk);
         }
         return false;
     }
 
     public UUID getDiskUUID() {
         if (hasDiskUUID())
-            return stack.getOrCreateTag().getUUID("diskuuid");
+            return CellItemData.getDiskUUID(stack);
         else
             return null;
     }
@@ -176,7 +173,15 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
     protected Object2ObjectOpenHashMap<AEKey, Int128> getCellItems() {
         if (this.storedMap == null) {
             this.storedMap = new Object2ObjectOpenHashMap<>();
-            this.loadCellItems();
+            try {
+                this.loadCellItems();
+            } catch (RuntimeException error) {
+                this.storedMap = null;
+                lists.clear();
+                displayOverflow.clear();
+                displayIndex.clear();
+                throw error;
+            }
         }
         return this.storedMap;
     }
@@ -211,34 +216,33 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
     }
 
     private void loadCellItems() {
-        boolean corruptedTag = false;
-
-        if (!stack.hasTag()) {
+        if (!hasDiskUUID()) {
             return;
         }
 
         var amounts = getDiskStorage().amounts;
         var stackKeys = getDiskStorage().stackKeys;
         if (amounts.size() != stackKeys.size()) {
-            AELog.warn("Loading storage cell with mismatched amounts/tags: %d != %d", amounts.size(), stackKeys.size());
+            throw new IllegalStateException("Disk " + getDiskUUID() + " has mismatched key and amount lists; original SavedData was retained");
         }
 
+        this.storedItemCount = 0;
         for (int i = 0; i < amounts.size(); i++) {
             var amountTag = amounts.get(i);
-            var key = AEKey.fromTagGeneric(stackKeys.getCompound(i));
-            if (key == null || !(amountTag instanceof LongArrayTag longArrayTag)) corruptedTag = true;
+            var key = AEKey.fromTagGeneric(getStorageInstance().getRegistries(),
+                    stackKeys.getCompound(i));
+            if (key == null || !(amountTag instanceof LongArrayTag longArrayTag)) throw new IllegalStateException("Cannot decode disk " + getDiskUUID() + " key " + i + "; original SavedData was retained");
             else {
                 var longArray = longArrayTag.getAsLongArray();
+                if (longArray.length != 2) throw new IllegalStateException("Invalid 128-bit amount in disk " + getDiskUUID());
                 var count = new Int128(longArray[0], longArray[1]);
-                storedMap.put(key, count);
-                updateDisplayAmount(key, count);
+                if (count.isNegative()) throw new IllegalStateException("Negative amount in disk " + getDiskUUID());
+                Int128 merged = storedMap.merge(key, count, Int128::add);
+                updateDisplayAmount(key, merged);
                 this.storedItemCount += count.doubleValue();
             }
         }
 
-        if (corruptedTag) {
-            this.saveChanges(0);
-        }
     }
 
     protected void saveChanges(double incur) {
@@ -250,7 +254,8 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
     }
 
     private StorageManager getStorageInstance() {
-        return GTLCore.STORAGE_INSTANCE;
+        return StorageManager.getInstance(Objects.requireNonNull(
+                ServerLifecycleHooks.getCurrentServer(), "Disk inventories require an active server"));
     }
 
     @Override
@@ -267,7 +272,7 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
         }
 
         if (!hasDiskUUID()) {
-            stack.getOrCreateTag().putUUID("diskuuid", UUID.randomUUID());
+            CellItemData.ensureDiskUUID(stack);
             getStorageInstance().getOrCreateDisk(getDiskUUID(), true);
             loadCellItems();
         }
@@ -322,9 +327,7 @@ public class FastInfinityCellInventory implements StorageCell, PreciseStorageAmo
 
     public double getNbtItemCount() {
         if (hasDiskUUID()) {
-            if (stack.getTag() != null) {
-                return stack.getTag().getDouble("count");
-            }
+            return CellItemData.getStoredCount(stack);
         }
         return 0;
     }

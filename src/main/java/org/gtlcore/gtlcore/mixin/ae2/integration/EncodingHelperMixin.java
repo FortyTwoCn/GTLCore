@@ -4,14 +4,14 @@ import org.gtlcore.gtlcore.utils.Registries;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.stacks.*;
-import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.InventoryActionPacket;
+import appeng.core.network.serverbound.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
-import appeng.integration.modules.jeirei.EncodingHelper;
+import appeng.integration.modules.itemlists.EncodingHelper;
 import appeng.menu.me.common.GridInventoryEntry;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.items.PatternEncodingTermMenu;
@@ -56,13 +56,13 @@ public abstract class EncodingHelperMixin {
      */
     @Overwrite(remap = false)
     public static void encodeCraftingRecipe(PatternEncodingTermMenu menu,
-                                            @Nullable Recipe<?> recipe,
+                                            @Nullable RecipeHolder<?> recipe,
                                             List<List<GenericStack>> genericIngredients,
                                             Predicate<ItemStack> visiblePredicate) {
-        if (recipe != null && recipe.getType().equals(RecipeType.STONECUTTING)) {
+        if (recipe != null && recipe.value().getType().equals(RecipeType.STONECUTTING)) {
             menu.setMode(EncodingMode.STONECUTTING);
-            menu.setStonecuttingRecipeId(recipe.getId());
-        } else if (recipe != null && recipe.getType().equals(RecipeType.SMITHING)) {
+            menu.setStonecuttingRecipeId(recipe.id());
+        } else if (recipe != null && recipe.value().getType().equals(RecipeType.SMITHING)) {
             menu.setMode(EncodingMode.SMITHING_TABLE);
         } else menu.setMode(EncodingMode.CRAFTING);
 
@@ -74,7 +74,7 @@ public abstract class EncodingHelperMixin {
         if (recipe != null) {
             // When we have access to a crafting recipe, we'll switch modes and try to find suitable
             // ingredients based on the recipe ingredients, which allows for fuzzy-matching.
-            var ingredients3x3 = CraftingRecipeUtil.ensure3by3CraftingMatrix(recipe);
+            var ingredients3x3 = CraftingRecipeUtil.ensure3by3CraftingMatrix(recipe.value());
 
             // Find a good match for every ingredient
             for (int slot = 0; slot < ingredients3x3.size(); slot++) {
@@ -122,13 +122,13 @@ public abstract class EncodingHelperMixin {
 
         for (int i = 0; i < encodedInputs.size(); i++) {
             ItemStack encodedInput = encodedInputs.get(i);
-            NetworkHandler.instance().sendToServer(new InventoryActionPacket(
+            PacketDistributor.sendToServer(new InventoryActionPacket(
                     InventoryAction.SET_FILTER, menu.getCraftingGridSlots()[i].index, encodedInput));
         }
 
         // Clear out the processing outputs
         for (var outputSlot : menu.getProcessingOutputSlots()) {
-            NetworkHandler.instance().sendToServer(new InventoryActionPacket(
+            PacketDistributor.sendToServer(new InventoryActionPacket(
                     InventoryAction.SET_FILTER, outputSlot.index, ItemStack.EMPTY));
         }
     }

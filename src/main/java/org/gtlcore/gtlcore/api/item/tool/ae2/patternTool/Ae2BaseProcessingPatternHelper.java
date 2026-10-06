@@ -1,13 +1,11 @@
 package org.gtlcore.gtlcore.api.item.tool.ae2.patternTool;
 
-import org.gtlcore.gtlcore.GTLCore;
-
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 import appeng.crafting.pattern.AEProcessingPattern;
@@ -15,35 +13,33 @@ import appeng.crafting.pattern.EncodedPatternItem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.jetbrains.annotations.Nullable;
 
 public class Ae2BaseProcessingPatternHelper {
 
     // 乘或除 输入解码后样板，输出编码后样板
-    public static ItemStack multiplyScale(int scale, boolean div, AEProcessingPattern patternDetail, long maxItemStack, long maxFluidStack) {
+    public static @Nullable ItemStack multiplyScale(int scale, boolean div, AEProcessingPattern patternDetail, long maxItemStack, long maxFluidStack) {
+        if (scale <= 0) return null;
         var input = patternDetail.getSparseInputs();
-        var output = patternDetail.getOutputs();
+        var output = patternDetail.getSparseOutputs();
         if (checkModify(input, scale, div, maxItemStack, maxFluidStack) && checkModify(output, scale, div, maxItemStack, maxFluidStack)) {
-            var mulInput = new GenericStack[input.length];
-            var mulOutput = new GenericStack[output.length];
-            modifyStacks(input, mulInput, scale, div);
-            modifyStacks(output, mulOutput, scale, div);
-            return PatternDetailsHelper.encodeProcessingPattern(mulInput, mulOutput);
+            // Rewrite only the encoded pattern component; retain its name, lore and other item data.
+            var result = patternDetail.getDefinition().toStack();
+            AEProcessingPattern.encode(result, modifyStacks(input, scale, div), modifyStacks(output, scale, div));
+            return result;
         }
-        GTLCore.LOGGER.info("内部错误：无法整除 或 乘数过大");
         return null;
     }
 
     // 从样板物品解码样板
-    public static AEProcessingPattern decodeToAEProcessingPattern(ItemStack patternStack, ServerPlayer serverPlayer) {
-        if (patternStack.getItem() instanceof EncodedPatternItem patternItem_1) {
-            if (patternItem_1.decode(patternStack, serverPlayer.level(), false) instanceof AEProcessingPattern processStack) {
-                return processStack;
-            } else {
-                GTLCore.LOGGER.info("Ae2BaseProcessingPattern requires a EncodedPatternItem 意外之内的输入：非处理样板");
-            }
-        } else {
-            GTLCore.LOGGER.info("Ae2BaseProcessingPattern requires a EncodedPatternItem 意外之内的输入：非AE样板");
+    public static @Nullable AEProcessingPattern decodeToAEProcessingPattern(ItemStack patternStack, @Nullable ServerPlayer serverPlayer) {
+        if (patternStack.getItem() instanceof EncodedPatternItem<?> patternItem &&
+                patternItem.decode(AEItemKey.of(patternStack), serverPlayer == null ? null : serverPlayer.level()) instanceof AEProcessingPattern processing) {
+            return processing;
         }
         return null;
     }
@@ -62,54 +58,44 @@ public class Ae2BaseProcessingPatternHelper {
     // 返回排除黑名单物品后的列表
     public static List<GenericStack> GenericStackListBlackFilter(List<GenericStack> inputGenericStacks, List<Item> matchItemList) {
         return inputGenericStacks.stream().filter(
-                genericStack -> !itemMatch(genericStack, matchItemList)).toList();
+                genericStack -> genericStack != null && !itemMatch(genericStack, matchItemList)).toList();
     }
 
     private static boolean itemMatch(GenericStack genericStack, List<Item> matchItemList) {
-        for (Item item : matchItemList) {
-            if (genericStack.what().equals(AEItemKey.of(item))) {
-                return true;
-            }
-        }
-        return false;
+        // Configured circuits and named/damaged molds still represent the same blacklisted item.
+        return genericStack.what() instanceof AEItemKey key && matchItemList.contains(key.getItem());
     }
 
-    private static boolean checkModify(GenericStack[] stacks, int scale, boolean div, long maxItemStack, long maxFluidStack) {
-        if (div) {
-            for (var stack : stacks) {
-                if (stack != null) {
-                    if (stack.amount() % scale != 0) {
-                        return false;
-                    }
-                }
+    private static boolean checkModify(List<GenericStack> stacks, int scale, boolean div, long maxItemStack, long maxFluidStack) {
+        Map<AEKey, Long> totals = new HashMap<>();
+        for (var stack : stacks) {
+            if (stack == null) continue;
+            if (stack.amount() <= 0) return false;
+            if (div && stack.amount() % scale != 0) return false;
+            if (!div && stack.amount() > Long.MAX_VALUE / scale) return false;
+            long amount = div ? stack.amount() / scale : stack.amount() * scale;
+            if (!div) {
+                long maximum = stack.what().getType().equals(AEKeyType.fluids()) ? maxFluidStack :
+                        stack.what().getType().equals(AEKeyType.items()) ? maxItemStack : Long.MAX_VALUE;
+                int unit = stack.what().getAmountPerUnit();
+                if (maximum <= 0 || unit <= 0) return false;
+                long upper = maximum > Long.MAX_VALUE / unit ? Long.MAX_VALUE : maximum * unit;
+                if (amount > upper) return false;
             }
-        } else {
-            for (var stack : stacks) {
-                if (stack != null) {
-                    if (stack.what().getType().equals(AEKeyType.fluids())) {
-                        long upper = maxFluidStack * stack.what().getAmountPerUnit();
-                        if (stack.amount() * scale > upper) {
-                            return false;
-                        }
-                    }
-                    if (stack.what().getType().equals(AEKeyType.items())) {
-                        long upper = maxItemStack * stack.what().getAmountPerUnit();
-                        if (stack.amount() * scale > upper) {
-                            return false;
-                        }
-                    }
-                }
-            }
+            // AE2 condenses repeated keys when decoding. That sum must not overflow either.
+            long previous = totals.getOrDefault(stack.what(), 0L);
+            if (amount > Long.MAX_VALUE - previous) return false;
+            totals.put(stack.what(), previous + amount);
         }
         return true;
     }
 
-    private static void modifyStacks(GenericStack[] stacks, GenericStack[] des, int scale, boolean div) {
-        for (int i = 0; i < stacks.length; i++) {
-            if (stacks[i] != null) {
-                long amt = div ? stacks[i].amount() / scale : stacks[i].amount() * scale;
-                des[i] = new GenericStack(stacks[i].what(), amt);
-            }
+    private static List<GenericStack> modifyStacks(List<GenericStack> stacks, int scale, boolean div) {
+        List<GenericStack> result = new ArrayList<>(stacks.size());
+        for (var stack : stacks) {
+            result.add(stack == null ? null : new GenericStack(stack.what(),
+                    div ? stack.amount() / scale : stack.amount() * scale));
         }
+        return result;
     }
 }

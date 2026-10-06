@@ -4,8 +4,9 @@ import org.gtlcore.gtlcore.api.capability.IInt128EnergyContainer;
 import org.gtlcore.gtlcore.utils.datastructure.Int128;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableRecipeHandlerTrait;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableEnergyContainer;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableRecipeHandlerTrait;
+import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 
 import org.spongepowered.asm.mixin.*;
 
@@ -13,7 +14,7 @@ import org.spongepowered.asm.mixin.*;
                        iface = IInt128EnergyContainer.class,
                        prefix = "gTLCore$"))
 @Mixin(NotifiableEnergyContainer.class)
-public abstract class NotifiableEnergyContainerMixin extends NotifiableRecipeHandlerTrait<Long> {
+public abstract class NotifiableEnergyContainerMixin extends NotifiableRecipeHandlerTrait<EnergyStack> {
 
     @Shadow(remap = false)
     protected long energyStored;
@@ -35,8 +36,8 @@ public abstract class NotifiableEnergyContainerMixin extends NotifiableRecipeHan
     @Unique
     protected Int128 gTLCore$energyOutputPerSec = Int128.ZERO();
 
-    public NotifiableEnergyContainerMixin(MetaMachine machine) {
-        super(machine);
+    public NotifiableEnergyContainerMixin() {
+        super();
     }
 
     /**
@@ -99,7 +100,7 @@ public abstract class NotifiableEnergyContainerMixin extends NotifiableRecipeHan
         if (energy > 0) {
             gTLCore$energyInputPerSec.add(energy);
         } else if (energy < 0) {
-            gTLCore$energyOutputPerSec.add(-energy);
+            gTLCore$energyOutputPerSec.subtract(new Int128(energy));
         }
     }
 

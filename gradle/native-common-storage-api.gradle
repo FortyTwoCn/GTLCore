@@ -1,0 +1,21 @@
+// Expose the unchanged APIs bundled by the pinned native mod to javac.
+// Runtime loads these same jars through Common Storage Lib's own NeoForge jar-in-jar metadata.
+configurations { nativeCommonStorageArtifact { transitive = false } }
+dependencies { nativeCommonStorageArtifact('maven.modrinth:common-storage-lib:SCkdlli6') }
+def bundledApiDir = layout.buildDirectory.dir('native-dependencies/common-storage-lib')
+def extractApis = tasks.register('extractNativeCommonStorageApis', Sync) {
+    from({ zipTree(configurations.nativeCommonStorageArtifact.singleFile) })
+    include 'META-INF/jars/common-storage-lib-data-neoforge-1.21.1-0.0.10.jar',
+            'META-INF/jars/common-storage-lib-resources-neoforge-1.21.1-0.0.10.jar',
+            'META-INF/jars/common-storage-lib-lookup-neoforge-1.21.1-0.0.10.jar'
+    into bundledApiDir
+    doFirst {
+        def profile = new groovy.json.JsonSlurper().parse(file('migration/native-adastra-api.json'))
+        def actual = java.security.MessageDigest.getInstance('SHA-256')
+                .digest(configurations.nativeCommonStorageArtifact.singleFile.bytes).encodeHex().toString()
+        if (actual != profile.common_storage.sha256) throw new GradleException('Pinned Common Storage Lib artifact changed')
+    }
+}
+dependencies {
+    compileOnly(files(provider { fileTree(bundledApiDir.get().asFile) { include '**/*.jar' } }).builtBy(extractApis))
+}

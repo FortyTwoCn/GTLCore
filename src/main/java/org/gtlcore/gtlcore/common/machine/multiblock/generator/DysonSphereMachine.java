@@ -1,6 +1,10 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.generator;
 
 import org.gtlcore.gtlcore.utils.Registries;
+import org.gtlcore.gtlcore.utils.NumberUtils;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.PanelSyncManager;
 
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
@@ -9,16 +13,15 @@ import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.IRecipeHandler;
 import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
+import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,16 +41,13 @@ import java.util.Objects;
 @Getter
 public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            DysonSphereMachine.class, WorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
+    @SaveField
     private int DysonSphereData;
-    @Persisted
+    @SaveField
     private int DysonSpheredamageData;
-    @Persisted
+    @SaveField
     private boolean upgradeTriggeredThisRecipe = false;
-    @Persisted
+    @SaveField
     private boolean damageTriggeredThisRecipe = false;
 
     protected ConditionalSubscriptionHandler nightSubs;
@@ -55,18 +55,26 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
     @Nullable
     private List<@NotNull BlockPos> cachedCheckPositions;
 
-    public DysonSphereMachine(IMachineBlockEntity holder) {
+    public DysonSphereMachine(BlockEntityCreationInfo holder) {
         super(holder);
-        this.nightSubs = new ConditionalSubscriptionHandler(this, this::nightUpdate, () -> DysonSphereData > 0);
+        this.nightSubs = new ConditionalSubscriptionHandler(this, this::nightUpdate, () -> isFormed() && DysonSphereData > 0 && !isRemoved());
     }
 
     @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public void onLoad() {
+        super.onLoad(); nightSubs.initialize(getLevel());
     }
 
+    @Override
+    public void onUnload() {
+        nightSubs.unsubscribe(); cachedCheckPositions = null; super.onUnload();
+    }
+
+    public int getDysonSphereData() { return DysonSphereData; }
+    public int getDysonSpheredamageData() { return DysonSpheredamageData; }
+
     protected void nightUpdate() {
-        if (getOffsetTimer() % 10 == 0 && getLevel() instanceof ServerLevel serverLevel) {
+        if (isFormed() && DysonSphereData > 0 && getOffsetTimer() % 10 == 0 && getLevel() instanceof ServerLevel serverLevel) {
             serverLevel.setDayTime(18000L);
         }
     }
@@ -77,7 +85,8 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
         // 获取所有输出仓（动力仓）
         List<IEnergyContainer> outputContainers = getOutputContainers();
         for (IEnergyContainer container : outputContainers) {
-            totalPower += container.getOutputVoltage() * container.getOutputAmperage();
+            totalPower = NumberUtils.saturatedAdd(totalPower,
+                    NumberUtils.saturatedMultiply(container.getOutputVoltage(), container.getOutputAmperage()));
         }
         if (totalPower <= 0) {
             // 没有输出仓时，回退到父类逻辑（避免 NPE）
@@ -99,8 +108,8 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
 
     private List<IEnergyContainer> getOutputContainers() {
         List<IEnergyContainer> outputContainers = new ArrayList<>();
-        List<IRecipeHandler<?>> capabilities = this.capabilitiesProxy.get(IO.OUT, EURecipeCapability.CAP);
-        if (capabilities != null) {
+        var capabilities = getCapabilitiesFlat(IO.OUT, EURecipeCapability.CAP);
+        if (!capabilities.isEmpty()) {
             for (IRecipeHandler<?> handler : capabilities) {
                 if (handler instanceof IEnergyContainer container) {
                     outputContainers.add(container);
@@ -111,18 +120,20 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String name) {
+        super.formStructure(name);
+        if (!getPatternState(name).isFormed()) return;
         nightSubs.initialize(getLevel());
         cachedCheckPositions = findCheckPositions();
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String name) {
+        boolean wasFormed = isFormed();
+        super.invalidateStructure(name);
         cachedCheckPositions = null;
         if (nightSubs != null) nightSubs.unsubscribe();
-        if (this.DysonSphereData > 0) DysonSphereData--;
+        if (wasFormed && this.DysonSphereData > 0) { DysonSphereData--; markAsChanged(); }
     }
 
     @Nullable
@@ -130,7 +141,7 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
         Level level = getLevel();
         if (level == null) return null;
 
-        BlockPos pos = getPos();
+        BlockPos pos = getBlockPos();
         BlockPos[] coordinates = new BlockPos[] {
                 pos.offset(4, 14, 0),
                 pos.offset(-4, 14, 0),
@@ -139,6 +150,7 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
         };
 
         for (BlockPos blockPos : coordinates) {
+            if (!level.hasChunkAt(blockPos)) continue;
             if (Objects.equals(Registries.getBlockId(level.getBlockState(blockPos).getBlock()), "kubejs:dyson_receiver_casing")) {
                 var checkPositions = new ObjectArrayList<BlockPos>(169);
                 for (int i = -6; i < 7; i++) {
@@ -148,7 +160,7 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
                         }
                     }
                 }
-                return checkPositions;
+                return List.copyOf(checkPositions);
             }
         }
         return null;
@@ -157,6 +169,7 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
     @Override
     public boolean onWorking() {
         boolean value = super.onWorking();
+        if (!value) return false;
         GTRecipe currentRecipe = getRecipeLogic().getLastRecipe();
         if (currentRecipe == null) return value;
 
@@ -171,6 +184,7 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
             } else if (getDysonSphereData() < 10000) {
                 this.DysonSphereData++;
             }
+            nightSubs.updateSubscription(); markAsChanged();
         }
 
         int targetProgress = (int) (duration * 0.95);
@@ -180,10 +194,12 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
                 if (getDysonSpheredamageData() > 99) {
                     this.DysonSphereData--;
                     this.DysonSpheredamageData = 0;
+                    nightSubs.updateSubscription();
                 } else {
                     this.DysonSpheredamageData++;
                 }
             }
+            markAsChanged();
         }
 
         return value;
@@ -191,32 +207,20 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
 
     @Override
     public boolean beforeWorking(@Nullable GTRecipe recipe) {
-        upgradeTriggeredThisRecipe = false;
-        damageTriggeredThisRecipe = false;
-        if (cachedCheckPositions != null) {
-            Level level = getLevel();
-            if (level != null) {
-                for (BlockPos checkPos : cachedCheckPositions) {
-                    if (!level.canSeeSky(checkPos)) {
-                        getRecipeLogic().resetRecipeLogic();
-                        return false;
-                    }
-                }
-            }
-        } else {
-            getRecipeLogic().resetRecipeLogic();
-            return false;
+        if (recipe == null || !super.beforeWorking(recipe)) return false;
+        Level level = getLevel();
+        if (cachedCheckPositions == null || level == null) return false;
+        for (BlockPos checkPos : cachedCheckPositions) {
+            if (!level.hasChunkAt(checkPos) || !level.canSeeSky(checkPos)) return false;
         }
 
-        if (recipe != null && isLaunch(recipe)) {
-            return getDysonSphereData() <= 10000;
-        } else {
-            return getDysonSphereData() > 0;
-        }
+        boolean allowed = isLaunch(recipe) ? getDysonSphereData() <= 10000 : getDysonSphereData() > 0;
+        if (allowed) { upgradeTriggeredThisRecipe = false; damageTriggeredThisRecipe = false; markAsChanged(); }
+        return allowed;
     }
 
     private boolean isLaunch(GTRecipe recipe) {
-        return RecipeHelper.getOutputEUt(recipe) < GTValues.V[GTValues.MAX];
+        return recipe.getOutputEUt().getTotalEU() < GTValues.V[GTValues.MAX];
     }
 
     private double getEfficiency() {
@@ -233,32 +237,39 @@ public class DysonSphereMachine extends WorkableElectricMultiblockMachine {
         return (long) (2L * GTValues.V[GTValues.MAX] * getDysonSphereData() * getEfficiency());
     }
 
-    @Nullable
-    public static GTRecipe recipeModifier(MetaMachine machine, @NotNull GTRecipe recipe) {
+    public static ModifierFunction recipeModifier(MetaMachine machine, @NotNull GTRecipe recipe) {
         if (machine instanceof DysonSphereMachine engineMachine) {
             if (!engineMachine.isLaunch(recipe)) {
-                GTRecipe recipe1 = recipe.copy();
-                recipe1.tickOutputs.put(EURecipeCapability.CAP, List.of(new Content(
-                        engineMachine.getOverclockVoltage(),
-                        ChanceLogic.getMaxChancedValue(), ChanceLogic.getMaxChancedValue(), 0, null, null)));
-                recipe1.tickInputs.put(CWURecipeCapability.CAP, List.of(new Content(
-                        engineMachine.getDysonSphereData(),
-                        ChanceLogic.getMaxChancedValue(), ChanceLogic.getMaxChancedValue(), 0, null, null)));
-                return recipe1;
+                return input -> {
+                    GTRecipe recipe1 = input.copy();
+                    recipe1.tickOutputs.put(EURecipeCapability.CAP, List.of(new Content(
+                            new EnergyStack(engineMachine.getOverclockVoltage()),
+                            ChanceLogic.getMaxChancedValue(), ChanceLogic.getMaxChancedValue())));
+                    recipe1.tickInputs.put(CWURecipeCapability.CAP, List.of(new Content(
+                            engineMachine.getDysonSphereData(),
+                            ChanceLogic.getMaxChancedValue(), ChanceLogic.getMaxChancedValue())));
+                    return recipe1;
+                };
             }
-            return recipe;
+            return ModifierFunction.IDENTITY;
         }
-        return null;
+        return ModifierFunction.NULL;
     }
 
-    @Override
     public void addDisplayText(@NotNull List<Component> textList) {
-        super.addDisplayText(textList);
         if (!this.isFormed) return;
         textList.add(Component.translatable("gtceu.machine.dyson_sphere.number", getDysonSphereData()));
         textList.add(Component.translatable("gtceu.machine.dyson_sphere.voltage",
                 (getDysonSphereData() > 0 ? getOverclockVoltage() : 0)));
         textList.add(Component.translatable("gtceu.machine.fission_reactor.damaged",
                 getDysonSpheredamageData()).append("%"));
+    }
+
+    @Override
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager syncManager) {
+        var widgets = super.getWidgetsForDisplay(syncManager);
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("dyson", (controller, lines) ->
+                ((DysonSphereMachine) controller).addDisplayText(lines)).apply(this, syncManager));
+        return widgets;
     }
 }

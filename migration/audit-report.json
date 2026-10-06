@@ -1,0 +1,102 @@
+{
+  "baseline_revision": "5b6cd0ec6a9d2be99d9031404176e84b9cd342ea",
+  "gtceu_revision": "c72dc16b52795cbb0456b6e15e13cc4a85c0ed1b",
+  "resource_count": 1397,
+  "baseline_registration_literal_count": 575,
+  "missing_resources": [],
+  "changed_resources": [
+    "src/main/resources/assets/gtceu/models/block/machine/part/me_mini_pattern_buffer.json",
+    "src/main/resources/assets/gtceu/models/block/machine/part/neutron_accelerator.json",
+    "src/main/resources/assets/gtceu/models/block/machine/part/neutron_sensor.json",
+    "src/main/resources/assets/gtceu/models/block/machine/part/rotor_hatch.json",
+    "src/main/resources/assets/gtlcore/lang/en_us.json",
+    "src/main/resources/assets/gtlcore/models/block/variant/advanced_assembly_line_unit.json",
+    "src/main/resources/data/gtlcore/recipe/virtual_ingredient_supply_machine.json"
+  ],
+  "reviewed_native_resource_changes": [
+    "src/main/resources/assets/gtceu/models/block/machine/part/me_mini_pattern_buffer.json",
+    "src/main/resources/assets/gtceu/models/block/machine/part/neutron_accelerator.json",
+    "src/main/resources/assets/gtceu/models/block/machine/part/neutron_sensor.json",
+    "src/main/resources/assets/gtceu/models/block/machine/part/rotor_hatch.json",
+    "src/main/resources/assets/gtlcore/lang/en_us.json",
+    "src/main/resources/assets/gtlcore/models/block/variant/advanced_assembly_line_unit.json",
+    "src/main/resources/data/gtlcore/recipe/virtual_ingredient_supply_machine.json"
+  ],
+  "unexpected_resource_changes": [],
+  "missing_registration_literals": [],
+  "allowed_resource_transforms": [
+    "1.21 singular data paths",
+    "crafting result item to id",
+    "forge:obj to neoforge:obj",
+    "verified native recipe translation aliases and two missing Additions labels",
+    "individually recorded native UI and Jade configuration translations"
+  ],
+  "limitations": "Static literals do not establish runtime registry IDs, recipe counts, machine behavior or world compatibility.",
+  "legacy_forge_references": {},
+  "missing_gtceu_imports": {},
+  "ldlib_consumers_requiring_review": [
+    "src/main/java/org/gtlcore/gtlcore/api/gui/ExtendLabelWidget.java",
+    "src/main/java/org/gtlcore/gtlcore/api/gui/PatternPreviewWidget.java",
+    "src/main/java/org/gtlcore/gtlcore/api/gui/GuiTextures.java",
+    "src/main/java/org/gtlcore/gtlcore/api/gui/NativePatternPreviewWidget.java",
+    "src/main/java/org/gtlcore/gtlcore/api/data/chemical/material/info/GTLMaterialIconSet.java",
+    "src/main/java/org/gtlcore/gtlcore/api/machine/trait/LongItemStorageLookup.java",
+    "src/main/java/org/gtlcore/gtlcore/client/ae2/JeiPatternStatus.java",
+    "src/main/java/org/gtlcore/gtlcore/client/forge/ForgeClientEventListener.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/SparsePreviewShape.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewSceneState.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewMesh.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewControls.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewButtonTexture.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewPicking.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewSnapshot.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewScenes.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/PreviewMaterialHighlights.java",
+    "src/main/java/org/gtlcore/gtlcore/client/preview/WorldPreview.java",
+    "src/main/java/org/gtlcore/gtlcore/client/ae2/wireless/MEChamberManagerTerminalScreen.java",
+    "src/main/java/org/gtlcore/gtlcore/client/ae2/graph/CraftingRingScreen.java",
+    "src/main/java/org/gtlcore/gtlcore/client/renderer/item/WrappedItemRenderer.java",
+    "src/main/java/org/gtlcore/gtlcore/client/renderer/item/VirtualIngredientRenderer.java",
+    "src/main/java/org/gtlcore/gtlcore/common/data/GTLMachines.java",
+    "src/main/java/org/gtlcore/gtlcore/common/data/GTLMaterials.java",
+    "src/main/java/org/gtlcore/gtlcore/common/data/GTLRecipeTypes.java",
+    "src/main/java/org/gtlcore/gtlcore/common/item/VirtualIngredientItem.java",
+    "src/main/java/org/gtlcore/gtlcore/integration/jei/GTLJEIPlugin.java",
+    "src/main/java/org/gtlcore/gtlcore/integration/jei/SlotRecipeWidget.java",
+    "src/main/java/org/gtlcore/gtlcore/integration/jei/NativePreviewJeiSlots.java",
+    "src/main/java/org/gtlcore/gtlcore/integration/rei/GTLREIPlugin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/gtm/TagPrefixItemMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/AsyncThreadDataMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/ClickDataMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/CustomBakedModelFixed.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/ItemStackTransferMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/WorldSceneRendererMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/MachineBlockInfoMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/CompassManagerMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/EmptyItemStackTransferMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/BlockInfoAccessor.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/mc/BlockableEventLoopMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ae2/gui/CraftConfirmScreenMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/gtm/api/machine/NativeMachineDirtyMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/client/PreviewWorldStorageMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/client/PreviewSceneAccessor.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/client/PreviewPickingMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/ldlib/client/PreviewSceneWidgetMixin.java"
+  ],
+  "item_nbt_calls_requiring_review": {
+    "src/main/java/org/gtlcore/gtlcore/client/preview/SparsePreviewShape.java": [
+      52
+    ],
+    "src/main/java/org/gtlcore/gtlcore/mixin/gtm/recipe/MaterialRecipeHandlerMixin.java": [
+      123,
+      145,
+      173
+    ],
+    "src/main/java/org/gtlcore/gtlcore/mixin/gtm/recipe/OreRecipeHandlerMixin.java": [
+      569,
+      573,
+      581,
+      584
+    ]
+  }
+}

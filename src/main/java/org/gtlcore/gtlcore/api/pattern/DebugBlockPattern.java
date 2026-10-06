@@ -1,6 +1,8 @@
 package org.gtlcore.gtlcore.api.pattern;
 
-import com.gregtechceu.gtceu.api.pattern.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,6 +12,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,19 +22,21 @@ public class DebugBlockPattern {
     public String[][] pattern;
     public int[][] aisleRepetitions;
     public Map<Character, Set<String>> symbolMap;
-    public Map<Block, Character> legend = new HashMap<>();
+    public Map<Block, Character> legend = new LinkedHashMap<>();
 
     public DebugBlockPattern() {
         symbolMap = new HashMap<>();
         structureDir = new RelativeDirection[] {
-                RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT
+                RelativeDirection.BACK, RelativeDirection.UP, RelativeDirection.RIGHT
         };
     }
 
     public DebugBlockPattern(
                              Level world, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         this();
-        pattern = new String[1 + maxX - minX][1 + maxY - minY];
+        if (maxX < minX || maxY < minY || maxZ < minZ) throw new IllegalArgumentException("Invalid structure bounds");
+        pattern = new String[Math.addExact(1, Math.subtractExact(maxX, minX))][Math.addExact(1, Math.subtractExact(maxY, minY))];
+        boolean controllerFound = false;
         aisleRepetitions = new int[pattern.length][2];
         for (int[] aisleRepetition : aisleRepetitions) {
             aisleRepetition[0] = 1;
@@ -40,18 +45,26 @@ public class DebugBlockPattern {
 
         legend.put(Blocks.AIR, ' ');
 
-        char c = 'A'; // auto
+        char c = 'A'; // '~' is reserved for the first selected controller.
 
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 StringBuilder builder = new StringBuilder();
                 for (int z = minZ; z <= maxZ; z++) {
-                    Block block = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+                    var pos = new BlockPos(x, y, z);
+                    if (!world.hasChunkAt(pos)) throw new IllegalStateException("Structure selection contains an unloaded chunk at " + pos);
+                    Block block = world.getBlockState(pos).getBlock();
+                    if (!controllerFound && MetaMachine.getMachine(world, pos) instanceof MultiblockControllerMachine) {
+                        builder.append('~');
+                        symbolMap.computeIfAbsent('~', key -> new HashSet<>()).add("~");
+                        controllerFound = true;
+                        continue;
+                    }
                     if (!legend.containsKey(block)) {
                         legend.put(block, c);
                         String name = String.valueOf(c);
                         symbolMap.computeIfAbsent(c, key -> new HashSet<>()).add(name); // any
-                        c++;
+                        do { c++; } while (c == '~' || c == '\\' || c == '\'' || c == '"' || Character.isISOControl(c));
                     }
                     builder.append(legend.get(block));
                 }
@@ -92,32 +105,32 @@ public class DebugBlockPattern {
 
     public void changeDir(RelativeDirection charDir, RelativeDirection stringDir,
                           RelativeDirection aisleDir) {
-        if (charDir.isSameAxis(stringDir) || stringDir.isSameAxis(aisleDir) || aisleDir.isSameAxis(charDir)) return;
-        char[][][] newPattern = new char[structureDir[0].isSameAxis(aisleDir) ? pattern[0][0].length() :
-                structureDir[1].isSameAxis(aisleDir) ? pattern[0].length :
-                        pattern.length][structureDir[0].isSameAxis(stringDir) ? pattern[0][0].length() :
-                                structureDir[1].isSameAxis(stringDir) ? pattern[0].length :
-                                        pattern.length][structureDir[0].isSameAxis(charDir) ? pattern[0][0].length() :
-                                                structureDir[1].isSameAxis(charDir) ? pattern[0].length :
+        RelativeDirection.validateFacingsArray(new RelativeDirection[] {charDir, stringDir, aisleDir});
+        char[][][] newPattern = new char[sameAxis(structureDir[0], aisleDir) ? pattern[0][0].length() :
+                sameAxis(structureDir[1], aisleDir) ? pattern[0].length :
+                        pattern.length][sameAxis(structureDir[0], stringDir) ? pattern[0][0].length() :
+                                sameAxis(structureDir[1], stringDir) ? pattern[0].length :
+                                        pattern.length][sameAxis(structureDir[0], charDir) ? pattern[0][0].length() :
+                                                sameAxis(structureDir[1], charDir) ? pattern[0].length :
                                                         pattern.length];
         for (int i = 0; i < pattern.length; i++) {
             for (int j = 0; j < pattern[0].length; j++) {
                 for (int k = 0; k < pattern[0][0].length(); k++) {
                     char c = pattern[i][j].charAt(k);
                     int x = 0, y = 0, z = 0;
-                    if (structureDir[2].isSameAxis(aisleDir)) {
+                    if (sameAxis(structureDir[2], aisleDir)) {
                         if (structureDir[2] == aisleDir) {
                             x = i;
                         } else {
                             x = pattern.length - i - 1;
                         }
-                    } else if (structureDir[2].isSameAxis(stringDir)) {
+                    } else if (sameAxis(structureDir[2], stringDir)) {
                         if (structureDir[2] == stringDir) {
                             y = i;
                         } else {
                             y = pattern.length - i - 1;
                         }
-                    } else if (structureDir[2].isSameAxis(charDir)) {
+                    } else if (sameAxis(structureDir[2], charDir)) {
                         if (structureDir[2] == charDir) {
                             z = i;
                         } else {
@@ -125,19 +138,19 @@ public class DebugBlockPattern {
                         }
                     }
 
-                    if (structureDir[1].isSameAxis(aisleDir)) {
+                    if (sameAxis(structureDir[1], aisleDir)) {
                         if (structureDir[1] == aisleDir) {
                             x = j;
                         } else {
                             x = pattern[0].length - j - 1;
                         }
-                    } else if (structureDir[1].isSameAxis(stringDir)) {
+                    } else if (sameAxis(structureDir[1], stringDir)) {
                         if (structureDir[1] == stringDir) {
                             y = j;
                         } else {
                             y = pattern[0].length - j - 1;
                         }
-                    } else if (structureDir[1].isSameAxis(charDir)) {
+                    } else if (sameAxis(structureDir[1], charDir)) {
                         if (structureDir[1] == charDir) {
                             z = j;
                         } else {
@@ -145,19 +158,19 @@ public class DebugBlockPattern {
                         }
                     }
 
-                    if (structureDir[0].isSameAxis(aisleDir)) {
+                    if (sameAxis(structureDir[0], aisleDir)) {
                         if (structureDir[0] == aisleDir) {
                             x = k;
                         } else {
                             x = pattern[0][0].length() - k - 1;
                         }
-                    } else if (structureDir[0].isSameAxis(stringDir)) {
+                    } else if (sameAxis(structureDir[0], stringDir)) {
                         if (structureDir[0] == stringDir) {
                             y = k;
                         } else {
                             y = pattern[0][0].length() - k - 1;
                         }
-                    } else if (structureDir[0].isSameAxis(charDir)) {
+                    } else if (sameAxis(structureDir[0], charDir)) {
                         if (structureDir[0] == charDir) {
                             z = k;
                         } else {
@@ -189,6 +202,15 @@ public class DebugBlockPattern {
         structureDir = new RelativeDirection[] { charDir, stringDir, aisleDir };
     }
 
+    private static boolean sameAxis(RelativeDirection a, RelativeDirection b) {
+        return a.ordinal() / 2 == b.ordinal() / 2;
+    }
+
+    public boolean hasController() {
+        for (var slice : pattern) for (var row : slice) if (row.indexOf('~') >= 0) return true;
+        return false;
+    }
+
     public DebugBlockPattern copy() {
         DebugBlockPattern newPattern = new DebugBlockPattern();
         System.arraycopy(this.structureDir, 0, newPattern.structureDir, 0, this.structureDir.length);
@@ -206,6 +228,7 @@ public class DebugBlockPattern {
 
         symbolMap.forEach((k, v) -> newPattern.symbolMap.put(k, new HashSet<>(v)));
 
+        newPattern.legend.putAll(legend);
         return newPattern;
     }
 }

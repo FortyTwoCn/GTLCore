@@ -13,27 +13,28 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.stacks.AEKey;
 
@@ -47,148 +48,123 @@ import java.util.function.Supplier;
 
 public final class WirelessAePackets {
 
-    private static final String PROTOCOL_VERSION = "27";
+    private static final String PROTOCOL_VERSION = "28";
     private static final MeInventoryRequestLimiter<ServerPlayer> TARGET_REQUEST_LIMITER = new MeInventoryRequestLimiter<>(8, 20);
-    private static int nextPacketId;
-
-    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(GTLCore.MOD_ID, "wireless_ae"),
-            () -> PROTOCOL_VERSION,
-            PROTOCOL_VERSION::equals,
-            PROTOCOL_VERSION::equals);
-
     private WirelessAePackets() {}
 
-    public static void register() {
-        registerPacket(UnbindWithToolPacket.class, (packet, buffer) -> buffer.writeBlockPos(packet.pos()),
-                buffer -> new UnbindWithToolPacket(buffer.readBlockPos()), UnbindWithToolPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(ClearBindingToolPacket.class, (packet, buffer) -> {}, buffer -> new ClearBindingToolPacket(),
-                ClearBindingToolPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(RenameNetworkPacket.class, RenameNetworkPacket::encode, RenameNetworkPacket::decode,
-                RenameNetworkPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SetFavoriteNetworkPacket.class, SetFavoriteNetworkPacket::encode, SetFavoriteNetworkPacket::decode,
-                SetFavoriteNetworkPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(ConnectTargetPacket.class, ConnectTargetPacket::encode, ConnectTargetPacket::decode,
-                ConnectTargetPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(OpenTargetMenuPacket.class, OpenTargetMenuPacket::encode, OpenTargetMenuPacket::decode,
-                OpenTargetMenuPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(OpenNormalTargetMenuPacket.class, OpenNormalTargetMenuPacket::encode,
-                OpenNormalTargetMenuPacket::decode, OpenNormalTargetMenuPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(RequestTargetNetworksPacket.class, RequestTargetNetworksPacket::encode,
-                RequestTargetNetworksPacket::decode, RequestTargetNetworksPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SyncTargetNetworksPacket.class, SyncTargetNetworksPacket::encode, SyncTargetNetworksPacket::decode,
-                SyncTargetNetworksPacket::handle, NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(OpenPatternQuickUploadSelectionPacket.class, OpenPatternQuickUploadSelectionPacket::encode,
-                OpenPatternQuickUploadSelectionPacket::decode, OpenPatternQuickUploadSelectionPacket::handle,
-                NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(SelectPatternQuickUploadTargetPacket.class, SelectPatternQuickUploadTargetPacket::encode,
-                SelectPatternQuickUploadTargetPacket::decode, SelectPatternQuickUploadTargetPacket::handle,
-                NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(PatternQuickUploadDuplicatePacket.class, PatternQuickUploadDuplicatePacket::encode,
-                PatternQuickUploadDuplicatePacket::decode, PatternQuickUploadDuplicatePacket::handle,
-                NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(SyncThroughputMonitorTerminalPacket.class, SyncThroughputMonitorTerminalPacket::encode,
-                SyncThroughputMonitorTerminalPacket::decode, SyncThroughputMonitorTerminalPacket::handle,
-                NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(SetThroughputMonitorSourceTrackingPacket.class, SetThroughputMonitorSourceTrackingPacket::encode,
-                SetThroughputMonitorSourceTrackingPacket::decode, SetThroughputMonitorSourceTrackingPacket::handle,
-                NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SetThroughputMonitorUpdateIntervalPacket.class, SetThroughputMonitorUpdateIntervalPacket::encode,
-                SetThroughputMonitorUpdateIntervalPacket::decode, SetThroughputMonitorUpdateIntervalPacket::handle,
-                NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SyncThroughputMonitorSourcesPacket.class, SyncThroughputMonitorSourcesPacket::encode,
-                SyncThroughputMonitorSourcesPacket::decode, SyncThroughputMonitorSourcesPacket::handle,
-                NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(SyncEmitterManagerTerminalPacket.class, SyncEmitterManagerTerminalPacket::encode,
-                SyncEmitterManagerTerminalPacket::decode, SyncEmitterManagerTerminalPacket::handle,
-                NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(SetEmitterSettingPacket.class, SetEmitterSettingPacket::encode, SetEmitterSettingPacket::decode,
-                SetEmitterSettingPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SetEmitterValuePacket.class, SetEmitterValuePacket::encode, SetEmitterValuePacket::decode,
-                SetEmitterValuePacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SelectEmitterPacket.class, SelectEmitterPacket::encode, SelectEmitterPacket::decode,
-                SelectEmitterPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SyncMEChamberManagerEntriesPacket.class, SyncMEChamberManagerEntriesPacket::encode,
-                SyncMEChamberManagerEntriesPacket::decode, SyncMEChamberManagerEntriesPacket::handle,
-                NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(SelectMEChamberPacket.class, SelectMEChamberPacket::encode, SelectMEChamberPacket::decode,
-                SelectMEChamberPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SetMEChamberSlotAmountPacket.class, SetMEChamberSlotAmountPacket::encode,
-                SetMEChamberSlotAmountPacket::decode, SetMEChamberSlotAmountPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SetMEChamberSlotConfigPacket.class, SetMEChamberSlotConfigPacket::encode,
-                SetMEChamberSlotConfigPacket::decode, SetMEChamberSlotConfigPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SetMEChamberControlPacket.class, SetMEChamberControlPacket::encode,
-                SetMEChamberControlPacket::decode, SetMEChamberControlPacket::handle, NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(MEChamberConfiguratorActionPacket.class, MEChamberConfiguratorActionPacket::encode,
-                MEChamberConfiguratorActionPacket::decode, MEChamberConfiguratorActionPacket::handle,
-                NetworkDirection.PLAY_TO_SERVER);
-        registerPacket(SyncMEChamberManagerContentsPacket.class, SyncMEChamberManagerContentsPacket::encode,
-                SyncMEChamberManagerContentsPacket::decode, SyncMEChamberManagerContentsPacket::handle,
-                NetworkDirection.PLAY_TO_CLIENT);
-        registerPacket(SyncMEChamberSnapshotPacket.class, SyncMEChamberSnapshotPacket::encode,
-                SyncMEChamberSnapshotPacket::decode, SyncMEChamberSnapshotPacket::handle, NetworkDirection.PLAY_TO_CLIENT);
-        MeInventoryAmountPackets.register(CHANNEL, () -> nextPacketId++);
-        FastCellDisplayPackets.register(CHANNEL, () -> nextPacketId++);
-        org.gtlcore.gtlcore.integration.ae2.graph.GraphRingPackets.register(CHANNEL, () -> nextPacketId++);
-        JeiWirelessTerminalOrderPackets.register(CHANNEL, () -> nextPacketId++);
-        JeiPatternQuery.register(CHANNEL, () -> nextPacketId++);
+    public static void register(net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION);
+        registerPacket(registrar, UnbindWithToolPacket.TYPE, (packet, buffer) -> buffer.writeBlockPos(packet.pos()), buffer -> new UnbindWithToolPacket(buffer.readBlockPos()), UnbindWithToolPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, ClearBindingToolPacket.TYPE, (packet, buffer) -> {}, buffer -> new ClearBindingToolPacket(), ClearBindingToolPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, RenameNetworkPacket.TYPE, RenameNetworkPacket::encode, RenameNetworkPacket::decode, RenameNetworkPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SetFavoriteNetworkPacket.TYPE, SetFavoriteNetworkPacket::encode, SetFavoriteNetworkPacket::decode, SetFavoriteNetworkPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, ConnectTargetPacket.TYPE, ConnectTargetPacket::encode, ConnectTargetPacket::decode, ConnectTargetPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, OpenTargetMenuPacket.TYPE, OpenTargetMenuPacket::encode, OpenTargetMenuPacket::decode, OpenTargetMenuPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, OpenNormalTargetMenuPacket.TYPE, OpenNormalTargetMenuPacket::encode, OpenNormalTargetMenuPacket::decode, OpenNormalTargetMenuPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, RequestTargetNetworksPacket.TYPE, RequestTargetNetworksPacket::encode, RequestTargetNetworksPacket::decode, RequestTargetNetworksPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SyncTargetNetworksPacket.TYPE, SyncTargetNetworksPacket::encode, SyncTargetNetworksPacket::decode, SyncTargetNetworksPacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, OpenPatternQuickUploadSelectionPacket.TYPE, OpenPatternQuickUploadSelectionPacket::encode, OpenPatternQuickUploadSelectionPacket::decode, OpenPatternQuickUploadSelectionPacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, SelectPatternQuickUploadTargetPacket.TYPE, SelectPatternQuickUploadTargetPacket::encode, SelectPatternQuickUploadTargetPacket::decode, SelectPatternQuickUploadTargetPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, PatternQuickUploadDuplicatePacket.TYPE, PatternQuickUploadDuplicatePacket::encode, PatternQuickUploadDuplicatePacket::decode, PatternQuickUploadDuplicatePacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, SyncThroughputMonitorTerminalPacket.TYPE, SyncThroughputMonitorTerminalPacket::encode, SyncThroughputMonitorTerminalPacket::decode, SyncThroughputMonitorTerminalPacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, SetThroughputMonitorSourceTrackingPacket.TYPE, SetThroughputMonitorSourceTrackingPacket::encode, SetThroughputMonitorSourceTrackingPacket::decode, SetThroughputMonitorSourceTrackingPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SetThroughputMonitorUpdateIntervalPacket.TYPE, SetThroughputMonitorUpdateIntervalPacket::encode, SetThroughputMonitorUpdateIntervalPacket::decode, SetThroughputMonitorUpdateIntervalPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SyncThroughputMonitorSourcesPacket.TYPE, SyncThroughputMonitorSourcesPacket::encode, SyncThroughputMonitorSourcesPacket::decode, SyncThroughputMonitorSourcesPacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, SyncEmitterManagerTerminalPacket.TYPE, SyncEmitterManagerTerminalPacket::encode, SyncEmitterManagerTerminalPacket::decode, SyncEmitterManagerTerminalPacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, SetEmitterSettingPacket.TYPE, SetEmitterSettingPacket::encode, SetEmitterSettingPacket::decode, SetEmitterSettingPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SetEmitterValuePacket.TYPE, SetEmitterValuePacket::encode, SetEmitterValuePacket::decode, SetEmitterValuePacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SelectEmitterPacket.TYPE, SelectEmitterPacket::encode, SelectEmitterPacket::decode, SelectEmitterPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SyncMEChamberManagerEntriesPacket.TYPE, SyncMEChamberManagerEntriesPacket::encode, SyncMEChamberManagerEntriesPacket::decode, SyncMEChamberManagerEntriesPacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, SelectMEChamberPacket.TYPE, SelectMEChamberPacket::encode, SelectMEChamberPacket::decode, SelectMEChamberPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SetMEChamberSlotAmountPacket.TYPE, SetMEChamberSlotAmountPacket::encode, SetMEChamberSlotAmountPacket::decode, SetMEChamberSlotAmountPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SetMEChamberSlotConfigPacket.TYPE, SetMEChamberSlotConfigPacket::encode, SetMEChamberSlotConfigPacket::decode, SetMEChamberSlotConfigPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SetMEChamberControlPacket.TYPE, SetMEChamberControlPacket::encode, SetMEChamberControlPacket::decode, SetMEChamberControlPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, MEChamberConfiguratorActionPacket.TYPE, MEChamberConfiguratorActionPacket::encode, MEChamberConfiguratorActionPacket::decode, MEChamberConfiguratorActionPacket::handle, PacketFlow.SERVERBOUND);
+        registerPacket(registrar, SyncMEChamberManagerContentsPacket.TYPE, SyncMEChamberManagerContentsPacket::encode, SyncMEChamberManagerContentsPacket::decode, SyncMEChamberManagerContentsPacket::handle, PacketFlow.CLIENTBOUND);
+        registerPacket(registrar, SyncMEChamberSnapshotPacket.TYPE, SyncMEChamberSnapshotPacket::encode, SyncMEChamberSnapshotPacket::decode, SyncMEChamberSnapshotPacket::handle, PacketFlow.CLIENTBOUND);
+        MeInventoryAmountPackets.register(registrar);
+        FastCellDisplayPackets.register(registrar);
+        org.gtlcore.gtlcore.integration.ae2.graph.GraphRingPackets.register(registrar);
+        JeiWirelessTerminalOrderPackets.register(registrar);
+        JeiPatternQuery.register(registrar);
     }
 
-    public record ClearBindingToolPacket() {
+    public record ClearBindingToolPacket() implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<ClearBindingToolPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/clear_binding_tool"));
 
-        private static void handle(ClearBindingToolPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            var context = contextSupplier.get();
+        @Override
+        public CustomPacketPayload.Type<ClearBindingToolPacket> type() { return TYPE; }
+
+
+        private static void handle(ClearBindingToolPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && !player.isSpectator()) {
                     WirelessNetworkBindingToolItem.clearSavedNetwork(player);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record UnbindWithToolPacket(BlockPos pos) {
+    public record UnbindWithToolPacket(BlockPos pos) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<UnbindWithToolPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/unbind_with_tool"));
 
-        private static void handle(UnbindWithToolPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            var context = contextSupplier.get();
+        @Override
+        public CustomPacketPayload.Type<UnbindWithToolPacket> type() { return TYPE; }
+
+
+        private static void handle(UnbindWithToolPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
-                if (player != null && player.canReach(packet.pos(), 0)) {
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
+                if (player != null && player.canInteractWithBlock(packet.pos(), 0)) {
                     WirelessAeNetworkRuntime.unbindWithTool(player, packet.pos());
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    private static <P> void registerPacket(Class<P> packetType, BiConsumer<P, FriendlyByteBuf> encoder,
-                                           Function<FriendlyByteBuf, P> decoder,
-                                           BiConsumer<P, Supplier<NetworkEvent.Context>> handler,
-                                           NetworkDirection direction) {
-        CHANNEL.registerMessage(nextPacketId++, packetType, encoder, decoder, handler, Optional.of(direction));
+    public static <P extends CustomPacketPayload> void registerPacket(PayloadRegistrar registrar,
+            CustomPacketPayload.Type<P> type, BiConsumer<P, RegistryFriendlyByteBuf> encoder,
+            Function<RegistryFriendlyByteBuf, P> decoder, BiConsumer<P, IPayloadContext> handler,
+            PacketFlow direction) {
+        StreamCodec<RegistryFriendlyByteBuf, P> codec = StreamCodec.of(
+                (buffer, packet) -> encoder.accept(packet, buffer), decoder::apply);
+        if (direction == PacketFlow.SERVERBOUND) {
+            registrar.playToServer(type, codec, handler::accept);
+        } else {
+            registrar.playToClient(type, codec, handler::accept);
+        }
     }
 
-    private static void dispatchClient(NetworkEvent.Context context, Runnable handler) {
-        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> handler));
-        context.setPacketHandled(true);
+    private static void dispatchClient(IPayloadContext context, Runnable handler) {
+        context.enqueueWork(handler);
+
     }
 
-    public record RenameNetworkPacket(BlockPos corePos, String name) {
+    public record RenameNetworkPacket(BlockPos corePos, String name) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<RenameNetworkPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/rename_network"));
 
-        private static void encode(RenameNetworkPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<RenameNetworkPacket> type() { return TYPE; }
+
+
+        private static void encode(RenameNetworkPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeBlockPos(packet.corePos);
             buffer.writeUtf(packet.name);
         }
 
-        private static RenameNetworkPacket decode(FriendlyByteBuf buffer) {
+        private static RenameNetworkPacket decode(RegistryFriendlyByteBuf buffer) {
             return new RenameNetworkPacket(buffer.readBlockPos(), buffer.readUtf(32));
         }
 
-        private static void handle(RenameNetworkPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(RenameNetworkPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || isCloseEnough(player, packet.corePos)) {
                     return;
                 }
@@ -211,25 +187,30 @@ public final class WirelessAePackets {
                         Component.translatable("message.gtlcore.wireless_core.name_saved", data.getNetworkName(frequency)),
                         true);
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record SetFavoriteNetworkPacket(BlockPos bookmarkPos, UUID frequency) {
+    public record SetFavoriteNetworkPacket(BlockPos bookmarkPos, UUID frequency) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetFavoriteNetworkPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_favorite_network"));
 
-        private static void encode(SetFavoriteNetworkPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SetFavoriteNetworkPacket> type() { return TYPE; }
+
+
+        private static void encode(SetFavoriteNetworkPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeBlockPos(packet.bookmarkPos);
             buffer.writeUUID(packet.frequency);
         }
 
-        private static SetFavoriteNetworkPacket decode(FriendlyByteBuf buffer) {
+        private static SetFavoriteNetworkPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetFavoriteNetworkPacket(buffer.readBlockPos(), buffer.readUUID());
         }
 
-        private static void handle(SetFavoriteNetworkPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(SetFavoriteNetworkPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || isCloseEnough(player, packet.bookmarkPos)) {
                     return;
                 }
@@ -254,18 +235,24 @@ public final class WirelessAePackets {
                                 networkName),
                         true);
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record ConnectTargetPacket(BlockPos targetPos, Direction targetSide, Vec3 hitLocation,
-                                      UUID frequency, boolean disconnect) {
+                                      UUID frequency, boolean disconnect) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<ConnectTargetPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/connect_target"));
+
+        @Override
+        public CustomPacketPayload.Type<ConnectTargetPacket> type() { return TYPE; }
+
 
         public ConnectTargetPacket(BlockPos targetPos, UUID frequency, boolean disconnect) {
             this(targetPos, null, null, frequency, disconnect);
         }
 
-        private static void encode(ConnectTargetPacket packet, FriendlyByteBuf buffer) {
+        private static void encode(ConnectTargetPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeBlockPos(packet.targetPos);
             writeDirection(buffer, packet.targetSide);
             writeVec3(buffer, packet.hitLocation);
@@ -273,7 +260,7 @@ public final class WirelessAePackets {
             buffer.writeBoolean(packet.disconnect);
         }
 
-        private static ConnectTargetPacket decode(FriendlyByteBuf buffer) {
+        private static ConnectTargetPacket decode(RegistryFriendlyByteBuf buffer) {
             return new ConnectTargetPacket(
                     buffer.readBlockPos(),
                     readDirection(buffer),
@@ -282,10 +269,9 @@ public final class WirelessAePackets {
                     buffer.readBoolean());
         }
 
-        private static void handle(ConnectTargetPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(ConnectTargetPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || isCloseEnough(player, packet.targetPos)) {
                     return;
                 }
@@ -366,30 +352,35 @@ public final class WirelessAePackets {
                                 data.getNetworkName(packet.frequency)),
                         true);
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record OpenTargetMenuPacket(BlockPos targetPos, Direction targetSide, Vec3 hitLocation) {
+    public record OpenTargetMenuPacket(BlockPos targetPos, Direction targetSide, Vec3 hitLocation) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<OpenTargetMenuPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/open_target_menu"));
+
+        @Override
+        public CustomPacketPayload.Type<OpenTargetMenuPacket> type() { return TYPE; }
+
 
         public OpenTargetMenuPacket(BlockPos targetPos) {
             this(targetPos, null, null);
         }
 
-        private static void encode(OpenTargetMenuPacket packet, FriendlyByteBuf buffer) {
+        private static void encode(OpenTargetMenuPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeBlockPos(packet.targetPos);
             writeDirection(buffer, packet.targetSide);
             writeVec3(buffer, packet.hitLocation);
         }
 
-        private static OpenTargetMenuPacket decode(FriendlyByteBuf buffer) {
+        private static OpenTargetMenuPacket decode(RegistryFriendlyByteBuf buffer) {
             return new OpenTargetMenuPacket(buffer.readBlockPos(), readDirection(buffer), readVec3(buffer));
         }
 
-        private static void handle(OpenTargetMenuPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(OpenTargetMenuPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || isCloseEnough(player, packet.targetPos)) {
                     return;
                 }
@@ -405,24 +396,29 @@ public final class WirelessAePackets {
                     WirelessAeTargetMenu.open(player, level, packet.targetPos, packet.targetSide, packet.hitLocation);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record OpenNormalTargetMenuPacket(BlockPos targetPos) {
+    public record OpenNormalTargetMenuPacket(BlockPos targetPos) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<OpenNormalTargetMenuPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/open_normal_target_menu"));
 
-        private static void encode(OpenNormalTargetMenuPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<OpenNormalTargetMenuPacket> type() { return TYPE; }
+
+
+        private static void encode(OpenNormalTargetMenuPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeBlockPos(packet.targetPos);
         }
 
-        private static OpenNormalTargetMenuPacket decode(FriendlyByteBuf buffer) {
+        private static OpenNormalTargetMenuPacket decode(RegistryFriendlyByteBuf buffer) {
             return new OpenNormalTargetMenuPacket(buffer.readBlockPos());
         }
 
-        private static void handle(OpenNormalTargetMenuPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(OpenNormalTargetMenuPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || isCloseEnough(player, packet.targetPos)) {
                     return;
                 }
@@ -437,40 +433,45 @@ public final class WirelessAePackets {
                         Direction.UP,
                         packet.targetPos,
                         false);
-                InteractionResult result = state.use(level, player, InteractionHand.MAIN_HAND, hit);
-                if (result.consumesAction()) {
-                    return;
-                }
+                ItemInteractionResult result = state.useItemOn(player.getMainHandItem(), level, player, InteractionHand.MAIN_HAND, hit);
+                if (result.consumesAction() || result == ItemInteractionResult.FAIL) return;
+                if (result == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION &&
+                        state.useWithoutItem(level, player, hit).consumesAction()) return;
 
                 MenuProvider provider = state.getMenuProvider(level, packet.targetPos);
                 if (provider != null) {
                     player.openMenu(provider);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record RequestTargetNetworksPacket(BlockPos targetPos, Direction targetSide, Vec3 hitLocation) {
+    public record RequestTargetNetworksPacket(BlockPos targetPos, Direction targetSide, Vec3 hitLocation) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<RequestTargetNetworksPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/request_target_networks"));
+
+        @Override
+        public CustomPacketPayload.Type<RequestTargetNetworksPacket> type() { return TYPE; }
+
 
         public RequestTargetNetworksPacket(BlockPos targetPos) {
             this(targetPos, null, null);
         }
 
-        private static void encode(RequestTargetNetworksPacket packet, FriendlyByteBuf buffer) {
+        private static void encode(RequestTargetNetworksPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeBlockPos(packet.targetPos);
             writeDirection(buffer, packet.targetSide);
             writeVec3(buffer, packet.hitLocation);
         }
 
-        private static RequestTargetNetworksPacket decode(FriendlyByteBuf buffer) {
+        private static RequestTargetNetworksPacket decode(RegistryFriendlyByteBuf buffer) {
             return new RequestTargetNetworksPacket(buffer.readBlockPos(), readDirection(buffer), readVec3(buffer));
         }
 
-        private static void handle(RequestTargetNetworksPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(RequestTargetNetworksPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || isCloseEnough(player, packet.targetPos)) {
                     return;
                 }
@@ -486,17 +487,22 @@ public final class WirelessAePackets {
                     return;
                 }
 
-                CHANNEL.send(
-                        PacketDistributor.PLAYER.with(() -> player),
+                PacketDistributor.sendToPlayer(player,
                         new SyncTargetNetworksPacket(packet.targetPos, buildTargetEntries(player, target)));
             });
-            context.setPacketHandled(true);
+
         }
     }
 
-    public record SyncTargetNetworksPacket(BlockPos targetPos, List<TargetNetworkEntry> entries) {
+    public record SyncTargetNetworksPacket(BlockPos targetPos, List<TargetNetworkEntry> entries) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SyncTargetNetworksPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/sync_target_networks"));
 
-        private static void encode(SyncTargetNetworksPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SyncTargetNetworksPacket> type() { return TYPE; }
+
+
+        private static void encode(SyncTargetNetworksPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeBlockPos(packet.targetPos);
             buffer.writeVarInt(packet.entries.size());
             for (TargetNetworkEntry entry : packet.entries) {
@@ -507,7 +513,7 @@ public final class WirelessAePackets {
             }
         }
 
-        private static SyncTargetNetworksPacket decode(FriendlyByteBuf buffer) {
+        private static SyncTargetNetworksPacket decode(RegistryFriendlyByteBuf buffer) {
             BlockPos targetPos = buffer.readBlockPos();
             int size = buffer.readVarInt();
             List<TargetNetworkEntry> entries = new ArrayList<>(size);
@@ -521,8 +527,7 @@ public final class WirelessAePackets {
             return new SyncTargetNetworksPacket(targetPos, entries);
         }
 
-        private static void handle(SyncTargetNetworksPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(SyncTargetNetworksPacket packet, IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handleTargetNetworks(packet));
         }
@@ -531,69 +536,83 @@ public final class WirelessAePackets {
     public record TargetNetworkEntry(UUID frequency, String name, boolean connected, boolean disconnectable) {}
 
     public record OpenPatternQuickUploadSelectionPacket(ItemStack patternStack,
-                                                        List<PatternQuickUploadSelectionMenu.Entry> entries) {
+                                                        List<PatternQuickUploadSelectionMenu.Entry> entries) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<OpenPatternQuickUploadSelectionPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/open_pattern_quick_upload_selection"));
 
-        private static void encode(OpenPatternQuickUploadSelectionPacket packet, FriendlyByteBuf buffer) {
-            buffer.writeItem(packet.patternStack);
+        @Override
+        public CustomPacketPayload.Type<OpenPatternQuickUploadSelectionPacket> type() { return TYPE; }
+
+
+        private static void encode(OpenPatternQuickUploadSelectionPacket packet, RegistryFriendlyByteBuf buffer) {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, packet.patternStack);
             writePatternQuickUploadEntries(buffer, packet.entries);
         }
 
-        private static OpenPatternQuickUploadSelectionPacket decode(FriendlyByteBuf buffer) {
-            return new OpenPatternQuickUploadSelectionPacket(buffer.readItem(), readPatternQuickUploadEntries(buffer));
+        private static OpenPatternQuickUploadSelectionPacket decode(RegistryFriendlyByteBuf buffer) {
+            return new OpenPatternQuickUploadSelectionPacket(ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer), readPatternQuickUploadEntries(buffer));
         }
 
         private static void handle(OpenPatternQuickUploadSelectionPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handlePatternQuickUploadSelection(packet));
         }
     }
 
-    public record SelectPatternQuickUploadTargetPacket(int index) {
+    public record SelectPatternQuickUploadTargetPacket(int index) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SelectPatternQuickUploadTargetPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/select_pattern_quick_upload_target"));
 
-        private static void encode(SelectPatternQuickUploadTargetPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SelectPatternQuickUploadTargetPacket> type() { return TYPE; }
+
+
+        private static void encode(SelectPatternQuickUploadTargetPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.index);
         }
 
-        private static SelectPatternQuickUploadTargetPacket decode(FriendlyByteBuf buffer) {
+        private static SelectPatternQuickUploadTargetPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SelectPatternQuickUploadTargetPacket(buffer.readVarInt());
         }
 
         private static void handle(SelectPatternQuickUploadTargetPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof PatternQuickUploadSelectionMenu menu) {
                     menu.select(player, packet.index);
                 } else if (player != null && player.containerMenu instanceof PatterEncodingTermMenuModify menuModify) {
                     menuModify.gTLCore$selectQuickUploadTarget(packet.index);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public static void sendPatternQuickUploadDuplicate(ServerPlayer player, Component targetName) {
-        CHANNEL.send(
-                PacketDistributor.PLAYER.with(() -> player),
+        PacketDistributor.sendToPlayer(player,
                 new PatternQuickUploadDuplicatePacket(targetName));
     }
 
-    public record PatternQuickUploadDuplicatePacket(Component targetName) {
+    public record PatternQuickUploadDuplicatePacket(Component targetName) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<PatternQuickUploadDuplicatePacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/pattern_quick_upload_duplicate"));
 
-        private static void encode(PatternQuickUploadDuplicatePacket packet, FriendlyByteBuf buffer) {
-            buffer.writeComponent(packet.targetName);
+        @Override
+        public CustomPacketPayload.Type<PatternQuickUploadDuplicatePacket> type() { return TYPE; }
+
+
+        private static void encode(PatternQuickUploadDuplicatePacket packet, RegistryFriendlyByteBuf buffer) {
+            ComponentSerialization.STREAM_CODEC.encode(buffer, packet.targetName);
         }
 
-        private static PatternQuickUploadDuplicatePacket decode(FriendlyByteBuf buffer) {
-            return new PatternQuickUploadDuplicatePacket(buffer.readComponent());
+        private static PatternQuickUploadDuplicatePacket decode(RegistryFriendlyByteBuf buffer) {
+            return new PatternQuickUploadDuplicatePacket(ComponentSerialization.STREAM_CODEC.decode(buffer));
         }
 
         private static void handle(PatternQuickUploadDuplicatePacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handlePatternQuickUploadDuplicate(packet));
         }
@@ -601,36 +620,47 @@ public final class WirelessAePackets {
 
     public record SyncThroughputMonitorTerminalPacket(
                                                       int containerId,
-                                                      List<ThroughputMonitorTerminalMenu.Entry> entries) {
+                                                      List<ThroughputMonitorTerminalMenu.Entry> entries) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SyncThroughputMonitorTerminalPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/sync_throughput_monitor_terminal"));
 
-        private static void encode(SyncThroughputMonitorTerminalPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SyncThroughputMonitorTerminalPacket> type() { return TYPE; }
+
+
+        private static void encode(SyncThroughputMonitorTerminalPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             ThroughputMonitorTerminalMenu.writeEntries(buffer, packet.entries);
         }
 
-        private static SyncThroughputMonitorTerminalPacket decode(FriendlyByteBuf buffer) {
+        private static SyncThroughputMonitorTerminalPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SyncThroughputMonitorTerminalPacket(
                     buffer.readVarInt(),
                     ThroughputMonitorTerminalMenu.readEntries(buffer));
         }
 
         private static void handle(SyncThroughputMonitorTerminalPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handleThroughputMonitorTerminal(packet));
         }
     }
 
-    public record SetThroughputMonitorSourceTrackingPacket(int containerId, AEKey key, boolean track) {
+    public record SetThroughputMonitorSourceTrackingPacket(int containerId, AEKey key, boolean track) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetThroughputMonitorSourceTrackingPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_throughput_monitor_source_tracking"));
 
-        private static void encode(SetThroughputMonitorSourceTrackingPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SetThroughputMonitorSourceTrackingPacket> type() { return TYPE; }
+
+
+        private static void encode(SetThroughputMonitorSourceTrackingPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             AEKey.writeKey(buffer, packet.key);
             buffer.writeBoolean(packet.track);
         }
 
-        private static SetThroughputMonitorSourceTrackingPacket decode(FriendlyByteBuf buffer) {
+        private static SetThroughputMonitorSourceTrackingPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetThroughputMonitorSourceTrackingPacket(
                     buffer.readVarInt(),
                     AEKey.readKey(buffer),
@@ -638,60 +668,70 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SetThroughputMonitorSourceTrackingPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof ThroughputMonitorTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.trackSources(player, packet.key, packet.track);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SetThroughputMonitorUpdateIntervalPacket(
                                                            int containerId,
-                                                           ThroughputMonitorUpdateInterval updateInterval) {
+                                                           ThroughputMonitorUpdateInterval updateInterval) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetThroughputMonitorUpdateIntervalPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_throughput_monitor_update_interval"));
 
-        private static void encode(SetThroughputMonitorUpdateIntervalPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SetThroughputMonitorUpdateIntervalPacket> type() { return TYPE; }
+
+
+        private static void encode(SetThroughputMonitorUpdateIntervalPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             buffer.writeEnum(packet.updateInterval);
         }
 
-        private static SetThroughputMonitorUpdateIntervalPacket decode(FriendlyByteBuf buffer) {
+        private static SetThroughputMonitorUpdateIntervalPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetThroughputMonitorUpdateIntervalPacket(
                     buffer.readVarInt(),
                     buffer.readEnum(ThroughputMonitorUpdateInterval.class));
         }
 
         private static void handle(SetThroughputMonitorUpdateIntervalPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof ThroughputMonitorTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.setUpdateInterval(player, packet.updateInterval);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SyncThroughputMonitorSourcesPacket(
                                                      int containerId,
                                                      AEKey key,
-                                                     List<ThroughputMonitorTerminalMenu.SourceEntry> sources) {
+                                                     List<ThroughputMonitorTerminalMenu.SourceEntry> sources) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SyncThroughputMonitorSourcesPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/sync_throughput_monitor_sources"));
 
-        private static void encode(SyncThroughputMonitorSourcesPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SyncThroughputMonitorSourcesPacket> type() { return TYPE; }
+
+
+        private static void encode(SyncThroughputMonitorSourcesPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             AEKey.writeKey(buffer, packet.key);
             ThroughputMonitorTerminalMenu.writeSourceEntries(buffer, packet.sources);
         }
 
-        private static SyncThroughputMonitorSourcesPacket decode(FriendlyByteBuf buffer) {
+        private static SyncThroughputMonitorSourcesPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SyncThroughputMonitorSourcesPacket(
                     buffer.readVarInt(),
                     AEKey.readKey(buffer),
@@ -699,8 +739,7 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SyncThroughputMonitorSourcesPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handleThroughputMonitorSources(packet));
         }
@@ -708,40 +747,51 @@ public final class WirelessAePackets {
 
     public record SyncEmitterManagerTerminalPacket(
                                                    int containerId,
-                                                   List<EmitterManagerTerminalMenu.Entry> entries) {
+                                                   List<EmitterManagerTerminalMenu.Entry> entries) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SyncEmitterManagerTerminalPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/sync_emitter_manager_terminal"));
 
-        private static void encode(SyncEmitterManagerTerminalPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SyncEmitterManagerTerminalPacket> type() { return TYPE; }
+
+
+        private static void encode(SyncEmitterManagerTerminalPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             EmitterManagerTerminalMenu.writeEntries(buffer, packet.entries);
         }
 
-        private static SyncEmitterManagerTerminalPacket decode(FriendlyByteBuf buffer) {
+        private static SyncEmitterManagerTerminalPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SyncEmitterManagerTerminalPacket(
                     buffer.readVarInt(),
                     EmitterManagerTerminalMenu.readEntries(buffer));
         }
 
         private static void handle(SyncEmitterManagerTerminalPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handleEmitterManagerTerminal(packet));
         }
     }
 
     public record SetEmitterSettingPacket(int containerId, EmitterManagerTerminalMenu.Address address,
-                                          String settingName, String valueName) {
+                                          String settingName, String valueName) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetEmitterSettingPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_emitter_setting"));
+
+        @Override
+        public CustomPacketPayload.Type<SetEmitterSettingPacket> type() { return TYPE; }
+
 
         private static final int MAX_SETTING_NAME_LENGTH = 64;
 
-        private static void encode(SetEmitterSettingPacket packet, FriendlyByteBuf buffer) {
+        private static void encode(SetEmitterSettingPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             packet.address.write(buffer);
             buffer.writeUtf(packet.settingName, MAX_SETTING_NAME_LENGTH);
             buffer.writeUtf(packet.valueName, MAX_SETTING_NAME_LENGTH);
         }
 
-        private static SetEmitterSettingPacket decode(FriendlyByteBuf buffer) {
+        private static SetEmitterSettingPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetEmitterSettingPacket(
                     buffer.readVarInt(),
                     EmitterManagerTerminalMenu.Address.read(buffer),
@@ -750,24 +800,29 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SetEmitterSettingPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof EmitterManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.setEmitterSetting(player, packet.address, packet.settingName, packet.valueName);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     /** Tells the server which emitter the terminal has selected, so its upgrade slots back the card slots. */
     public record SelectEmitterPacket(int containerId,
-                                      @org.jetbrains.annotations.Nullable EmitterManagerTerminalMenu.Address address) {
+                                      @org.jetbrains.annotations.Nullable EmitterManagerTerminalMenu.Address address) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SelectEmitterPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/select_emitter"));
 
-        private static void encode(SelectEmitterPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SelectEmitterPacket> type() { return TYPE; }
+
+
+        private static void encode(SelectEmitterPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             buffer.writeBoolean(packet.address != null);
             if (packet.address != null) {
@@ -775,37 +830,42 @@ public final class WirelessAePackets {
             }
         }
 
-        private static SelectEmitterPacket decode(FriendlyByteBuf buffer) {
+        private static SelectEmitterPacket decode(RegistryFriendlyByteBuf buffer) {
             int containerId = buffer.readVarInt();
             return new SelectEmitterPacket(
                     containerId,
                     buffer.readBoolean() ? EmitterManagerTerminalMenu.Address.read(buffer) : null);
         }
 
-        private static void handle(SelectEmitterPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(SelectEmitterPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof EmitterManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.setSelectedAddress(packet.address);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SetEmitterValuePacket(int containerId, EmitterManagerTerminalMenu.Address address,
-                                        EmitterManagerTerminalMenu.ValueKind kind, long value) {
+                                        EmitterManagerTerminalMenu.ValueKind kind, long value) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetEmitterValuePacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_emitter_value"));
 
-        private static void encode(SetEmitterValuePacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SetEmitterValuePacket> type() { return TYPE; }
+
+
+        private static void encode(SetEmitterValuePacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             packet.address.write(buffer);
             buffer.writeEnum(packet.kind);
             buffer.writeVarLong(packet.value);
         }
 
-        private static SetEmitterValuePacket decode(FriendlyByteBuf buffer) {
+        private static SetEmitterValuePacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetEmitterValuePacket(
                     buffer.readVarInt(),
                     EmitterManagerTerminalMenu.Address.read(buffer),
@@ -814,73 +874,88 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SetEmitterValuePacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof EmitterManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.setEmitterValue(player, packet.address, packet.kind, packet.value);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SyncMEChamberManagerEntriesPacket(
                                                     int containerId,
-                                                    List<MEChamberManagerTerminalMenu.Entry> entries) {
+                                                    List<MEChamberManagerTerminalMenu.Entry> entries) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SyncMEChamberManagerEntriesPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/sync_m_e_chamber_manager_entries"));
 
-        private static void encode(SyncMEChamberManagerEntriesPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SyncMEChamberManagerEntriesPacket> type() { return TYPE; }
+
+
+        private static void encode(SyncMEChamberManagerEntriesPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             MEChamberManagerTerminalMenu.writeEntries(buffer, packet.entries);
         }
 
-        private static SyncMEChamberManagerEntriesPacket decode(FriendlyByteBuf buffer) {
+        private static SyncMEChamberManagerEntriesPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SyncMEChamberManagerEntriesPacket(
                     buffer.readVarInt(),
                     MEChamberManagerTerminalMenu.readEntries(buffer));
         }
 
         private static void handle(SyncMEChamberManagerEntriesPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handleMEChamberManagerEntries(packet));
         }
     }
 
-    public record SelectMEChamberPacket(int containerId, MEChamberManagerTerminalMenu.Address address) {
+    public record SelectMEChamberPacket(int containerId, MEChamberManagerTerminalMenu.Address address) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SelectMEChamberPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/select_m_e_chamber"));
 
-        private static void encode(SelectMEChamberPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SelectMEChamberPacket> type() { return TYPE; }
+
+
+        private static void encode(SelectMEChamberPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             packet.address.write(buffer);
         }
 
-        private static SelectMEChamberPacket decode(FriendlyByteBuf buffer) {
+        private static SelectMEChamberPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SelectMEChamberPacket(
                     buffer.readVarInt(),
                     MEChamberManagerTerminalMenu.Address.read(buffer));
         }
 
-        private static void handle(SelectMEChamberPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+        private static void handle(SelectMEChamberPacket packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof MEChamberManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.selectChamber(player, packet.address);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SetMEChamberSlotAmountPacket(int containerId, MEChamberManagerTerminalMenu.Address address,
                                                MEChamberManagerTerminalMenu.StorageKind storage, int slot,
-                                               long amount) {
+                                               long amount) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetMEChamberSlotAmountPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_m_e_chamber_slot_amount"));
 
-        private static void encode(SetMEChamberSlotAmountPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SetMEChamberSlotAmountPacket> type() { return TYPE; }
+
+
+        private static void encode(SetMEChamberSlotAmountPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             packet.address.write(buffer);
             buffer.writeEnum(packet.storage);
@@ -888,7 +963,7 @@ public final class WirelessAePackets {
             buffer.writeVarLong(packet.amount);
         }
 
-        private static SetMEChamberSlotAmountPacket decode(FriendlyByteBuf buffer) {
+        private static SetMEChamberSlotAmountPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetMEChamberSlotAmountPacket(
                     buffer.readVarInt(),
                     MEChamberManagerTerminalMenu.Address.read(buffer),
@@ -898,24 +973,29 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SetMEChamberSlotAmountPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof MEChamberManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.setSlotAmount(player, packet.address, packet.storage, packet.slot, packet.amount);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SetMEChamberSlotConfigPacket(int containerId, MEChamberManagerTerminalMenu.Address address,
                                                MEChamberManagerTerminalMenu.StorageKind storage, int slot,
-                                               @org.jetbrains.annotations.Nullable AEKey key) {
+                                               @org.jetbrains.annotations.Nullable AEKey key) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetMEChamberSlotConfigPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_m_e_chamber_slot_config"));
 
-        private static void encode(SetMEChamberSlotConfigPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SetMEChamberSlotConfigPacket> type() { return TYPE; }
+
+
+        private static void encode(SetMEChamberSlotConfigPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             packet.address.write(buffer);
             buffer.writeEnum(packet.storage);
@@ -923,7 +1003,7 @@ public final class WirelessAePackets {
             AEKey.writeOptionalKey(buffer, packet.key);
         }
 
-        private static SetMEChamberSlotConfigPacket decode(FriendlyByteBuf buffer) {
+        private static SetMEChamberSlotConfigPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetMEChamberSlotConfigPacket(
                     buffer.readVarInt(),
                     MEChamberManagerTerminalMenu.Address.read(buffer),
@@ -933,30 +1013,35 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SetMEChamberSlotConfigPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof MEChamberManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.setSlotConfig(player, packet.address, packet.storage, packet.slot, packet.key);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SetMEChamberControlPacket(int containerId, MEChamberManagerTerminalMenu.Address address,
-                                            MEChamberManagerTerminalMenu.ControlKind control, int value) {
+                                            MEChamberManagerTerminalMenu.ControlKind control, int value) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SetMEChamberControlPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/set_m_e_chamber_control"));
 
-        private static void encode(SetMEChamberControlPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SetMEChamberControlPacket> type() { return TYPE; }
+
+
+        private static void encode(SetMEChamberControlPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             packet.address.write(buffer);
             buffer.writeEnum(packet.control);
             buffer.writeVarInt(packet.value);
         }
 
-        private static SetMEChamberControlPacket decode(FriendlyByteBuf buffer) {
+        private static SetMEChamberControlPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SetMEChamberControlPacket(
                     buffer.readVarInt(),
                     MEChamberManagerTerminalMenu.Address.read(buffer),
@@ -965,24 +1050,29 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SetMEChamberControlPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof MEChamberManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.setControl(player, packet.address, packet.control, packet.value);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record MEChamberConfiguratorActionPacket(int containerId, MEChamberManagerTerminalMenu.Address address,
                                                     MEChamberConfigurator.Kind kind, int actionId,
-                                                    byte[] actionData) {
+                                                    byte[] actionData) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<MEChamberConfiguratorActionPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/m_e_chamber_configurator_action"));
 
-        private static void encode(MEChamberConfiguratorActionPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<MEChamberConfiguratorActionPacket> type() { return TYPE; }
+
+
+        private static void encode(MEChamberConfiguratorActionPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             packet.address.write(buffer);
             buffer.writeEnum(packet.kind);
@@ -990,7 +1080,7 @@ public final class WirelessAePackets {
             buffer.writeByteArray(packet.actionData);
         }
 
-        private static MEChamberConfiguratorActionPacket decode(FriendlyByteBuf buffer) {
+        private static MEChamberConfiguratorActionPacket decode(RegistryFriendlyByteBuf buffer) {
             return new MEChamberConfiguratorActionPacket(
                     buffer.readVarInt(),
                     MEChamberManagerTerminalMenu.Address.read(buffer),
@@ -1000,24 +1090,29 @@ public final class WirelessAePackets {
         }
 
         private static void handle(MEChamberConfiguratorActionPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof MEChamberManagerTerminalMenu menu &&
                         menu.containerId == packet.containerId) {
                     menu.handleConfiguratorAction(
                             player, packet.address, packet.kind, packet.actionId, packet.actionData);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
     public record SyncMEChamberSnapshotPacket(int containerId, boolean contents, long revision,
-                                              int totalBytes, int offset, byte[] data) {
+                                              int totalBytes, int offset, byte[] data) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SyncMEChamberSnapshotPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/sync_m_e_chamber_snapshot"));
 
-        private static void encode(SyncMEChamberSnapshotPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SyncMEChamberSnapshotPacket> type() { return TYPE; }
+
+
+        private static void encode(SyncMEChamberSnapshotPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             buffer.writeBoolean(packet.contents);
             buffer.writeVarLong(packet.revision);
@@ -1026,14 +1121,14 @@ public final class WirelessAePackets {
             buffer.writeByteArray(packet.data);
         }
 
-        private static SyncMEChamberSnapshotPacket decode(FriendlyByteBuf buffer) {
+        private static SyncMEChamberSnapshotPacket decode(RegistryFriendlyByteBuf buffer) {
             return new SyncMEChamberSnapshotPacket(buffer.readVarInt(), buffer.readBoolean(), buffer.readVarLong(),
                     buffer.readVarInt(), buffer.readVarInt(), buffer.readByteArray(
                             org.gtlcore.gtlcore.integration.ae2.chamber.ChamberSnapshotTransfer.MAX_CHUNK_BYTES));
         }
 
-        private static void handle(SyncMEChamberSnapshotPacket packet, Supplier<NetworkEvent.Context> supplier) {
-            dispatchClient(supplier.get(), () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
+        private static void handle(SyncMEChamberSnapshotPacket packet, IPayloadContext context) {
+            dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handleMEChamberSnapshot(packet));
         }
     }
@@ -1042,9 +1137,15 @@ public final class WirelessAePackets {
                                                      int containerId,
                                                      @org.jetbrains.annotations.Nullable MEChamberManagerTerminalMenu.Address address,
                                                      List<MEChamberManagerTerminalMenu.SlotContent> contents,
-                                                     MEChamberManagerTerminalMenu.ChamberDetails details) {
+                                                     MEChamberManagerTerminalMenu.ChamberDetails details) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SyncMEChamberManagerContentsPacket> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "wireless_ae/sync_m_e_chamber_manager_contents"));
 
-        private static void encode(SyncMEChamberManagerContentsPacket packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<SyncMEChamberManagerContentsPacket> type() { return TYPE; }
+
+
+        private static void encode(SyncMEChamberManagerContentsPacket packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             buffer.writeBoolean(packet.address != null);
             if (packet.address != null) {
@@ -1054,7 +1155,7 @@ public final class WirelessAePackets {
             MEChamberManagerTerminalMenu.writeDetails(buffer, packet.details);
         }
 
-        private static SyncMEChamberManagerContentsPacket decode(FriendlyByteBuf buffer) {
+        private static SyncMEChamberManagerContentsPacket decode(RegistryFriendlyByteBuf buffer) {
             int containerId = buffer.readVarInt();
             MEChamberManagerTerminalMenu.Address address = buffer.readBoolean() ?
                     MEChamberManagerTerminalMenu.Address.read(buffer) :
@@ -1067,36 +1168,35 @@ public final class WirelessAePackets {
         }
 
         private static void handle(SyncMEChamberManagerContentsPacket packet,
-                                   Supplier<NetworkEvent.Context> contextSupplier) {
-            NetworkEvent.Context context = contextSupplier.get();
+                                   IPayloadContext context) {
             dispatchClient(context, () -> org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClientPacketHandler
                     .handleMEChamberManagerContents(packet));
         }
     }
 
-    private static void writePatternQuickUploadEntries(FriendlyByteBuf buffer,
+    private static void writePatternQuickUploadEntries(RegistryFriendlyByteBuf buffer,
                                                        List<PatternQuickUploadSelectionMenu.Entry> entries) {
         buffer.writeVarInt(entries.size());
         for (PatternQuickUploadSelectionMenu.Entry entry : entries) {
             buffer.writeResourceLocation(entry.levelKey().location());
             buffer.writeBlockPos(entry.bufferPos());
-            buffer.writeComponent(entry.targetName());
+            ComponentSerialization.STREAM_CODEC.encode(buffer, entry.targetName());
             buffer.writeResourceLocation(entry.recipeTypeId());
-            buffer.writeComponent(entry.recipeTypeName());
+            ComponentSerialization.STREAM_CODEC.encode(buffer, entry.recipeTypeName());
             buffer.writeBoolean(entry.showPosition());
         }
     }
 
-    private static List<PatternQuickUploadSelectionMenu.Entry> readPatternQuickUploadEntries(FriendlyByteBuf buffer) {
+    private static List<PatternQuickUploadSelectionMenu.Entry> readPatternQuickUploadEntries(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
         List<PatternQuickUploadSelectionMenu.Entry> entries = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             entries.add(new PatternQuickUploadSelectionMenu.Entry(
                     ResourceKey.create(Registries.DIMENSION, buffer.readResourceLocation()),
                     buffer.readBlockPos(),
-                    buffer.readComponent(),
+                    ComponentSerialization.STREAM_CODEC.decode(buffer),
                     buffer.readResourceLocation(),
-                    buffer.readComponent(),
+                    ComponentSerialization.STREAM_CODEC.decode(buffer),
                     buffer.readBoolean()));
         }
         return entries;
@@ -1122,18 +1222,18 @@ public final class WirelessAePackets {
         return entries;
     }
 
-    private static void writeDirection(FriendlyByteBuf buffer, Direction direction) {
+    private static void writeDirection(RegistryFriendlyByteBuf buffer, Direction direction) {
         buffer.writeBoolean(direction != null);
         if (direction != null) {
             buffer.writeEnum(direction);
         }
     }
 
-    private static Direction readDirection(FriendlyByteBuf buffer) {
+    private static Direction readDirection(RegistryFriendlyByteBuf buffer) {
         return buffer.readBoolean() ? buffer.readEnum(Direction.class) : null;
     }
 
-    private static void writeVec3(FriendlyByteBuf buffer, Vec3 vec) {
+    private static void writeVec3(RegistryFriendlyByteBuf buffer, Vec3 vec) {
         buffer.writeBoolean(vec != null);
         if (vec != null) {
             buffer.writeDouble(vec.x);
@@ -1142,7 +1242,7 @@ public final class WirelessAePackets {
         }
     }
 
-    private static Vec3 readVec3(FriendlyByteBuf buffer) {
+    private static Vec3 readVec3(RegistryFriendlyByteBuf buffer) {
         return buffer.readBoolean() ? new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()) : null;
     }
 

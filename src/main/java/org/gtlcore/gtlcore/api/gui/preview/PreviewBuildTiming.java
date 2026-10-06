@@ -1,7 +1,7 @@
 package org.gtlcore.gtlcore.api.gui.preview;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -60,10 +60,10 @@ public final class PreviewBuildTiming implements AutoCloseable {
         }
     }
 
-    public static void formController(IMultiController controller) {
+    public static void formController(MultiblockControllerMachine controller) {
         long start = System.nanoTime();
         try {
-            controller.onStructureFormed();
+            controller.formStructure("main");
         } finally {
             synchronized (LOCK) {
                 formedNanos += System.nanoTime() - start;
@@ -71,8 +71,8 @@ public final class PreviewBuildTiming implements AutoCloseable {
         }
     }
 
-    public static String identity(IMultiController controller, boolean module) {
-        return controller.self().getDefinition().getId() + (module ? "#module" : "");
+    public static String identity(MultiblockControllerMachine controller, boolean module) {
+        return controller.getDefinition().getId() + (module ? "#module" : "");
     }
 
     @Override

@@ -1,36 +1,20 @@
 package org.gtlcore.gtlcore.mixin.ae2.stacks;
 
-import net.minecraft.world.item.Item;
-
 import appeng.api.stacks.AEItemKey;
-import org.spongepowered.asm.mixin.*;
-
-/**
- * 代码参考自gto
- * &#064;line <a href="https://github.com/GregTech-Odyssey/GTOCore">...</a>
- */
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(AEItemKey.class)
 public abstract class AEItemKeyMixin {
+    @Unique
+    private volatile int gtlcore$fuzzySearchMaxValue = -1;
 
-    private int fuzzySearchMaxValue = -1;
-
-    @Shadow(remap = false)
-    @Final
-    @Mutable
-    private final Item item;
-
-    public AEItemKeyMixin(Item item) {
-        this.item = item;
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public int getFuzzySearchMaxValue() {
-        if (this.fuzzySearchMaxValue < 0) this.fuzzySearchMaxValue = this.item.getMaxDamage();
-        return fuzzySearchMaxValue;
+    @WrapMethod(method = "getFuzzySearchMaxValue", remap = false)
+    private int gtlcore$cachedMaxDamage(Operation<Integer> original) {
+        int value = gtlcore$fuzzySearchMaxValue;
+        if (value < 0) gtlcore$fuzzySearchMaxValue = value = original.call();
+        return value;
     }
 }

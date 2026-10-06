@@ -1,8 +1,6 @@
 package org.gtlcore.gtlcore.mixin.gtm.machine;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IRotorHolderMachine;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.generator.LargeTurbineMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.RotorHolderPartMachine;
@@ -10,38 +8,39 @@ import com.gregtechceu.gtceu.common.machine.multiblock.part.RotorHolderPartMachi
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(LargeTurbineMachine.class)
 public abstract class LargeTurbineMachineMixin extends WorkableElectricMultiblockMachine {
 
-    RotorHolderPartMachine rotorHolderPart;
+    @Unique
+    private @Nullable RotorHolderPartMachine gtlcore$rotorHolder;
 
-    public LargeTurbineMachineMixin(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    public LargeTurbineMachineMixin(BlockEntityCreationInfo info) {
+        super(info);
     }
 
     /**
-     * @author .
-     * @reason .
+     * @author GTLCore
+     * @reason Cache the formed structure's rotor holder for voltage and efficiency queries.
      */
     @Overwrite(remap = false)
-    private @Nullable IRotorHolderMachine getRotorHolder() {
-        return this.rotorHolderPart;
+    private @Nullable RotorHolderPartMachine getRotorHolder() {
+        return gtlcore$rotorHolder;
     }
 
     @Override
-    public boolean onWorking() {
-        if (rotorHolderPart == null || !rotorHolderPart.onWorking(this)) return false;
-        return super.onWorking();
+    public void formStructure(String substructureName) {
+        super.formStructure(substructureName);
+        gtlcore$rotorHolder = getParts().stream()
+                .filter(RotorHolderPartMachine.class::isInstance)
+                .map(RotorHolderPartMachine.class::cast)
+                .findFirst().orElse(null);
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
-        for (IMultiPart part : getParts()) {
-            if (part instanceof RotorHolderPartMachine rotorHatchPart) {
-                rotorHolderPart = rotorHatchPart;
-            }
-        }
+    public void invalidateStructure(String substructureName) {
+        super.invalidateStructure(substructureName);
+        gtlcore$rotorHolder = null;
     }
 }

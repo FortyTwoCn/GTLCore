@@ -159,12 +159,12 @@ public class PatternQuickUploadSelectionScreen extends AbstractContainerScreen<P
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
         if (isInsideRect(mouseX, mouseY, getListX(), getListY(), this.imageWidth - CONTENT_X * 2, getScrollbarHeight()) &&
-                scrollBy(delta)) {
+                scrollBy(vertical)) {
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
     private boolean handleScrollbarClick(double mouseX, double mouseY) {
@@ -196,7 +196,7 @@ public class PatternQuickUploadSelectionScreen extends AbstractContainerScreen<P
         }
         int index = this.scrollOffset + (int) (relativeY / ROW_HEIGHT);
         if (index >= 0 && index < entries.size()) {
-            WirelessAePackets.CHANNEL.sendToServer(new WirelessAePackets.SelectPatternQuickUploadTargetPacket(index));
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new WirelessAePackets.SelectPatternQuickUploadTargetPacket(index));
             this.onClose();
         }
         return true;

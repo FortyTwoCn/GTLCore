@@ -1,14 +1,11 @@
 package org.gtlcore.gtlcore.integration.ae2.async;
 
-import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.integration.ae2.AEOutputIngredients;
 
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.api.recipe.ingredient.IntProviderIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
 
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 
 import appeng.api.stacks.*;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -62,7 +59,7 @@ public final class AEWriteService implements AutoCloseable {
         }
     }
 
-    public void submitIngredientLeft(WeakReference<AEAccumulator> accRef, List<Ingredient> left) {
+    public void submitIngredientLeft(WeakReference<AEAccumulator> accRef, List<SizedIngredient> left) {
         if (left == null || left.isEmpty()) return;
         var acc = accRef.get();
         if (acc == null) throw new IllegalStateException("Output owner disappeared before accepting items");
@@ -74,28 +71,18 @@ public final class AEWriteService implements AutoCloseable {
         // Resolve quantities, random providers and NBT before acknowledging the
         // recipe. No worker may retain mutable ingredient objects or sample again.
         Object2LongOpenHashMap<AEKey> accepted = new Object2LongOpenHashMap<>();
-        for (Ingredient ingredient : left) {
+        for (SizedIngredient ingredient : left) {
             GenericStack output = itemOutput(ingredient);
-            if (output != null) accepted.addTo(output.what(), output.amount());
+            if (output != null) accepted.put(output.what(), Math.addExact(accepted.getLong(output.what()), output.amount()));
         }
-        synchronized (acc) {
-            accepted.object2LongEntrySet().fastForEach(entry -> acc.add(entry.getKey(), entry.getLongValue()));
-        }
+        acc.addAll(accepted);
     }
 
-    private static GenericStack itemOutput(Ingredient ingredient) {
-        if (ingredient instanceof IntProviderIngredient intProvider) {
-            intProvider.setItemStacks(null);
-            intProvider.setSampledCount(null);
-        }
-        ItemStack[] items = ingredient.getItems();
-        if (items.length == 0 || items[0].isEmpty()) return null;
-        ItemStack output = items[0];
-        return new GenericStack(AEItemKey.of(output),
-                ingredient instanceof LongIngredient longIngredient ? longIngredient.getActualAmount() : output.getCount());
+    private static GenericStack itemOutput(SizedIngredient ingredient) {
+        return AEOutputIngredients.item(ingredient, false);
     }
 
-    public void submitFluidIngredientLeft(WeakReference<AEAccumulator> accRef, List<FluidIngredient> left) {
+    public void submitFluidIngredientLeft(WeakReference<AEAccumulator> accRef, List<SizedFluidIngredient> left) {
         if (left == null || left.isEmpty()) return;
         var acc = accRef.get();
         if (acc == null) throw new IllegalStateException("Output owner disappeared before accepting fluids");
@@ -105,21 +92,15 @@ public final class AEWriteService implements AutoCloseable {
             return;
         }
         Object2LongOpenHashMap<AEKey> accepted = new Object2LongOpenHashMap<>();
-        for (FluidIngredient ingredient : left) {
+        for (SizedFluidIngredient ingredient : left) {
             GenericStack output = fluidOutput(ingredient);
-            if (output != null) accepted.addTo(output.what(), output.amount());
+            if (output != null) accepted.put(output.what(), Math.addExact(accepted.getLong(output.what()), output.amount()));
         }
-        synchronized (acc) {
-            accepted.object2LongEntrySet().fastForEach(entry -> acc.add(entry.getKey(), entry.getLongValue()));
-        }
+        acc.addAll(accepted);
     }
 
-    private static GenericStack fluidOutput(FluidIngredient ingredient) {
-        if (ingredient.isEmpty()) return null;
-        FluidStack[] fluids = ingredient.getStacks();
-        if (fluids.length == 0 || fluids[0].isEmpty()) return null;
-        FluidStack output = fluids[0];
-        return new GenericStack(AEFluidKey.of(output.getFluid(), output.getTag()), output.getAmount());
+    private static GenericStack fluidOutput(SizedFluidIngredient ingredient) {
+        return AEOutputIngredients.fluid(ingredient, false);
     }
 
     public void prepareDrainedData(WeakReference<AEAccumulator> accRef,

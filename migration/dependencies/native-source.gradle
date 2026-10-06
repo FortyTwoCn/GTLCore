@@ -1,0 +1,27 @@
+// Record complete native dependency ports, including new files and required licenses.
+def nativeManifestFile = file('patch-manifest.json')
+def nativeManifest = new groovy.json.JsonSlurper().parse(nativeManifestFile)
+def nativeProperties = new Properties()
+file('../../../gradle.properties').withInputStream { nativeProperties.load(it) }
+def verifiedSource = file('../../../' + nativeProperties.getProperty(nativeManifest.source_property))
+tasks.register('verifyNativeSource', Exec) {
+    inputs.file(nativeManifestFile)
+    inputs.file(nativeManifest.patch_file)
+    commandLine('python3', file('../native_source.py'), 'verify',
+            '--manifest', nativeManifestFile, '--source', verifiedSource)
+}
+tasks.withType(JavaCompile).configureEach { dependsOn tasks.named('verifyNativeSource') }
+tasks.named('sourcesJar') {
+    dependsOn tasks.named('verifyNativeSource')
+    from(verifiedSource) {
+        include(nativeManifest.licenses_sha256.keySet())
+        into("META-INF/licenses/${nativeManifest.mod_id}")
+    }
+}
+tasks.named('processResources') {
+    dependsOn tasks.named('verifyNativeSource')
+    from(verifiedSource) {
+        include(nativeManifest.licenses_sha256.keySet())
+        into("META-INF/licenses/${nativeManifest.mod_id}")
+    }
+}

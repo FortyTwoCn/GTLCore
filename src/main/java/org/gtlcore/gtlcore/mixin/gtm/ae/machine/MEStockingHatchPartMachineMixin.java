@@ -2,103 +2,61 @@ package org.gtlcore.gtlcore.mixin.gtm.ae.machine;
 
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IModifiableSyncOffset;
 import org.gtlcore.gtlcore.api.machine.trait.MEStock.IOptimizedMEList;
-import org.gtlcore.gtlcore.utils.MachineUtil;
-
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEInputHatchPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEStockingHatchPartMachine;
-
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.stacks.GenericStack;
-import org.jetbrains.annotations.NotNull;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.callback.*;
 import java.util.function.Predicate;
 
 @Mixin(MEStockingHatchPartMachine.class)
 public abstract class MEStockingHatchPartMachineMixin extends MEInputHatchPartMachine implements IModifiableSyncOffset {
-
-    @Shadow(remap = false)
-    public abstract void setAutoPullTest(Predicate<GenericStack> autoPullTest);
-
-    public MEStockingHatchPartMachineMixin(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    @Shadow(remap = false) public abstract void setAutoPullTest(Predicate<GenericStack> predicate);
+    @Shadow(remap = false) public abstract boolean isAutoPull();
+    @Shadow(remap = false) public abstract int getTicksPerCycle();
+    @Shadow(remap = false) private void refreshList() { throw new AssertionError(); }
+    protected MEStockingHatchPartMachineMixin(BlockEntityCreationInfo info) { super(info); }
+    @Override public void setWorkingEnabled(boolean enabled) {
+        super.setWorkingEnabled(enabled);
+        if (aeFluidHandler instanceof IOptimizedMEList list) list.onConfigChanged();
+        if (aeFluidHandler != null) aeFluidHandler.notifyListeners();
     }
-
-    @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        super.setWorkingEnabled(workingEnabled);
-        MachineUtil.notifyControllersRecipeLogic(this);
-    }
-
-    @Inject(method = "<init>", at = @At("RETURN"), remap = false)
-    private void gtlcore$allowStandaloneAutoPull(IMachineBlockEntity holder, Object[] args, CallbackInfo ci) {
-        setAutoPullTest(stack -> true);
-    }
-
+    @Inject(method = "<init>(Lcom/gregtechceu/gtceu/api/blockentity/BlockEntityCreationInfo;)V", at = @At("TAIL"), remap = false)
+    private void gtlcore$standalone(BlockEntityCreationInfo info, CallbackInfo ci) { setAutoPullTest(stack -> true); }
     @Inject(method = "removedFromController", at = @At("RETURN"), remap = false)
-    private void gtlcore$restoreStandaloneAutoPull(IMultiController controller, CallbackInfo ci) {
-        setAutoPullTest(stack -> true);
+    private void gtlcore$standaloneAfterRemoval(MultiblockControllerMachine controller, CallbackInfo ci) { setAutoPullTest(stack -> true); }
+    @Override public void onLoad() {
+        super.onLoad(); scheduleForNextServerTick(this::gtlcore$configurationChanged);
     }
-
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        gtlcore$rebuildConfigCache();
+    @Unique private void gtlcore$configurationChanged() {
+        if (aeFluidHandler instanceof IOptimizedMEList list) list.onConfigChanged();
     }
-
-    @Override
-    public void onMainNodeStateChanged(IGridNodeListener.State reason) {
-        super.onMainNodeStateChanged(reason);
-        gtlcore$restoreStock();
+    @Override public void onMainNodeStateChanged(IGridNodeListener.State reason) {
+        super.onMainNodeStateChanged(reason); gtlcore$configurationChanged();
     }
-
-    private void gtlcore$restoreStock() {
-        if (getMainNode().isOnline()) {
-            gtlcore$rebuildConfigCache();
-            syncME();
-            updateTankSubscription();
-            aeFluidHandler.notifyListeners();
-        }
+    @Override public boolean shouldSyncME() {
+        int interval = getMEUpdateInterval();
+        return getOffsetTimer() % Math.max(1, interval == 0 ? getTicksPerCycle() : interval) == 0;
     }
-
-    private void gtlcore$rebuildConfigCache() {
-        if (aeFluidHandler instanceof IOptimizedMEList optimized) {
-            optimized.onConfigChanged();
-        }
+    /** @author GTLCore @reason One bounded refresh with working/online gates; no removed constant injection. */
+    @Overwrite(remap = false) public void autoIO() {
+        if (!isWorkingEnabled() || !shouldSyncME() || !updateMEStatus() || getMainNode().getGrid() == null) return;
+        if (isAutoPull()) refreshList();
+        syncME(); gtlcore$configurationChanged(); updateTankSubscription();
     }
-
-    @ModifyConstant(
-                    method = "autoIO",
-                    constant = @Constant(longValue = 100),
-                    remap = false)
-    private long replaceOffset(long constant) {
-        return getOffset() == 0 ? constant : getOffset();
+    @Inject(method = "writeConfigToTag", at = @At("RETURN"), remap = false)
+    private void gtlcore$writeInterval(HolderLookup.Provider provider, CallbackInfoReturnable<CompoundTag> cir) {
+        cir.getReturnValue().putInt("SyncOffset", getMEUpdateInterval());
     }
-
-    @Inject(method = "writeConfigToTag",
-            at = @At("RETURN"),
-            remap = false)
-    public void writesSyncOffset(CallbackInfoReturnable<CompoundTag> cir) {
-        cir.getReturnValue().putInt("SyncOffset", getOffset());
-    }
-
-    @Inject(method = "readConfigFromTag",
-            at = @At("RETURN"),
-            remap = false)
-    public void readSyncOffset(CompoundTag tag, CallbackInfo ci) {
-        if (tag.contains("SyncOffset")) {
-            this.setOffset(tag.getInt("SyncOffset"));
-        }
+    @Inject(method = "readConfigFromTag", at = @At("RETURN"), remap = false)
+    private void gtlcore$readInterval(HolderLookup.Provider provider, CompoundTag tag, CallbackInfo ci) {
+        if (tag.contains("SyncOffset")) setMEUpdateInterval(Math.max(0, tag.getInt("SyncOffset")));
+        gtlcore$configurationChanged();
     }
 }

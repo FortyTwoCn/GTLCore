@@ -1,10 +1,14 @@
 package org.gtlcore.gtlcore.utils;
 
-import org.gtlcore.gtlcore.GTLCore;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -17,17 +21,19 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.Objects;
 
 public class Registries {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     public static Item getItem(String s) {
-        Item i = ForgeRegistries.ITEMS.getValue(new ResourceLocation(s));
+        Item i = BuiltInRegistries.ITEM.get(ResourceLocation.parse(s));
         if (i == Items.AIR) {
-            GTLCore.LOGGER.atError().log("未找到ID为{}的物品", s);
+            LOGGER.atError().log("未找到ID为{}的物品", s);
             return Items.BARRIER;
         }
         return i;
@@ -42,22 +48,22 @@ public class Registries {
     }
 
     public static Block getBlock(String s) {
-        Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(s));
+        Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(s));
         if (b == Blocks.AIR) {
-            GTLCore.LOGGER.atError().log("未找到ID为{}的方块", s);
+            LOGGER.atError().log("未找到ID为{}的方块", s);
             return Blocks.BARRIER;
         }
         return b;
     }
 
     public static Fluid getFluid(String s) {
-        return getFluid(new ResourceLocation(s));
+        return getFluid(ResourceLocation.parse(s));
     }
 
     public static Fluid getFluid(ResourceLocation resourceLocation) {
-        Fluid f = ForgeRegistries.FLUIDS.getValue(resourceLocation);
+        Fluid f = BuiltInRegistries.FLUID.get(resourceLocation);
         if (f == Fluids.EMPTY) {
-            GTLCore.LOGGER.atError().log("未找到ID为{}的流体", resourceLocation.toString());
+            LOGGER.atError().log("未找到ID为{}的流体", resourceLocation.toString());
             return Fluids.WATER;
         }
         return f;
@@ -65,36 +71,44 @@ public class Registries {
 
     public static ResourceKey<Level> getDimension(String s) {
         return ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,
-                new ResourceLocation(s));
+                ResourceLocation.parse(s));
     }
 
     public static RecipeManager getRecipeManager() {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server != null && Thread.currentThread() == server.getRunningThread()) {
+        if (server != null && (FMLEnvironment.dist == Dist.DEDICATED_SERVER || server.isSameThread())) {
             return server.getRecipeManager();
         } else {
-            return Objects.requireNonNull(Minecraft.getInstance().getConnection()).getRecipeManager();
+            if (FMLEnvironment.dist != Dist.CLIENT) throw new IllegalStateException("No running server recipe manager");
+            return ClientRecipes.getRecipeManager();
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private static final class ClientRecipes {
+        private static RecipeManager getRecipeManager() {
+            return Objects.requireNonNull(Minecraft.getInstance().getConnection(), "No client connection").getRecipeManager();
         }
     }
 
     public static ResourceLocation getResourceKey(ItemStack itemStack) {
-        return ForgeRegistries.ITEMS.getKey(itemStack.getItem());
+        return BuiltInRegistries.ITEM.getKey(itemStack.getItem());
     }
 
     public static ResourceLocation getResourceKey(Item item) {
-        return ForgeRegistries.ITEMS.getKey(item);
+        return BuiltInRegistries.ITEM.getKey(item);
     }
 
     public static ResourceLocation getResourceKey(FluidStack fluidStack) {
-        return ForgeRegistries.FLUIDS.getKey(fluidStack.getFluid());
+        return BuiltInRegistries.FLUID.getKey(fluidStack.getFluid());
     }
 
     public static ResourceLocation getResourceKey(Fluid fluid) {
-        return ForgeRegistries.FLUIDS.getKey(fluid);
+        return BuiltInRegistries.FLUID.getKey(fluid);
     }
 
     public static ResourceLocation getResourceKey(Block block) {
-        return ForgeRegistries.BLOCKS.getKey(block);
+        return BuiltInRegistries.BLOCK.getKey(block);
     }
 
     public static String getItemId(ItemStack itemStack) {

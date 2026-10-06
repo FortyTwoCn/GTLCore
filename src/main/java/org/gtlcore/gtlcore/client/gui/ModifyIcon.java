@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.client.gui;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.gtlcore.gtlcore.api.GTLConstants;
 
 import net.minecraft.resources.ResourceLocation;
 
@@ -21,7 +21,7 @@ public enum ModifyIcon {
     public final int y;
     public final int width;
     public final int height;
-    public static final ResourceLocation TEXTURE = GTLCore.id("textures/guis/states.png");
+    public static final ResourceLocation TEXTURE = GTLConstants.id("textures/guis/states.png");
     public static final int TEXTURE_WIDTH = 48;
     public static final int TEXTURE_HEIGHT = 48;
 

@@ -1,0 +1,130 @@
+{
+  "gui.gtlcore.generator_array.wireless_unavailable": {
+    "en_us": "Wireless energy output is unavailable or rate-limited",
+    "zh_cn": "无线能量输出不可用或达到传输速率限制"
+  },
+  "gui.gtlcore.neutron_activator.working_blocked": {
+    "en_us": "Neutron processing is blocked",
+    "zh_cn": "中子处理受阻"
+  },
+  "gtlcore.terminal.pending_empty": {
+    "en_us": "Stored materials: none",
+    "zh_cn": "暂存材料：无"
+  },
+  "gtlcore.terminal.pending_materials": {
+    "en_us": "Stored materials: ",
+    "zh_cn": "暂存材料："
+  },
+  "gtlcore.terminal.pending_more": {
+    "en_us": " and %s more types",
+    "zh_cn": "，另有 %s 种"
+  },
+  "gtlcore.terminal.pending_hint": {
+    "en_us": "Reused when building; returned when binding an online ME network in AE mode.",
+    "zh_cn": "再次建造时使用；AE 模式下绑定在线 ME 网络可返还。"
+  },
+  "message.gtlcore.pattern_test.invalid_type": {
+    "en_us": "Unknown GregTech recipe type: %s",
+    "zh_cn": "未知的 GregTech 配方类型：%s"
+  },
+  "message.gtlcore.pattern_test.generated": {
+    "en_us": "Generated %s patterns; skipped %s recipes that cannot be encoded.",
+    "zh_cn": "已生成 %s 张样板；跳过 %s 个无法编码的配方。"
+  },
+  "message.gtlcore.pattern_test.analyzed": {
+    "en_us": "Found %s potential conflicts among %s recipes. See the server log for details.",
+    "zh_cn": "发现 %s 个可能冲突的结果（配方总数 %s）；详情请查看服务器日志。"
+  },
+  "message.gtlcore.structure_writer.export_failed": {
+    "en_us": "Could not export the selected structure: %s",
+    "zh_cn": "无法导出所选结构：%s"
+  },
+  "gui.gtlcore.pattern_test.inputWhite": {
+    "en_us": "Input whitelist keywords",
+    "zh_cn": "输入白名单关键词"
+  },
+  "gui.gtlcore.pattern_test.inputBlack": {
+    "en_us": "Input blacklist keywords",
+    "zh_cn": "输入黑名单关键词"
+  },
+  "gui.gtlcore.pattern_test.outputWhite": {
+    "en_us": "Output whitelist keywords",
+    "zh_cn": "输出白名单关键词"
+  },
+  "gui.gtlcore.pattern_test.outputBlack": {
+    "en_us": "Output blacklist keywords",
+    "zh_cn": "输出黑名单关键词"
+  },
+  "gui.gtlcore.pattern_modifier.scale": {
+    "en_us": "Multiplier",
+    "zh_cn": "样板乘数"
+  },
+  "gui.gtlcore.pattern_modifier.divisor": {
+    "en_us": "Divisor",
+    "zh_cn": "样板除数"
+  },
+  "gui.gtlcore.pattern_modifier.maxItem": {
+    "en_us": "Max input items",
+    "zh_cn": "最大输入物品数"
+  },
+  "gui.gtlcore.pattern_modifier.maxFluid": {
+    "en_us": "Max input fluid (mB)",
+    "zh_cn": "最大输入流体量 (mB)"
+  },
+  "gui.gtlcore.pattern_modifier.applications": {
+    "en_us": "Applications per use",
+    "zh_cn": "每次应用次数"
+  },
+  "config.jade.plugin_gtmthings.wireless_optical_computation_hatch_provider": {
+    "en_us": "Wireless Optical Computation Hatch",
+    "zh_cn": "无线光学算力仓"
+  },
+  "config.jade.plugin_gtlcore.batch_processing_provider": {
+    "en_us": "Batch processing",
+    "zh_cn": "批处理"
+  },
+  "config.jade.plugin_gtlcore.me_pattern_buffer": {
+    "en_us": "GTL Pattern Buffer",
+    "zh_cn": "GTL 样板缓存仓"
+  },
+  "config.jade.plugin_gtlcore.me_pattern_buffer_proxy": {
+    "en_us": "GTL Pattern Buffer Proxy",
+    "zh_cn": "GTL 样板缓存仓代理"
+  },
+  "item.gtlcore.infinite_circuit_cell": {
+    "en_us": "Infinite Programmed Circuit Cell (0)",
+    "zh_cn": "集成电路（0）无限存储元件"
+  },
+  "gtlcore.gui.cover_settings": {
+    "en_us": "Cover settings",
+    "zh_cn": "覆盖板配置"
+  },
+  "gtlcore.gui.cover_side.down": {
+    "en_us": "Down",
+    "zh_cn": "下"
+  },
+  "gtlcore.gui.cover_side.up": {
+    "en_us": "Up",
+    "zh_cn": "上"
+  },
+  "gtlcore.gui.cover_side.north": {
+    "en_us": "North",
+    "zh_cn": "北"
+  },
+  "gtlcore.gui.cover_side.south": {
+    "en_us": "South",
+    "zh_cn": "南"
+  },
+  "gtlcore.gui.cover_side.west": {
+    "en_us": "West",
+    "zh_cn": "西"
+  },
+  "gtlcore.gui.cover_side.east": {
+    "en_us": "East",
+    "zh_cn": "东"
+  },
+  "gtlcore.gui.prospector.clear_waypoints": {
+    "en_us": "Clear prospecting waypoints in this dimension",
+    "zh_cn": "清除当前维度的勘探路标"
+  }
+}

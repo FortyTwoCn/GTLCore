@@ -3,25 +3,30 @@ package org.gtlcore.gtlcore.client;
 import org.gtlcore.gtlcore.api.event.SourceTooltipRegistrationEvent;
 import org.gtlcore.gtlcore.client.ae2.wireless.WirelessAeClient;
 import org.gtlcore.gtlcore.client.renderer.machine.HarmonyAnimationRenderer;
+import org.gtlcore.gtlcore.client.renderer.machine.GTLDynamicRenders;
 import org.gtlcore.gtlcore.common.CommonProxy;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.bus.api.IEventBus;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientProxy extends CommonProxy {
 
-    public ClientProxy() {
-        super();
-        init();
+    private final IEventBus modBus;
+
+    public ClientProxy(IEventBus modBus) {
+        super(modBus);
+        this.modBus = modBus;
+        init(modBus);
     }
 
-    public static void init() {
-        CraftingUnitModelProvider.initCraftingUnitModels();
-        WirelessAeClient.register(FMLJavaModLoadingContext.get().getModEventBus());
-        HarmonyAnimationRenderer.register(FMLJavaModLoadingContext.get().getModEventBus());
+    public static void init(IEventBus modBus) {
+        CraftingUnitModelProvider.initCraftingUnitModels(modBus);
+        WirelessAeClient.register(modBus);
+        HarmonyAnimationRenderer.register(modBus);
+        GTLDynamicRenders.register(modBus);
     }
 
     @Override
@@ -29,7 +34,7 @@ public class ClientProxy extends CommonProxy {
         super.clientSetup(event);
         event.enqueueWork(() -> {
             // Fire event to allow mods to register their own source tooltips
-            FMLJavaModLoadingContext.get().getModEventBus().post(new SourceTooltipRegistrationEvent());
+            modBus.post(new SourceTooltipRegistrationEvent());
         });
     }
 }

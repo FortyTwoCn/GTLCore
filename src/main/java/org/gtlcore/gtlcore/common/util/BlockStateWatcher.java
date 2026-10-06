@@ -1,28 +1,29 @@
 package org.gtlcore.gtlcore.common.util;
 
-import org.gtlcore.gtlcore.GTLCore;
+import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.DEDICATED_SERVER)
+@EventBusSubscriber(modid = "gtlcore", bus = EventBusSubscriber.Bus.GAME)
 public class BlockStateWatcher {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<Level, Long2ObjectMap<List<Consumer<BlockState>>>> LEVEL_DATA = new ConcurrentHashMap<>();
 
     public static WatcherHandle addWatcher(Level level, BlockPos pos,
@@ -69,11 +70,12 @@ public class BlockStateWatcher {
         List<Consumer<BlockState>> callbacks = watchers.get(pos.asLong());
         if (callbacks == null || callbacks.isEmpty()) return;
 
-        for (Consumer<BlockState> callback : callbacks) {
+        // Callbacks may invalidate a structure and remove their own watcher.
+        for (Consumer<BlockState> callback : List.copyOf(callbacks)) {
             try {
                 callback.accept(newState);
             } catch (Exception e) {
-                GTLCore.LOGGER.error("Error in BlockStateWatcher callback at {}: {}",
+                LOGGER.error("Error in BlockStateWatcher callback at {}: {}",
                         pos, e.getMessage(), e);
             }
         }

@@ -4,11 +4,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
 
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.forge.ForgeTypes;
+import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.runtime.IClickableIngredient;
 import mezz.jei.api.runtime.IJeiRuntime;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Optional;
 
 @Pseudo
-@Mixin(targets = "dev.ftb.mods.ftblibrary.integration.forge.JEIIntegration", remap = false)
+@Mixin(targets = "dev.ftb.mods.ftblibrary.integration.JEIIntegration", remap = false)
 public abstract class FtbJeiIntegrationMixin {
 
     @Shadow
@@ -45,7 +45,7 @@ public abstract class FtbJeiIntegrationMixin {
         }
         runtime.getIngredientManager()
                 .createClickableIngredient(
-                        ForgeTypes.FLUID_STACK, containedFluid.get(), clickable.get().getArea(), false)
+                        NeoForgeTypes.FLUID_STACK, containedFluid.get(), clickable.get().getArea(), false)
                 .ifPresent(fluidClickable -> cir.setReturnValue(Optional.of(fluidClickable)));
     }
 
@@ -70,10 +70,10 @@ public abstract class FtbJeiIntegrationMixin {
                 return;
             }
             FluidStack forgeFluid = new FluidStack(
-                    architecturyFluid.getFluid(), (int) amount, architecturyFluid.getTag());
+                    architecturyFluid.getFluid().builtInRegistryHolder(), (int) amount, architecturyFluid.getPatch());
             Rect2i area = (Rect2i) positionedIngredient.getClass().getMethod("area").invoke(positionedIngredient);
             runtime.getIngredientManager()
-                    .createClickableIngredient(ForgeTypes.FLUID_STACK, forgeFluid, area, false)
+                    .createClickableIngredient(NeoForgeTypes.FLUID_STACK, forgeFluid, area, false)
                     .ifPresent(fluidClickable -> cir.setReturnValue(Optional.of(fluidClickable)));
         } catch (ReflectiveOperationException | RuntimeException exception) {
             // FTB is optional; leave its original handler untouched when its UI changes.

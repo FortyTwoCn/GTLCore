@@ -4,37 +4,34 @@ import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MECraftingCPUInterf
 import org.gtlcore.gtlcore.integration.ae2.crafting.transfinite.TransfiniteCraftingCPU;
 import org.gtlcore.gtlcore.utils.NumberUtils;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDisplayUIMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.TickableSubscription;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.pattern.MultiblockWorldSavedData;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.ComponentPanelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.drawable.GuiTextures;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.IntSyncValue;
+import brachy.modularui.value.sync.InteractionSyncHandler;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.layout.Flow;
+import net.minecraft.core.HolderLookup;
+import net.neoforged.neoforge.common.util.INBTSerializable;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.player.Player;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.CpuSelectionMode;
@@ -57,12 +54,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class TransfiniteComputationArrayMachine extends MultiblockControllerMachine
-                                                implements IFancyUIMachine, IDisplayUIMachine {
+                                                implements IMuiMachine, org.gtlcore.gtlcore.api.machine.IStartupCriticalMachine {
 
     public static final long MIN_PARALLELISM = 1L;
     public static final long MAX_PARALLELISM = Long.MAX_VALUE;
@@ -75,35 +70,13 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
     private static final String NBT_CPU_ID = "Id";
     private static final String NBT_CPU_BYTES = "Bytes";
     private static final String NBT_CPU_STATE = "State";
-    private static final long ASYNC_PATTERN_CHECK_INTERVAL = 4L;
-    /**
-     * Ticks after loading during which the structure is checked every tick instead of every
-     * {@link #ASYNC_PATTERN_CHECK_INTERVAL} ticks. This array is large enough that the throttled cadence can
-     * leave it unformed noticeably long after entering the world, so it is polled hard for the first
-     * 5 seconds and then falls back to the normal interval.
-     */
     private static final int EAGER_CHECK_TICKS = 100;
-    private static final int UI_WIDTH = 198;
-    private static final int UI_HEIGHT = 208;
-    private static final int MAIN_PAGE_WIDTH = 190;
-    private static final int MAIN_PAGE_HEIGHT = 125;
-    private static final int SCREEN_MARGIN = 4;
-    private static final int SCREEN_WIDTH = MAIN_PAGE_WIDTH - 2 * SCREEN_MARGIN;
-    private static final int SCREEN_HEIGHT = MAIN_PAGE_HEIGHT - 2 * SCREEN_MARGIN;
-    private static final int SCREEN_CONTENT_X = 4;
-    private static final int TITLE_Y = 5;
-    private static final int STATUS_Y = 17;
-    private static final int STATUS_WIDTH = SCREEN_WIDTH - 12;
-    private static final int SELECTION_MODE_BUTTON_Y = 61;
-    private static final int SELECTION_MODE_BUTTON_WIDTH = SCREEN_WIDTH - 8;
-    private static final int SELECTION_MODE_BUTTON_HEIGHT = 18;
+    private static final long PATTERN_CHECK_INTERVAL = 4;
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            TransfiniteComputationArrayMachine.class, MultiblockControllerMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
-    @DescSynced
+    @SaveField @SyncToClient
     private CpuSelectionMode selectionMode = DEFAULT_SELECTION_MODE;
+    @SaveField(nbtKey = NBT_CPUS)
+    private final PersistedCpuState persistedCpus = new PersistedCpuState();
 
     private final Map<UUID, TransfiniteCraftingCPU> activeCpus = new LinkedHashMap<>();
     private final Map<AEKey, ObjectOpenHashSet<TransfiniteCraftingCPU>> waitingIndex = new Object2ObjectOpenHashMap<>();
@@ -112,11 +85,10 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
     @Nullable
     private MECraftingCPUInterfacePartMachine networkInterface;
     private TransfiniteCraftingCPU capacityCpu;
-    private final AtomicBoolean patternCheckQueued = new AtomicBoolean();
-    /** Remaining ticks of the post-load eager check window; decremented from the async check thread. */
-    private final AtomicInteger eagerCheckTicks = new AtomicInteger();
+    private int eagerCheckTicks;
+    @Nullable private TickableSubscription structureRetry;
 
-    public TransfiniteComputationArrayMachine(IMachineBlockEntity holder) {
+    public TransfiniteComputationArrayMachine(BlockEntityCreationInfo holder) {
         super(holder);
     }
 
@@ -124,86 +96,28 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
     public void onLoad() {
         super.onLoad();
         restoreCpus();
-        // Entering the world should settle the structure as soon as possible, so prioritise it over the
-        // throttled cadence until it forms or the window runs out.
-        this.eagerCheckTicks.set(!isFormed() || this.networkInterface == null ? EAGER_CHECK_TICKS : 0);
+        eagerCheckTicks = EAGER_CHECK_TICKS;
+        if (!isRemote()) structureRetry = subscribeServerTick(structureRetry, this::retryStructure);
     }
 
     @Override
-    public void asyncCheckPattern(long periodID) {
-        if (isFormed() && !getMultiblockState().hasError() && this.networkInterface != null) {
+    public void onUnload() {
+        MECraftingCPUInterfacePartMachine previous = networkInterface;
+        super.onUnload();
+        networkInterface = null;
+        if (previous != null) previous.notifyCraftingCpuChange();
+        if (structureRetry != null) { structureRetry.unsubscribe(); structureRetry = null; }
+    }
+
+    private void retryStructure() {
+        if (isRemoved()) return;
+        if (isFormed() && networkInterface != null) {
+            structureRetry.unsubscribe(); structureRetry = null;
             return;
         }
-        boolean eager = this.eagerCheckTicks.get() > 0 && this.eagerCheckTicks.getAndDecrement() > 0;
-        if (!eager && Math.floorMod(getHolder().getOffset() + periodID, ASYNC_PATTERN_CHECK_INTERVAL) != 0) {
-            return;
-        }
-        if (!this.patternCheckQueued.compareAndSet(false, true)) {
-            return;
-        }
-        if (!(getLevel() instanceof ServerLevel serverLevel)) {
-            this.patternCheckQueued.set(false);
-            return;
-        }
-        long startedGameTime = serverLevel.getGameTime();
-        boolean formedBefore = isFormed();
-
-        if (isInValid()) {
-
-            this.patternCheckQueued.set(false);
-            return;
-        }
-        if (getLevel() != serverLevel) {
-
-            this.patternCheckQueued.set(false);
-            return;
-        }
-
-        final boolean matched;
-        try {
-            matched = checkPatternWithTryLock();
-        } catch (RuntimeException | Error exception) {
-
-            this.patternCheckQueued.set(false);
-            throw exception;
-        }
-        if (!matched) {
-
-            this.patternCheckQueued.set(false);
-            return;
-        }
-
-        this.eagerCheckTicks.set(0);
-        try {
-            serverLevel.getServer().execute(() -> {
-                getPatternLock().lock();
-                try {
-                    if (isInValid()) {
-
-                        return;
-                    }
-                    if (getLevel() != serverLevel) {
-
-                        return;
-                    }
-
-                    setFlipped(getMultiblockState().isNeededFlip());
-                    onStructureFormed();
-                    var savedData = MultiblockWorldSavedData.getOrCreate(serverLevel);
-                    savedData.addMapping(getMultiblockState());
-                    savedData.removeAsyncLogic(this);
-                } catch (RuntimeException | Error exception) {
-
-                    throw exception;
-                } finally {
-                    getPatternLock().unlock();
-                    this.patternCheckQueued.set(false);
-                }
-            });
-        } catch (RuntimeException | Error exception) {
-
-            this.patternCheckQueued.set(false);
-            throw exception;
+        if (eagerCheckTicks > 0 || getOffsetTimer() % PATTERN_CHECK_INTERVAL == 0) {
+            if (eagerCheckTicks > 0) eagerCheckTicks--;
+            checkAndFormStructure();
         }
     }
 
@@ -212,7 +126,7 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
     }
 
     public void restoreNetworkInterface(@NotNull MECraftingCPUInterfacePartMachine networkInterface) {
-        this.networkInterface = networkInterface;
+        if (isFormed() && getParts().contains(networkInterface)) this.networkInterface = networkInterface;
     }
 
     public boolean isOperational() {
@@ -272,7 +186,7 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
         ICraftingSubmitResult result = cpu.getCraftingLogic().trySubmitJob(grid, plan, source, requester);
         if (result.successful()) {
             this.activeCpus.put(id, cpu);
-            markDirty();
+            markAsChanged();
             notifyCraftingCpuChange();
         }
         return result;
@@ -298,7 +212,7 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
             }
         }
         if (removedCpu) {
-            markDirty();
+            markAsChanged();
             notifyCraftingCpuChange();
         }
         return latestChange;
@@ -442,80 +356,57 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
     }
 
     public void markCpuDirty() {
-        markDirty();
+        markAsChanged();
     }
 
     @Override
-    public void onStructureFormed() {
-        try {
-            super.onStructureFormed();
-
-            var parts = getParts();
-            this.networkInterface = parts.stream()
-                    .filter(MECraftingCPUInterfacePartMachine.class::isInstance)
-                    .map(MECraftingCPUInterfacePartMachine.class::cast)
-                    .findFirst()
-                    .orElse(null);
-
-            notifyCraftingCpuChange();
-
-        } catch (RuntimeException | Error exception) {
-
-            throw exception;
-        }
+    public void formStructure(String name) {
+        super.formStructure(name);
+        if (!DEFAULT_STRUCTURE.equals(name) || !isFormed()) return;
+        networkInterface = getParts().stream().filter(MECraftingCPUInterfacePartMachine.class::isInstance)
+                .map(MECraftingCPUInterfacePartMachine.class::cast).findFirst().orElse(null);
+        notifyCraftingCpuChange();
     }
 
     @Override
-    public void onStructureInvalid() {
-        MECraftingCPUInterfacePartMachine previousInterface = this.networkInterface;
-        boolean previousInterfaceOnline = previousInterface != null && previousInterface.isOnline();
-        boolean previousNodeActive = previousInterface != null && previousInterface.getMainNode().isActive();
-        boolean previousGridPresent = previousInterface != null && previousInterface.getMainNode().getGrid() != null;
-        super.onStructureInvalid();
-        this.networkInterface = null;
-        if (previousInterface != null) {
-            previousInterface.notifyCraftingCpuChange();
-        }
+    public void invalidateStructure(String name) {
+        MECraftingCPUInterfacePartMachine previous = networkInterface;
+        super.invalidateStructure(name);
+        if (!DEFAULT_STRUCTURE.equals(name)) return;
+        networkInterface = null;
+        if (previous != null) previous.notifyCraftingCpuChange();
+        if (!isRemote() && !isRemoved()) structureRetry = subscribeServerTick(structureRetry, this::retryStructure);
+    }
+
+    @Override
+    public void onPartUnload() {
+        super.onPartUnload();
+        if (networkInterface != null && !getParts().contains(networkInterface)) invalidateStructure(DEFAULT_STRUCTURE);
     }
 
     private void notifyCraftingCpuChange() {
-        if (this.networkInterface != null) {
-            this.networkInterface.notifyCraftingCpuChange();
-        }
+        if (networkInterface != null) networkInterface.notifyCraftingCpuChange();
     }
 
-    @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        super.saveCustomPersistedData(tag, forDrop);
-        if (this.pendingCpus != null) {
-            // A save during chunk attachment must retain jobs whose patterns
-            // cannot yet be decoded against a server level.
-            tag.put(NBT_CPUS, this.pendingCpus.copy());
-            return;
+    /** Native save callbacks retain jobs even if their patterns cannot yet be resolved during attachment. */
+    private final class PersistedCpuState implements INBTSerializable<CompoundTag> {
+        @Override public CompoundTag serializeNBT(HolderLookup.Provider registries) {
+            var result = new CompoundTag();
+            if (pendingCpus != null) { result.put("cpus", pendingCpus.copy()); return result; }
+            var list = new ListTag();
+            for (var entry : activeCpus.entrySet()) {
+                var cpu = new CompoundTag(); cpu.putUUID(NBT_CPU_ID, entry.getKey());
+                cpu.putLong(NBT_CPU_BYTES, entry.getValue().getAvailableStorage());
+                var state = new CompoundTag(); entry.getValue().getCraftingLogic().writeToNbt(state, registries);
+                cpu.put(NBT_CPU_STATE, state); list.add(cpu);
+            }
+            result.put("cpus", list); return result;
         }
-        ListTag cpuList = new ListTag();
-        for (var entry : this.activeCpus.entrySet()) {
-            CompoundTag cpuTag = new CompoundTag();
-            cpuTag.putUUID(NBT_CPU_ID, entry.getKey());
-            cpuTag.putLong(NBT_CPU_BYTES, entry.getValue().getAvailableStorage());
-            CompoundTag stateTag = new CompoundTag();
-            entry.getValue().getCraftingLogic().writeToNbt(stateTag);
-            cpuTag.put(NBT_CPU_STATE, stateTag);
-            cpuList.add(cpuTag);
+        @Override public void deserializeNBT(HolderLookup.Provider registries, CompoundTag data) {
+            activeCpus.clear(); waitingIndex.clear();
+            pendingCpus = data.getList("cpus", Tag.TAG_COMPOUND).copy();
+            restoreCpus();
         }
-        tag.put(NBT_CPUS, cpuList);
-    }
-
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        if (this.selectionMode == null) {
-            this.selectionMode = DEFAULT_SELECTION_MODE;
-        }
-        this.activeCpus.clear();
-        this.waitingIndex.clear();
-        this.pendingCpus = tag.getList(NBT_CPUS, Tag.TAG_COMPOUND).copy();
-        restoreCpus();
     }
 
     private void restoreCpus() {
@@ -531,63 +422,45 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
             UUID id = cpuTag.getUUID(NBT_CPU_ID);
             long bytes = Math.max(0L, cpuTag.getLong(NBT_CPU_BYTES));
             var cpu = new TransfiniteCraftingCPU(this, id, bytes);
-            cpu.getCraftingLogic().readFromNbt(cpuTag.getCompound(NBT_CPU_STATE));
+            cpu.getCraftingLogic().readFromNbt(cpuTag.getCompound(NBT_CPU_STATE), getLevel().registryAccess());
             this.activeCpus.put(id, cpu);
         }
         this.pendingCpus = null;
     }
 
     @Override
-    public ModularUI createUI(Player player) {
-        return new ModularUI(UI_WIDTH, UI_HEIGHT, this, player)
-                .widget(new FancyMachineUIWidget(this, UI_WIDTH, UI_HEIGHT));
+    public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var builder = IMuiMachine.super.getPanelBuilder(data, sync, settings);
+        var interfacePanel = sync.syncedPanel("transfiniteNetworkInterface", true, (manager, handler) ->
+                PopupPanel.createPopupPanel("transfiniteNetworkInterfacePanel", 178, 120)
+                        .child(MECraftingCPUInterfacePartMachine.settings(manager, () -> networkInterface).pos(8, 8)));
+        return builder.leftConfigurators(flow -> flow.child(new ButtonWidget<>().name("transfiniteInterfaceButton")
+                .size(18).overlay(Text.str("AE"))
+                .tooltip(t -> t.addLine(Component.translatable("gui.gtlcore.me_crafting_cpu_interface.cpu_name.rename")))
+                .onMousePressed((context, button) -> { if (button != 0) return false; interfacePanel.openPanel(); return true; })));
     }
 
     @Override
-    public @NotNull Widget createUIWidget() {
-        var selectionModeButton = new ButtonWidget(
-                SCREEN_CONTENT_X, SELECTION_MODE_BUTTON_Y,
-                SELECTION_MODE_BUTTON_WIDTH, SELECTION_MODE_BUTTON_HEIGHT,
-                new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture(this::getSelectionModeButtonText)),
-                clickData -> cycleSelectionMode())
-                .setHoverTooltips(
-                        Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.tooltip"),
-                        Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.any.tooltip"),
-                        Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.player_only.tooltip"),
-                        Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.machine_only.tooltip"));
-
-        var screen = new DraggableScrollableWidgetGroup(
-                SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_WIDTH, SCREEN_HEIGHT)
-                .setBackground(getScreenTexture());
-        screen.addWidget(new LabelWidget(
-                SCREEN_CONTENT_X, TITLE_Y, getBlockState().getBlock().getDescriptionId()));
-        screen.addWidget(new ComponentPanelWidget(SCREEN_CONTENT_X, STATUS_Y, this::addDisplayText)
-                .textSupplier(isRemote() ? null : this::addDisplayText)
-                .setMaxWidthLimit(STATUS_WIDTH));
-        screen.addWidget(selectionModeButton);
-
-        var mainPage = new WidgetGroup(0, 0, MAIN_PAGE_WIDTH, MAIN_PAGE_HEIGHT);
-        mainPage.addWidget(screen);
-        mainPage.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        return mainPage;
+    public void buildMainUI(ParentWidget<?> contents, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var mode = new IntSyncValue(() -> selectionMode.ordinal()); sync.syncValue("transfiniteSelectionMode", mode);
+        var cycle = new InteractionSyncHandler().setOnMousePressed(mouse -> {
+            if (mouse.isLeftMouseButton()) cycleSelectionMode();
+        });
+        sync.syncValue("transfiniteCycleMode", cycle);
+        var display = Flow.col().name("transfiniteStatus").width(182).coverChildrenHeight().childPadding(4)
+                .children(GTLMultiblockDisplays.syncedLines("transfinite", 174, (controller, lines) -> addDisplayText(lines)).apply(this, sync))
+                .child(new ButtonWidget<>().name("transfiniteSelectionModeButton").size(174, 18)
+                        .overlay(Text.dynamic(() -> Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode",
+                                Component.translatable(selectionModeTranslationKey(CPU_SELECTION_MODES[Math.clamp(mode.getIntValue(), 0, CPU_SELECTION_MODES.length - 1)])))))
+                        .syncHandler(cycle).tooltip(t -> {
+                            t.addLine(Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.tooltip"));
+                            t.addLine(Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.any.tooltip"));
+                            t.addLine(Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.player_only.tooltip"));
+                            t.addLine(Component.translatable("gui.gtlcore.transfinite_computation_array.selection_mode.machine_only.tooltip"));
+                        }));
+        contents.child(display.padding(4).background(GuiTextures.DISPLAY));
     }
 
-    @Override
-    public List<IFancyUIProvider> getSubTabs() {
-        return getParts().stream()
-                .filter(IFancyUIProvider.class::isInstance)
-                .map(IFancyUIProvider.class::cast)
-                .toList();
-    }
-
-    @Override
-    public void attachTooltips(TooltipsPanel tooltipsPanel) {
-        for (IMultiPart part : getParts()) {
-            part.attachFancyTooltipsToController(this, tooltipsPanel);
-        }
-    }
-
-    @Override
     public void addDisplayText(List<Component> textList) {
         boolean formed = isFormed();
         boolean online = isOperational();
@@ -604,7 +477,6 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
                 .withStyle(ChatFormatting.GRAY));
         textList.add(Component.translatable("gui.gtlcore.transfinite_computation_array.storage")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
-        IDisplayUIMachine.super.addDisplayText(textList);
     }
 
     private void cycleSelectionMode() {
@@ -617,26 +489,16 @@ public class TransfiniteComputationArrayMachine extends MultiblockControllerMach
             return;
         }
         this.selectionMode = selectionMode;
-        markDirty();
+        syncDataHolder.markClientSyncFieldDirty("selectionMode");
+        markAsChanged();
         notifyCraftingCpuChange();
     }
 
-    private String getSelectionModeButtonText() {
-        return Component.translatable(
-                "gui.gtlcore.transfinite_computation_array.selection_mode",
-                Component.translatable(getSelectionModeTranslationKey())).getString();
-    }
-
-    private String getSelectionModeTranslationKey() {
-        return switch (this.selectionMode) {
+    private static String selectionModeTranslationKey(CpuSelectionMode mode) {
+        return switch (mode) {
             case ANY -> "gui.gtlcore.transfinite_computation_array.selection_mode.any";
             case PLAYER_ONLY -> "gui.gtlcore.transfinite_computation_array.selection_mode.player_only";
             case MACHINE_ONLY -> "gui.gtlcore.transfinite_computation_array.selection_mode.machine_only";
         };
-    }
-
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
     }
 }

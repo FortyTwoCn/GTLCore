@@ -1,0 +1,69 @@
+tasks.register('verifyGtceuBaseline') {
+    group = 'verification'
+    doLast {
+        def source = file(providers.gradleProperty('gtceu_source').get())
+        def expected = providers.gradleProperty('gtceu_revision').get()
+        def actual = providers.exec {
+            commandLine 'git', '-C', source.absolutePath, 'rev-parse', 'HEAD'
+        }.standardOutput.asText.get().trim()
+        if (actual != expected) {
+            throw new GradleException("GregTech source revision ${actual} differs from the pinned API baseline ${expected}")
+        }
+        def coreRoot = file(providers.gradleProperty('gtlcore_source').orElse('.').get())
+        def patch = new File(coreRoot, 'migration/dependencies/gtceu/ldlib-metadata.patch')
+        def manifest = new groovy.json.JsonSlurper().parse(new File(coreRoot,
+                'migration/dependencies/gtceu/patch-manifest.json'))
+        def hash = { byte[] value -> java.security.MessageDigest.getInstance('SHA-256').digest(value).encodeHex().toString() }
+        if (hash(patch.bytes) != manifest.patch_sha256 ||
+                hash(new File(source, manifest.file as String).bytes) != manifest.after_sha256) {
+            throw new GradleException('GregTech dependency metadata differs from the recorded LDLib repair; run migration/dependencies/gtceu/prepare.py')
+        }
+        def changes = providers.exec {
+            commandLine 'git', '-C', source.absolutePath, 'diff', 'HEAD', '--binary'
+        }.standardOutput.asText.get()
+        def canonicalDiff = { String value -> value.replaceAll(/(?m)^index [0-9a-f]+\.\.[0-9a-f]+(?=\s|$)/, 'index <objects>') }
+        if (canonicalDiff(changes) != canonicalDiff(patch.getText('UTF-8'))) {
+            throw new GradleException('GregTech dependency contains changes beyond the recorded metadata repair')
+        }
+        def untrackedSources = providers.exec {
+            commandLine 'git', '-C', source.absolutePath, 'ls-files', '--others', '--exclude-standard'
+        }.standardOutput.asText.get().readLines().findAll { it.startsWith('src/') || it.endsWith('.gradle') || it.endsWith('.gradle.kts') }
+        if (!untrackedSources.empty) throw new GradleException("Unexpected sources in the pinned GT dependency: ${untrackedSources}")
+    }
+}
+
+tasks.register('verifyNativeRuntime') {
+    group = 'verification'
+    description = 'Rejects legacy Forge mod JARs and duplicate mod IDs among published runtime dependencies.'
+    doLast {
+        def publishedArtifacts = configurations.runtimeClasspath.incoming.artifactView {
+            componentFilter { it instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier }
+        }.files
+        def modIds = [:]
+        publishedArtifacts.findAll { it.name.endsWith('.jar') }.each { artifact ->
+            new java.util.zip.ZipFile(artifact).withCloseable { archive ->
+                if (archive.getEntry('META-INF/mods.toml') != null &&
+                        archive.getEntry('META-INF/neoforge.mods.toml') == null) {
+                    throw new GradleException("Legacy Forge mod on the NeoForge runtime classpath: ${artifact.name}")
+                }
+                def metadata = archive.getEntry('META-INF/neoforge.mods.toml')
+                if (metadata != null) {
+                    def contents = archive.getInputStream(metadata).withCloseable { it.getText('UTF-8') }
+                    def mods = contents =~ /(?s)\[\[mods\]\](.*?)(?=\n\s*\[\[|\z)/
+                    mods.each { entry ->
+                        def ids = entry[1] =~ /(?m)^\s*modId\s*=\s*["']([^"']+)["']/
+                        if (ids.find()) {
+                            def id = ids.group(1)
+                            if (modIds.containsKey(id)) {
+                                throw new GradleException("Duplicate runtime mod ${id}: ${modIds[id]} and ${artifact.name}")
+                            }
+                            modIds[id] = artifact.name
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+tasks.named('compileJava') { dependsOn 'verifyGtceuBaseline' }
+tasks.named('check') { dependsOn 'migrationRegression', 'verifyNativeRuntime' }

@@ -2,6 +2,8 @@ package org.gtlcore.gtlcore.integration.ae2.wireless;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,13 +32,12 @@ public final class WirelessNetworkBindingToolItem extends Item {
     public static void clearSavedNetwork(ServerPlayer player) {
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof WirelessNetworkBindingToolItem)) return;
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (tag == null || !tag.hasUUID(TAG_NETWORK)) return;
-        if (tag != null) {
-            tag.remove(TAG_NETWORK);
-            tag.remove(TAG_NETWORK_NAME);
-            if (tag.isEmpty()) stack.setTag(null);
-        }
+        CustomData.update(DataComponents.CUSTOM_DATA, stack, data -> {
+            data.remove(TAG_NETWORK);
+            data.remove(TAG_NETWORK_NAME);
+        });
         player.inventoryMenu.broadcastChanges();
         message(player, "message.gtlcore.wireless_binding_tool.cleared");
     }
@@ -60,13 +61,15 @@ public final class WirelessNetworkBindingToolItem extends Item {
             if (!WirelessAeNetworkRuntime.canAccessNetwork(serverPlayer, frequency)) {
                 return message(serverPlayer, "message.gtlcore.wireless_binding_tool.no_access");
             }
-            stack.getOrCreateTag().putUUID(TAG_NETWORK, frequency);
             String networkName = WirelessAeSavedData.get(serverPlayer.server).getNetworkName(frequency);
-            stack.getOrCreateTag().putString(TAG_NETWORK_NAME, networkName);
+            CustomData.update(DataComponents.CUSTOM_DATA, stack, data -> {
+                data.putUUID(TAG_NETWORK, frequency);
+                data.putString(TAG_NETWORK_NAME, networkName);
+            });
             return message(serverPlayer, "message.gtlcore.wireless_binding_tool.saved", networkName);
         }
 
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (tag == null || !tag.hasUUID(TAG_NETWORK)) {
             return message(serverPlayer, "message.gtlcore.wireless_binding_tool.select_core");
         }
@@ -79,7 +82,7 @@ public final class WirelessNetworkBindingToolItem extends Item {
         if (!WirelessAeNetworkRuntime.canAccessNetwork(serverPlayer, frequency)) {
             return message(serverPlayer, "message.gtlcore.wireless_binding_tool.no_access");
         }
-        tag.putString(TAG_NETWORK_NAME, data.getNetworkName(frequency));
+        CustomData.update(DataComponents.CUSTOM_DATA, stack, value -> value.putString(TAG_NETWORK_NAME, data.getNetworkName(frequency)));
         var target = WirelessAeNetworkRuntime.resolveWirelessTarget(serverPlayer.serverLevel(),
                 context.getClickedPos(), context.getClickedFace(), context.getClickLocation());
         if (!level.mayInteract(player, target.blockPos())) return InteractionResult.FAIL;
@@ -128,16 +131,16 @@ public final class WirelessNetworkBindingToolItem extends Item {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         // Refresh renamed networks and migrate tools that only stored the network ID.
-        // Keep the cached name in NBT so it is also available to the client and after reloads.
+        // Keep the cached name in the component so it is available on the client and after reloads.
         if (!(level instanceof ServerLevel serverLevel) || level.getGameTime() % 20 != 0) return;
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (tag == null || !tag.hasUUID(TAG_NETWORK)) return;
         UUID frequency = tag.getUUID(TAG_NETWORK);
         var data = WirelessAeSavedData.get(serverLevel.getServer());
         if (data.getCore(frequency) != null) {
             String networkName = data.getNetworkName(frequency);
             if (!networkName.equals(tag.getString(TAG_NETWORK_NAME))) {
-                tag.putString(TAG_NETWORK_NAME, networkName);
+                CustomData.update(DataComponents.CUSTOM_DATA, stack, value -> value.putString(TAG_NETWORK_NAME, networkName));
             }
         }
     }
@@ -151,7 +154,7 @@ public final class WirelessNetworkBindingToolItem extends Item {
     @Override
     public Component getName(ItemStack stack) {
         var name = Component.translatable(getDescriptionId(stack)).withStyle(ChatFormatting.GOLD);
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (tag != null && tag.hasUUID(TAG_NETWORK)) {
             name.append(Component.literal(" [").append(savedNetworkName(tag)).append("]").withStyle(ChatFormatting.AQUA));
         }
@@ -159,13 +162,13 @@ public final class WirelessNetworkBindingToolItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.gtlcore.wireless_binding_tool.select").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.gtlcore.wireless_binding_tool.bind").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.gtlcore.wireless_binding_tool.rebind").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.gtlcore.wireless_binding_tool.clear").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.gtlcore.wireless_binding_tool.disconnect").withStyle(ChatFormatting.GRAY));
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         tooltip.add(tag != null && tag.hasUUID(TAG_NETWORK) ?
                 Component.translatable("tooltip.gtlcore.wireless_binding_tool.network", savedNetworkName(tag)).withStyle(ChatFormatting.AQUA) :
                 Component.translatable("tooltip.gtlcore.wireless_binding_tool.empty").withStyle(ChatFormatting.YELLOW));

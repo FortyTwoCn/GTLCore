@@ -1,6 +1,7 @@
 package org.gtlcore.gtlcore.integration.ae2.graph;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.StringTag;
@@ -24,8 +25,8 @@ public final class PatternFingerprint {
 
     private PatternFingerprint() {}
 
-    public static String of(IPatternDetails pattern) {
-        return new Context().of(pattern);
+    public static String of(IPatternDetails pattern, HolderLookup.Provider registries) {
+        return new Context(registries).of(pattern);
     }
 
     /** Copy callback results on the server thread; workers only encode these values. */
@@ -38,7 +39,7 @@ public final class PatternFingerprint {
             inputs.add(new Input(multiplier, List.copyOf(choices)));
         }
         return new Values(pattern.getClass().getName(), pattern.getDefinition(), pattern.supportsPushInputsToExternalInventory(),
-                List.copyOf(inputs), List.of(pattern.getOutputs().clone()));
+                List.copyOf(inputs), List.copyOf(pattern.getOutputs()));
     }
 
     public record Choice(GenericStack stack, AEKey remaining) {}
@@ -65,7 +66,10 @@ public final class PatternFingerprint {
         private final MessageDigest digest;
         private int retainedCharacters;
 
-        public Context() {
+        private final HolderLookup.Provider registries;
+
+        public Context(HolderLookup.Provider registries) {
+            this.registries = java.util.Objects.requireNonNull(registries);
             try {
                 digest = MessageDigest.getInstance("SHA-256");
             } catch (NoSuchAlgorithmException e) {
@@ -76,7 +80,7 @@ public final class PatternFingerprint {
         public String key(AEKey key) {
             String old = keys.get(key);
             if (old != null) return old;
-            String value = PatternFingerprint.key(key);
+            String value = PatternFingerprint.key(key, registries);
             if (value.length() <= 1_048_576) {
                 // A large catalog must not permanently fill this cache with its
                 // first definitions. Nearby recipes reuse the current frontier's
@@ -102,7 +106,7 @@ public final class PatternFingerprint {
             // hashes (adjacent input/output variants). Do not fill the reusable
             // material-key LRU with definitions that are serialized only once.
             text.append('|');
-            canonical(pattern.getDefinition().toTagGeneric(), text);
+            canonical(pattern.getDefinition().toTagGeneric(registries), text);
             text.append('|').append(pattern.supportsPushInputsToExternalInventory());
             for (var input : pattern.getInputs()) {
                 text.append(";i:").append(input.getMultiplier());
@@ -119,7 +123,7 @@ public final class PatternFingerprint {
         public String of(Values pattern) {
             StringBuilder text = new StringBuilder(pattern.type());
             text.append('|');
-            canonical(pattern.definition().toTagGeneric(), text);
+            canonical(pattern.definition().toTagGeneric(registries), text);
             text.append('|').append(pattern.external());
             for (var input : pattern.inputs()) {
                 text.append(";i:").append(input.multiplier());
@@ -133,8 +137,8 @@ public final class PatternFingerprint {
         }
     }
 
-    public static String key(AEKey key) {
-        return canonical(key.toTagGeneric());
+    public static String key(AEKey key, HolderLookup.Provider registries) {
+        return canonical(key.toTagGeneric(registries));
     }
 
     private static String canonical(Tag tag) {

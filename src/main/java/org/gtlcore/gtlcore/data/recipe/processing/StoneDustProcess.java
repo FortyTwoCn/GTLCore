@@ -1,10 +1,11 @@
 package org.gtlcore.gtlcore.data.recipe.processing;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import org.gtlcore.gtlcore.common.data.GTLItems;
 
 import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKeys;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import java.util.function.Consumer;
 
@@ -17,7 +18,7 @@ import static org.gtlcore.gtlcore.common.data.GTLRecipeTypes.DEHYDRATOR_RECIPES;
 
 public class StoneDustProcess {
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         MIXER_RECIPES.recipeBuilder("dirty_hexafluorosilicic_acid_output")
                 .inputItems(dust, Stone, 24)
                 .inputFluids(HydrofluoricAcid.getFluid(6000))
@@ -202,7 +203,7 @@ public class StoneDustProcess {
                 .outputFluids(Xenon.getFluid(2000))
                 .outputFluids(Water.getFluid(1000))
                 .outputFluids(Ozone.getFluid(1000))
-                .outputFluids(HydrogenPeroxide.getFluid(1000))
+                .outputFluids(org.gtlcore.gtlcore.common.data.GTLMaterials.HydrogenPeroxide.getFluid(1000))
                 .outputFluids(Oxygen.getFluid(2000))
                 .duration(120).EUt(VA[HV])
                 .save(provider);
@@ -234,63 +235,81 @@ public class StoneDustProcess {
                 .duration(80).EUt(VA[IV])
                 .save(provider);
 
-        CENTRIFUGE_RECIPES.recipeBuilder("diamagnetic_residues_input")
-                .inputItems(dust, DiamagneticResidues, 6)
-                .chancedOutput(dust, Calcium, 1, 2500, 0)
-                .chancedOutput(dust, Zinc, 1, 2500, 0)
-                .chancedOutput(dust, Copper, 1, 2500, 0)
-                .chancedOutput(dust, Gallium, 1, 2500, 0)
-                .chancedOutput(dust, Beryllium, 1, 2500, 0)
-                .chancedOutput(dust, Tin, 1, 2500, 0)
+        {
+            var gtlRecipeBuilder237 = CENTRIFUGE_RECIPES.recipeBuilder("diamagnetic_residues_input")
+                .inputItems(dust, DiamagneticResidues, 6);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder237, dust, Calcium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder237, dust, Zinc, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder237, dust, Copper, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder237, dust, Gallium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder237, dust, Beryllium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder237, dust, Tin, 1, 2500, 0);
+            gtlRecipeBuilder237
                 .duration(100).EUt(3000)
                 .save(provider);
+        }
 
-        CENTRIFUGE_RECIPES.recipeBuilder("paramagnetic_residues_input")
-                .inputItems(dust, ParamagneticResidues, 6)
-                .chancedOutput(dust, Sodium, 1, 2500, 0)
-                .chancedOutput(dust, Potassium, 1, 2500, 0)
-                .chancedOutput(dust, Magnesium, 1, 2500, 0)
-                .chancedOutput(dust, Titanium, 1, 2500, 0)
-                .chancedOutput(dust, Vanadium, 1, 2500, 0)
-                .chancedOutput(dust, Manganese, 1, 2500, 0)
+        {
+            var gtlRecipeBuilder248 = CENTRIFUGE_RECIPES.recipeBuilder("paramagnetic_residues_input")
+                .inputItems(dust, ParamagneticResidues, 6);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder248, dust, Sodium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder248, dust, Potassium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder248, dust, Magnesium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder248, dust, Titanium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder248, dust, Vanadium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder248, dust, Manganese, 1, 2500, 0);
+            gtlRecipeBuilder248
                 .duration(100).EUt(3000)
                 .save(provider);
+        }
 
-        CENTRIFUGE_RECIPES.recipeBuilder("ferromagnetic_residues_input")
-                .inputItems(dust, FerromagneticResidues, 6)
-                .chancedOutput(dust, Iron, 1, 2500, 0)
-                .chancedOutput(dust, Nickel, 1, 2500, 0)
-                .chancedOutput(dust, Cobalt, 1, 2500, 0)
+        {
+            var gtlRecipeBuilder259 = CENTRIFUGE_RECIPES.recipeBuilder("ferromagnetic_residues_input")
+                .inputItems(dust, FerromagneticResidues, 6);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder259, dust, Iron, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder259, dust, Nickel, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder259, dust, Cobalt, 1, 2500, 0);
+            gtlRecipeBuilder259
                 .duration(100).EUt(3000)
                 .save(provider);
+        }
 
-        CENTRIFUGE_RECIPES.recipeBuilder("heavy_diamagnetic_residues_input")
-                .inputItems(dust, HeavyDiamagneticResidues, 6)
-                .chancedOutput(dust, Lead, 1, 2500, 0)
-                .chancedOutput(dust, Cadmium, 1, 2500, 0)
-                .chancedOutput(dust, Indium, 1, 2500, 0)
-                .chancedOutput(dust, Gold, 1, 2500, 0)
-                .chancedOutput(dust, Bismuth, 1, 2500, 0)
+        {
+            var gtlRecipeBuilder267 = CENTRIFUGE_RECIPES.recipeBuilder("heavy_diamagnetic_residues_input")
+                .inputItems(dust, HeavyDiamagneticResidues, 6);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder267, dust, Lead, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder267, dust, Cadmium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder267, dust, Indium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder267, dust, Gold, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder267, dust, Bismuth, 1, 2500, 0);
+            gtlRecipeBuilder267
                 .outputFluids(Mercury.getFluid(36))
                 .duration(120).EUt(3000)
                 .save(provider);
+        }
 
-        CENTRIFUGE_RECIPES.recipeBuilder("heavy_paramagnetic_residues_input")
-                .inputItems(dust, HeavyParamagneticResidues, 6)
-                .chancedOutput(dust, Thorium, 1, 2500, 0)
-                .chancedOutput(dust, Uranium235, 1, 2500, 0)
-                .chancedOutput(dust, Tungsten, 1, 2500, 0)
-                .chancedOutput(dust, Hafnium, 1, 2500, 0)
-                .chancedOutput(dust, Tantalum, 1, 2500, 0)
-                .chancedOutput(dust, Thallium, 1, 2500, 0)
+        {
+            var gtlRecipeBuilder278 = CENTRIFUGE_RECIPES.recipeBuilder("heavy_paramagnetic_residues_input")
+                .inputItems(dust, HeavyParamagneticResidues, 6);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder278, dust, Thorium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder278, dust, Uranium235, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder278, dust, Tungsten, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder278, dust, Hafnium, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder278, dust, Tantalum, 1, 2500, 0);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder278, dust, Thallium, 1, 2500, 0);
+            gtlRecipeBuilder278
                 .duration(120).EUt(3000)
                 .save(provider);
+        }
 
-        CENTRIFUGE_RECIPES.recipeBuilder("heavy_ferromagnetic_residues_input")
-                .inputItems(dust, HeavyFerromagneticResidues, 6)
-                .chancedOutput(dust, Dysprosium, 1, 2500, 0)
+        {
+            var gtlRecipeBuilder289 = CENTRIFUGE_RECIPES.recipeBuilder("heavy_ferromagnetic_residues_input")
+                .inputItems(dust, HeavyFerromagneticResidues, 6);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder289, dust, Dysprosium, 1, 2500, 0);
+            gtlRecipeBuilder289
                 .duration(120).EUt(3000)
                 .save(provider);
+        }
 
         MIXER_RECIPES.recipeBuilder("exotic_heavy_residues_input")
                 .inputItems(dust, ExoticHeavyResidues, 16)

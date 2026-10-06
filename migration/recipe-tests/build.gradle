@@ -1,0 +1,1315 @@
+plugins {
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm' version '2.0.21'
+    id 'io.freefair.lombok' version '8.14'
+    id 'net.neoforged.moddev' version '2.0.141'
+}
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+lombok { version = '1.18.38' }
+apply from: '../../gradle/repositories.gradle'
+configurations.configureEach { exclude group: 'org.appliedenergistics', module: 'guideme' }
+sourceSets.main.java {
+    srcDir '../../src/main/java'
+    srcDir '../../../GTLAdditions/src/main/java'
+    include 'org/gtlcore/gtlcore/migration/NativeQueuedMachineFixtures.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLDataComponents.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/GTDimensionMarkersMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/ParallelLogicMixin.java'
+    include 'com/gtladd/gtladditions/api/recipe/NativeWirelessRecipeTick.java'
+    include 'com/gtladd/gtladditions/integration/xei/ILongFluidDisplay.java'
+    include 'com/gtladd/gtladditions/mixin/neoforge/FluidStackDisplayMixin.java'
+    include 'com/gtladd/gtladditions/api/gui/widget/CloudComputationMonitorOverviewPage.java'
+    include 'com/gtladd/gtladditions/api/gui/NativeHatchUI.java'
+    include 'com/gtladd/gtladditions/api/gui/widget/ClientCloudMonitorActions.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCloudFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCloudGameTests.java'
+    include 'com/gtladd/gtladditions/api/machine/wireless/NativeWirelessEnergyAccount.java'
+    include 'com/gtladd/gtladditions/api/machine/wireless/NativeBigTransferData.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/IPreciseWirelessTransferData.java'
+    include 'com/gtladd/gtladditions/mixin/gtmtings/WirelessEnergyManagerMixin.java'
+    include 'com/gtladd/gtladditions/mixin/gtmtings/WirelessEnergyMonitorMixin.java'
+    include 'com/gtladd/gtladditions/api/machine/multiblock/NativeCoilStructure.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/recipe/NativeWirelessRecipeTickMixin.java'
+    include 'com/gtladd/gtladditions/mixin/gtlcore/machine/trait/MultipleRecipesLogicMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IDirectItemStackTransfer.java'
+    include 'org/gtlcore/gtlcore/mixin/ldlib/ItemStackTransferMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/ldlib/EmptyItemStackTransferMixin.java'
+    include 'com/gtladd/gtladditions/api/registry/NativeQueuedMachines.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/registry/QueuedMachineBuilderMixin.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/registry/DefaultRecipeLogicMixin.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/Ae2BaseProcessingPattern.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/Ae2BaseProcessingPatternHelper.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/Ae2GtmProcessingPattern.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/PatternQuickUploadMetadata.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/chamber/ChamberSnapshotCodec.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/chamber/ChamberConfiguratorActions.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/chamber/MEChamberConfigurator.java'
+    include 'org/gtlcore/gtlcore/client/ae2/wireless/MEChamberConfiguratorPanels.java'
+    include 'org/gtlcore/gtlcore/client/ae2/wireless/MEChamberConfiguratorWidgetHost.java'
+    include 'org/gtlcore/gtlcore/client/ae2/wireless/WirelessAeStyle.java'
+    include 'org/gtlcore/gtlcore/client/ae2/wireless/WirelessAeStyleMetrics.java'
+    include 'org/gtlcore/gtlcore/client/ae2/wireless/NativeChamberConfiguratorClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAvaritiaClientFixtures.java'
+    include 'org/gtlcore/gtlcore/api/GTLConstants.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLAnimationModels.java'
+    include 'org/gtlcore/gtlcore/client/ClientUtil.java'
+    include 'org/gtlcore/gtlcore/client/GlobalRenderClock.java'
+    include 'org/gtlcore/gtlcore/client/renderer/RenderBufferHelper.java'
+    include 'org/gtlcore/gtlcore/utils/RenderUtil.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/AnnihilateGeneratorRenderer.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/EyeOfHarmonyRenderer.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/SpaceElevatorRenderer.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/GTLDynamicRenders.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/HarmonyAnimationRenderer.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/HarmonyModelCache.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/HarmonyWorldBuffers.java'
+    include 'org/gtlcore/gtlcore/mixin/mc/BufferBuilderAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/mc/client/AnimationBufferSourceAccessor.java'
+    include 'org/gtlcore/gtlcore/migration/NativeDynamicRenderFixtures.java'
+    include 'org/gtlcore/gtlcore/client/renderer/machine/NativeDynamicRenderClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeChamberConfiguratorGameTests.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/patternrelay/PatternRelayPart.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/graph/GraphDispatchContext.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/crafting/IPatternProviderAutoExpand.java'
+    include 'org/gtlcore/gtlcore/migration/NativePatternRelayGameTests.java'
+    include 'org/gtlcore/gtlcore/integration/ftbu/AreaShape.java'
+    include 'org/gtlcore/gtlcore/mixin/ftbu/YouCantBreakAE2Mixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeUltimineGameTests.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/PatternQuickUploadRecipeTypeResolver.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/NativeCopiedRecipeTypes.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/PatternQuickUploadService.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/PatternQuickUploadMatch.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/PatternEncoderMetadata.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/RecipeStackHelper.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/GTRecipeManager.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/ConflictAnalysisManager.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/ConflictAnalysisObj.java'
+    include 'org/gtlcore/gtlcore/api/item/tool/ae2/patternTool/ConflictAnalysisResult.java'
+    include 'org/gtlcore/gtlcore/common/item/PatternTestBehavior.java'
+    include 'org/gtlcore/gtlcore/common/item/StructureWriteBehavior.java'
+    include 'org/gtlcore/gtlcore/common/item/StructureDetectBehavior.java'
+    include 'org/gtlcore/gtlcore/network/GTLNetworkHandler.java'
+    include 'org/gtlcore/gtlcore/network/packet/CSetNoClip.java'
+    include 'org/gtlcore/gtlcore/network/packet/SSetNoClip.java'
+    include 'org/gtlcore/gtlcore/network/packet/SStructureDetectHighlight.java'
+    include 'org/gtlcore/gtlcore/common/player/NoClipManager.java'
+    include 'org/gtlcore/gtlcore/client/renderer/BlockHighlightHandler.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/MEDualHatchStockPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/MEDualInputHatchPartMachine.java'
+    include 'org/gtlcore/gtlcore/utils/MachineUtil.java'
+    include 'org/gtlcore/gtlcore/utils/MachineIO.java'
+    include 'org/gtlcore/gtlcore/utils/Registries.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/*.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/GTLCleanroomType.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLRecipeConditions.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLCovers.java'
+    include 'org/gtlcore/gtlcore/common/recipe/condition/GravityCondition.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/trait/CleanroomReceiverTraitAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/condition/CleanroomConditionMixin.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/TagFilterMEStockBusPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/TagFilterMEStockHatchPartMachine.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/TagFilteredStocking.java'
+    include 'org/gtlcore/gtlcore/api/gui/TagFilterConfigurator.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/AEBufferedSlotTransactions.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/StockingInputTransactions.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/IBufferedMEInventory.java'
+    include 'org/gtlcore/gtlcore/api/gui/AdvancedMEConfigurator.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEInputBusPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEInputHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEStockingHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEStockingBusPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/ExportOnlyAEStockingItemListMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/ExportOnlyAEStockingItemSlotMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/ExportOnlyAEFluidSlotMixin.java'
+    include 'org/gtlcore/gtlcore/client/gui/widget/AEDualConfigWidget.java'
+    include 'org/gtlcore/gtlcore/client/gui/widget/AEDualConfigSlotWidget.java'
+    include 'org/gtlcore/gtlcore/client/gui/widget/AEDualAmountSetWidget.java'
+    include 'org/gtlcore/gtlcore/client/gui/widget/NativeAEWidgetIngredients.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/gui/NativeAEAmounts.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/gui/NativeAEConfigSnapshot.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/AEConfigSyncHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/AEConfigSlotWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/AEFluidConfigSlotWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/AEListDisplayWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/AmountSetWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAEWidgetsClientFixtures.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEStock/ExportOnlyAEConfigureItemSlot.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEStock/ExportOnlyAEConfigureFluidSlot.java'
+    include 'org/gtlcore/gtlcore/api/pattern/DebugBlockPattern.java'
+    include 'org/gtlcore/gtlcore/mixin/modularui/HeldItemMenuMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/IMolecularAssemblerHandler.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/IMolecularAssemblerHandlerTrait.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/IMolecularAssemblerOutputMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/MolecularAssemblerOutputStorage.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/NotifiableMAHandlerTrait.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MECraftHandler.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/IMECraftIOPart.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/IMECraftPatternContainer.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/IMECraftParallelCore.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/AECraft/IMECraftSpeedCore.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IMolecularAssemblerMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/MolecularAssemblerMultiblockMachineBase.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/MolecularAssemblerMultiblockMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/MolecularAssemblerRecipesLogic.java'
+    include 'com/gtladd/gtladditions/mixin/gtlcore/machine/trait/MECraftHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongIngredient.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/CacheHashStrategies.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongFluidIngredient.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongFluidRecipeHandler.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/AEFluidRecipeHandler.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/AEItemRecipeHandler.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/ExportOnlyAEItemListMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEStock/IMESlot.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEHatchPartMachineAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/ExportOnlyAEStockingFluidListMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/ExportOnlyAEStockingFluidSlotMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/slot/ExportOnlyAEFluidListMixin.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongFluidParallelLogic.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/trait/NotifiableFluidTankMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/capability/FluidRecipeCapabilityMixin.java' 
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongItemRecipeHandler.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IAdvancedContentModifier.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/ContentModifierMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/LongRecipeBuilderMixin.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongItemParallelLogic.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/capability/ItemRecipeCapabilityMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/gui/CapabilityContentBuilderMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/GTRecipeWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/ProspectingMapWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/ProspectingTextureMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/ProspectorScannerBehaviorMixin.java'
+    include 'org/gtlcore/gtlcore/client/gui/IProspectingTextureMixin.java'
+    include 'org/gtlcore/gtlcore/integration/jei/NativeRecipeEnergy.java'
+    include 'org/gtlcore/gtlcore/integration/ftb/NativeProspectorCoordinates.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ftb/TeleportFromMapPacketMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeProspectorClientFixtures.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/gui/RichTooltipMixin.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IRecipeTooltip.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/ParallelMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/ILongItemStorage.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/ILongFluidStorage.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/NativeLongFluidTank.java'
+    include 'org/gtlcore/gtlcore/api/gui/NativeCoverInventory.java'
+    include 'org/gtlcore/gtlcore/api/gui/NativeCoverUI.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/LongItemStorageLookup.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/LongStorageAdapterRegistry.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEStock/IOptimizedMEList.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/TierCasingMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/AdvancedAssemblyLineMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/StorageMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/NeutronSensorPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/NeutronAcceleratorPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/noenergy/NeutronActivatorMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/NeutronActivatorRecipeLogic.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/PCBFactoryMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/CoilWorkableElectricMultipleRecipesMultiblockMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/noenergy/HeatExchangerMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/generator/GeneratorArrayMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/GeneratorArrayRecipeLogic.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/CombustionEngineRecipeLogic.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/generator/GTLLargeCombustionEngineMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/generator/ChemicalEnergyDevourerMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/generator/MegaTurbineMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/RotorHatchPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/BallHatchPartMachine.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/CatalystInputMatcher.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/PaginationUIManager.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/widget/AEPatternViewExtendSlotWidget.java'
+    include 'com/gtladd/gtladditions/integration/ae2/SuperPatternDataStick.java'
+    include 'com/gtladd/gtladditions/mixin/gtlcore/machine/part/MEPatternBufferPartMachineBaseMixin.java'
+    include 'com/gtladd/gtladditions/mixin/gtlcore/machine/part/MEPatternBufferPartMachineMixin.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/common/item/DataItemBehaviorMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/trait/CatalystItemStackHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/trait/CatalystFluidStackHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLRegistryTooltips.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLMultiblockDisplays.java'
+    include 'org/gtlcore/gtlcore/common/data/machines/GCyMMachines.java'
+    include 'org/gtlcore/gtlcore/common/data/machines/GTLGCYMMachinePolicies.java'
+    include 'org/gtlcore/gtlcore/common/data/machines/TootipsModify.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/HPCAComputationPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/HPCAComponentTraitMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/NativeMultiblockLifecycleMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/IStartupCriticalMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/IServerTickMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/IPerformanceDisplayMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/MachineStartupTickBudget.java'
+    include 'org/gtlcore/gtlcore/api/machine/PerformanceMonitorMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/PerformanceMonitorRowWidget.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/HarmonyMachine.java'
+    include 'org/gtlcore/gtlcore/migration/NativeHarmonyFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeHarmonyGameTests.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/generator/DysonSphereMachine.java'
+    include 'org/gtlcore/gtlcore/migration/NativeDysonFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeDysonGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeWildcardFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeWildcardGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeWildcardClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeGtOutputFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeGtOutputGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeGtOutputClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCatalystFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCatalystGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeSuperPatternFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeSuperPatternGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCoverTagFilterGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCoverTransferGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCoverTransferFixtures.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/HugeFluidHatchPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/BedrockFluidProduction.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/AdvancedFluidDrillProduction.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/FissionReactorThermal.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/FissionReactorRecipeLogic.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/FissionReactorMachine.java'
+    include 'org/gtlcore/gtlcore/migration/NativeFissionFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeFissionGameTests.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/AdvancedInfiniteDrillLogic.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/AdvancedInfiniteDrillMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/TemperatureSensorPartMachine.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAdvancedFluidRigFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAdvancedFluidRigGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAdvancedFluidRigClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeRockBreakerFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeRockBreakerGameTests.java'
+    include 'org/gtlcore/gtlcore/utils/TextUtil.java'
+    include 'org/gtlcore/gtlcore/api/data/tag/GTLItemTags.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/CustomTagsMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/GTDynamicTagsMixin.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/INFFluidDrillLogic.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/INFFluidDrillMachine.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/FluidDrillLogicMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeFluidRigFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeFluidRigGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeFluidRigClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeSuperPatternClientFixtures.java'
+    include 'org/gtlcore/gtlcore/client/gui/widget/MEOutListGridWidget.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/gui/NativeMEOutputUI.java'
+    include 'org/gtlcore/gtlcore/client/gui/widget/PatternCycleWidget.java'
+    include 'org/gtlcore/gtlcore/integration/wildcard/MEWildcardPatternBufferPersistenceHelper.java'
+    include 'org/gtlcore/gtlcore/integration/wildcard/NativeWildcardPatternDecoder.java'
+    include 'org/gtlcore/gtlcore/integration/wildcard/MEWildcardPatternBufferPartMachine.java'
+    include 'org/gtlcore/gtlcore/integration/wildcard/MEStockingWildcardPatternBufferPartMachine.java'
+    include 'org/gtlcore/gtlcore/integration/wildcard/WildcardPatternCompatImpl.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/WildcardRecipeHandlerTrait.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/StockingWildcardRecipeHandlerTrait.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/MetaMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/NativeMachineDirtyMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/MachineBuilderMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/MultiblockMachineBuilderMixin.java'
+    include 'org/gtlcore/gtlcore/common/data/NativeMachineAssetRegistry.java'
+    include 'org/gtlcore/gtlcore/api/gui/NativeGuiCodecAdapters.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/NativeCodecAdaptersMixin.java'
+    include 'org/gtlcore/gtlcore/common/data/machines/GTLGeneratorMachines.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/GTMachineUtilsMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/ItemBusPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/ParallelHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/DualHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/FluidHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/BufferMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/RotorHolderPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/trait/NotifiableEnergyContainerMixin.java'
+    include 'org/gtlcore/gtlcore/api/capability/IInt128EnergyContainer.java'
+    include 'org/gtlcore/gtlcore/utils/datastructure/Int128.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/SimpleGeneratorMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/WorkableTieredMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/trait/RecipeAmperageEnergyContainerMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/NoEnergyMultiblockMachine.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IRecipeIterator.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/NativeRecipeSearchIndex.java'
+    include 'org/gtlcore/gtlcore/api/recipe/ingredient/ComponentFluidMapIngredient.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IAdditionalRecipeIterator.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IMultipleRecipeSearch.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/api/recipe/GTRecipeLookupMixin.java'
+    include 'org/gtlcore/gtlcore/api/recipe/NativeGroupedRecipeIterator.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/GTRecipeLookupMixin.java'
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeResult.java'
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeText.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/RecipeHandlePart.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/NotifiableCircuitItemStackHandler.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IRecipeHandlePart.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IRecipeCapabilityMachine.java'
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeRunner.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IParallelLogic.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IAdvancedOCResult.java'
+    include 'org/gtlcore/gtlcore/api/recipe/CoreOverclockingLogic.java'
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeMultiplierTracker.java'
+    include 'org/gtlcore/gtlcore/api/recipe/NativeModifierSupport.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/OverclockingLogicMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/OCResultMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/NativeModifierFunctionMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/RecipeModifierListMixin.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/MultipleRecipesLogic.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/WorkableElectricMultipleRecipesMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/CoilWorkableElectricMultipleRecipesMachine.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLRecipeModifiers.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLPlasmaGeneratorModifiers.java'
+    include 'org/gtlcore/gtlcore/api/recipe/CoreRecipeModifiers.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/GTRecipeModifiersMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IRecipeInputHandlerPolicy.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/ExactSteamEnergyRecipeHandler.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/SteamEnergyConversion.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/RecipeInputExclusion.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/trait/SteamEnergyRecipeHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/SimpleSteamMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/SteamParallelMultiblockMachineMixin.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/steam/LargeSteamParallelMultiblockMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/LargeSteamHatchPartMachine.java'
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeChancePreview.java'
+    include 'org/gtlcore/gtlcore/api/recipe/BatchProcessing.java'
+    include 'org/gtlcore/gtlcore/api/recipe/BatchProcessingDecisionLogger.java'
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeExtensionCopier.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IBatchMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/ILockRecipe.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/ICrossRecipeLogic.java'
+    include 'org/gtlcore/gtlcore/api/machine/ISuspendableMachine.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/RecipeLogicMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/fix/WorkableElectricMultiblockMachineMixin.java'  
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/WorkableMultiblockMachineMixin.java'
+    include 'org/gtlcore/gtlcore/utils/datastructure/FirstFlagRecipePartSet.java'
+    include 'org/gtlcore/gtlcore/utils/datastructure/ReverseIteratorBuilder.java' 
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeRunnerHelper.java'
+    include 'org/gtlcore/gtlcore/api/recipe/RecipeCacheStrategy.java'
+    include 'org/gtlcore/gtlcore/api/capability/IMERecipeHandler.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IMERecipeHandlerTrait.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEIORecipeHandlePart.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPatternRecipeHandlePart.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMEIOPartMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMEIOTrait.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEIOPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/NotifiableMERecipeHandlerTrait.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEPatternBufferProxyRecipeHandler.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/AEGridMachineSettings.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/MolecularAssemblerPatternHelper.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/AEBufferedOutput.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/AEOutputIngredients.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/AEOutputBuffer.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/AERefundQueue.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/NativeMEOutputPersistence.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/NativeMEOutputRecipeTransfer.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMEOutputPart.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMENativeOutputBuffer.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/NativeMEOutputHandlersMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEOutputBusPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEOutputHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/MEOutputPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/MEOutputPartMachineAccessor.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/async/*.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEExtendedOutputPartMachineBase.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEExtendedOutputPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEExtendedAsyncOutputPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEOutputFilterHandler.java'
+    include 'org/gtlcore/gtlcore/api/machine/MEExtendedOutputFancyConfigurator.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/AEUtils.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/handler/SlotCacheManager.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/handler/MEBufferPatternHelper.java'
+    include 'org/gtlcore/gtlcore/common/item/VirtualIngredientBehavior.java'
+    include 'org/gtlcore/gtlcore/common/item/VirtualIngredientItem.java'
+    include 'org/gtlcore/gtlcore/common/item/PatternBoxBehavior.java'
+    include 'org/gtlcore/gtlcore/common/item/PatternModifier.java'
+    include 'org/gtlcore/gtlcore/common/item/UltimateTerminalBehavior.java'
+    include 'org/gtlcore/gtlcore/migration/NativeTerminalFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeTerminalGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativePatternSearchGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeLimitedPredicateGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeFusionGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeLargeBoilerGameTests.java'
+    include 'org/gtlcore/gtlcore/api/pattern/NativeLimitedPredicateMatches.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IFusionHeatTransaction.java'
+    include 'org/gtlcore/gtlcore/api/recipe/NativeFusionStartup.java'
+    include 'org/gtlcore/gtlcore/api/recipe/NativeLargeBoilerFuel.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/LargeBoilerMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/LargeBoilerRecipeLogicMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/FusionRecipeLogicMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/FusionReactorMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/pattern/TraceabilityPredicateMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeConfigurationGameTests.java'
+    include 'org/gtlcore/gtlcore/common/block/BlockMap.java'
+    include 'org/gtlcore/gtlcore/api/gui/BlockMapSelectorWidget.java'
+    include 'org/gtlcore/gtlcore/api/pattern/AdvancedBlockPattern.java'
+    include 'org/gtlcore/gtlcore/api/pattern/FixedPatternLayout.java'
+    include 'org/gtlcore/gtlcore/api/pattern/PatternLayoutSearch.java'
+    include 'org/gtlcore/gtlcore/api/pattern/WorldPatternMatcher.java'
+            include 'org/gtlcore/gtlcore/api/pattern/WorldPatternTiming.java'
+    include 'org/gtlcore/gtlcore/api/pattern/PatternCheckScope.java'
+    include 'org/gtlcore/gtlcore/api/pattern/INewMultiblockWorldSavedData.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/MultiblockWorldSavedDataMixin.java'
+    include 'org/gtlcore/gtlcore/api/pattern/PreviewMatcherTiming.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/pattern/BlockPatternMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/pattern/BasicSliceStrategyAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/pattern/BasicSliceGroupAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/MultiblockControllerMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/IMultiblockStateInvoker.java'
+    include 'org/gtlcore/gtlcore/integration/terminal/TerminalMaterials.java'
+    include 'org/gtlcore/gtlcore/common/item/ConfigurationCopyBehavior.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/IAutoConfiguratioGravityPart.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/IAutoConfigurationMaintenanceHatch.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/IGravityPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/trait/QuantumChestLongStorage.java'
+    include 'org/gtlcore/gtlcore/integration/jade/provider/QuantumChestItemStorageProvider.java'
+    include 'org/gtlcore/gtlcore/integration/jade/provider/MEPatternBufferProvider.java'
+    include 'org/gtlcore/gtlcore/integration/jade/provider/MEPatternBufferProxyProvider.java'
+    include 'org/gtlcore/gtlcore/integration/jade/provider/MEMAIOProvider.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/MEFluidUnits.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/throughput/METhroughputMonitorPart.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/throughput/ThroughputMonitorStorageTracker.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/throughput/ThroughputCache.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/throughput/ThroughputStorageView.java'
+    include 'org/gtlcore/gtlcore/migration/NativeThroughputFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeThroughputGameTests.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/crafting/ManualCraftingInventoryLock.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/crafting/ManualCraftingInventoryLockLogger.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/storage/NetworkStorageMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/storage/SupplierStorageMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/storage/CompositeStorageMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/QuantumChestMachineAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/QuantumTankMachineAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/QuantumChestMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/QuantumChestItemCacheMixin.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/WirelessTerminalGridResolver.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/wireless/CuriosCompat.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/wireless/CuriosTerminalLocator.java'
+    include 'org/gtlcore/gtlcore/client/renderer/item/VirtualIngredientRenderer.java'
+    include 'org/gtlcore/gtlcore/client/renderer/item/WrappedItemRenderer.java'
+    include 'org/gtlcore/gtlcore/client/renderer/item/StereoscopicItemRenderer.java'
+    include 'org/gtlcore/gtlcore/api/data/chemical/material/info/GTLMaterialIconSet.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/TagPrefixItemMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/TagPrefixItemRendererMixin.java'
+    include 'org/gtlcore/gtlcore/common/machine/VirtualIngredientSupplyMachine.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/VirtualIngredientEncoding.java'
+    include 'org/gtlcore/gtlcore/common/item/MEPatternBufferCopyBehavior.java'
+    include 'org/gtlcore/gtlcore/common/item/MEPatternBufferCutBehavior.java'
+    include 'org/gtlcore/gtlcore/common/item/MEPatternBufferCutItem.java'
+    include 'org/gtlcore/gtlcore/api/gui/PatternBufferProxyPositionConfigurator.java'
+    include 'org/gtlcore/gtlcore/api/gui/MachineModeConfigurator.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/MachineModeFancyConfiguratorMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/gui/FancyMachineUIWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/client/gui/MEStorageConfiguratorTabLayout.java'
+    include 'org/gtlcore/gtlcore/client/gui/PatternBufferProxyPositionConfiguratorClient.java'
+    include 'org/gtlcore/gtlcore/client/renderer/BlockHighlightHandler.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEPatternBufferPartMachineBase.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEPatternBufferJadeMerger.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEPatternBufferRecipeHandlerTraitBase.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEPatternBufferRecipeHandlerTrait.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEPatternBufferPartMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEStockingPatternBufferPartMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEStock/ExportOnlyAEConfigureItemSlot.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEStock/ExportOnlyAEConfigureFluidSlot.java'
+    include 'org/gtlcore/gtlcore/utils/NumberUtils.java'
+    include 'org/gtlcore/gtlcore/api/gui/MEPatternCatalystUIManager.java'
+    include 'org/gtlcore/gtlcore/api/gui/PatternCircuitConfigurator.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/gui/PatternBufferItemSlot.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEPatternBufferProxyPartMachine.java'
+        include 'org/gtlcore/gtlcore/integration/ae2/gui/MolecularPatternPagination.java'
+        include 'org/gtlcore/gtlcore/integration/ae2/PatternCacheSyncTransformer.java'
+        include 'org/gtlcore/gtlcore/mixin/modularui/PatternOutputRenderMixin.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/gui/MolecularAssemblerUIFactory.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEMolecularAssemblerIOPartMachine.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/graph/GraphDispatchPreflight.java'
+    include 'org/gtlcore/gtlcore/integration/lowdragmc/misc/MutableItemTransferList.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MECraftPatternContainerPartMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IModifiableSyncOffset.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEBusPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAeGridFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAePatternFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAePatternGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeVirtualIngredientGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAeGridGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAeOutputGameTests.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMEFilterIOPartMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMEFilterIOTrait.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMEPatternPartMachine.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/MEPart/IMEPatternTrait.java'
+    include 'org/gtlcore/gtlcore/utils/datastructure/GTRecipe2IntBiMultiMap.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IGTRecipe.java'
+    include 'org/gtlcore/gtlcore/api/recipe/NativeRecipeState.java'
+    include 'org/gtlcore/gtlcore/api/recipe/NativeContentState.java'
+    include 'org/gtlcore/gtlcore/integration/jei/RecipeChanceTooltip.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/client/ContentOverlayMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/client/GTRecipeViewerWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/client/JeiRecipeViewerSlotMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeRecipeClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMaterialRendererFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMaterialRendererClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMachineClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeNeutronGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativePlasmaGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMachineValidationMonitor.java'
+    include 'org/gtlcore/gtlcore/api/recipe/IRecipeChanceDisplay.java'
+    include 'org/gtlcore/gtlcore/api/recipe/chance/LongChanceLogic.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/ContentMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/ChanceLogicOrMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/NativeRecipeRunnerMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/ISteamMachine.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/GTRecipeMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/NativeRecipeSerializerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/NativeRecipeHolderIdsMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/recipe/NativeTickRecipeMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/GTRecipeBuilderMixin.java'
+    include 'org/gtlcore/gtlcore/api/machine/trait/IRecipeStatus.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/NativeCoilMenuMixin.java'
+    include 'org/gtlcore/gtlcore/api/pattern/PatternMatchData.java'
+    include 'org/gtlcore/gtlcore/api/pattern/GTLPredicates.java'
+    include 'org/gtlcore/gtlcore/common/data/machines/structure/*.java'
+    include 'org/gtlcore/gtlcore/common/data/machines/AnnihilateGeneratorA.java'
+    include 'org/gtlcore/gtlcore/common/data/machines/AnnihilateGeneratorB.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/pattern/PredicateContextMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/pattern/StructurePreviewMixin.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLIngredientTypes.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLRecipeTypes.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLCallbackMaterials.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLWorldgenMaterials.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/ComputationProviderMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/BedrockDrillingRig.java'
+    include 'org/gtlcore/gtlcore/common/util/BlockStateWatcher.java'
+    include 'org/gtlcore/gtlcore/mixin/mc/LevelChunkMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeBedrockDrillingFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeBedrockDrillingGameTests.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/InfinityCellChestMenuMixin.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/pattern/NativePatternModifierAmounts.java'
+    include 'org/gtlcore/gtlcore/mixin/extendedae/InfinityCellMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/extendedae/ContainerPatternModifierMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/extendedae/GuiPatternModifierMixin.java'
+    include 'org/gtlcore/gtlcore/client/gui/IPatternModifierScreen.java'
+    include 'org/gtlcore/gtlcore/client/gui/ModifyIcon.java'
+    include 'org/gtlcore/gtlcore/client/gui/ModifyIconButton.java'
+    include 'org/gtlcore/gtlcore/client/gui/PatternModifierClientState.java'
+    include 'org/gtlcore/gtlcore/client/gui/SetReplaceAmountScreen.java'
+    include 'org/gtlcore/gtlcore/client/gui/widget/IShiftAmountOperations.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/gui/NumberEntryWidgetAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/gui/NumberEntryWidgetMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeExtendedAEGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeExtendedAEClientFixtures.java'
+    include 'org/gtlcore/gtlcore/client/gui/NativePatternModifierClientEvents.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/capability/NativeCapabilityLookupMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/machine/MufflerPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCellFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCellGameTests.java'
+    include 'org/gtlcore/gtlcore/integration/jade/NativeRecipeOutputRows.java'
+    include 'org/gtlcore/gtlcore/utils/GTLUtil.java'
+    include 'org/gtlcore/gtlcore/api/gui/preview/NativePreviewGeometry.java'
+    include 'org/gtlcore/gtlcore/api/gui/preview/NativePreviewBlockMap.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/pattern/NativePreviewPopulationMixin.java'
+    include 'org/gtlcore/gtlcore/api/pattern/NativePatternPredicateLookup.java'
+    include 'org/gtlcore/gtlcore/api/gui/preview/NativePreviewShapes.java'
+    include 'org/gtlcore/gtlcore/api/gui/PatternPreviewWidget.java'
+    include 'org/gtlcore/gtlcore/api/gui/NativePatternPreviewWidget.java'
+    include 'org/gtlcore/gtlcore/integration/jei/NativePreviewJeiSlots.java'
+    include 'org/gtlcore/gtlcore/integration/jei/GTRecipeJeiTiming.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/GTRecipeTypeCategoryMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/GTJEIPluginMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/mc/client/PreviewReloadMixin.java'
+    include 'org/gtlcore/gtlcore/integration/jei/SlotRecipeWidget.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/MultiblockInfoCategoryMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/MultiblockInWorldPreviewRendererMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativePreviewClientFixtures.java'
+    include 'org/gtlcore/gtlcore/api/gui/preview/PreviewBuildTiming.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/IModularMachineHost.java'
+    include 'org/gtlcore/gtlcore/api/machine/multiblock/IModularMachineModule.java'
+    include 'org/gtlcore/gtlcore/utils/datastructure/ModuleRenderInfo.java'
+    include 'org/gtlcore/gtlcore/utils/datastructure/LatestTask.java'
+    include 'org/gtlcore/gtlcore/client/preview/*.java'
+    include 'org/gtlcore/gtlcore/mixin/ldlib/BlockInfoAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/ldlib/WorldSceneRendererMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/ldlib/client/Preview*.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/client/WorldPreviewPerformanceMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/client/WorldPreviewAccessor.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/client/PreviewShapesMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/MultiblockInfoWrapperMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/MultiblockInfoEmiRecipeMixin.java'
+    include 'org/gtlcore/gtlcore/utils/datastructure/WeightedCache.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/RecipeOutputProviderMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/RecipeLogicProviderMixin.java'
+    include 'org/gtlcore/gtlcore/integration/jade/NativeRecipeLogicTooltip.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/NewGTValues.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/NativeWirelessMonitorRows.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/WirelessEnergyDisplayTextLimiter.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/WirelessEnergyMonitorSnapshot.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/WirelessEnergyManagerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/WirelessEnergyMonitorMixin.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/NativeCreativeEnergyUI.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/InfinityEnergyContainer.java'
+    include 'org/gtlcore/gtlcore/integration/gtmt/InfinityLaserContainer.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/CreativeEnergyHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtmt/CreativeLaserHatchPartMachineMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeWirelessEnergyGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeCreativeEnergyGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeEnergyClientFixtures.java'
+    include 'com/gtladd/gtladditions/integration/jade/NativeWirelessEnergyTooltip.java'
+    include 'com/gtladd/gtladditions/api/recipe/NativeWirelessRecipeState.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/recipe/RecipeLogicProviderMixin.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/recipe/NativeWirelessRecipeSerializerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/recipe/OreRecipeHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/recipe/MaterialRecipeHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/recipe/VanillaRecipeHelperMixin.java'
+    include 'org/gtlcore/gtlcore/migration/NativeGeneratedMaterialGameTests.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/part/WirelessOpticalDataHatchMachine.java'
+    include 'org/gtlcore/gtlcore/api/capability/BindCapability.java'
+    include 'org/gtlcore/gtlcore/integration/jade/provider/WirelessOpticalDataHatchProvide.java'
+    include 'org/gtlcore/gtlcore/migration/NativeWirelessDataFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeWirelessDataGameTests.java'
+    include 'org/gtlcore/gtlcore/common/machine/generator/LightningRodMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/generator/MagicEnergyMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/GreenhouseMachine.java'
+    include 'org/gtlcore/gtlcore/migration/NativeGreenhouseFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeGreenhouseGameTests.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/electric/SlaughterhouseMachine.java'
+    include 'org/gtlcore/gtlcore/migration/NativeSlaughterhouseFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeSlaughterhouseGameTests.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/noenergy/PrimitiveOreMachine.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/generator/WatermelonGeneration.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAmbientGeneratorFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeAmbientGeneratorGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeJadeGameTests.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/CursedInternalSlotMixin.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/FastInfinityCell.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/InfinityCell.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/FastInfinityCellHandler.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/FastInfinityCellInventory.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/InfinityCellDataStorage.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/InfinityCellHandler.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/InfinityCellInventory.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/PreciseStorageAmount.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/CellItemData.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/storage/Terminal*.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/storage/TerminalCounterAccessor.java'
+    include 'org/gtlcore/gtlcore/utils/StorageManager.java'
+    include 'org/gtlcore/gtlcore/common/machine/multiblock/SimulationMachine.java'
+    include 'org/gtlcore/gtlcore/migration/NativeSimulationGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeHpcaGameTests.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLBedrockFluids.java'
+    include 'org/gtlcore/gtlcore/data/GTLWorldgenData.java'
+    include 'org/gtlcore/gtlcore/migration/NativeBedrockFluidGameTests.java'
+    include 'org/gtlcore/gtlcore/common/recipe/GTLRecipeCallbacks.java'
+    include 'org/gtlcore/gtlcore/common/recipe/GTLRecipeContents.java'
+    include 'org/gtlcore/gtlcore/common/recipe/RecipeModify.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/cover/TagFilterMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/cover/InfiniteWaterCoverMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/cover/ConveyorCoverMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/cover/PumpCoverMixin.java'
+    include 'org/gtlcore/gtlcore/utils/TagExprFilter.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/registry/GTRecipeTypeMixin.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLRecipes.java'
+    include 'org/gtlcore/gtlcore/common/data/GTLSoundEntries.java'
+    include 'org/gtlcore/gtlcore/common/recipe/GTLRecipeUIModifiers.java'
+    include 'org/gtlcore/gtlcore/data/recipe/GenerateDisassembly.java'
+    include 'org/gtlcore/gtlcore/config/*.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/graph/GraphJobCodec.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/graph/PatternFingerprint.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/graph/GraphRingView.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/crafting/compiled/MaxFastFingerprint.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/crafting/IMaxFastNetworkInventoryFingerprint.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/crafting/NetworkCraftingSimulationStateMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/stacks/AEKeyMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/stacks/GenericStackMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/ae2/stacks/AEItemKeyMixin.java'
+    include 'org/gtlcore/gtlcore/integration/ae2/graph/core/*.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/machine/trait/NotifiableItemStackHandlerMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/capability/LongItemRecipeCapabilityMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/api/capability/CWURecipeCapabilityMixin.java'
+    include 'org/gtlcore/gtlcore/mixin/gtm/RockBreakerConditionMixin.java'
+    include 'com/gtladd/gtladditions/mixin/gtceu/recipe/GTRecipeTypeMixin.java'
+    include 'com/gtladd/gtladditions/integration/ae2/MEStorageCapabilityProvider.java'
+    include 'org/gtlcore/gtlcore/migration/RecipeMigrationHarness.java'
+    include 'org/gtlcore/gtlcore/migration/NativeComputationFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeComputationGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMachineFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMolecularFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMolecularGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeProductionMolecularGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMolecularMenuGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativePatternBoxGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativePatternToolGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeStructureWriterGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeStructureDetectGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeStructureLifecycleGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeRecipeModeGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeConfiguratorLayoutGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeConfiguratorColumnsClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeRecipeModeClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativePerformanceFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMachineTickGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativePerformanceClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeItemMenusClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeDualStockGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeDualInputGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeStockItemGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeFluidInputGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMachineUtilGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeQuickUploadGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMaintenanceClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMaintenanceFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMaintenanceGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeTagStockGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeTagStockClientFixtures.java'
+    include 'org/gtlcore/gtlcore/migration/NativeMultiblockGameTests.java'
+    include 'org/gtlcore/gtlcore/migration/NativeGcymGameTests.java'
+}
+kotlin { jvmToolchain(21) }
+sourceSets.main.kotlin {
+    srcDir '../../../GTLAdditions/src/main/java'
+    include 'com/gtladd/gtladditions/integration/xei/LongFluidStack.kt'
+    include 'com/gtladd/gtladditions/api/pattern/PatternPredicatePatch.kt'
+    include 'com/gtladd/gtladditions/common/machine/GTLAddPredicates.kt'
+    include 'com/gtladd/gtladditions/common/machine/trait/FastNotifiableInputItemStack.kt'
+    include 'com/gtladd/gtladditions/common/machine/trait/FastNotifiableInputFluidTank.kt'
+    include 'com/gtladd/gtladditions/utils/TransferHelper.kt'
+    include 'com/gtladd/gtladditions/utils/OreProcessorRecipeHelper.kt'
+    include 'com/gtladd/gtladditions/utils/RecipeCalculationHelper.kt'
+    include 'com/gtladd/gtladditions/api/recipe/ChanceParallelLogic.kt'
+    include 'com/gtladd/gtladditions/api/machine/ICloudTeamBindable.kt'
+    include 'com/gtladd/gtladditions/api/machine/trait/CloudOpticalComputationContainer.kt'
+    include 'com/gtladd/gtladditions/common/machine/CloudOpticalDataMachine.kt'
+    include 'com/gtladd/gtladditions/common/machine/CloudOpticalComputationMonitorMachine.kt'
+    include 'com/gtladd/gtladditions/common/machine/hatch/CloudOpticalDataHatchMachine.kt'
+    include 'com/gtladd/gtladditions/common/machine/hatch/CloudOpticalComputationHatchMachine.kt'
+    include 'com/gtladd/gtladditions/common/data/CloudMachineSnapshot.kt'
+    include 'com/gtladd/gtladditions/common/data/ComputationTopologySnapshot.kt'
+    include 'com/gtladd/gtladditions/common/data/ComputationLiveSnapshot.kt'
+    include 'com/gtladd/gtladditions/utils/CloudTeamUtil.kt'
+    include 'com/gtladd/gtladditions/utils/CloudNetworkManager.kt'
+    include 'com/gtladd/gtladditions/utils/CloudComputationProviderAdapter.kt'
+    include 'com/gtladd/gtladditions/events/ClientCloudHighlighter.kt'
+    include 'com/gtladd/gtladditions/utils/WirelessEnergyManagerData.kt'
+    include 'com/gtladd/gtladditions/common/data/ParallelData.kt'
+    include 'com/gtladd/gtladditions/api/machine/logic/MutableRecipesLogic.kt'
+    include 'com/gtladd/gtladditions/api/machine/logic/IWirelessRecipeLogic.kt'
+    include 'com/gtladd/gtladditions/api/machine/IWirelessElectricMultiblockMachine.kt'
+    include 'com/gtladd/gtladditions/api/machine/IThreadModifierMachine.kt'
+    include 'com/gtladd/gtladditions/api/machine/trait/IWirelessNetworkEnergyHandler.kt'
+    include 'com/gtladd/gtladditions/api/machine/feature/IThreadModifierPart.kt'
+    include 'com/gtladd/gtladditions/common/recipe/GTLAddRecipesTypes.kt'
+    include 'com/gtladd/gtladditions/api/recipe/IWirelessGTRecipe.kt'
+    include 'com/gtladd/gtladditions/api/recipe/WirelessGTRecipe.kt'
+    include 'com/gtladd/gtladditions/api/recipe/WirelessGTRecipeBuilder.kt'
+    include 'com/gtladd/gtladditions/common/modify/RecipesModify.kt'
+    include 'com/gtladd/gtladditions/common/modify/SkyTearsAndGregHeart.kt'
+    include 'com/gtladd/gtladditions/utils/TempChemicalHelper.kt'
+    include 'com/gtladd/gtladditions/utils/CycleContainerHelper.kt'
+    include 'com/gtladd/gtladditions/common/machine/multiblock/part/MESuperPatternBufferPartMachine.kt'
+    include 'com/gtladd/gtladditions/common/machine/multiblock/part/MESuperPatternBufferProxyPartMachine.kt'
+    include 'com/gtladd/gtladditions/api/machine/gui/FOAPatternConfigurator.kt'
+    include 'com/gtladd/gtladditions/integration/ae2/ForgePatternRules.kt'
+    include 'com/gtladd/gtladditions/integration/ae2/MEBufferPatternHelperExtensions.kt'
+    include 'com/gtladd/gtladditions/common/modify/GTLAddSoundEntries.kt'
+    include 'com/gtladd/gtladditions/api/registry/GTLAddRegistration.kt'
+    include 'com/gtladd/gtladditions/api/registry/GTLAddMultiBlockMachineBuilder.kt'
+}
+sourceSets.test.resources.srcDir('..')
+sourceSets.test.resources.include('structure-templates.json', 'recipe-types.json', 'bedrock-fluids.json')
+neoForge {
+    version = '21.1.248'
+    parchment { minecraftVersion = '1.21.1'; mappingsVersion = '2024.11.17' }
+    mods { gtlcore_recipe_test { sourceSet(sourceSets.main) } }
+    runs {
+        data {
+            data()
+            gameDirectory = file('run/data')
+            programArguments.addAll('--mod', 'gtlcore_recipe_test', '--server',
+                    '--output', file('build/generated-worldgen').absolutePath,
+                    '--existing', file('src/main/resources').absolutePath)
+            systemProperty 'mixin.debug.verify', 'true'
+            systemProperty 'mixin.debug.strict.unique', 'true'
+            systemProperty 'mixin.checks', 'true'
+            environment 'TEST', 'true'
+        }
+        machineModelData {
+            data()
+            gameDirectory = file('run/machine-model-data')
+            programArguments.addAll('--mod', 'gtlcore_recipe_test', '--client',
+                    '--output', file('build/generated-machine-models').absolutePath,
+                    '--existing', file('src/main/resources').absolutePath,
+                    '--existing', file('../../src/main/resources').absolutePath,
+                    '--existing-mod', 'gtceu', '--existing-mod', 'gtmthings', '--existing-mod', 'avaritia')
+            environment 'TEST', 'true'
+        }
+        client {
+            client()
+            gameDirectory = file('run/client')
+            systemProperty 'gtlcore.machineValidation.enabled', providers.gradleProperty('machineUiValidation').orElse('false').get()
+            systemProperty 'gtlcore.rendererValidation.enabled', providers.gradleProperty('rendererValidation').orElse('false').get()
+            systemProperty 'gtlcore.itemMenusValidation.enabled', providers.gradleProperty('itemMenusValidation').orElse('false').get()
+            systemProperty 'gtlcore.maintenanceValidation.enabled', providers.gradleProperty('maintenanceValidation').orElse('false').get()
+            systemProperty 'gtlcore.previewValidation.enabled', providers.gradleProperty('previewValidation').orElse('false').get()
+            systemProperty 'gtlcore.modeValidation.enabled', providers.gradleProperty('modeValidation').orElse('false').get()
+            systemProperty 'gtlcore.columnsValidation.enabled', providers.gradleProperty('columnsValidation').orElse('false').get()
+            systemProperty 'gtlcore.performanceValidation.enabled', providers.gradleProperty('performanceValidation').orElse('false').get()
+            systemProperty 'gtlcore.wildcardValidation.enabled', providers.gradleProperty('wildcardValidation').orElse('false').get()
+            systemProperty 'gtlcore.gtOutputValidation.enabled', providers.gradleProperty('gtOutputValidation').orElse('false').get()
+            systemProperty 'gtlcore.superPatternValidation.enabled', providers.gradleProperty('superPatternValidation').orElse('false').get()
+            systemProperty 'gtlcore.fluidRigValidation.enabled', providers.gradleProperty('fluidRigValidation').orElse('false').get()
+            systemProperty 'gtlcore.advancedFluidRigValidation.enabled', providers.gradleProperty('advancedFluidRigValidation').orElse('false').get()
+            systemProperty 'gtlcore.tagStockValidation.enabled', providers.gradleProperty('tagStockValidation').orElse('false').get()
+            systemProperty 'gtlcore.chamberConfiguratorValidation.enabled', providers.gradleProperty('chamberConfiguratorValidation').orElse('false').get()
+            systemProperty 'gtlcore.dynamicRenderValidation.enabled', providers.gradleProperty('dynamicRenderValidation').orElse('false').get()
+            systemProperty 'gtlcore.avaritiaValidation.enabled', providers.gradleProperty('avaritiaValidation').orElse('false').get()
+            systemProperty 'gtlcore.prospectorValidation.enabled', providers.gradleProperty('prospectorValidation').orElse('false').get()
+            systemProperty 'gtlcore.energyValidation.enabled', providers.gradleProperty('energyValidation').orElse('false').get()
+            systemProperty 'gtlcore.extendedAEValidation.enabled', providers.gradleProperty('extendedAEValidation').orElse('false').get()
+            systemProperty 'gtlcore.aeWidgetsValidation.enabled', providers.gradleProperty('aeWidgetsValidation').orElse('false').get()
+            systemProperty 'gtlcore.recipeValidation.enabled', (!providers.gradleProperty('energyValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('prospectorValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('extendedAEValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('aeWidgetsValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('dynamicRenderValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('avaritiaValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('chamberConfiguratorValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('advancedFluidRigValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('fluidRigValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('superPatternValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('gtOutputValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('wildcardValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('performanceValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('columnsValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('modeValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('machineUiValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('itemMenusValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('tagStockValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('maintenanceValidation').orElse('false').get().toBoolean() && !providers.gradleProperty('previewValidation').orElse('false').get().toBoolean()).toString()
+            systemProperty 'mixin.debug.verify', 'true'
+            systemProperty 'mixin.debug.strict.unique', 'true'
+            systemProperty 'mixin.checks', 'true'
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = file('run/gametest')
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'gtlcore_recipe_test'
+            systemProperty 'mixin.debug.verify', 'true'
+            systemProperty 'mixin.debug.strict.unique', 'true'
+            systemProperty 'mixin.checks', 'true'
+            environment 'TEST', 'true'
+        }
+    }
+    unitTest { enable(); testedMod = mods.gtlcore_recipe_test }
+}
+dependencies {
+    jarJar(implementation('com.github.ben-manes.caffeine:caffeine:3.1.8'))
+    // Development runs use source directories, so their classpath needs the bundled library too.
+    additionalRuntimeClasspath 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    implementation(forge.ftbchunks)
+    implementation(forge.ftbteams)
+    implementation('dev.ftb.mods:ftb-ultimine-neoforge:2101.1.1')
+    implementation('maven.modrinth:re-avaritia:uY1x1LTC')
+    implementation('com.gregtechceu.gtceu:gtceu-1.21.1:8.0.0')
+    implementation('com.hepdd.gtmthings:gtmthings:1.6.0')
+    implementation(forge.registrate)
+    implementation(forge.configuration)
+    implementation(forge.mui)
+    implementation(forge.jei.neoforge.impl)
+    compileOnly(forge.emi)
+    implementation(forge.ae2)
+    implementation('maven.modrinth:ldlib:oe3VmoEH')
+    implementation('maven.modrinth:guideme:hFpGwC6q')
+    implementation('maven.modrinth:glodium:pfbmdJ3b')
+    implementation('maven.modrinth:extended-ae:bC302UUP')
+    implementation('maven.modrinth:applied-energistics-2-wireless-terminals:6feJ9h09')
+    compileOnly('top.theillusivec4.curios:curios-neoforge:9.4.2+1.21.1:api')
+    implementation('maven.modrinth:jade:15.10.0+neoforge')
+    implementation('thedarkcolour:kotlinforforge-neoforge:5.7.0')
+    compileOnly(forge.bundles.kjs)
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+test {
+    useJUnitPlatform()
+    doFirst { systemProperty 'migration.nativeCompileClasspath', sourceSets.main.runtimeClasspath.asPath }
+    systemProperty 'mixin.debug.verify', 'true'
+    systemProperty 'mixin.debug.strict.unique', 'true'
+    systemProperty 'mixin.checks', 'true'
+}
+
+tasks.named('processTestResources') {
+    from('../../../GTLAdditions/migration/recipe-types.json') { rename { 'additions-recipe-types.json' } }
+}
+
+tasks.register('verifyNativeWorld') {
+    group = 'verification'
+    description = 'Requires completed native GameTests and rejects loader or sync errors, even when Java exits normally.'
+    dependsOn 'runGameTestServer'
+    doLast {
+        def log = file('run/gametest/logs/latest.log')
+        if (!log.exists()) throw new GradleException('Native world validation produced no Minecraft log')
+        def contents = log.getText('UTF-8')
+        def expected = fileTree('src/main/java/org/gtlcore/gtlcore/migration') {
+            include '*GameTests.java'
+        }.sum { (it.getText('UTF-8') =~ /@GameTest\(/).count }
+        if (!contents.contains("All ${expected} required tests passed")) {
+            throw new GradleException('Native world startup/test completion was not confirmed; inspect run/gametest/logs/latest.log')
+        }
+        if (contents.contains('Sync: Error') || contents.contains('Sync: failed to') || contents.contains('ModLoadingException') ||
+                contents.contains('MixinApplyError') || contents.contains('InvalidInjectionException')) {
+            throw new GradleException('Native world validation logged a loader, mixin or sync failure')
+        }
+    }
+}
+
+tasks.named('processResources') {
+    from('../../src/main/resources/data/gtceu/gtceu/bedrock_fluid') { into 'data/gtceu/gtceu/bedrock_fluid' }
+    inputs.dir('../../src/main/resources/assets/gtceu/lang')
+    inputs.dir('../../../GTLAdditions/src/main/resources/assets/gtceu/lang')
+    doLast {
+        ['en_us', 'zh_cn'].each { locale ->
+            def parser = new groovy.json.JsonSlurper()
+            def labels = parser.parse(file("../../src/main/resources/assets/gtceu/lang/${locale}.json"))
+            labels.putAll(parser.parse(file("../../../GTLAdditions/src/main/resources/assets/gtceu/lang/${locale}.json")))
+            def target = destinationDir.toPath().resolve("assets/gtceu/lang/${locale}.json").toFile()
+            target.parentFile.mkdirs()
+            target.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(labels)) + '\n'
+        }
+    }
+    from('../../src/main/resources/assets/ae2/screens/gtlcore_set_replace_amount.json') { into 'assets/ae2/screens' }
+    from('../../src/main/resources/assets/gtlcore/textures/guis/states.png') { into 'assets/gtlcore/textures/guis' }
+    from('../../src/main/resources/assets/gtlcore/lang') { into 'assets/gtlcore/lang' }
+    from('../../src/main/resources/assets/gtlcore/textures/gui/preview') { into 'assets/gtlcore/textures/gui/preview' }
+    from('../../src/main/resources/assets/gtlcore/textures/gui/wireless') { into 'assets/gtlcore/textures/gui/wireless' }
+    from('../../src/main/resources/assets/gtceu/models/item') { into 'assets/gtceu/models/item' }
+    from('../../src/main/resources/assets/gtceu/textures/item') { into 'assets/gtceu/textures/item' }
+    from('build/generated-machine-models/assets/gtlcore_recipe_test') {
+        into 'assets/gtlcore_recipe_test'
+        include 'blockstates/native_*_render.json', 'models/block/machine/native_*_render.json', 'models/item/native_*_render.json'
+    }
+    from('../../src/main/resources/assets/gtlcore/models/obj') { into 'assets/gtlcore/models/obj' }
+    from('../../src/main/resources/assets/gtlcore/textures/block/obj') { into 'assets/gtlcore/textures/block/obj' }
+    from('../../src/main/resources/assets/gtlcore/textures/block/space_elevator_mechanical_casing.png') { into 'assets/gtlcore/textures/block' }
+    from('../../src/main/resources/assets/gtlcore/textures/block/casings') { include 'dimensionally_transcendent*'; into 'assets/gtlcore/textures/block/casings' }
+    from('../../src/main/resources/assets/gtlcore/shaders') { include '**/harmony_animation.*'; into 'assets/gtlcore/shaders' }
+    from('../../migration/native-textures.json')
+    from('../../../GTLAdditions/migration/native-textures.json') { rename { 'native-additions-textures.json' } }
+    from('../../../GTLAdditions/src/main/resources/assets/gtladditions/textures/block/obj/heartofuniverse.png') { into 'assets/gtladditions/textures/block/obj' }
+    from('../../../GTLAdditions/src/main/resources/assets/gtladditions/textures/block/multiblock/forge_of_antichrist') { include 'space_layer.png', 'star_layer_0.png'; into 'assets/gtladditions/textures/block/multiblock/forge_of_antichrist' }
+    from('../../migration/native-avaritia-api.json')
+    from('../../src/main/resources/assets/gtlcore/models/item/virtual_ingredient.json') { into 'assets/gtlcore/models/item' }
+    from('../../src/main/resources/assets/gtlcore/textures/item/virtual_ingredient.png') { into 'assets/gtlcore/textures/item' }
+    from('../../../GTLAdditions/src/main/resources/assets/gtladditions/lang') { into 'assets/gtladditions/lang' }
+    from('../../../GTLAdditions/src/main/resources/assets/gtladditions/textures/gui/matter_exotic_catalyst.png') {
+        into 'assets/gtladditions/textures/gui'
+    }
+}
+
+tasks.register('verifyNativeMachineClient') {
+    group = 'verification'
+    description = 'Requires actual ModularUI client clicks, C2S settings changes, native SaveField restoration, and no menu payload errors.'
+    dependsOn 'runClient'
+    doLast {
+        def log = file('run/client/logs/latest.log')
+        def contents = log.getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_MACHINE_UI_SERVER_SAVE_RESTORE=PASS batch=true distinct=true lock=true'))
+            throw new GradleException('Actual machine menu C2S clicks / native setting restoration were not confirmed')
+        if (contents.contains('Failed to process a synchronized task') || contents.contains('Error executing task on Client') ||
+                contents.contains('Sync: Error') || contents.contains('Sync: failed to') || contents.contains('ModLoadingException') || contents.contains('MixinApplyError'))
+            throw new GradleException('Native machine menu validation logged a payload, sync, loader or mixin failure')
+    }
+}
+
+tasks.register('verifyNativeRendererClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_MATERIAL_RENDERERS=PASS providers=true special_models=true item=true fluid=true unbound=true frames=60'))
+            throw new GradleException('Actual native material and virtual ingredient rendering was not confirmed')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to', 'ReportedException'].any { contents.contains(it) })
+            throw new GradleException('Native renderer verification logged a loader, mixin, sync or render failure')
+        if (!file('run/client/screenshots/native-material-renderers.png').isFile())
+            throw new GradleException('Native renderer screenshot was not saved')
+    }
+}
+
+tasks.register('verifyNativeItemMenusClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_ITEM_MENUS=PASS menus=6 offhand=true page_c2s=true rotation_c2s=true stock_s2c=true'))
+            throw new GradleException('Native integrated client menu rendering / C2S / S2C validation did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to', 'ReportedException',
+             'Failed to process a synchronized task', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native menu client verification logged a loader, sync or render failure')
+        for (def name : ['dual-stock', 'structure-writer', 'pattern-generator', 'ultimate-terminal', 'pattern-box', 'pattern-modifier'])
+            if (!file('run/client/screenshots/native-menu-' + name + '.png').isFile())
+                throw new GradleException('Native ' + name + ' menu screenshot was not saved')
+    }
+}
+
+tasks.register('verifyNativeTagStockClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_TAG_STOCK_CLIENT=PASS menus=2 count_sort_c2s=true tag_popup_s2c=true'))
+            throw new GradleException('Native tag stocking popup, S2C settings or actual C2S sorting clicks did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to', 'ReportedException',
+             'Failed to process a synchronized task', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native tag client validation logged a loader, sync or render failure')
+        for (def name : ['tag-stock-item', 'tag-stock-fluid'])
+            if (!file('run/client/screenshots/native-menu-' + name + '.png').isFile())
+                throw new GradleException('Native tag stocking screenshot was not saved: ' + name)
+    }
+}
+
+tasks.register('verifyNativePreviewClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_PREVIEW_CLIENT=PASS native_gt_definitions=2 page_click=true fullscreen_click=true pan=true restore=true meshdata=true jei_layout=true jei_live_materials=true world_ghost=true world_layer=true expiration=true custom_world_shell=true jei_registration=true resource_reload=true'))
+            throw new GradleException('Native multiblock preview rendering and actual screen interaction did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'Multiblock preview upload failed',
+             'Multiblock preview compilation failed', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native multiblock preview logged a loader, compilation or render failure')
+        for (def name : ['ebf', 'tower', 'fullscreen', 'jei', 'world', 'world-custom', 'reloaded'])
+            if (!file('run/client/screenshots/native-preview-' + name + '.png').isFile())
+                throw new GradleException('Native multiblock preview screenshot was not saved: ' + name)
+    }
+}
+
+tasks.register('verifyNativeMaintenanceClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_MAINTENANCE_CLIENT=PASS menus=4 duration_click_c2s=true gravity_c2s_s2c=true'))
+            throw new GradleException('Native maintenance menu rendering or C2S/S2C settings did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to', 'ReportedException',
+             'Failed to process a synchronized task', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native maintenance client logged a loader, sync or render failure')
+        for (def name : ['auto-maintenance', 'clean-maintenance', 'gravity-maintenance', 'gravity-only'])
+            if (!file('run/client/screenshots/native-menu-' + name + '.png').isFile())
+                throw new GradleException('Native maintenance screenshot was not saved: ' + name)
+    }
+}
+
+tasks.register('verifyNativeRecipeModeClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_RECIPE_MODE_CLIENT=PASS types=7 popup=true scroll=true selection_c2s=true highlight_s2c=true saved_recreation=true'))
+            throw new GradleException('Native recipe mode popup, screen input, C2S/S2C or saved recreation did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to',
+             'Failed to process a synchronized task', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native recipe mode client logged a loader, sync or render failure')
+        for (def name : ['recipe-modes', 'recipe-modes-scrolled', 'recipe-modes-restored'])
+            if (!file('run/client/screenshots/native-menu-' + name + '.png').isFile())
+                throw new GradleException('Native recipe mode screenshot was not saved: ' + name)
+    }
+}
+
+tasks.register('verifyNativePerformanceClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_PERFORMANCE_CLIENT=PASS rows=12 equal_timings=true native_s2c=true refresh=true dispose=true scroll=true highlight_dimension=true highlight_15s=true bounded=true'))
+            throw new GradleException('Native performance rows, refresh, scroll or actual highlight mouse input did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to',
+             'Failed to process a synchronized task', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native performance client logged a loader, sync or render failure')
+        for (def name : ['native-performance-monitor', 'native-performance-monitor-scrolled', 'native-performance-monitor-updated'])
+            if (!file('run/client/screenshots/' + name + '.png').isFile())
+                throw new GradleException('Native performance screenshot was not saved: ' + name)
+    }
+}
+
+tasks.register('verifyNativeConfiguratorColumnsClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_CONFIGURATOR_COLUMNS_CLIENT=PASS controls=9 columns=3 first_popup=true second_c2s_s2c=true third_popup=true rename_c2s_s2c=true bounded=true slots=108 scroll=true last_row_popup=true page_c2s_s2c=true last_slot_popup=true output_preview=true'))
+            throw new GradleException('Actual native configuration columns, popup mouse input or C2S/S2C settings did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to',
+             'Failed to process a synchronized task', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native configuration columns logged a loader, sync or render failure')
+        for (def name : ['native-ae-columns', 'native-ae-columns-items', 'native-ae-columns-rename', 'native-ae-columns-scrolled', 'native-ae-columns-catalysts', 'native-ae-columns-large', 'native-ae-columns-last-catalysts'])
+            if (!file('run/client/screenshots/' + name + '.png').isFile())
+                throw new GradleException('Native configuration screenshot was not saved: ' + name)
+    }
+}
+
+// Generate with the production NeoForge provider and compare complete codec output to the shipped datapack.
+tasks.register('verifyNativeWorldgenData') {
+    group = 'verification'
+    dependsOn tasks.named('runData')
+    doLast {
+        def parser = new groovy.json.JsonSlurper()
+        def manifest = parser.parse(file('../bedrock-fluids.json'))
+        def generated = file('build/generated-worldgen/data/gtceu/gtceu/bedrock_fluid')
+        def shipped = file('../../src/main/resources/data/gtceu/gtceu/bedrock_fluid')
+        def expected = manifest.entries.collect { it.id.split(':')[1] + '.json' }.toSet()
+        def found = generated.listFiles()?.findAll { it.name.endsWith('.json') }?.collect { it.name }?.toSet()
+        if (found != expected) throw new GradleException("Native bedrock fluid generation differs: expected=${expected}, found=${found}")
+        expected.each { name ->
+            if (parser.parse(new File(generated, name)) != parser.parse(new File(shipped, name))) {
+                throw new GradleException("Native bedrock fluid generated settings differ from the production resource: ${name}")
+            }
+        }
+        logger.lifecycle('GTL_NATIVE_WORLDGEN_DATA=PASS deposits=30 production_provider=true unchanged_settings=true')
+    }
+}
+
+// Physical production wildcard-buffer GUI acceptance (external editor is independently pending).
+tasks.register('verifyNativeGtOutputClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_GT_OUTPUT_CLIENT=PASS menus=3 keys_per_list=12 long_components_s2c=true readonly=true scroll_last=true exact_hover=true return_click_c2s_s2c=true interval_c2s_s2c=true bounded=true'))
+            throw new GradleException('Native GT/GTMThings output menus did not complete actual client synchronization and rendering')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to', 'ReportedException', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native output client logged a loader, synchronization or rendering failure')
+        for (def machine : ['item', 'fluid', 'dual'])
+            for (def stage : ['main', 'last', 'refresh'])
+                if (!file('run/client/screenshots/native-gt-output-' + machine + '-' + stage + '.png').isFile())
+                    throw new GradleException('Native output screenshot missing: ' + machine + '/' + stage)
+    }
+}
+
+tasks.register('verifyNativeWildcardClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_WILDCARD_CLIENT=PASS menus=2 long_components=true rotation_s2c=true readonly_preview=true visibility_c2s_s2c=true rename_c2s_s2c=true pages=4 last_config=true stock_reload=true interval_c2s=true bounded=true fluid_tooltip=true'))
+            throw new GradleException('Native wildcard production menus did not complete rendering and server synchronization')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to', 'ReportedException', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native wildcard client logged a loader, synchronization or rendering failure')
+        for (def name : ['buffer', 'fluid-tooltip', 'rename', 'stocking', 'stock-last-page', 'refresh'])
+            if (!file('run/client/screenshots/native-wildcard-' + name + '.png').isFile())
+                throw new GradleException('Native wildcard screenshot missing: ' + name)
+    }
+}
+
+
+tasks.register('verifyNativeSuperPatternClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_SUPER_PATTERN_CLIENT=PASS menus=3 default_slots=162 max_slots=1800 min_slots=1 foa_c2s_s2c=true page_c2s_s2c=true scroll_both_axes=true last_middle_popup=true component_pattern=true output_preview=true bounded=true'))
+            throw new GradleException('Native Additions super pattern menus did not finish client acceptance')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'Sync: Failed to', 'ReportedException', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native super pattern client logged a loader, sync or rendering failure')
+        for (def variant : ['default', 'wide', 'tiny']) {
+            for (def stage : ['main', 'last'])
+                if (!file('run/client/screenshots/native-super-pattern-' + variant + '-' + stage + '.png').isFile())
+                    throw new GradleException('Missing native super pattern screenshot: ' + variant + '/' + stage)
+            if (variant != 'tiny' && !file('run/client/screenshots/native-super-pattern-' + variant + '-catalysts.png').isFile())
+                throw new GradleException('Missing final-slot catalyst screenshot: ' + variant)
+        }
+        if (!file('run/client/screenshots/native-super-pattern-default-foa.png').isFile())
+            throw new GradleException('Missing native FOA setting screenshot')
+    }
+}
+
+tasks.register('verifyNativeFluidRigClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_FLUID_RIG_CLIENT=PASS menus=3 long_display_s2c=true readonly=true physical_power_c2s_s2c=true one_paid_cycle=true controller_reload=true bounded=true title_bounds=true'))
+            throw new GradleException('Native fluid rig menus did not finish client acceptance')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'Sync: failed to', 'ReportedException', 'Error executing task on Client'].any { contents.contains(it) })
+            throw new GradleException('Native fluid rig client logged a loader, sync or rendering failure')
+        for (def variant : ['normal', 'overclocked', 'long'])
+            for (def stage : ['ready', 'completed', 'reloaded'])
+                if (!file('run/client/screenshots/native-fluid-rig-' + variant + '-' + stage + '.png').isFile())
+                    throw new GradleException('Missing native fluid rig screenshot: ' + variant + '/' + stage)
+    }
+}
+
+// A native embedded UI test, with explicit fixture command callbacks rather than terminal network traffic.
+tasks.register('verifyNativeChamberConfiguratorClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_CHAMBER_CONFIGURATOR_CLIENT=PASS panels=3 native_inputs=true fixture_commands=true bounded=true parent_retained=true'))
+            throw new GradleException('Native embedded chamber input, rendering or parent retention was not confirmed')
+        if (['ModLoadingException', 'MixinApplyError', 'Sync: Error', 'ReportedException', 'AssertionError'].any { contents.contains(it) })
+            throw new GradleException('Native chamber panel verification logged a loader, sync or render failure')
+        for (def name : ['circuits', 'refresh', 'tags'])
+            if (!file('run/client/screenshots/native-chamber-' + name + '.png').isFile())
+                throw new GradleException('Native chamber screenshot was not saved: ' + name)
+    }
+}
+
+ext.nativeAvaritiaCoreRoot = file('../..')
+apply from: '../../gradle/native-avaritia-validation.gradle'
+
+tasks.register('verifyNativeAvaritiaClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_AVARITIA_CLIENT=PASS models=50 cosmic=11 halo=39 native_loaders=true native_render=true source_json_unchanged=true bounded=true'))
+            throw new GradleException('Actual fifty production cosmic/halo model bakes and rendering were not confirmed')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'AssertionError'].any { contents.contains(it) })
+            throw new GradleException('Native Avaritia validation logged a loader, mixin or render failure')
+        if (!file('run/client/screenshots/native-avaritia-models.png').isFile())
+            throw new GradleException('Native Avaritia model screenshot was not saved')
+    }
+}
+
+tasks.register('verifyNativeDynamicRenderClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_DYNAMIC_RENDER_CLIENT=PASS renderers=3 obj_models=6 native_models=true codecs=true shader=true mesh_upload=true admission=true resource_reload=true fixture_states=true textures=true'))
+            throw new GradleException('Actual native machine model, OBJ, shader, geometry and reload validation did not complete')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'AssertionError', 'Could not load the harmony animation shader'].any { contents.contains(it) })
+            throw new GradleException('Native machine renderer validation logged a loader, mixin or render failure')
+        ['native-machine-animations.png', 'native-machine-animations-reloaded.png'].each {
+            if (!file("run/client/screenshots/${it}").isFile()) throw new GradleException('Native animation screenshot is absent: ' + it)
+        }
+    }
+}
+
+// Physical input menus use the original GT block registrations and native menu actions.
+tasks.register('verifyNativeAEWidgetsClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_AE_WIDGETS_CLIENT=PASS menus=2 long_components_s2c=true amount_popup_c2s_s2c=true scroll_c2s_s2c=true jei_item_fluid=true stock_hover=true native_stack_display=true fluid_units=true bounded=true'))
+            throw new GradleException('Native AE input GUI, recipe ingredients and long quantity packets were not confirmed')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'AssertionError'].any { contents.contains(it) })
+            throw new GradleException('Native AE widgets logged a loader, mixin or GUI failure')
+        ['native-ae-input-item-config.png', 'native-ae-input-item-stock.png',
+         'native-ae-input-fluid-config.png', 'native-ae-input-fluid-stock.png', 'native-ae-stack-display.png'].each {
+            if (!file("run/client/screenshots/${it}").isFile()) throw new GradleException('Native AE widget screenshot is absent: ' + it)
+        }
+    }
+}
+
+
+tasks.register('verifyNativeExtendedAEClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_EXTENDEDAE_CLIENT=PASS original_host=true scope_c2s_s2c=true page_c2s_s2c=true middle_click_popup=true typed_long_c2s_s2c=true replace_c2s_s2c=true metadata=true bounded=true'))
+            throw new GradleException('Native ExtendedAE physical menu actions and packets were not confirmed')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'AssertionError'].any { contents.contains(it) })
+            throw new GradleException('Native ExtendedAE client reported a loader, Mixin or interaction failure')
+        ['scoped', 'replace', 'amount', 'replaced'].each {
+            if (!file("run/client/screenshots/native-extendedae-${it}.png").isFile()) throw new GradleException('Native ExtendedAE screenshot is absent: ' + it)
+        }
+    }
+}
+
+
+tasks.register('verifyNativeProspectorClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_PROSPECTOR_CLIENT=PASS original_item_menu=true native_map=true negative_coordinates=true fixed_opening_anchor=true right_waypoints=true clear_preserves_manual=true teleport_c2s_s2c=true bounded=true'))
+            throw new GradleException('Native prospecting menu, waypoint controls and teleport packets were not confirmed')
+        if (['ModLoadingException', 'MixinApplyError', 'ReportedException', 'AssertionError'].any { contents.contains(it) })
+            throw new GradleException('Native prospecting client reported a loader, Mixin or interaction failure')
+        ['waypoint', 'moved', 'cleared', 'teleported'].each {
+            if (!file("run/client/screenshots/native-prospector-${it}.png").isFile()) throw new GradleException('Native prospecting screenshot is absent: ' + it)
+        }
+    }
+}
+
+
+tasks.register('verifyNativeEnergyClient') {
+    group = 'verification'
+    dependsOn 'runClient'
+    doLast {
+        def contents = file('run/client/logs/latest.log').getText('UTF-8')
+        if (!contents.contains('GTL_NATIVE_ENERGY_CLIENT=PASS original_menus=3 dropdown_c2s_s2c=true exact_odd_long=true typed_max_long=true zero_amps=true plus_c2s_s2c=true creative_reload=true monitor_scope_c2s_s2c=true native_rich_rows=true physical_scroll=true native_highlight=true bounded=true') ||
+                contents.contains('ModLoadingException') || contents.contains('MixinApplyError') || contents.contains('InvalidInjectionException') || contents.contains('AssertionError') || contents.contains('Sync: Error'))
+            throw new GradleException('Actual native creative/wireless energy client validation did not complete')
+        if (contents.contains('MUI [SIZING]')) throw new GradleException('Native energy menu reported layout errors')
+        for (def type : ['energy', 'laser']) for (def name : ['tiers', 'odd', 'maximum', 'reload'])
+            if (!file("run/client/screenshots/native-creative-${type}-${name}.png").isFile()) throw new GradleException('Missing native creative menu screenshot')
+        for (def name : ['team', 'all', 'highlight'])
+            if (!file("run/client/screenshots/native-wireless-monitor-${name}.png").isFile()) throw new GradleException('Missing native wireless monitor screenshot')
+    }
+}

@@ -46,7 +46,7 @@ public class WirelessNetworkBookmarkScreen extends AbstractContainerScreen<Wirel
 
     @Override
     public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
     }
@@ -166,12 +166,12 @@ public class WirelessNetworkBookmarkScreen extends AbstractContainerScreen<Wirel
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalDelta, double delta) {
         if (isInsideRect(mouseX, mouseY, getListX(), getListY(), this.imageWidth - CONTENT_X * 2, getScrollbarHeight()) &&
                 scrollBy(delta)) {
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, horizontalDelta, delta);
     }
 
     private boolean handleScrollbarClick(double mouseX, double mouseY) {
@@ -205,7 +205,7 @@ public class WirelessNetworkBookmarkScreen extends AbstractContainerScreen<Wirel
             boolean removeFavorite = entry.frequency().equals(this.favoriteNetwork);
             this.favoriteNetwork = removeFavorite ? null : entry.frequency();
             this.favoriteName = removeFavorite ? null : entry.name();
-            WirelessAePackets.CHANNEL.sendToServer(
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                     new WirelessAePackets.SetFavoriteNetworkPacket(this.menu.getPos(), entry.frequency()));
         }
         return true;

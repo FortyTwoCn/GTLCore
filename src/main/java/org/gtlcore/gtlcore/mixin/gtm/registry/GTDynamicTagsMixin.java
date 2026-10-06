@@ -2,7 +2,8 @@ package org.gtlcore.gtlcore.mixin.gtm.registry;
 
 import org.gtlcore.gtlcore.api.data.tag.GTLItemTags;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
+import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
@@ -14,6 +15,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagLoader;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,16 +32,28 @@ public abstract class GTDynamicTagsMixin {
 
     private static final String TAG_SOURCE = "GTLCore dynamic siftable ore tags";
 
-    @Inject(method = "generateGTDynamicTags", at = @At("TAIL"), remap = false)
+    @Inject(method = "generateGTDynamicTags", at = @At("TAIL"), remap = false, require = 1)
     private static <T> void gtlcore$addSiftableOreItems(
                                                         Map<ResourceLocation, List<TagLoader.EntryWithSource>> tags,
                                                         Registry<T> registry,
                                                         CallbackInfo ci) {
+        if (registry == BuiltInRegistries.BLOCK) {
+            for (var tag : CustomTags.TOOL_TIERS) tags.computeIfAbsent(tag.location(), ignored -> new ArrayList<>());
+            for (int tier = 0; tier < CustomTags.INCORRECT_TOOL_TIERS.length; tier++) {
+                var incorrect = tags.computeIfAbsent(CustomTags.INCORRECT_TOOL_TIERS[tier].location(), ignored -> new ArrayList<>());
+                for (int higher = tier + 1; higher < CustomTags.TOOL_TIERS.length; higher++)
+                    incorrect.add(new TagLoader.EntryWithSource(TagEntry.tag(CustomTags.TOOL_TIERS[higher].location()), "GTLCore native harvest tiers"));
+            }
+            var gold = tags.computeIfAbsent(BlockTags.INCORRECT_FOR_GOLD_TOOL.location(), ignored -> new ArrayList<>());
+            for (int higher = 7; higher < CustomTags.TOOL_TIERS.length; higher++)
+                gold.add(new TagLoader.EntryWithSource(TagEntry.tag(CustomTags.TOOL_TIERS[higher].location()), "GTLCore native harvest tiers"));
+            return;
+        }
         if (registry != BuiltInRegistries.ITEM) {
             return;
         }
 
-        for (Material material : GTCEuAPI.materialManager.getRegisteredMaterials()) {
+        for (Material material : GTRegistries.MATERIALS) {
             if (!gtlcore$isSiftableOre(material)) {
                 continue;
             }

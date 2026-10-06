@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.integration.jei;
 import org.gtlcore.gtlcore.client.preview.PreviewMaterialHighlights;
 
 import com.lowdragmc.lowdraglib.gui.ingredient.IRecipeIngredientSlot;
-import com.lowdragmc.lowdraglib.utils.Position;
+import com.lowdragmc.lowdraglib.math.Position;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.client.gui.GuiGraphics;
@@ -39,7 +39,7 @@ public class SlotRecipeWidget implements ISlottedRecipeWidget {
     public SlotRecipeWidget(IRecipeIngredientSlot slot, IRecipeSlotDrawable jeiSlot) {
         this.slot = slot;
         this.jeiSlot = jeiSlot;
-        this.position = new Position(slot.self().getPositionX(), slot.self().getPositionY());
+        this.position = Position.of(slot.self().getPositionX(), slot.self().getPositionY());
         PreviewMaterialHighlights.bind(slot, jeiSlot);
     }
 
@@ -116,7 +116,7 @@ public class SlotRecipeWidget implements ISlottedRecipeWidget {
 
         @Override
         public Rect2i getAreaIncludingBackground() {
-            return null;
+            return getRect();
         }
 
         @Override
@@ -129,7 +129,17 @@ public class SlotRecipeWidget implements ISlottedRecipeWidget {
 
         @Override
         public @Unmodifiable List<@Nullable ITypedIngredient<?>> getAllIngredientsList() {
-            return List.of();
+            return getAllIngredients().toList();
+        }
+
+        @Override
+        public Stream<ITypedIngredient<?>> getDisplayedIngredients() {
+            return getDisplayedIngredient().stream();
+        }
+
+        @Override
+        public Optional<net.minecraft.tags.TagKey<?>> getTagKey() {
+            return jeiSlot.getTagKey();
         }
 
         @Override
@@ -151,7 +161,7 @@ public class SlotRecipeWidget implements ISlottedRecipeWidget {
 
         @Override
         public void drawHighlight(GuiGraphics guiGraphics, int color) {
-            jeiSlot.drawHighlight(guiGraphics, color);
+            PreviewMaterialHighlights.draw(jeiSlot, guiGraphics, color);
         }
 
         @Override

@@ -1,240 +1,119 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 
-import org.gtlcore.gtlcore.api.machine.MEExtendedOutputFancyConfigurator;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEFilterIOTrait;
-import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
-import org.gtlcore.gtlcore.utils.NumberUtils;
-
-import com.gregtechceu.gtceu.api.gui.fancy.TabsWidget;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.recipe.ingredient.*;
-
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.annotation.LazyManaged;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
+import org.gtlcore.gtlcore.api.machine.MEExtendedOutputFancyConfigurator;
+import org.gtlcore.gtlcore.integration.ae2.AEOutputIngredients;
+import org.gtlcore.gtlcore.integration.ae2.AEBufferedOutput;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import brachy.modularui.screen.UISettings;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.ticking.*;
 import appeng.api.stacks.*;
+import brachy.modularui.factory.PosGuiData;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widgets.ButtonWidget;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
 import java.util.List;
-
-import static org.gtlcore.gtlcore.integration.ae2.AEUtils.reFunds;
+import java.util.ArrayList;
+import java.util.function.Function;
 
 public class MEExtendedOutputPartMachine extends MEExtendedOutputPartMachineBase {
+    protected static final int FILTER_ROW = 3, FILTER_COL = 9;
+    @SaveField protected final MEOutputFilterHandler filterHandler;
 
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public MEExtendedOutputPartMachine(BlockEntityCreationInfo info) {
+        super(info);
+        filterHandler = new MEOutputFilterHandler(FILTER_ROW, FILTER_COL,
+                this::onFilterChanged, this::updatePriority, this::getPriority, this::setPriority);
     }
+    private void onFilterChanged() { markAsChanged(); notifyHandlers(); }
+    public MEOutputFilterHandler getFilterHandler() { return filterHandler; }
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEExtendedOutputPartMachine.class, MEExtendedOutputPartMachineBase.MANAGED_FIELD_HOLDER);
-
-    protected final static int FILTER_ROW = 3;
-    protected final static int FILTER_COL = 9;
-
-    @Persisted
-    @LazyManaged
-    protected final MEOutputFilterHandler filterHandler;
-
-    public MEExtendedOutputPartMachine(IMachineBlockEntity holder) {
-        super(holder);
-        filterHandler = new MEOutputFilterHandler(FILTER_ROW, FILTER_COL, this::onFilterChanged, this::updatePriority, this::getPriority, this::setPriority);
+    @Override public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager manager, UISettings settings) {
+        var configurator = new MEExtendedOutputFancyConfigurator(filterHandler::createMainWidgetGroup);
+        var filters = manager.syncedPanel("extendedOutputFilters", true, (sync, handler) -> configurator.createPanel(sync));
+        return MachineUIPanelBuilder.panelBuilder(this).leftConfigurators(flow -> flow.child(
+                new ButtonWidget<>().size(18).overlay(GTGuiTextures.BUTTON_ITEM_OUTPUT)
+                        .onMousePressed((context, button) -> { filters.openPanel(); return true; })
+                        .tooltipDynamic(t -> t.addLine(Component.translatable("tooltip.gtlcore.change_item_fluid_filter_priority")))));
     }
-
-    private void onFilterChanged() {
-        markDirty();
-        notifyHandlers();
-    }
-
-    public MEOutputFilterHandler getFilterHandler() {
-        return filterHandler;
-    }
-
-    // ========================================
-    // GUI SYSTEM
-    // ========================================
-
-    @Override
-    public ModularUI createUI(Player entityPlayer) {
-        final var ui = super.createUI(entityPlayer);
-        ui.registerCloseListener(filterHandler::onUIClosed);
-        return ui;
-    }
-
-    @Override
-    public void attachSideTabs(TabsWidget sideTabs) {
-        super.attachSideTabs(sideTabs);
-        sideTabs.attachSubTab(new MEExtendedOutputFancyConfigurator(filterHandler::createMainWidgetGroup));
-    }
-
-    // ========================================
-    // DataStick Copy
-    // ========================================
-
-    protected CompoundTag writeConfigToTag() {
+    @Override protected CompoundTag writeConfigToTag() {
         var tag = super.writeConfigToTag();
-        tag.put("meOutputFilterHandler", filterHandler.serializeNBT());
-        return tag;
+        tag.put("meOutputFilterHandler", filterHandler.serializeNBT(getLevel().registryAccess())); return tag;
     }
-
-    protected void readConfigFromTag(CompoundTag tag) {
+    @Override protected void readConfigFromTag(CompoundTag tag) {
         super.readConfigFromTag(tag);
-        if (tag.contains("meOutputFilterHandler")) {
-            filterHandler.deserializeNBT(tag.getCompound("meOutputFilterHandler"));
+        if (tag.contains("meOutputFilterHandler", 10)) {
+            filterHandler.deserializeNBT(getLevel().registryAccess(), tag.getCompound("meOutputFilterHandler"));
             onFilterChanged();
         }
     }
 
-    // ========================================
-    // ME Output Handlers && Tick Service
-    // ========================================
-
-    @Override
-    protected NotifiableMERecipeHandlerTrait<Ingredient, ItemStack> createItemOutputHandler() {
-        return new MEExtendedOutputPartMachineBase.MEItemOutputHandler(this) {
-
-            @Override
-            public MEExtendedOutputPartMachine getMachine() {
-                return (MEExtendedOutputPartMachine) this.machine;
+    /** Preflight the complete accepted subset so a long overflow never acknowledges lost output. */
+    private <T> List<T> accept(List<T> left, boolean simulate, Function<T, GenericStack> resolver) {
+        var accepted = new Object2LongOpenHashMap<AEKey>(); var remaining = new ArrayList<T>();
+        try {
+            for (T ingredient : left) {
+                var output = resolver.apply(ingredient);
+                if (output == null) continue;
+                boolean matches = output.what() instanceof AEItemKey key ? filterHandler.test(key.toStack(1)) :
+                        output.what() instanceof AEFluidKey fluidKey && filterHandler.test(fluidKey.toStack(1));
+                if (!matches) { remaining.add(ingredient); continue; }
+                accepted.put(output.what(), Math.addExact(accepted.getLong(output.what()), output.amount()));
             }
-
-            @Override
-            public boolean outputHasFilter() {
-                return filterHandler.isHasItemFilter();
-            }
-
-            @Override
-            public List<Ingredient> meHandleRecipeOutputInner(List<Ingredient> left, boolean simulate) {
-                if (simulate) return filterHandler.testIngredient(left);
-                for (Iterator<Ingredient> it = left.iterator(); it.hasNext();) {
-                    Ingredient ingredient = it.next();
-                    if (ingredient instanceof IntProviderIngredient intProvider) {
-                        intProvider.setItemStacks(null);
-                        intProvider.setSampledCount(null);
-                    }
-
-                    ItemStack[] items = ingredient.getItems();
-                    if (items.length != 0) {
-                        ItemStack output = items[0];
-                        if (output.isEmpty()) it.remove();
-                        else if (filterHandler.test(output)) {
-                            buffer.mergeLong(AEItemKey.of(output),
-                                    ingredient instanceof LongIngredient longIngredient ? longIngredient.getActualAmount() : output.getCount(),
-                                    NumberUtils::saturatedAdd);
-                            it.remove();
-                        }
-                    } else it.remove();
-                }
-                return left;
+            for (var entry : accepted.object2LongEntrySet()) Math.addExact(buffer.getLong(entry.getKey()), entry.getLongValue());
+        } catch (ArithmeticException overflow) { return left; }
+        if (!simulate && !accepted.isEmpty()) {
+            for (var entry : accepted.object2LongEntrySet()) buffer.put(entry.getKey(), buffer.getLong(entry.getKey()) + entry.getLongValue());
+            markAsChanged(); getMETrait().notifySelfIO();
+        }
+        return remaining;
+    }
+    @Override protected NotifiableMERecipeHandlerTrait<SizedIngredient, ItemStack> createItemOutputHandler() {
+        return new MEItemOutputHandler() {
+            @Override public boolean outputHasFilter() { return filterHandler.isHasItemFilter(); }
+            @Override public List<SizedIngredient> meHandleRecipeOutputInner(List<SizedIngredient> left, boolean simulate) {
+                return accept(left, simulate, ingredient -> AEOutputIngredients.item(ingredient, simulate));
             }
         };
     }
-
-    @Override
-    protected NotifiableMERecipeHandlerTrait<FluidIngredient, FluidStack> createFluidOutputHandler() {
-        return new MEExtendedOutputPartMachineBase.MEFluidOutputHandler(this) {
-
-            @Override
-            public MEExtendedOutputPartMachine getMachine() {
-                return (MEExtendedOutputPartMachine) this.machine;
-            }
-
-            @Override
-            public boolean outputHasFilter() {
-                return filterHandler.isHasFluidFilter();
-            }
-
-            @Override
-            public List<FluidIngredient> meHandleRecipeOutputInner(List<FluidIngredient> left, boolean simulate) {
-                if (simulate) return filterHandler.testFluidIngredient(left);
-                for (Iterator<FluidIngredient> it = left.iterator(); it.hasNext();) {
-                    FluidIngredient fluidIngredient = it.next();
-                    if (!fluidIngredient.isEmpty()) {
-                        FluidStack[] fluids = fluidIngredient.getStacks();
-                        if (fluids.length != 0) {
-                            FluidStack output = fluids[0];
-                            if (output.isEmpty()) it.remove();
-                            else if (filterHandler.test(output)) {
-                                buffer.mergeLong(AEFluidKey.of(output.getFluid()), output.getAmount(), NumberUtils::saturatedAdd);
-                                it.remove();
-                            }
-                        } else it.remove();
-                    } else it.remove();
-                }
-
-                return left;
+    @Override protected NotifiableMERecipeHandlerTrait<SizedFluidIngredient, FluidStack> createFluidOutputHandler() {
+        return new MEFluidOutputHandler() {
+            @Override public boolean outputHasFilter() { return filterHandler.isHasFluidFilter(); }
+            @Override public List<SizedFluidIngredient> meHandleRecipeOutputInner(List<SizedFluidIngredient> left, boolean simulate) {
+                return accept(left, simulate, ingredient -> AEOutputIngredients.fluid(ingredient, simulate));
             }
         };
     }
-
-    @Override
-    protected @NotNull IMEFilterIOTrait createMETrait() {
-        return new MEFilterIOTrait(this);
-    }
-
-    @Override
-    public @NotNull IMEFilterIOTrait getMETrait() {
-        return (IMEFilterIOTrait) meTrait;
-    }
-
-    @Override
-    protected void registerDefaultServices() {
-        getMainNode().addService(IGridTickable.class, new Ticker());
-    }
+    @Override protected @NotNull IMEFilterIOTrait createMETrait() { return new MEFilterIOTrait(); }
+    @Override public @NotNull IMEFilterIOTrait getMETrait() { return (IMEFilterIOTrait) meTrait; }
+    @Override protected void registerDefaultServices() { getMainNode().addService(IGridTickable.class, new Ticker()); }
 
     protected class Ticker implements IGridTickable {
-
-        @Override
-        public TickingRequest getTickingRequest(IGridNode node) {
-            return new TickingRequest(MIN_FREQUENCY, MAX_FREQUENCY, false, true);
-        }
-
-        @Override
-        public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
-            if (!getMainNode().isActive()) {
-                isSleeping = true;
-                return TickRateModulation.SLEEP;
-            }
-
+        @Override public TickingRequest getTickingRequest(IGridNode node) { return new TickingRequest(MIN_FREQUENCY, MAX_FREQUENCY, false); }
+        @Override public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
+            if (!getMainNode().isActive()) { isSleeping = true; return TickRateModulation.SLEEP; }
             if (buffer.isEmpty()) {
-                if (ticksSinceLastCall >= MAX_FREQUENCY) {
-                    isSleeping = true;
-                    return TickRateModulation.SLEEP;
-                } else return TickRateModulation.SLOWER;
-            } else return reFunds(buffer, getMainNode().getGrid(), actionSource) ? TickRateModulation.URGENT : TickRateModulation.SLOWER;
+                if (ticksSinceLastCall >= MAX_FREQUENCY) { isSleeping = true; return TickRateModulation.SLEEP; }
+                return TickRateModulation.SLOWER;
+            }
+            if (AEBufferedOutput.flush(buffer, getMainNode().getGrid(), actionSource)) { markAsChanged(); return TickRateModulation.URGENT; }
+            return TickRateModulation.SLOWER;
         }
     }
-
     protected class MEFilterIOTrait extends MEIOTrait implements IMEFilterIOTrait {
-
-        public MEFilterIOTrait(MEExtendedOutputPartMachine machine) {
-            super(machine);
-        }
-
-        @Override
-        public MEExtendedOutputPartMachine getMachine() {
-            return (MEExtendedOutputPartMachine) machine;
-        }
-
-        @Override
-        public boolean hasItemFilter() {
-            return filterHandler.isHasItemFilter();
-        }
-
-        @Override
-        public boolean hasFluidFilter() {
-            return filterHandler.isHasFluidFilter();
-        }
+        @Override public boolean hasItemFilter() { return filterHandler.isHasItemFilter(); }
+        @Override public boolean hasFluidFilter() { return filterHandler.isHasFluidFilter(); }
     }
 }

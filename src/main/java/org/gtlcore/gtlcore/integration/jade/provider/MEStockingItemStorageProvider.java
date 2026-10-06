@@ -3,14 +3,13 @@ package org.gtlcore.gtlcore.integration.jade.provider;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.integration.jade.MEStockingItemJadeHelper;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 import snownee.jade.api.Accessor;
+import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.view.ClientViewGroup;
 import snownee.jade.api.view.IClientExtensionProvider;
 import snownee.jade.api.view.IServerExtensionProvider;
@@ -19,7 +18,7 @@ import snownee.jade.api.view.ViewGroup;
 
 import java.util.List;
 
-public enum MEStockingItemStorageProvider implements IServerExtensionProvider<MetaMachineBlockEntity, ItemStack>, IClientExtensionProvider<ItemStack, ItemView> {
+public enum MEStockingItemStorageProvider implements IServerExtensionProvider<ItemStack>, IClientExtensionProvider<ItemStack, ItemView> {
 
     INSTANCE;
 
@@ -27,9 +26,9 @@ public enum MEStockingItemStorageProvider implements IServerExtensionProvider<Me
     private static final int PRIORITY = -10;
 
     @Override
-    public List<ViewGroup<ItemStack>> getGroups(ServerPlayer player, ServerLevel level,
-                                                MetaMachineBlockEntity blockEntity, boolean showDetails) {
-        return MEStockingItemJadeHelper.createGroups(blockEntity.getMetaMachine());
+    public List<ViewGroup<ItemStack>> getGroups(Accessor<?> accessor) {
+        if (!(accessor instanceof BlockAccessor block) || !(block.getBlockEntity() instanceof MetaMachine machine)) return null;
+        return MEStockingItemJadeHelper.createGroups(machine);
     }
 
     @Override

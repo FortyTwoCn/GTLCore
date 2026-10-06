@@ -1,69 +1,77 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 
-import org.gtlcore.gtlcore.api.pattern.util.IValueContainer;
+import org.gtlcore.gtlcore.api.pattern.PatternMatchData;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
-import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
+import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
-
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.network.chat.Component;
 
-import org.jetbrains.annotations.NotNull;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.value.sync.IntSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AdvancedAssemblyLineMachine extends WorkableElectricMultiblockMachine {
+    @Getter
+    @SyncToClient
+    private int speed;
 
-    public AdvancedAssemblyLineMachine(IMachineBlockEntity holder) {
-        super(holder);
+    public AdvancedAssemblyLineMachine(BlockEntityCreationInfo info) {
+        super(info);
     }
 
-    public static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            AdvancedAssemblyLineMachine.class, WorkableMultiblockMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
-    private int speed = 0;
-
-    public static GTRecipe recipeModifier(MetaMachine machine, @NotNull GTRecipe recipe, OCParams params, OCResult result) {
-        if (machine instanceof AdvancedAssemblyLineMachine lineMachine) {
-            GTRecipe recipe1 = GTRecipeModifiers.hatchParallel(machine, recipe, false, params, result);
-            if (recipe1 == null) return null;
-            recipe1.duration = Math.max(lineMachine.speed * recipe1.duration / 100, 1);
-            return RecipeHelper.applyOverclock(OverclockingLogic.NON_PERFECT_OVERCLOCK,
-                    recipe1, lineMachine.getOverclockVoltage(), params, result);
+    public static ModifierFunction recipeModifier(MetaMachine machine, GTRecipe recipe) {
+        if (!(machine instanceof AdvancedAssemblyLineMachine line)) {
+            return RecipeModifier.nullWrongType(AdvancedAssemblyLineMachine.class, machine);
         }
-        return null;
+        return GTRecipeModifiers.hatchParallel(machine, recipe)
+                .andThen(ModifierFunction.builder().durationMultiplier(line.speed / 100.0).build())
+                .andThen(modified -> OverclockingLogic.NON_PERFECT_OVERCLOCK
+                        .getModifier(machine, modified, line.getOverclockVoltage()).apply(modified));
     }
 
     @Override
-    public void onStructureFormed() {
-        IValueContainer<?> container = getMultiblockState().getMatchContext()
-                .getOrCreate("UnitValue", IValueContainer::noop);
-        if (container.getValue() instanceof Integer integer) {
-            speed = 100 - integer;
+    public void formStructure(String name) {
+        super.formStructure(name);
+        if (DEFAULT_STRUCTURE.equals(name)) {
+            speed = isFormed() ? 100 - PatternMatchData.of(getDefaultPatternState().getContext())
+                    .blockCount("Unit") : 0;
+            getSyncDataHolder().markClientSyncFieldDirty("speed");
         }
-        super.onStructureFormed();
     }
 
     @Override
-    public void addDisplayText(@NotNull List<Component> textList) {
-        super.addDisplayText(textList);
-        if (!this.isFormed) return;
-        textList.add(Component.translatable("gtceu.machine.duration_multiplier.tooltip", speed).append("%"));
+    public void invalidateStructure(String name) {
+        super.invalidateStructure(name);
+        if (DEFAULT_STRUCTURE.equals(name)) {
+            speed = 0;
+            getSyncDataHolder().markClientSyncFieldDirty("speed");
+        }
     }
 
     @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager syncManager) {
+        List<IWidget> widgets = new ArrayList<>(super.getWidgetsForDisplay(syncManager));
+        var value = syncManager.getOrCreateSyncHandler("gtlAssemblySpeed", IntSyncValue.class,
+                () -> new IntSyncValue(this::getSpeed));
+        var formed = syncManager.getOrCreateSyncHandler("isFormed", BooleanSyncValue.class,
+                () -> new BooleanSyncValue(this::isFormed));
+        widgets.add(Text.dynamic(() -> Component.translatable("gtceu.machine.duration_multiplier.tooltip",
+                value.getIntValue()).append("%"))
+                .asWidget().setEnabledIf(widget -> formed.getBoolValue()));
+        return widgets;
     }
 }

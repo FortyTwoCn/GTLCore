@@ -2,9 +2,9 @@ package org.gtlcore.gtlcore.integration.jade.provider;
 
 import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferProxyPartMachine;
 
-import com.gregtechceu.gtceu.GTCEu;
+import org.gtlcore.gtlcore.api.GTLConstants;
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.utils.GradientUtil;
 
 import net.minecraft.ChatFormatting;
@@ -23,8 +23,8 @@ public class MEPatternBufferProxyProvider implements IBlockComponentProvider, IS
 
     @Override
     public void appendTooltip(ITooltip iTooltip, BlockAccessor blockAccessor, IPluginConfig iPluginConfig) {
-        if (blockAccessor.getBlockEntity() instanceof IMachineBlockEntity blockEntity) {
-            if (blockEntity.getMetaMachine() instanceof MEPatternBufferProxyPartMachine) {
+        if (blockAccessor.getBlockEntity() instanceof MetaMachine blockEntity) {
+            if (blockEntity instanceof MEPatternBufferProxyPartMachine) {
                 CompoundTag serverData = blockAccessor.getServerData();
 
                 if (!serverData.getBoolean("formed")) return;
@@ -34,19 +34,20 @@ public class MEPatternBufferProxyProvider implements IBlockComponentProvider, IS
                 }
 
                 int[] pos = serverData.getIntArray("pos");
+                if (pos.length != 3) return;
                 iTooltip.add(Component.translatable("gtceu.top.buffer_bound_pos", pos[0], pos[1], pos[2])
                         .withStyle(style -> style.withColor(rainbowColor(1.25f))));
 
                 // Show buffer contents
-                MEPatternBufferProvider.readBufferContents(iTooltip, serverData);
+                MEPatternBufferProvider.readBufferContents(iTooltip, serverData, blockAccessor.getLevel().registryAccess());
             }
         }
     }
 
     @Override
     public void appendServerData(CompoundTag compoundTag, BlockAccessor blockAccessor) {
-        if (blockAccessor.getBlockEntity() instanceof IMachineBlockEntity blockEntity) {
-            if (blockEntity.getMetaMachine() instanceof MEPatternBufferProxyPartMachine proxy) {
+        if (blockAccessor.getBlockEntity() instanceof MetaMachine blockEntity) {
+            if (blockEntity instanceof MEPatternBufferProxyPartMachine proxy) {
                 if (!proxy.isFormed()) {
                     compoundTag.putBoolean("formed", false);
                     return;
@@ -60,7 +61,7 @@ public class MEPatternBufferProxyProvider implements IBlockComponentProvider, IS
                 }
                 compoundTag.putBoolean("bound", true);
 
-                var pos = buffer.getPos();
+                var pos = buffer.getBlockPos();
                 compoundTag.putIntArray("pos", new int[] { pos.getX(), pos.getY(), pos.getZ() });
 
                 MEPatternBufferProvider.putTag(compoundTag, buffer);
@@ -70,7 +71,7 @@ public class MEPatternBufferProxyProvider implements IBlockComponentProvider, IS
 
     @Override
     public ResourceLocation getUid() {
-        return GTCEu.id("me_pattern_buffer_proxy");
+        return GTLConstants.id("me_pattern_buffer_proxy");
     }
 
     static TextColor rainbowColor(float speed) {

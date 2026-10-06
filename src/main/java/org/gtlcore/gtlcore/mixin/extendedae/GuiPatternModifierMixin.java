@@ -17,13 +17,13 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.IconButton;
-import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.InventoryActionPacket;
+import net.neoforged.neoforge.network.PacketDistributor;
+import appeng.core.network.serverbound.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
 import com.glodblock.github.extendedae.client.gui.GuiPatternModifier;
 import com.glodblock.github.extendedae.container.ContainerPatternModifier;
-import com.glodblock.github.extendedae.network.EPPNetworkHandler;
-import com.glodblock.github.glodium.network.packet.CGenericPacket;
+import com.glodblock.github.extendedae.network.EAENetworkHandler;
+import com.glodblock.github.extendedae.network.packet.CEAEGenericPacket;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -74,15 +74,15 @@ public abstract class GuiPatternModifierMixin extends AEBaseScreen<ContainerPatt
             return;
         }
         var screen = new SetReplaceAmountScreen((GuiPatternModifier) (Object) this, currentStack,
-                newStack -> NetworkHandler.instance().sendToServer(new InventoryActionPacket(
+                newStack -> PacketDistributor.sendToServer(new InventoryActionPacket(
                         InventoryAction.SET_FILTER, slot.index, GenericStack.wrapInItemStack(newStack))));
         this.switchToScreen(screen);
     }
 
-    @Inject(method = "init", at = @At("TAIL"))
+    @Inject(method = "init", at = @At("TAIL"), require = 1)
     private void gtlcore$initButtons(CallbackInfo ci) {
-        // 移除原版 x2/x10/÷2/÷10 按钮与替换按钮，保留清除按钮
-        for (int i = 0; i < 4; i++) {
+        // 原生版本含八个可配置倍率按钮；保留最后的清除按钮。
+        for (int i = 0; i < this.multiBtns.size() - 1; i++) {
             this.removeWidget(this.multiBtns.get(i));
         }
         this.removeWidget(this.replace);
@@ -98,7 +98,7 @@ public abstract class GuiPatternModifierMixin extends AEBaseScreen<ContainerPatt
         gtlcore$updateScopeButton();
         this.addRenderableWidget(this.gtlcore$scopeButton);
         // 清除按钮右移，为范围切换按钮腾出位置
-        this.multiBtns.get(4).setPosition(this.leftPos + 138, this.topPos + 19);
+        this.multiBtns.getLast().setPosition(this.leftPos + 138, this.topPos + 19);
         this.gtlcore$swapButton.setPosition(this.leftPos + 40, this.topPos + 21);
         this.addRenderableWidget(this.gtlcore$swapButton);
         this.gtlcore$insertDeleteButton.setPosition(this.leftPos + 106, this.topPos + 20);
@@ -107,7 +107,7 @@ public abstract class GuiPatternModifierMixin extends AEBaseScreen<ContainerPatt
         this.addRenderableWidget(this.gtlcore$replaceButton);
     }
 
-    @Inject(method = "updateBeforeRender", at = @At("TAIL"), remap = false)
+    @Inject(method = "updateBeforeRender", at = @At("TAIL"), remap = false, require = 1)
     private void gtlcore$syncButtonVisibility(CallbackInfo ci) {
         if (this.gtlcore$scaleButtons == null) {
             return;
@@ -156,7 +156,7 @@ public abstract class GuiPatternModifierMixin extends AEBaseScreen<ContainerPatt
                 .tooltip(Tooltip.create(Component.translatable("tooltip.gtlcore.pattern_modify_scope")))
                 .build();
         this.gtlcore$swapButton = new ModifyIconButton(
-                b -> EPPNetworkHandler.INSTANCE.sendToServer(new CGenericPacket("swapReplace")),
+                b -> EAENetworkHandler.INSTANCE.sendToServer(new CEAEGenericPacket("swapReplace")),
                 ModifyIcon.UNDO,
                 Component.translatable("tooltip.gtlcore.pattern_modifier.swap_replace"));
         this.gtlcore$insertDeleteButton = new IconButton(b -> {
@@ -180,9 +180,9 @@ public abstract class GuiPatternModifierMixin extends AEBaseScreen<ContainerPatt
             }
         };
         this.gtlcore$replaceButton = Button
-                .builder(Component.translatable("gui.expatternprovider.pattern_modifier.replace_button"),
-                        b -> EPPNetworkHandler.INSTANCE
-                                .sendToServer(new CGenericPacket("gtlReplace", this.gtlcore$insertDelete)))
+                .builder(Component.translatable("gui.extendedae.pattern_modifier.replace_button"),
+                        b -> EAENetworkHandler.INSTANCE
+                                .sendToServer(new CEAEGenericPacket("gtlReplace", this.gtlcore$insertDelete)))
                 .size(46, 18)
                 .tooltip(Tooltip.create(Component.translatable("tooltip.gtlcore.pattern_modifier.replace_rounding")))
                 .build();
@@ -191,8 +191,8 @@ public abstract class GuiPatternModifierMixin extends AEBaseScreen<ContainerPatt
     @Unique
     private ModifyIconButton gtlcore$createScaleButton(int scale, boolean div, ModifyIcon icon,
                                                        Component displayName, Component displayValue) {
-        return new ModifyIconButton(b -> EPPNetworkHandler.INSTANCE
-                .sendToServer(new CGenericPacket("modify", scale, div, this.gtlcore$scope)),
+        return new ModifyIconButton(b -> EAENetworkHandler.INSTANCE
+                .sendToServer(new CEAEGenericPacket("modify", scale, div, this.gtlcore$scope)),
                 icon, displayName, displayValue);
     }
 

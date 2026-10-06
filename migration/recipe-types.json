@@ -1,0 +1,1140 @@
+{
+  "baseline": "5b6cd0ec6a9d2be99d9031404176e84b9cd342ea",
+  "registry_namespace": "gtceu",
+  "namespace_evidence": "Bundled GTCEu 1.20.1-1.4.4 GTRecipeTypes.register uses GTCEu.id(name); native registration uses the same GT Registrate namespace.",
+  "tooltip_layout": "Native ModularUI flow sizes itself to all recipe information lines; legacy maxTooltips values were fixed layout row-count hints.",
+  "entries": [
+    {
+      "field": "PRIMITIVE_VOID_ORE_RECIPES",
+      "id": "gtceu:primitive_void_ore",
+      "max_io_size": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 1,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW_MULTIPLE"
+    },
+    {
+      "field": "SEMI_FLUID_GENERATOR_FUELS",
+      "id": "gtceu:semi_fluid_generator",
+      "max_io_size": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "group": "GENERATOR",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW_MULTIPLE"
+    },
+    {
+      "field": "SUPERCRITICAL_STEAM_TURBINE_FUELS",
+      "id": "gtceu:supercritical_steam_turbine",
+      "max_io_size": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "group": "GENERATOR",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_GAS_COLLECTOR"
+    },
+    {
+      "field": "ROCKET_ENGINE_FUELS",
+      "id": "gtceu:rocket_engine",
+      "max_io_size": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "group": "GENERATOR",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "NAQUADAH_REACTOR",
+      "id": "gtceu:naquadah_reactor",
+      "max_io_size": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "group": "GENERATOR",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "ELECTRIC_IMPLOSION_COMPRESSOR_RECIPES",
+      "id": "gtceu:electric_implosion_compressor",
+      "max_io_size": [
+        2,
+        1,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null
+    },
+    {
+      "field": "DISASSEMBLY_RECIPES",
+      "id": "gtceu:disassembly",
+      "max_io_size": [
+        1,
+        16,
+        0,
+        4
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW_MULTIPLE"
+    },
+    {
+      "field": "NEUTRON_ACTIVATOR_RECIPES",
+      "id": "gtceu:neutron_activator",
+      "max_io_size": [
+        6,
+        3,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null
+    },
+    {
+      "field": "HEAT_EXCHANGER_RECIPES",
+      "id": "gtceu:heat_exchanger",
+      "max_io_size": [
+        0,
+        0,
+        2,
+        2
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 1,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_MIXER"
+    },
+    {
+      "field": "ELEMENT_COPYING_RECIPES",
+      "id": "gtceu:element_copying",
+      "max_io_size": [
+        1,
+        1,
+        2,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW_MULTIPLE"
+    },
+    {
+      "field": "LIGHTNING_PROCESSOR_RECIPES",
+      "id": "gtceu:lightning_processor",
+      "max_io_size": [
+        6,
+        1,
+        6,
+        1
+      ],
+      "group": "ELECTRIC",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW_MULTIPLE"
+    },
+    {
+      "field": "DEHYDRATOR_RECIPES",
+      "id": "gtceu:dehydrator",
+      "max_io_size": [
+        2,
+        6,
+        2,
+        2
+      ],
+      "group": "ELECTRIC",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_EXTRACT"
+    },
+    {
+      "field": "INTEGRATED_ORE_PROCESSOR",
+      "id": "gtceu:integrated_ore_processor",
+      "max_io_size": [
+        2,
+        9,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "FISSION_REACTOR_RECIPES",
+      "id": "gtceu:fission_reactor",
+      "max_io_size": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "SPACE_ELEVATOR_RECIPES",
+      "id": "gtceu:space_elevator",
+      "max_io_size": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "STELLAR_FORGE_RECIPES",
+      "id": "gtceu:stellar_forge",
+      "max_io_size": [
+        3,
+        2,
+        9,
+        2
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARC_FURNACE"
+    },
+    {
+      "field": "COMPONENT_ASSEMBLY_LINE_RECIPES",
+      "id": "gtceu:component_assembly_line",
+      "max_io_size": [
+        9,
+        1,
+        9,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "SLAUGHTERHOUSE_RECIPES",
+      "id": "gtceu:slaughterhouse",
+      "max_io_size": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "GREENHOUSE_RECIPES",
+      "id": "gtceu:greenhouse",
+      "max_io_size": [
+        3,
+        3,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_BATH"
+    },
+    {
+      "field": "DIMENSIONALLY_TRANSCENDENT_PLASMA_FORGE_RECIPES",
+      "id": "gtceu:dimensionally_transcendent_plasma_forge",
+      "max_io_size": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": "special_273_kelvin",
+      "progress_texture": "PROGRESS_BAR_ARC_FURNACE"
+    },
+    {
+      "field": "PLASMA_CONDENSER_RECIPES",
+      "id": "gtceu:plasma_condenser",
+      "max_io_size": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "RARE_EARTH_CENTRIFUGAL_RECIPES",
+      "id": "gtceu:rare_earth_centrifugal",
+      "max_io_size": [
+        1,
+        17,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "CENTRIFUGE_OVERLAY"
+    },
+    {
+      "field": "MAGIC_MANUFACTURER_RECIPES",
+      "id": "gtceu:magic_manufacturer",
+      "max_io_size": [
+        2,
+        0,
+        0,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_MASS_FAB"
+    },
+    {
+      "field": "SPS_CRAFTING_RECIPES",
+      "id": "gtceu:sps_crafting",
+      "max_io_size": [
+        3,
+        1,
+        3,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "MATTER_FABRICATOR_RECIPES",
+      "id": "gtceu:matter_fabricator",
+      "max_io_size": [
+        2,
+        1,
+        0,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "VOID_MINER_RECIPES",
+      "id": "gtceu:void_miner",
+      "max_io_size": [
+        2,
+        4,
+        2,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "LARGE_VOID_MINER_RECIPES",
+      "id": "gtceu:large_void_miner",
+      "max_io_size": [
+        1,
+        4,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "RANDOM_ORE_RECIPES",
+      "id": "gtceu:random_ore",
+      "max_io_size": [
+        0,
+        216,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "VOID_FLUID_DRILLING_RIG_RECIPES",
+      "id": "gtceu:void_fluid_drilling_rig",
+      "max_io_size": [
+        2,
+        0,
+        0,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "WORLD_DATA_SCANNER_RECIPES",
+      "id": "gtceu:world_data_scanner",
+      "max_io_size": [
+        3,
+        1,
+        2,
+        0
+      ],
+      "group": "ELECTRIC",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "ANNIHILATE_GENERATOR_RECIPES",
+      "id": "gtceu:annihilate_generator",
+      "max_io_size": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "HYPER_REACTOR_RECIPES",
+      "id": "gtceu:hyper_reactor",
+      "max_io_size": [
+        0,
+        0,
+        2,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "ADVANCED_HYPER_REACTOR_RECIPES",
+      "id": "gtceu:advanced_hyper_reactor",
+      "max_io_size": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "LARGE_NAQUADAH_REACTOR_RECIPES",
+      "id": "gtceu:large_naquadah_reactor",
+      "max_io_size": [
+        0,
+        0,
+        2,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "COSMOS_SIMULATION_RECIPES",
+      "id": "gtceu:cosmos_simulation",
+      "max_io_size": [
+        1,
+        120,
+        1,
+        18
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "SPACE_PROBE_SURFACE_RECEPTION_RECIPES",
+      "id": "gtceu:space_probe_surface_reception",
+      "max_io_size": [
+        2,
+        0,
+        0,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "SPACE_COSMIC_PROBE_RECEIVERS_RECIPES",
+      "id": "gtceu:space_cosmic_probe_receivers",
+      "max_io_size": [
+        2,
+        0,
+        0,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DECAY_HASTENER_RECIPES",
+      "id": "gtceu:decay_hastener",
+      "max_io_size": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "LARGE_RECYCLER_RECIPES",
+      "id": "gtceu:large_recycler",
+      "max_io_size": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_RECYCLER"
+    },
+    {
+      "field": "MASS_FABRICATOR_RECIPES",
+      "id": "gtceu:mass_fabricator",
+      "max_io_size": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_REPLICATOR"
+    },
+    {
+      "field": "CIRCUIT_ASSEMBLY_LINE_RECIPES",
+      "id": "gtceu:circuit_assembly_line",
+      "max_io_size": [
+        16,
+        1,
+        4,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "SUPRACHRONAL_ASSEMBLY_LINE_RECIPES",
+      "id": "gtceu:suprachronal_assembly_line",
+      "max_io_size": [
+        16,
+        1,
+        4,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "PRECISION_ASSEMBLER_RECIPES",
+      "id": "gtceu:precision_assembler",
+      "max_io_size": [
+        4,
+        1,
+        4,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "ASSEMBLER_MODULE_RECIPES",
+      "id": "gtceu:assembler_module",
+      "max_io_size": [
+        16,
+        1,
+        4,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "MINER_MODULE_RECIPES",
+      "id": "gtceu:miner_module",
+      "max_io_size": [
+        2,
+        6,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DRILLING_MODULE_RECIPES",
+      "id": "gtceu:drilling_module",
+      "max_io_size": [
+        2,
+        0,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "FISHING_GROUND_RECIPES",
+      "id": "gtceu:fishing_ground",
+      "max_io_size": [
+        2,
+        24,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "BLOCK_CONVERSION_RECIPES",
+      "id": "gtceu:block_conversion",
+      "max_io_size": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "INCUBATOR_RECIPES",
+      "id": "gtceu:incubator",
+      "max_io_size": [
+        6,
+        1,
+        2,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_BATH"
+    },
+    {
+      "field": "PCB_FACTORY_RECIPES",
+      "id": "gtceu:pcb_factory",
+      "max_io_size": [
+        2,
+        1,
+        2,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "LAVA_FURNACE_RECIPES",
+      "id": "gtceu:lava_furnace",
+      "max_io_size": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARC_FURNACE"
+    },
+    {
+      "field": "LARGE_GAS_COLLECTOR_RECIPES",
+      "id": "gtceu:large_gas_collector",
+      "max_io_size": [
+        2,
+        0,
+        0,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "AGGREGATION_DEVICE_RECIPES",
+      "id": "gtceu:aggregation_device",
+      "max_io_size": [
+        9,
+        1,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "SUPER_PARTICLE_COLLIDER_RECIPES",
+      "id": "gtceu:super_particle_collider",
+      "max_io_size": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DIMENSIONAL_FOCUS_ENGRAVING_ARRAY_RECIPES",
+      "id": "gtceu:dimensional_focus_engraving_array",
+      "max_io_size": [
+        2,
+        1,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "PRECISION_LASER_ENGRAVER_RECIPES",
+      "id": "gtceu:precision_laser_engraver",
+      "max_io_size": [
+        9,
+        1,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DIMENSIONALLY_TRANSCENDENT_MIXER_RECIPES",
+      "id": "gtceu:dimensionally_transcendent_mixer",
+      "max_io_size": [
+        9,
+        1,
+        6,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_BATH"
+    },
+    {
+      "field": "NEUTRON_COMPRESSOR_RECIPES",
+      "id": "gtceu:neutron_compressor",
+      "max_io_size": [
+        2,
+        1,
+        0,
+        0
+      ],
+      "group": "ELECTRIC",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_COMPRESS"
+    },
+    {
+      "field": "QFT_RECIPES",
+      "id": "gtceu:qft",
+      "max_io_size": [
+        18,
+        1,
+        3,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DRAGON_EGG_COPIER_RECIPES",
+      "id": "gtceu:dragon_egg_copier",
+      "max_io_size": [
+        1,
+        2,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DOOR_OF_CREATE_RECIPES",
+      "id": "gtceu:door_of_create",
+      "max_io_size": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "BEDROCK_DRILLING_RIG_RECIPES",
+      "id": "gtceu:bedrock_drilling_rig",
+      "max_io_size": [
+        2,
+        1,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "CREATE_AGGREGATION_RECIPES",
+      "id": "gtceu:create_aggregation",
+      "max_io_size": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "GRAVITATION_SHOCKBURST_RECIPES",
+      "id": "gtceu:gravitation_shockburst",
+      "max_io_size": [
+        2,
+        1,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "ULTIMATE_MATERIAL_FORGE_RECIPES",
+      "id": "gtceu:ultimate_material_forge",
+      "max_io_size": [
+        2,
+        2,
+        2,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DYSON_SPHERE_RECIPES",
+      "id": "gtceu:dyson_sphere",
+      "max_io_size": [
+        1,
+        0,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "PETROCHEMICAL_PLANT_RECIPES",
+      "id": "gtceu:petrochemical_plant",
+      "max_io_size": [
+        0,
+        0,
+        2,
+        12
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "WEATHER_CONTROL_RECIPES",
+      "id": "gtceu:weather_control",
+      "max_io_size": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DISTORT_RECIPES",
+      "id": "gtceu:distort",
+      "max_io_size": [
+        9,
+        9,
+        9,
+        9
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 4,
+      "ui_coils": "standard",
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "NANO_FORGE_RECIPES",
+      "id": "gtceu:nano_forge",
+      "max_io_size": [
+        6,
+        1,
+        3,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "FUEL_REFINING_RECIPES",
+      "id": "gtceu:fuel_refining",
+      "max_io_size": [
+        3,
+        0,
+        6,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": "standard",
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "ATOMIC_ENERGY_EXCITATION_RECIPES",
+      "id": "gtceu:atomic_energy_excitation",
+      "max_io_size": [
+        3,
+        0,
+        6,
+        2
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": "standard",
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "ISA_MILL_RECIPES",
+      "id": "gtceu:isa_mill",
+      "max_io_size": [
+        2,
+        1,
+        1,
+        0
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "FLOTATING_BENEFICIATION_RECIPES",
+      "id": "gtceu:flotating_beneficiation",
+      "max_io_size": [
+        2,
+        0,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_BATH"
+    },
+    {
+      "field": "VACUUM_DRYING_RECIPES",
+      "id": "gtceu:vacuum_drying",
+      "max_io_size": [
+        1,
+        6,
+        1,
+        2
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": "standard",
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DISSOLUTION_TREATMENT",
+      "id": "gtceu:dissolution_treatment",
+      "max_io_size": [
+        2,
+        2,
+        2,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_EXTRACT"
+    },
+    {
+      "field": "DIGESTION_TREATMENT",
+      "id": "gtceu:digestion_treatment",
+      "max_io_size": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": "standard",
+      "progress_texture": "PROGRESS_BAR_EXTRACT"
+    },
+    {
+      "field": "WOOD_DISTILLATION_RECIPES",
+      "id": "gtceu:wood_distillation",
+      "max_io_size": [
+        1,
+        1,
+        1,
+        16
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "DESULFURIZER_RECIPES",
+      "id": "gtceu:desulfurizer",
+      "max_io_size": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": null,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "MOLECULAR_ASSEMBLER",
+      "id": "gtceu:molecular_assembler",
+      "max_io_size": [
+        3,
+        12,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 1,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_ARROW"
+    },
+    {
+      "field": "FRAGMENT_WORLD_COLLECTION",
+      "id": "gtceu:fragment_world_collection",
+      "max_io_size": [
+        3,
+        12,
+        1,
+        1
+      ],
+      "group": "MULTIBLOCK",
+      "max_tooltip_rows_hint": 1,
+      "ui_coils": null,
+      "progress_texture": "PROGRESS_BAR_MACERATE"
+    }
+  ]
+}

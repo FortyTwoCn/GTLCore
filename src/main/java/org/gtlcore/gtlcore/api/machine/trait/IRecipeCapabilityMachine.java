@@ -1,12 +1,13 @@
 package org.gtlcore.gtlcore.api.machine.trait;
 
 import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
-import com.gregtechceu.gtceu.api.capability.IParallelHatch;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
+import com.gregtechceu.gtceu.common.machine.multiblock.part.ParallelHatchPartMachine;
+import com.gregtechceu.gtceu.common.machine.multiblock.part.MaintenanceHatchPartMachine;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.layout.Flow;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 
@@ -25,7 +26,7 @@ import java.util.*;
  * &#064;line <a href="https://github.com/GregTech-Odyssey/GTOCore">...</a>
  */
 
-public interface IRecipeCapabilityMachine {
+public interface IRecipeCapabilityMachine extends IRecipeInputHandlerPolicy {
 
     @NotNull
     List<RecipeHandlePart> getNormalRecipeHandlePart(IO io);
@@ -36,6 +37,11 @@ public interface IRecipeCapabilityMachine {
     boolean emptyRecipeHandlePart();
 
     boolean emptyHandlePart();
+
+    /** Custom Core routes supplement native groups only when the holder has opted into that policy. */
+    default boolean usesCoreRecipeRouting() {
+        return !emptyHandlePart();
+    }
 
     // ==================== ME ====================
 
@@ -80,11 +86,11 @@ public interface IRecipeCapabilityMachine {
         return false;
     }
 
-    default IParallelHatch getParallelHatch() {
-        return null;
+    default Optional<ParallelHatchPartMachine> getParallelHatch() {
+        return Optional.empty();
     }
 
-    default IMaintenanceMachine getMaintenanceMachine() {
+    default MaintenanceHatchPartMachine getMaintenanceMachine() {
         return null;
     }
 
@@ -92,17 +98,20 @@ public interface IRecipeCapabilityMachine {
         return null;
     }
 
-    static void attachConfigurators(ConfiguratorPanel configuratorPanel, WorkableElectricMultiblockMachine machine) {
+    static void attachConfigurators(Flow configuratorPanel, WorkableElectricMultiblockMachine machine) {
         if (machine instanceof IRecipeCapabilityMachine distinctMachine) {
-            configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                    GuiTextures.BUTTON_DISTINCT_BUSES.getSubTexture(0, 0.5, 1, 0.5),
-                    GuiTextures.BUTTON_DISTINCT_BUSES.getSubTexture(0, 0, 1, 0.5),
-                    distinctMachine::isDistinct, (clickData, pressed) -> {
+            var value = new BooleanSyncValue(distinctMachine::isDistinct, pressed -> {
+                        if (distinctMachine.isDistinct() == pressed) return;
                         distinctMachine.setDistinct(pressed);
                         distinctMachine.upDate();
-                    })
-                    .setTooltipsSupplier(pressed -> List.of(Component.translatable("gtceu.multiblock.universal.distinct.all").setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW))
-                            .append(Component.translatable(pressed ? "gtceu.multiblock.universal.distinct.yes" : "gtceu.multiblock.universal.distinct.no")))));
+                    }).allowC2S();
+            configuratorPanel.child(new ToggleButton().value(value)
+                    .background(GTGuiTextures.BUTTON_DISTINCT[0])
+                    .background(true, GTGuiTextures.BUTTON_DISTINCT[1])
+                    .tooltipAutoUpdate(true)
+                    .tooltipBuilder(tooltip -> tooltip.addLine(Component.translatable("gtceu.multiblock.universal.distinct.all")
+                            .withStyle(ChatFormatting.YELLOW)
+                            .append(Component.translatable(value.getBoolValue() ? "gtceu.multiblock.universal.distinct.yes" : "gtceu.multiblock.universal.distinct.no")))));
         }
     }
 }

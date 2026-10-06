@@ -1,15 +1,14 @@
 package org.gtlcore.gtlcore.client.preview;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.api.gui.PatternPreviewWidget;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "gtlcore", value = Dist.CLIENT)
 public final class PreviewLifecycle {
 
     private static int reloads;
@@ -17,11 +16,10 @@ public final class PreviewLifecycle {
     private PreviewLifecycle() {}
 
     @SubscribeEvent
-    public static void frame(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            PreviewFrameBudget.beginFrame();
-            PreviewSceneState.releaseInvisible();
-        }
+    public static void frame(RenderFrameEvent.Pre event) {
+        PreviewFrameBudget.beginFrame();
+        PreviewSceneState.releaseInvisible();
+
     }
 
     @SubscribeEvent
@@ -33,7 +31,7 @@ public final class PreviewLifecycle {
 
     public static void clear() {
         PreviewScenes.clear();
-        WorldPreview.clear();
+        com.gregtechceu.gtceu.client.renderer.PatternPreviewRenderer.INSTANCE.dispose();
         PreviewSceneState.clearAll();
         PreviewMesh.clearAll();
     }

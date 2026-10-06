@@ -36,8 +36,8 @@ import appeng.core.localization.GuiText;
 import appeng.items.storage.ViewCellItem;
 import appeng.menu.SlotSemantics;
 import appeng.util.prioritylist.IPartitionList;
-import de.mari_023.ae2wtlib.wut.CycleTerminalButton;
-import de.mari_023.ae2wtlib.wut.IUniversalTerminalCapable;
+import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
+import de.mari_023.ae2wtlib.api.terminal.IUniversalTerminalCapable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -121,7 +121,7 @@ public class ThroughputMonitorTerminalScreen extends AEBaseScreen<ThroughputMoni
                 (button, backwards) -> setSortDirection(button.getNextValue(backwards)));
         addToLeftToolbar(this.sortDirectionButton);
         if (menu.isUniversalTerminal()) {
-            addToLeftToolbar(new CycleTerminalButton(ignored -> cycleTerminal()));
+            addToLeftToolbar(cycleTerminalButton());
         }
     }
 
@@ -161,6 +161,11 @@ public class ThroughputMonitorTerminalScreen extends AEBaseScreen<ThroughputMoni
     }
 
     @Override
+    public WTMenuHost getHost() {
+        return (WTMenuHost) this.menu.getTarget();
+    }
+
+    @Override
     public void storeState() {
         rememberedSortOrder = this.sortOrder;
         rememberedSortDirection = this.sortDirection;
@@ -170,7 +175,6 @@ public class ThroughputMonitorTerminalScreen extends AEBaseScreen<ThroughputMoni
     @Override
     public void containerTick() {
         super.containerTick();
-        this.searchField.tick();
         updateViewCellFilter();
         clampScrollOffset();
     }
@@ -488,11 +492,11 @@ public class ThroughputMonitorTerminalScreen extends AEBaseScreen<ThroughputMoni
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalDelta, double delta) {
         if (isInsideList(mouseX, mouseY) && scrollBy(delta)) {
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, horizontalDelta, delta);
     }
 
     private boolean handleRowClick(double mouseX, double mouseY) {
@@ -522,7 +526,7 @@ public class ThroughputMonitorTerminalScreen extends AEBaseScreen<ThroughputMoni
             if (expanding) {
                 this.expandedKeys.add(key);
             }
-            WirelessAePackets.CHANNEL.sendToServer(
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                     new WirelessAePackets.SetThroughputMonitorSourceTrackingPacket(
                             this.menu.containerId,
                             key,
@@ -804,7 +808,7 @@ public class ThroughputMonitorTerminalScreen extends AEBaseScreen<ThroughputMoni
     }
 
     private void sendUpdateInterval() {
-        WirelessAePackets.CHANNEL.sendToServer(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                 new WirelessAePackets.SetThroughputMonitorUpdateIntervalPacket(
                         this.menu.containerId,
                         this.updateInterval));

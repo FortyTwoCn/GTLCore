@@ -12,9 +12,6 @@ import java.util.Map;
 @Mixin(MultiBufferSource.BufferSource.class)
 public interface AnimationBufferSourceAccessor {
 
-    @Accessor("builder")
-    BufferBuilder gtlcore$getAnimationBuilder();
-
-    @Accessor("fixedBuffers")
-    Map<RenderType, BufferBuilder> gtlcore$getAnimationFixedBuffers();
+    @Accessor("startedBuilders")
+    Map<RenderType, BufferBuilder> gtlcore$getAnimationStartedBuilders();
 }

@@ -141,7 +141,7 @@ public final class MAE2Compat {
                 BlockEntity outputBE = level.getBlockEntity(outputPos);
 
                 long outputOperations;
-                ICraftingMachine craftingMachine = ICraftingMachine.of(level, outputPos, outputSide, outputBE);
+                ICraftingMachine craftingMachine = ICraftingMachine.of(level, outputPos, outputSide);
                 if (craftingMachine != null && craftingMachine.acceptsPlans()) {
                     outputOperations = requestedOperations;
                 } else {
@@ -214,7 +214,7 @@ public final class MAE2Compat {
                 BlockEntity outputBE = outputLevel.getBlockEntity(outputPos);
 
                 long outputOperations;
-                ICraftingMachine craftingMachine = ICraftingMachine.of(outputLevel, outputPos, outputSide, outputBE);
+                ICraftingMachine craftingMachine = ICraftingMachine.of(outputLevel, outputPos, outputSide);
                 if (craftingMachine != null && craftingMachine.acceptsPlans()) {
                     outputOperations = requestedOperations;
                 } else {

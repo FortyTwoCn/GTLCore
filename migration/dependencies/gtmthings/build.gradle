@@ -1,0 +1,75 @@
+// Compile the pinned native source without modifying its checkout. Use the same
+// GTCEu and patched ModularUI baseline as Core instead of a second snapshot.
+plugins {
+    id 'java-library'
+    alias libs.plugins.modDevGradle
+    alias libs.plugins.lombok
+}
+
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty('gtmthings_source'))
+def upstreamProperties = new Properties()
+new File(nativeSource, 'gradle.properties').withInputStream { upstreamProperties.load(it) }
+group = 'com.hepdd.gtmthings'
+version = upstreamProperties.getProperty('mod_version')
+base { archivesName = 'gtmthings' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+lombok { version = '1.18.38' }
+
+sourceSets.main {
+    java.setSrcDirs([new File(nativeSource, 'src/main/java')])
+    resources.setSrcDirs([new File(nativeSource, 'src/main/resources'),
+                          new File(nativeSource, 'src/generated/resources')])
+    resources.exclude('.cache/**')
+}
+apply from: '../../../gradle/repositories.gradle'
+configurations.configureEach { exclude group: 'org.appliedenergistics', module: 'guideme' }
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+    mods { gtmthings { sourceSet(sourceSets.main) } }
+    accessTransformers = files(new File(nativeSource, 'src/main/resources/META-INF/accesstransformer.cfg'))
+}
+dependencies {
+    implementation('com.gregtechceu.gtceu:gtceu-1.21.1:8.0.0')
+    implementation(forge.registrate)
+    implementation(forge.configuration)
+    implementation(forge.mui)
+    implementation(forge.ae2)
+    implementation('maven.modrinth:guideme:hFpGwC6q')
+    compileOnly(forge.bundles.jei)
+    compileOnly(forge.emi)
+    compileOnly(forge.jade)
+    compileOnly(forge.ftblibrary)
+    compileOnly(forge.ftbteams)
+}
+tasks.register('verifyNativeSource') {
+    doLast {
+        def actual = providers.exec {
+            commandLine 'git', '-C', nativeSource.absolutePath, 'rev-parse', 'HEAD'
+        }.standardOutput.asText.get().trim()
+        def expected = coreProperties.getProperty('gtmthings_revision')
+        if (actual != expected) throw new GradleException("GTMThings source ${actual} differs from ${expected}")
+    }
+}
+tasks.named('compileJava') { dependsOn 'verifyNativeSource' }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+def modMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    def metadata = upstreamProperties.collectEntries { key, value -> [(key): value] }
+    metadata.version = version
+    metadata.gtceu_version = '8.0.0'
+    metadata.neoforge_version = libs.versions.neoForge.get()
+    metadata.minecraft_version = libs.versions.minecraft.get()
+    metadata.ae2_version = forge.versions.ae2.get()
+    inputs.properties(metadata)
+    from(new File(nativeSource, 'src/main/templates'))
+    expand(metadata)
+    into(layout.buildDirectory.dir('generated/modMetadata'))
+}
+sourceSets.main.resources.srcDir(modMetadata)
+// Match the upstream build's priority for main resources over generated copies.
+tasks.named('processResources') { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }

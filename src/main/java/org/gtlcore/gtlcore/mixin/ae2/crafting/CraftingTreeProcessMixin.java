@@ -69,7 +69,7 @@ public abstract class CraftingTreeProcessMixin implements ICraftingTreeProcess {
     private void gTLCore$initCachedData(ICraftingService cc, CraftingCalculation job, IPatternDetails details,
                                         CraftingTreeNode parent, CallbackInfo ci) {
         gTLCore$cacheChildRequests();
-        this.gTLCore$outputs = details.getOutputs();
+        this.gTLCore$outputs = details.getOutputs().toArray(GenericStack[]::new);
     }
 
     @Override
@@ -265,7 +265,7 @@ public abstract class CraftingTreeProcessMixin implements ICraftingTreeProcess {
     @Unique
     private GenericStack[] gTLCore$getOutputs() {
         if (this.gTLCore$outputs == null) {
-            this.gTLCore$outputs = this.details.getOutputs();
+            this.gTLCore$outputs = this.details.getOutputs().toArray(GenericStack[]::new);
         }
         return this.gTLCore$outputs;
     }

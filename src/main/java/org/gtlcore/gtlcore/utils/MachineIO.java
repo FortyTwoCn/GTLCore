@@ -2,7 +2,7 @@ package org.gtlcore.gtlcore.utils;
 
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -26,6 +26,10 @@ public class MachineIO {
 
     public static boolean inputFluid(WorkableMultiblockMachine machine, FluidStack fluid) {
         return MachineUtil.inputFluid(machine, fluid);
+    }
+
+    public static boolean inputFluid(WorkableMultiblockMachine machine, FluidStack fluid, long amount) {
+        return MachineUtil.inputFluid(machine, fluid, amount);
     }
 
     public static boolean outputFluid(WorkableMultiblockMachine machine, FluidStack fluid) {

@@ -1,0 +1,13 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+}
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs { from(files('../../../gradle/libs.versions.toml')) }
+        forge { from(files('../../../gradle/forge.versions.toml')) }
+    }
+}
+rootProject.name = 'ftbranks-native'

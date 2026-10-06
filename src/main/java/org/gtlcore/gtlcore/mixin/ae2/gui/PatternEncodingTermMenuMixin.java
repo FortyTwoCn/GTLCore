@@ -18,15 +18,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.config.Actionable;
+import appeng.api.inventories.InternalInventory;
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.storage.ITerminalHost;
 import appeng.core.definitions.AEItems;
-import appeng.helpers.IMenuCraftingPacket;
+import appeng.helpers.ICraftingGridMenu;
 import appeng.helpers.IPatternTerminalMenuHost;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.items.PatternEncodingTermMenu;
@@ -48,7 +49,7 @@ import java.util.Set;
  * @author EasterFG on 2024/9/12
  */
 @Mixin(value = PatternEncodingTermMenu.class, priority = 900)
-public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu implements IMenuCraftingPacket, PatterEncodingTermMenuModify {
+public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu implements ICraftingGridMenu, PatterEncodingTermMenuModify {
 
     @Unique
     private static final ItemStack Pattern = AEItems.BLANK_PATTERN.stack();
@@ -96,6 +97,13 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu impleme
 
     public PatternEncodingTermMenuMixin(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host) {
         super(menuType, id, ip, host);
+    }
+
+    @Override
+    public InternalInventory getCraftingMatrix() {
+        // AE2 19 exposes crafting and processing inputs through one config inventory.
+        // Only the first nine slots belong to the native crafting grid.
+        return encodedInputsInv.createMenuWrapper().getSubInventory(0, 9);
     }
 
     @Inject(method = "<init>(Lnet/minecraft/world/inventory/MenuType;ILnet/minecraft/world/entity/player/Inventory;Lappeng/helpers/IPatternTerminalMenuHost;Z)V",
@@ -165,7 +173,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu impleme
     private GenericStack filterData(ConfigInventory instance, int slot) {
         var stack = instance.getStack(slot);
         if (stack != null && stack.what() instanceof AEItemKey aeItemKey) {
-            if (aeItemKey.hasTag() &&
+            if (!aeItemKey.toStack().getComponentsPatch().isEmpty() &&
                     (aeItemKey.getItem() == GTItems.TOOL_DATA_STICK.asItem() ||
                             aeItemKey.getItem() == GTItems.TOOL_DATA_ORB.asItem() ||
                             aeItemKey.getItem() == GTItems.TOOL_DATA_MODULE.asItem()))
@@ -225,7 +233,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu impleme
 
         PatternQuickUploadService.SearchResult result = PatternQuickUploadService.findTargets(
                 player,
-                this.getNetworkNode(),
+                this.getGridNode(),
                 previewPattern);
         if (result.failureMessage() != null) {
             GTLCore.LOGGER.debug("{} target search failed: {}",
@@ -250,8 +258,7 @@ public abstract class PatternEncodingTermMenuMixin extends MEStorageMenu impleme
             }
             case AMBIGUOUS -> {
                 this.gTLCore$pendingQuickUploadTargets = List.copyOf(match.candidates());
-                WirelessAePackets.CHANNEL.send(
-                        PacketDistributor.PLAYER.with(() -> player),
+                PacketDistributor.sendToPlayer(player,
                         new WirelessAePackets.OpenPatternQuickUploadSelectionPacket(
                                 previewPattern,
                                 gTLCore$selectionEntries(this.gTLCore$pendingQuickUploadTargets)));

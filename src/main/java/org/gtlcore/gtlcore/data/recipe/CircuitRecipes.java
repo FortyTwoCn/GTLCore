@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.data.recipe;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import org.gtlcore.gtlcore.common.data.GTLItems;
 
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
@@ -7,7 +8,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import java.util.function.Consumer;
 
@@ -17,7 +18,7 @@ import static org.gtlcore.gtlcore.common.data.GTLMaterials.PiranhaSolution;
 
 public class CircuitRecipes {
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         AUTOCLAVE_RECIPES.recipeBuilder("sterilized_petri_dish")
                 .inputItems(GTItems.PETRI_DISH)
                 .inputFluids(AbsoluteEthanol.getFluid(100))

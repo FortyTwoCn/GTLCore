@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.mixin.ldlib;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.lowdragmc.lowdraglib.utils.data.BlockInfo;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;

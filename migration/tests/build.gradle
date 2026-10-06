@@ -1,0 +1,51 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.141'
+}
+repositories {
+    mavenCentral()
+    maven { url = 'https://modmaven.dev' }
+    maven { url = 'https://api.modrinth.com/maven' }
+}
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+// This separate test harness loads only the ported persistence classes.
+// It never replaces the production mod's source set or its build.
+sourceSets {
+    main.java {
+        srcDir '../../src/main/java'
+        include 'org/gtlcore/gtlcore/utils/StorageManager.java'
+        include 'org/gtlcore/gtlcore/integration/ae2/storage/InfinityCellDataStorage.java'
+        include 'org/gtlcore/gtlcore/integration/ae2/storage/CellItemData.java'
+        include 'org/gtlcore/gtlcore/integration/ae2/wireless/WirelessAeKeyPacketCodec.java'
+        include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongIngredient.java'
+        include 'org/gtlcore/gtlcore/api/recipe/ingredient/LongFluidIngredient.java'
+        include 'org/gtlcore/gtlcore/common/data/GTLIngredientTypes.java'
+        include 'org/gtlcore/gtlcore/migration/MigrationTestHarness.java'
+    }
+    test.java.srcDir '../../src/migrationRegression/java'
+}
+neoForge {
+    version = '21.1.248'
+    parchment {
+        minecraftVersion = '1.21.1'
+        mappingsVersion = '2024.11.17'
+    }
+    mods {
+        gtlcore_migration_test { sourceSet(sourceSets.main) }
+    }
+    unitTest {
+        enable()
+        testedMod = mods.gtlcore_migration_test
+    }
+}
+dependencies {
+    implementation('org.appliedenergistics:appliedenergistics2:19.2.8') {
+        exclude group: 'org.appliedenergistics', module: 'guideme'
+    }
+    implementation('maven.modrinth:guideme:hFpGwC6q')
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+test { useJUnitPlatform() }

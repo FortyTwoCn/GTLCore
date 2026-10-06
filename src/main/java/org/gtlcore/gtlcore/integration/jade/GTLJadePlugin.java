@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.integration.jade;
 import org.gtlcore.gtlcore.integration.jade.provider.*;
 
 import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -21,13 +21,13 @@ public class GTLJadePlugin implements IWailaPlugin {
 
     @Override
     public void register(IWailaCommonRegistration registration) {
-        registration.registerItemStorage(QuantumChestItemStorageProvider.INSTANCE, MetaMachineBlockEntity.class);
-        registration.registerItemStorage(MEStockingItemStorageProvider.INSTANCE, MetaMachineBlockEntity.class);
-        registration.registerFluidStorage(MEStockingFluidStorageProvider.INSTANCE, MetaMachineBlockEntity.class);
+        registration.registerItemStorage(QuantumChestItemStorageProvider.INSTANCE, MetaMachine.class);
+        registration.registerItemStorage(MEStockingItemStorageProvider.INSTANCE, MetaMachine.class);
+        registration.registerFluidStorage(MEStockingFluidStorageProvider.INSTANCE, MetaMachine.class);
         registration.registerBlockDataProvider(new WirelessOpticalDataHatchProvide(), BlockEntity.class);
-        registration.registerBlockDataProvider(new TickTimeProvider(), MetaMachineBlockEntity.class);
-        registration.registerBlockDataProvider(new BatchProcessingProvider(), MetaMachineBlockEntity.class);
-        registration.registerBlockDataProvider(new RecipeMultiplierProvider(), MetaMachineBlockEntity.class);
+        registration.registerBlockDataProvider(new TickTimeProvider(), MetaMachine.class);
+        registration.registerBlockDataProvider(new BatchProcessingProvider(), MetaMachine.class);
+        registration.registerBlockDataProvider(new RecipeMultiplierProvider(), MetaMachine.class);
         registration.registerBlockDataProvider(new MEPatternBufferProvider(), BlockEntity.class);
         registration.registerBlockDataProvider(new MEPatternBufferProxyProvider(), BlockEntity.class);
         registration.registerBlockDataProvider(new MEMAIOProvider(), BlockEntity.class);
@@ -37,10 +37,8 @@ public class GTLJadePlugin implements IWailaPlugin {
     @Override
     public void registerClient(IWailaClientRegistration registration) {
         var meInventoryAmountProvider = new MeInventoryAmountProvider();
-        registration.addConfig(meInventoryAmountProvider.getUid(), true);
         registration.registerBlockComponent(meInventoryAmountProvider, Block.class);
         var patternRelayProvider = new PatternRelayJadeProvider();
-        registration.addConfig(patternRelayProvider.getUid(), true);
         registration.registerBlockComponent(patternRelayProvider, Block.class);
         registration.registerItemStorageClient(QuantumChestItemStorageProvider.INSTANCE);
         registration.registerItemStorageClient(MEStockingItemStorageProvider.INSTANCE);

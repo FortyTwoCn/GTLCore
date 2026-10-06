@@ -1,7 +1,7 @@
 package org.gtlcore.gtlcore.mixin.gtm;
 
-import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
-import com.gregtechceu.gtceu.integration.jei.GTJEIPlugin;
+import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
+import com.gregtechceu.gtceu.integration.recipeviewer.jei.GTJEIPlugin;
 
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,9 +15,9 @@ public abstract class GTJEIPluginMixin {
               method = "registerCategories",
               at = @At(
                        value = "INVOKE",
-                       target = "Lcom/gregtechceu/gtceu/api/recipe/ui/GTRecipeTypeUI;isXEIVisible()Z"),
-              remap = false)
-    private boolean gtlcore$hideRecipeTypesWithoutUi(@Nullable GTRecipeTypeUI recipeUI) {
-        return recipeUI != null && recipeUI.isXEIVisible();
+                       target = "Lcom/gregtechceu/gtceu/api/recipe/category/GTRecipeCategory;shouldRegisterDisplays()Z"),
+              remap = false, require = 1)
+    private boolean gtlcore$visibleNativeCategory(@Nullable GTRecipeCategory category) {
+        return category != null && category.shouldRegisterDisplays();
     }
 }

@@ -35,13 +35,13 @@ public abstract class NetworkStorageMixin implements ThroughputStorageView, Manu
     @Unique
     private long gtlcore$throughputTopologyVersion;
 
-    @Inject(method = "mount", at = @At("RETURN"), remap = false)
+    @Inject(method = "mount", at = @At("RETURN"), remap = false, require = 1)
     private void gtlcore$bumpThroughputTopologyOnMount(int priority, MEStorage storage, CallbackInfo ci) {
         gtlcore$throughputTopologyVersion++;
         ThroughputMonitorStorageTracker.onTopologyChanged((MEStorage) (Object) this);
     }
 
-    @Inject(method = "unmount", at = @At("RETURN"), remap = false)
+    @Inject(method = "unmount", at = @At("RETURN"), remap = false, require = 1)
     private void gtlcore$bumpThroughputTopologyOnUnmount(MEStorage storage, CallbackInfo ci) {
         gtlcore$throughputTopologyVersion++;
         ThroughputMonitorStorageTracker.onTopologyChanged((MEStorage) (Object) this);
@@ -83,7 +83,7 @@ public abstract class NetworkStorageMixin implements ThroughputStorageView, Manu
         return extracted;
     }
 
-    @ModifyVariable(method = "extract", at = @At("HEAD"), argsOnly = true, ordinal = 0, remap = false)
+    @ModifyVariable(method = "extract", at = @At("HEAD"), argsOnly = true, ordinal = 0, remap = false, require = 1)
     private long gtlcore$limitExtractionToUnlockedInventory(long amount, AEKey what, long requested,
                                                             Actionable mode, IActionSource source) {
         return ManualCraftingInventoryLock.limitExtraction((MEStorage) (Object) this, what, amount, source);

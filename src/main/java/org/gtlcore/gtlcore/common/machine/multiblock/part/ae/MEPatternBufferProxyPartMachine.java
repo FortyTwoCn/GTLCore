@@ -7,23 +7,26 @@ import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEPatternTrait;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IInteractedMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineLife;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
+import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widget.ParentWidget;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import net.neoforged.neoforge.fluids.FluidStack;
 import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.ISubscription;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
+import com.gregtechceu.gtceu.utils.ISubscription;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -33,7 +36,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -48,32 +51,30 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine implements IMachineLife, IMEPatternPartMachine, IInteractedMachine {
+public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine implements IMEPatternPartMachine, IMuiMachine, IDataStickInteractable {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEPatternBufferProxyPartMachine.class, MultiblockPartMachine.MANAGED_FIELD_HOLDER);
 
     protected final ISubscription[] handlerSubscriptions = new ISubscription[2];
 
     protected final IMEPatternTrait meTrait;
-    protected final MEPatternBufferProxyRecipeHandler<Ingredient, ItemStack> itemProxyHandler;
-    protected final MEPatternBufferProxyRecipeHandler<FluidIngredient, FluidStack> fluidProxyHandler;
+    protected final MEPatternBufferProxyRecipeHandler<SizedIngredient, ItemStack> itemProxyHandler;
+    protected final MEPatternBufferProxyRecipeHandler<SizedFluidIngredient, FluidStack> fluidProxyHandler;
 
     protected IntConsumer removeSlotFromMap = i -> {};
 
-    @Persisted
+    @SaveField
     @Getter
-    @DescSynced
+    @SyncToClient
     private BlockPos bufferPos;
     private @Nullable MEPatternBufferPartMachineBase buffer = null;
     private @Nullable IMEPatternTrait bufferTrait = null;
     private boolean bufferResolved = false;
 
-    public MEPatternBufferProxyPartMachine(IMachineBlockEntity holder) {
+    public MEPatternBufferProxyPartMachine(BlockEntityCreationInfo holder) {
         super(holder);
-        this.itemProxyHandler = new MEPatternBufferProxyRecipeHandler<>(this, ItemRecipeCapability.CAP);
-        this.fluidProxyHandler = new MEPatternBufferProxyRecipeHandler<>(this, FluidRecipeCapability.CAP);
-        this.meTrait = new MEPatternProxyTrait(this);
+        this.itemProxyHandler = attachTrait(new MEPatternBufferProxyRecipeHandler<>(ItemRecipeCapability.CAP));
+        this.fluidProxyHandler = attachTrait(new MEPatternBufferProxyRecipeHandler<>(FluidRecipeCapability.CAP));
+        this.meTrait = attachTrait(new MEPatternProxyTrait());
     }
 
     @Override
@@ -83,51 +84,54 @@ public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine imple
     }
 
     public void setBuffer(@Nullable BlockPos pos) {
-        bufferResolved = true;
+        if (pos != null) pos = pos.immutable();
+        if (java.util.Objects.equals(bufferPos, pos) && buffer != null && !buffer.isRemoved()) return;
+        releaseRuntimeBinding(true);
+        bufferPos = pos;
+        bufferResolved = pos == null;
         var level = getLevel();
-        releaseBuffer();
-        if (level != null && pos != null) {
-            if (MetaMachine.getMachine(level, pos) instanceof MEPatternBufferPartMachineBase machine) {
-                bufferPos = pos;
+        if (level != null && pos != null && level.hasChunkAt(pos)) {
+            bufferResolved = true;
+            if (MetaMachine.getMachine(level, pos) instanceof MEPatternBufferPartMachineBase machine && !machine.isRemoved()) {
                 buffer = machine;
                 machine.addProxy(this);
                 if (!isRemote()) {
                     var pair = machine.getMERecipeHandlerTraits();
-                    this.itemProxyHandler.setHandler(pair.left());
-                    this.fluidProxyHandler.setHandler(pair.right());
-                    this.bufferTrait = machine.getMETrait();
+                    itemProxyHandler.setHandler(pair.left());
+                    fluidProxyHandler.setHandler(pair.right());
+                    bufferTrait = machine.getMETrait();
                     handlerSubscriptions[0] = pair.left().addChangedListener(itemProxyHandler::notifyListeners);
                     handlerSubscriptions[1] = pair.right().addChangedListener(fluidProxyHandler::notifyListeners);
                 }
-            }
+            } else bufferPos = null;
         }
+        markAsChanged();
+        syncDataHolder.markClientSyncFieldDirty("bufferPos");
         if (!isRemote()) updateIO();
     }
 
     @Nullable
     public MEPatternBufferPartMachineBase getBuffer() {
+        if (buffer != null && buffer.isRemoved()) {
+            releaseRuntimeBinding(false);
+            bufferResolved = false;
+        }
         if (!bufferResolved) setBuffer(bufferPos);
         return buffer;
     }
 
-    protected void releaseBuffer() {
-        var oldBuffer = buffer;
-        if (oldBuffer != null) {
-            oldBuffer.removeProxy(this);
+    /** Chunk unload releases listeners, while retaining the persisted target position. */
+    protected void releaseRuntimeBinding(boolean removeMembership) {
+        for (int i = 0; i < handlerSubscriptions.length; i++) {
+            if (handlerSubscriptions[i] != null) handlerSubscriptions[i].unsubscribe();
+            handlerSubscriptions[i] = null;
         }
+        var old = buffer;
         buffer = null;
-        bufferPos = null;
-        if (!isRemote()) {
-            this.itemProxyHandler.setHandler(null);
-            this.fluidProxyHandler.setHandler(null);
-            this.bufferTrait = null;
-            for (int i = 0; i < handlerSubscriptions.length; i++) {
-                if (handlerSubscriptions[i] != null) {
-                    handlerSubscriptions[i].unsubscribe();
-                    handlerSubscriptions[i] = null;
-                }
-            }
-        }
+        bufferTrait = null;
+        itemProxyHandler.setHandler(null);
+        fluidProxyHandler.setHandler(null);
+        if (removeMembership && old != null) old.removeProxy(this);
     }
 
     protected void updateIO() {
@@ -145,33 +149,15 @@ public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine imple
     // ========================================
 
     @Override
-    public InteractionResult onUse(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (stack.isEmpty()) return InteractionResult.PASS;
-
-        if (stack.is(GTItems.TOOL_DATA_STICK.asItem())) {
-            if (!world.isClientSide) {
-                // Check if it's research data - if so, pass to avoid conflicts
-                var researchData = ResearchManager.readResearchId(stack);
-                if (researchData != null) {
-                    return InteractionResult.PASS;
-                }
-
-                // Read pattern buffer position from the data stick
-                var tag = stack.getTag();
-                if (tag != null && tag.contains("pos")) {
-                    int[] posArray = tag.getIntArray("pos");
-                    if (posArray.length == 3) {
-                        BlockPos bufferPos = new BlockPos(posArray[0], posArray[1], posArray[2]);
-                        player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_paste_settings"));
-                        setBuffer(bufferPos);
-                    }
-                }
-            }
-            return InteractionResult.sidedSuccess(world.isClientSide);
+    public InteractionResult onDataStickUse(Player player, ItemStack stack) {
+        if (stack.has(GTDataComponents.RESEARCH_ITEM)) return InteractionResult.PASS;
+        var pos = stack.get(GTDataComponents.DATA_COPY_POS);
+        if (pos == null) return InteractionResult.PASS;
+        if (!isRemote()) {
+            setBuffer(pos);
+            player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_paste_settings"));
         }
-
-        return InteractionResult.PASS;
+        return InteractionResult.sidedSuccess(isRemote());
     }
 
     @Override
@@ -180,32 +166,38 @@ public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine imple
     }
 
     @Override
-    public ModularUI createUI(Player entityPlayer) {
-        assert getBuffer() != null; // UI should never be able to be opened when buffer is null
-        return getBuffer().createUI(entityPlayer);
+    public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var target = getBuffer();
+        if (target == null) throw new IllegalStateException("Pattern buffer proxy is not bound");
+        return target.getPanelBuilder(data, sync, settings);
     }
 
-    // ========================================
-    // LIFECYCLE
-    // ========================================
+    @Override
+    public void buildMainUI(ParentWidget<?> parent, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var target = getBuffer();
+        if (target == null) throw new IllegalStateException("Pattern buffer proxy is not bound");
+        target.buildMainUI(parent, data, sync, settings);
+    }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (getLevel() instanceof ServerLevel level) {
-            level.getServer().tell(new TickTask(0, () -> this.setBuffer(bufferPos)));
-        }
+        bufferResolved = false;
+        if (!isRemote()) scheduleForNextServerTick(() -> { if (!isRemoved()) getBuffer(); });
     }
 
     @Override
-    public void onMachineRemoved() {
-        releaseBuffer();
+    public void onUnload() {
+        releaseRuntimeBinding(false);
+        bufferResolved = false;
+        super.onUnload();
     }
 
     @Override
-    @NotNull
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public void onMachineDestroyed() {
+        releaseRuntimeBinding(true);
+        bufferPos = null;
+        super.onMachineDestroyed();
     }
 
     // ========================================
@@ -213,7 +205,8 @@ public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine imple
     // ========================================
 
     @Override
-    public Pair<IMERecipeHandlerTrait<Ingredient, ItemStack>, IMERecipeHandlerTrait<FluidIngredient, FluidStack>> getMERecipeHandlerTraits() {
+    public Pair<IMERecipeHandlerTrait<SizedIngredient, ItemStack>, IMERecipeHandlerTrait<SizedFluidIngredient, FluidStack>> getMERecipeHandlerTraits() {
+        getBuffer();
         return Pair.of(itemProxyHandler, fluidProxyHandler);
     }
 
@@ -224,16 +217,12 @@ public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine imple
 
     protected class MEPatternProxyTrait extends MachineTrait implements IMEPatternTrait {
 
-        protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-                MEPatternBufferProxyPartMachine.class);
 
-        public MEPatternProxyTrait(MEPatternBufferProxyPartMachine machine) {
-            super(machine);
-        }
+        public MEPatternProxyTrait() {}
 
         @Override
         public MEPatternBufferProxyPartMachine getMachine() {
-            return (MEPatternBufferProxyPartMachine) machine;
+            return (MEPatternBufferProxyPartMachine) super.getMachine();
         }
 
         @Override
@@ -280,9 +269,5 @@ public class MEPatternBufferProxyPartMachine extends MultiblockPartMachine imple
             return IO.NONE;
         }
 
-        @Override
-        public ManagedFieldHolder getFieldHolder() {
-            return MANAGED_FIELD_HOLDER;
-        }
     }
 }

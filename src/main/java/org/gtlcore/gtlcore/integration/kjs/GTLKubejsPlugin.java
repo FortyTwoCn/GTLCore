@@ -9,22 +9,19 @@ import org.gtlcore.gtlcore.common.recipe.condition.GravityCondition;
 import org.gtlcore.gtlcore.utils.Registries;
 import org.gtlcore.gtlcore.utils.TextUtil;
 
-import dev.latvian.mods.kubejs.KubeJSPlugin;
-import dev.latvian.mods.kubejs.script.BindingsEvent;
-import dev.latvian.mods.kubejs.script.ScriptType;
-import dev.latvian.mods.kubejs.util.ClassFilter;
+import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
+import dev.latvian.mods.kubejs.script.BindingRegistry;
+import dev.latvian.mods.kubejs.plugin.ClassFilter;
 
-public class GTLKubejsPlugin extends KubeJSPlugin {
+public class GTLKubejsPlugin implements KubeJSPlugin {
 
     @Override
-    public void registerClasses(ScriptType type, ClassFilter filter) {
-        super.registerClasses(type, filter);
+    public void registerClasses(ClassFilter filter) {
         filter.allow("org.gtlcore.gtlcore");
     }
 
     @Override
-    public void registerBindings(BindingsEvent event) {
-        super.registerBindings(event);
+    public void registerBindings(BindingRegistry event) {
 
         event.add("GTLMaterials", GTLMaterials.class);
         event.add("GTLBlocks", GTLBlocks.class);

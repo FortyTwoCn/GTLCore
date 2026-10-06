@@ -7,13 +7,13 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import static com.lowdragmc.lowdraglib.LDLib.isRemote;
+
 
 public class ExportOnlyAEConfigureItemSlot extends ExportOnlyAEItemSlot implements IMESlot {
 
     @Setter
     @Getter
-    private Runnable onConfigChanged;
+    private Runnable onConfigChanged = () -> {};
 
     public ExportOnlyAEConfigureItemSlot(@Nullable GenericStack config, @Nullable GenericStack stock) {
         super(config, stock);
@@ -31,6 +31,6 @@ public class ExportOnlyAEConfigureItemSlot extends ExportOnlyAEItemSlot implemen
     @Override
     public void setConfig(@Nullable GenericStack config) {
         super.setConfig(config);
-        if (!isRemote()) onConfigChanged.run();
+        onConfigChanged.run();
     }
 }

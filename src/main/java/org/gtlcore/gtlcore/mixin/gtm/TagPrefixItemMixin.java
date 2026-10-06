@@ -5,7 +5,6 @@ import org.gtlcore.gtlcore.api.data.chemical.material.info.GTLMaterialIconSet;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.item.TagPrefixItem;
-import com.gregtechceu.gtceu.api.item.component.ICustomRenderer;
 
 import com.lowdragmc.lowdraglib.Platform;
 import com.lowdragmc.lowdraglib.client.renderer.IItemRendererProvider;
@@ -20,12 +19,13 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.function.Supplier;
 
 @Mixin(value = TagPrefixItem.class, remap = false)
 public abstract class TagPrefixItemMixin extends Item implements IItemRendererProvider {
 
     @Unique
-    private ICustomRenderer gtlcore$customRenderer;
+    private Supplier<IRenderer> gtlcore$customRenderer;
 
     private TagPrefixItemMixin(Properties properties) {
         super(properties);
@@ -44,7 +44,7 @@ public abstract class TagPrefixItemMixin extends Item implements IItemRendererPr
     @Override
     public IRenderer getRenderer(ItemStack stack) {
         if (gtlcore$customRenderer != null) {
-            return gtlcore$customRenderer.getRenderer();
+            return gtlcore$customRenderer.get();
         }
         return null;
     }

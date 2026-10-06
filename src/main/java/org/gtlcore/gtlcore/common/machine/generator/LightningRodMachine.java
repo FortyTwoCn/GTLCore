@@ -1,10 +1,11 @@
 package org.gtlcore.gtlcore.common.machine.generator;
 
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableEnergyContainer;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
@@ -12,7 +13,7 @@ import net.minecraft.world.level.block.LightningRodBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
-import com.mojang.blaze3d.MethodsReturnNonnullByDefault;
+import net.minecraft.MethodsReturnNonnullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -26,47 +27,45 @@ public class LightningRodMachine extends TieredEnergyMachine {
     @Nullable
     protected TickableSubscription energySubs;
 
-    public LightningRodMachine(IMachineBlockEntity holder, int tier, Object... args) {
-        super(holder, tier, args);
-        this.energySubs = subscribeServerTick(energySubs, this::checkEnergy);
+    public LightningRodMachine(BlockEntityCreationInfo info, int tier) {
+        super(info, tier, NotifiableEnergyContainer.emitterContainer(charge(tier), GTValues.V[tier - 1], 512L));
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (!isRemote() && energySubs == null) energySubs = subscribeServerTick(this::checkEnergy);
+    }
+
+    @Override
+    public void onUnload() {
+        unsubscribe(energySubs); energySubs = null;
+        super.onUnload();
     }
 
     protected void checkEnergy() {
         if (getOffsetTimer() % 10 == 0) {
-            BlockState state = Objects.requireNonNull(getLevel()).getBlockState(getPos().offset(0, 1, 0));
+            BlockState state = Objects.requireNonNull(getLevel()).getBlockState(getBlockPos().offset(0, 1, 0));
             if (state.getBlock() == Blocks.LIGHTNING_ROD &&
                     state.getValue(BlockStateProperties.FACING) == Direction.UP &&
                     state.getValue(LightningRodBlock.POWERED)) {
                 if (energyContainer.getEnergyStored() == getCharge()) {
-                    doExplosion(getTier());
+                    GTUtil.doExplosion(getLevel(), getBlockPos(), getTier());
                 } else {
                     energyContainer.addEnergy(getCharge() / 4);
                 }
                 if (Math.random() > 0.9) {
-                    getLevel().setBlockAndUpdate(getPos().offset(0, 1, 0), Blocks.AIR.defaultBlockState());
+                    getLevel().setBlockAndUpdate(getBlockPos().offset(0, 1, 0), Blocks.AIR.defaultBlockState());
                 }
             }
         }
     }
 
-    @Override
-    protected boolean isEnergyEmitter() {
-        return true;
-    }
-
-    @Override
-    protected long getMaxInputOutputAmperage() {
-        return 512L;
-    }
-
     private long getCharge() {
-        return (long) (48828 * Math.pow(4, getTier()));
+        return charge(getTier());
     }
-
-    @Override
-    protected NotifiableEnergyContainer createEnergyContainer(Object... args) {
-        return NotifiableEnergyContainer.emitterContainer(this, getCharge(),
-                GTValues.V[getTier() - 1], getMaxInputOutputAmperage());
+    private static long charge(int tier) {
+        return (long) (48828 * Math.pow(4, tier));
     }
 
     @Override

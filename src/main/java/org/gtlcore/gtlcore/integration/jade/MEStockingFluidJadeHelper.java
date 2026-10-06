@@ -2,7 +2,6 @@ package org.gtlcore.gtlcore.integration.jade;
 
 import org.gtlcore.gtlcore.api.machine.trait.MEStock.IOptimizedMEList;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.MEDualHatchStockPartMachine;
-import org.gtlcore.gtlcore.mixin.gtm.ae.machine.MEInputHatchPartMachineAccessor;
 import org.gtlcore.gtlcore.utils.NumberUtils;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -11,8 +10,10 @@ import com.gregtechceu.gtceu.integration.ae2.machine.MEInputHatchPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidList;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidSlot;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.side.fluid.IFluidTransfer;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEStockingPatternBufferPartMachine;
+import com.gregtechceu.gtceu.integration.ae2.machine.feature.IGridConnectedMachine;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -34,19 +35,19 @@ import java.util.List;
 
 public final class MEStockingFluidJadeHelper {
 
-    private static final String FLUID_ID_TAG = "fluid";
-    private static final String FLUID_DATA_TAG = "tag";
-    private static final int DISPLAY_FLUID_AMOUNT = 1;
-
     private MEStockingFluidJadeHelper() {}
 
     public static @Nullable List<ViewGroup<CompoundTag>> createGroups(MetaMachine machine) {
+        if (machine instanceof MEStockingPatternBufferPartMachine stocking) {
+            var views = createFluidViews(stocking.getStockingFluidMap());
+            return views.isEmpty() ? Collections.emptyList() : List.of(new ViewGroup<>(views));
+        }
         ExportOnlyAEFluidList aeFluidHandler = getAeFluidHandler(machine);
         List<CompoundTag> views;
         if (aeFluidHandler != null) {
             views = createFluidViews(machine, aeFluidHandler);
         } else {
-            IFluidTransfer fluidTransfer = machine.getFluidTransferCap(null, false);
+            IFluidHandler fluidTransfer = machine.getFluidHandlerCap(null, false);
             if (fluidTransfer == null || fluidTransfer.getTanks() == 0) {
                 return null;
             }
@@ -64,18 +65,12 @@ public final class MEStockingFluidJadeHelper {
     }
 
     private static @Nullable FluidView readFluidView(CompoundTag viewData) {
-        FluidView view = FluidView.readDefault(viewData);
-        if (view != null) {
-            var fluid = BuiltInRegistries.FLUID.get(new ResourceLocation(viewData.getString(FLUID_ID_TAG)));
-            CompoundTag fluidData = viewData.contains(FLUID_DATA_TAG) ? viewData.getCompound(FLUID_DATA_TAG) : null;
-            view.fluidName = new net.minecraftforge.fluids.FluidStack(fluid, DISPLAY_FLUID_AMOUNT, fluidData).getDisplayName();
-        }
-        return view;
+        return FluidView.readDefault(viewData);
     }
 
     private static @Nullable ExportOnlyAEFluidList getAeFluidHandler(MetaMachine machine) {
         if (machine instanceof MEInputHatchPartMachine inputHatch) {
-            return ((MEInputHatchPartMachineAccessor) inputHatch).gtlcore$getAeFluidHandler();
+            return (ExportOnlyAEFluidList) inputHatch.tank;
         }
         if (machine instanceof MEDualHatchStockPartMachine dualHatch) {
             return dualHatch.aeFluidHandler;
@@ -85,10 +80,10 @@ public final class MEStockingFluidJadeHelper {
 
     private static List<CompoundTag> createFluidViews(MetaMachine machine, ExportOnlyAEFluidList fluidHandler) {
         if (fluidHandler instanceof IOptimizedMEList optimized && optimized.isStocking()) {
-            if (machine instanceof MEBusPartMachine meMachine && meMachine.getMainNode().getGrid() == null) {
+            if (machine instanceof IGridConnectedMachine meMachine && meMachine.getMainNode().getGrid() == null) {
                 return Collections.emptyList();
             }
-            return createFluidViews(optimized.getMEFluidList());
+            return createFluidViews(optimized.getMEFluidMap());
         }
 
         Object2LongLinkedOpenHashMap<AEFluidKey> amounts = new Object2LongLinkedOpenHashMap<>();
@@ -103,26 +98,24 @@ public final class MEStockingFluidJadeHelper {
         List<CompoundTag> views = new ArrayList<>(amounts.size());
         for (Object2LongMap.Entry<AEFluidKey> entry : amounts.object2LongEntrySet()) {
             long amount = entry.getLongValue();
-            JadeFluidObject fluid = JadeFluidObject.of(entry.getKey().getFluid(), amount, entry.getKey().copyTag());
+            JadeFluidObject fluid = JadeFluidObject.of(entry.getKey().getFluid(), amount, entry.getKey().toStack(1).getComponentsPatch());
             views.add(FluidView.writeDefault(fluid, amount));
         }
         return views;
     }
 
-    private static List<CompoundTag> createFluidViews(List<FluidStack> fluidStacks) {
-        List<CompoundTag> views = new ArrayList<>(fluidStacks.size());
-        for (FluidStack fluidStack : fluidStacks) {
-            if (fluidStack.isEmpty() || fluidStack.getAmount() <= 0L) {
-                continue;
-            }
-            long amount = fluidStack.getAmount();
-            JadeFluidObject fluid = JadeFluidObject.of(fluidStack.getFluid(), amount, fluidStack.getTag());
-            views.add(FluidView.writeDefault(fluid, amount));
+    private static List<CompoundTag> createFluidViews(@Nullable Object2LongMap<FluidStack> fluids) {
+        if (fluids == null) return List.of();
+        var views = new ArrayList<CompoundTag>();
+        for (var entry : fluids.object2LongEntrySet()) {
+            var stack = entry.getKey(); long amount = entry.getLongValue();
+            if (stack.isEmpty() || amount <= 0) continue;
+            views.add(FluidView.writeDefault(JadeFluidObject.of(stack.getFluid(), amount, stack.getComponentsPatch()), amount));
         }
         return views;
     }
 
-    private static List<CompoundTag> createFluidViews(IFluidTransfer fluidTransfer) {
+    private static List<CompoundTag> createFluidViews(IFluidHandler fluidTransfer) {
         List<CompoundTag> views = new ArrayList<>(fluidTransfer.getTanks());
         for (int tank = 0; tank < fluidTransfer.getTanks(); tank++) {
             FluidStack fluidStack = fluidTransfer.getFluidInTank(tank);
@@ -134,7 +127,7 @@ public final class MEStockingFluidJadeHelper {
                 continue;
             }
             long capacity = Math.max(amount, fluidTransfer.getTankCapacity(tank));
-            JadeFluidObject fluid = JadeFluidObject.of(fluidStack.getFluid(), amount, fluidStack.getTag());
+            JadeFluidObject fluid = JadeFluidObject.of(fluidStack.getFluid(), amount, fluidStack.getComponentsPatch());
             views.add(FluidView.writeDefault(fluid, capacity));
         }
         return views;

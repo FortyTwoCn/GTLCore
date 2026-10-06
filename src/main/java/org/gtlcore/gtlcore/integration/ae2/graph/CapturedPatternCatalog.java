@@ -6,6 +6,8 @@ import org.gtlcore.gtlcore.integration.ae2.graph.core.PlanningBudget;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.PlanningScheduler;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.PreparedCatalog;
 
+import net.minecraft.core.HolderLookup;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEKey;
 
@@ -37,9 +39,11 @@ public final class CapturedPatternCatalog {
 
     private volatile List<Entry> entries;
     private final int size;
+    private final HolderLookup.Provider registries;
     private volatile Prepared prepared;
 
-    public CapturedPatternCatalog(List<Entry> entries, int size) {
+    public CapturedPatternCatalog(List<Entry> entries, int size, HolderLookup.Provider registries) {
+        this.registries = java.util.Objects.requireNonNull(registries);
         this.entries = List.copyOf(entries);
         this.size = size;
     }
@@ -61,7 +65,7 @@ public final class CapturedPatternCatalog {
 
         private final PlanningBudget budget;
         private final List<Entry> capturedEntries;
-        private final PatternFingerprint.Context fingerprints = new PatternFingerprint.Context();
+        private final PatternFingerprint.Context fingerprints = new PatternFingerprint.Context(registries);
         private final Map<String, IPatternDetails> bindings = new LinkedHashMap<>();
         private final Map<String, Integer> priorities = new HashMap<>();
         private final Set<String> seen = new HashSet<>();
@@ -154,7 +158,7 @@ public final class CapturedPatternCatalog {
         }
 
         private List<Encoded> encode(int start, int end) {
-            var context = new PatternFingerprint.Context();
+            var context = new PatternFingerprint.Context(registries);
             List<Encoded> result = new ArrayList<>(end - start);
             for (int index = start; index < end; index++) {
                 budget.check();

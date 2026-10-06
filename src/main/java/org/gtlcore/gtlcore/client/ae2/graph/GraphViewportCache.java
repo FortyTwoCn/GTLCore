@@ -7,10 +7,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -22,7 +22,7 @@ import org.lwjgl.opengl.GL30;
 import java.util.*;
 
 /** World-anchored tiles: moving the viewport never restarts a visible tile's painter. */
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = GTLCore.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class GraphViewportCache implements AutoCloseable {
 
     interface Painter {
@@ -147,7 +147,7 @@ public final class GraphViewportCache implements AutoCloseable {
         var projection = new Matrix4f(RenderSystem.getProjectionMatrix());
         var sorting = RenderSystem.getVertexSorting();
         var view = RenderSystem.getModelViewStack();
-        view.pushPose();
+        view.pushMatrix();
         try {
             RenderSystem.disableScissor();
             // Allocate at most one target per frame; retain other tiles for panning and adjacent zooms.
@@ -165,7 +165,7 @@ public final class GraphViewportCache implements AutoCloseable {
                 }
                 tiles.put(missing, new Tile(missing, guiScale, factory));
             }
-            view.setIdentity();
+            view.identity();
             view.translate(0, 0, -10000);
             RenderSystem.applyModelViewMatrix();
             long deadline = System.nanoTime() + SLICE_NANOS;
@@ -192,7 +192,7 @@ public final class GraphViewportCache implements AutoCloseable {
             }
         } finally {
             RenderSystem.setProjectionMatrix(projection, sorting);
-            view.popPose();
+            view.popMatrix();
             RenderSystem.applyModelViewMatrix();
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawTarget);
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readTarget);
@@ -239,13 +239,12 @@ public final class GraphViewportCache implements AutoCloseable {
         float left = (float) box.x(), top = (float) box.y();
         float right = (float) (box.x() + box.width()), bottom = (float) (box.y() + box.height());
         float inset = (float) GUARD / (TILE_SIZE + 2 * GUARD);
-        var buffer = Tesselator.getInstance().getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.vertex(matrix, left, bottom, 0).uv(inset, inset).endVertex();
-        buffer.vertex(matrix, right, bottom, 0).uv(1 - inset, inset).endVertex();
-        buffer.vertex(matrix, right, top, 0).uv(1 - inset, 1 - inset).endVertex();
-        buffer.vertex(matrix, left, top, 0).uv(inset, 1 - inset).endVertex();
-        BufferUploader.drawWithShader(buffer.end());
+        var buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        buffer.addVertex(matrix, left, bottom, 0).setUv(inset, inset);
+        buffer.addVertex(matrix, right, bottom, 0).setUv(1 - inset, inset);
+        buffer.addVertex(matrix, right, top, 0).setUv(1 - inset, 1 - inset);
+        buffer.addVertex(matrix, left, top, 0).setUv(inset, 1 - inset);
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
     int progress() {

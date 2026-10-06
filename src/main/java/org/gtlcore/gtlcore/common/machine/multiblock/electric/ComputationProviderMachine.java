@@ -1,30 +1,34 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 
 import org.gtlcore.gtlcore.utils.MachineIO;
-import org.gtlcore.gtlcore.utils.TextUtil;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
 
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
+import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockDisplayText;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.PanelSyncManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -40,18 +44,36 @@ public class ComputationProviderMachine extends WorkableElectricMultiblockMachin
     private static final long INFINITE_PROVIDER_EU_PER_REQUEST = Integer.MAX_VALUE;
 
     public int allocatedCWUt = 0;
-    @Persisted
+    @SaveField
     public long totalCWU = 0;
     public int maxCWUt = 0;
     @Nullable
     protected TickableSubscription tickSubs;
 
-    boolean canProvideCWUt = true;
-    private boolean inf = false;
+    boolean canProvideCWUt;
+    private final boolean inf;
+    private int lastAllocatedCWUt;
 
-    public ComputationProviderMachine(IMachineBlockEntity holder, boolean inf, Object... args) {
-        super(holder, args);
+    public ComputationProviderMachine(BlockEntityCreationInfo holder, boolean inf) {
+        super(holder, new ComputationRecipeLogic());
         this.inf = inf;
+    }
+
+    // The native default overloads pre-add this provider. Start with an empty traversal instead,
+    // so the collection overload can still reject repeated visits without rejecting direct calls.
+    @Override
+    public int requestCWUt(int cwut, boolean simulate) {
+        return requestCWUt(cwut, simulate, new ArrayList<>());
+    }
+
+    @Override
+    public int getMaxCWUt() {
+        return getMaxCWUt(new ArrayList<>());
+    }
+
+    @Override
+    public boolean canBridge() {
+        return canBridge(new ArrayList<>());
     }
 
     @Override
@@ -89,37 +111,41 @@ public class ComputationProviderMachine extends WorkableElectricMultiblockMachin
                 projectedCWU = totalCWU;
             }
         }
-        int toAllocate = Math.min(cwut, (int) Math.min(availableCapacity, projectedCWU));
+        int toAllocate = Math.min(cwut, (int) Math.min(availableCapacity, Math.max(0, projectedCWU - allocatedCWUt)));
         if (!simulate) allocatedCWUt += toAllocate;
         return toAllocate;
     }
 
     private boolean canDrawEnergy(long eu) {
-        return getEnergyContainer().getEnergyStored() >= eu;
+        return eu >= 0 && com.gregtechceu.gtceu.api.recipe.RecipeHelper.matchTickRecipe(this,
+                GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(GTCEu.id("computation_energy_probe")).EUt(eu).build()).isSuccess();
     }
 
     private boolean isComputationAvailable() {
-        return isFormed() && canProvideCWUt && !getRecipeLogic().isSuspend();
+        return isFormed() && canProvideCWUt && isWorkingEnabled();
     }
-
-    private static final ItemStack OPTICAL_MAINFRAME = getItemStack("kubejs:optical_mainframe", 8);
-    private static final ItemStack EXOTIC_MAINFRAME = getItemStack("kubejs:exotic_mainframe", 8);
-    private static final ItemStack COSMIC_MAINFRAME = getItemStack("kubejs:cosmic_mainframe", 8);
-    private static final ItemStack SUPRACAUSAL_MAINFRAME = getItemStack("kubejs:supracausal_mainframe", 8);
 
     @Override
     public int getMaxCWUt(@NotNull Collection<IOpticalComputationProvider> seen) {
         if (!seen.add(this) || !isComputationAvailable()) return 0;
         if (inf) return Integer.MAX_VALUE;
-        if (maxCWUt == 0) {
-            maxCWUt = switch (getTier()) {
-                case GTValues.UIV -> MachineIO.notConsumableItem(this, OPTICAL_MAINFRAME) ? 1024 : 0;
-                case GTValues.UXV -> MachineIO.notConsumableItem(this, EXOTIC_MAINFRAME) ? 2048 : 0;
-                case GTValues.OpV -> MachineIO.notConsumableItem(this, COSMIC_MAINFRAME) ? 4096 : 0;
-                case GTValues.MAX -> MachineIO.notConsumableItem(this, SUPRACAUSAL_MAINFRAME) ? 8192 : 0;
-                default -> 0;
-            };
-        }
+        // Inventory changes now notify recipe traits rather than an onChanged machine callback.
+        // Recheck the non-consumed mainframes so removal cannot leave cached capacity behind.
+        String mainframe = switch (getTier()) {
+            case GTValues.UIV -> "kubejs:optical_mainframe";
+            case GTValues.UXV -> "kubejs:exotic_mainframe";
+            case GTValues.OpV -> "kubejs:cosmic_mainframe";
+            case GTValues.MAX -> "kubejs:supracausal_mainframe";
+            default -> null;
+        };
+        ItemStack stack = mainframe == null ? ItemStack.EMPTY : getItemStack(mainframe, 8);
+        maxCWUt = !stack.isEmpty() && MachineIO.notConsumableItem(this, stack) ? switch (getTier()) {
+            case GTValues.UIV -> 1024;
+            case GTValues.UXV -> 2048;
+            case GTValues.OpV -> 4096;
+            case GTValues.MAX -> 8192;
+            default -> 0;
+        } : 0;
         return maxCWUt;
     }
 
@@ -135,7 +161,11 @@ public class ComputationProviderMachine extends WorkableElectricMultiblockMachin
             updateTickSubscription();
             return;
         }
-        if (!inf) totalCWU = Math.max(0, totalCWU - allocatedCWUt);
+        if (!inf) {
+            totalCWU = Math.max(0, totalCWU - allocatedCWUt);
+            markAsChanged();
+        }
+        lastAllocatedCWUt = allocatedCWUt;
         if (getRecipeLogic().isSuspend()) {
             allocatedCWUt = 0;
             canProvideCWUt = false;
@@ -153,9 +183,7 @@ public class ComputationProviderMachine extends WorkableElectricMultiblockMachin
     @Override
     public void onLoad() {
         super.onLoad();
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateTickSubscription));
-        }
+        scheduleForNextServerTick(this::updateTickSubscription);
     }
 
     @Override
@@ -177,46 +205,36 @@ public class ComputationProviderMachine extends WorkableElectricMultiblockMachin
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(@NotNull String name) {
+        super.formStructure(name);
         canProvideCWUt = true;
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateTickSubscription));
-        }
+        scheduleForNextServerTick(this::updateTickSubscription);
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String name) {
+        super.invalidateStructure(name);
         allocatedCWUt = 0;
         canProvideCWUt = false;
         updateTickSubscription();
     }
 
     @Override
-    public void onChanged() {
-        maxCWUt = 0;
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager sync) {
+        var widgets = new ArrayList<>(super.getWidgetsForDisplay(sync));
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("computationProvider", (controller, lines) -> {
+            if (!isFormed()) return;
+            Component cwut = Component.literal(lastAllocatedCWUt + " / " + (inf ? "∞" : getMaxCWUt()) + " CWU/t")
+                    .withStyle(ChatFormatting.AQUA);
+            lines.add(Component.translatable("gtceu.multiblock.hpca.computation", cwut).withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable(lastAllocatedCWUt > 0 ?
+                    "gtceu.multiblock.data_bank.providing" : "gtceu.multiblock.idling"));
+        }).apply(this, sync));
+        return widgets;
     }
 
-    @Override
-    public void addDisplayText(List<Component> textList) {
-        MultiblockDisplayText.builder(textList, isFormed())
-                .setWorkingStatus(true, allocatedCWUt > 0)
-                .setWorkingStatusKeys(
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.data_bank.providing")
-                .addCustom(tl -> {
-                    if (isFormed()) {
-                        Component cwutInfo = Component.literal(
-                                allocatedCWUt + " / " + (inf ? TextUtil.full_color("∞") : getMaxCWUt()))
-                                .append(Component.literal(" CWU/t"))
-                                .withStyle(ChatFormatting.AQUA);
-                        tl.add(Component.translatable(
-                                "gtceu.multiblock.hpca.computation",
-                                cwutInfo).withStyle(ChatFormatting.GRAY));
-                    }
-                })
-                .addWorkingStatusLine();
+    /** Computation drives this trait's status; there is no ordinary recipe to search or consume. */
+    private static final class ComputationRecipeLogic extends RecipeLogic {
+        @Override public void serverTick() {}
     }
 }

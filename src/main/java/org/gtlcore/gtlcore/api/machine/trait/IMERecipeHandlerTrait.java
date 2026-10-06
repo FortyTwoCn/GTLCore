@@ -4,15 +4,13 @@ import org.gtlcore.gtlcore.api.capability.IMERecipeHandler;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 
-import com.lowdragmc.lowdraglib.syncdata.ISubscription;
-
-import java.util.function.Predicate;
+import com.gregtechceu.gtceu.utils.ISubscription;
 
 /**
  * @author Dragonators
  * @param <T>
  */
-public interface IMERecipeHandlerTrait<T extends Predicate<S>, S> extends IMERecipeHandler<T, S> {
+public interface IMERecipeHandlerTrait<T, S> extends IMERecipeHandler<T, S> {
 
     IO getIo();
 

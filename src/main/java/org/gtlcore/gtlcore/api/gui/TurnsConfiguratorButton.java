@@ -1,96 +1,44 @@
 package org.gtlcore.gtlcore.api.gui;
 
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
-
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-
-import net.minecraft.network.FriendlyByteBuf;
+import brachy.modularui.api.drawable.IDrawable;
+import brachy.modularui.drawable.DynamicDrawable;
+import brachy.modularui.value.sync.IntSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widgets.CycleButtonWidget;
 import net.minecraft.network.chat.Component;
-
-import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
-/**
- * @author EasterFG on 2025/3/22
- */
-public class TurnsConfiguratorButton implements IFancyConfiguratorButton {
+/** Native cycle control with server-owned state and per-mode icons/tooltips. */
+public final class TurnsConfiguratorButton {
+    private final IDrawable[] icons;
+    private final IntSupplier getter;
+    private final IntConsumer setter;
+    private Function<Integer, List<Component>> tooltips = mode -> List.of();
 
-    protected IGuiTexture[] group;
-    protected BiConsumer<ClickData, Integer> onClick;
-    protected IntSupplier intSupplier;
-    int mode;
-    Function<Integer, List<Component>> tooltipsSupplier = isPressed -> Collections.emptyList();
-
-    public TurnsConfiguratorButton(IntSupplier intSupplier, BiConsumer<ClickData, Integer> onClick, IGuiTexture... turns) {
-        this.intSupplier = intSupplier;
-        this.onClick = onClick;
-        this.group = turns;
+    public TurnsConfiguratorButton(IntSupplier getter, IntConsumer setter, IDrawable... icons) {
+        this.getter = Objects.requireNonNull(getter); this.setter = Objects.requireNonNull(setter);
+        if (icons.length == 0) throw new IllegalArgumentException("A cycle control requires at least one icon");
+        this.icons = icons.clone();
+        for (var icon : this.icons) Objects.requireNonNull(icon);
     }
 
-    @Override
-    public Component getTitle() {
-        return null;
+    public TurnsConfiguratorButton setTooltipsSupplier(Function<Integer, List<Component>> supplier) {
+        tooltips = Objects.requireNonNull(supplier); return this;
     }
 
-    @Override
-    public Widget createConfigurator() {
-        return null;
-    }
-
-    @Override
-    public IGuiTexture getIcon() {
-        return mode < group.length ? group[mode] : IGuiTexture.MISSING_TEXTURE;
-    }
-
-    public TurnsConfiguratorButton setTooltipsSupplier(Function<Integer, List<Component>> tooltipsSupplier) {
-        this.tooltipsSupplier = tooltipsSupplier;
-        return this;
-    }
-
-    @Override
-    public List<Component> getTooltips() {
-        return tooltipsSupplier.apply(mode);
-    }
-
-    @Override
-    public void detectAndSendChange(BiConsumer<Integer, Consumer<FriendlyByteBuf>> sender) {
-        var newValue = intSupplier.getAsInt();
-        if (newValue != mode) {
-            mode = newValue;
-            sender.accept(0, buf -> buf.writeInt(mode));
-        }
-    }
-
-    @Override
-    public void readUpdateInfo(int id, FriendlyByteBuf buf) {
-        if (id == 0) {
-            mode = buf.readInt();
-        }
-    }
-
-    @Override
-    public void writeInitialData(FriendlyByteBuf buffer) {
-        this.mode = intSupplier.getAsInt();
-        buffer.writeInt(this.mode);
-    }
-
-    @Override
-    public void readInitialData(FriendlyByteBuf buffer) {
-        this.mode = buffer.readInt();
-    }
-
-    @Override
-    public void onClick(ClickData clickData) {
-        mode++;
-        if (mode == group.length) {
-            mode = 0;
-        }
-        onClick.accept(clickData, mode);
+    public CycleButtonWidget createConfigurator(PanelSyncManager sync, String key) {
+        var state = new IntSyncValue(() -> Math.floorMod(getter.getAsInt(), icons.length), setter) {
+            @Override public void setIntValue(int value, boolean setSource, boolean synchronize) {
+                if (value >= 0 && value < icons.length) super.setIntValue(value, setSource, synchronize);
+            }
+        }.allowC2S();
+        sync.syncValue(key, state);
+        return new CycleButtonWidget().length(icons.length).value(state)
+                .overlay(new DynamicDrawable(() -> icons[state.getIntValue()]))
+                .tooltipDynamic(tooltip -> tooltips.apply(state.getIntValue()).forEach(tooltip::addLine));
     }
 }

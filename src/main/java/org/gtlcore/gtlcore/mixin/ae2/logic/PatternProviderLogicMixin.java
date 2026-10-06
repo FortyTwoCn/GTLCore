@@ -2,6 +2,7 @@ package org.gtlcore.gtlcore.mixin.ae2.logic;
 
 import org.gtlcore.gtlcore.api.crafting.IAutoExpandSettings;
 import org.gtlcore.gtlcore.config.ConfigHolder;
+import org.gtlcore.gtlcore.common.data.GTLDataComponents;
 import org.gtlcore.gtlcore.integration.ae2.AEUtils;
 import org.gtlcore.gtlcore.integration.ae2.compat.MAE2Compat;
 import org.gtlcore.gtlcore.integration.ae2.crafting.IPatternProviderAutoExpand;
@@ -11,15 +12,17 @@ import org.gtlcore.gtlcore.utils.NumberUtils;
 import com.gregtechceu.gtceu.common.data.GTItems;
 
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -97,12 +100,12 @@ public abstract class PatternProviderLogicMixin implements IAutoExpandSettings, 
     }
 
     @Inject(method = "writeToNBT", at = @At("TAIL"), remap = false)
-    private void gtlcore$writeAutoExpand(CompoundTag tag, CallbackInfo ci) {
+    private void gtlcore$writeAutoExpand(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         tag.putBoolean(AUTO_EXPAND_KEY, gtlcore$autoExpand);
     }
 
     @Inject(method = "readFromNBT", at = @At("TAIL"), remap = false)
-    private void gtlcore$readAutoExpand(CompoundTag tag, CallbackInfo ci) {
+    private void gtlcore$readAutoExpand(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         if (tag.contains(AUTO_EXPAND_KEY)) {
             gtlcore$autoExpand = tag.getBoolean(AUTO_EXPAND_KEY);
         } else {
@@ -131,21 +134,21 @@ public abstract class PatternProviderLogicMixin implements IAutoExpandSettings, 
     }
 
     @Inject(method = "exportSettings", at = @At("TAIL"), remap = false)
-    private void gtlcore$exportAutoExpand(CompoundTag output, CallbackInfo ci) {
-        output.putBoolean(AUTO_EXPAND_KEY, gtlcore$autoExpand);
+    private void gtlcore$exportAutoExpand(DataComponentMap.Builder output, CallbackInfo ci) {
+        output.set(GTLDataComponents.AUTO_EXPAND.get(), gtlcore$autoExpand);
     }
 
     @Inject(method = "importSettings", at = @At("TAIL"), remap = false)
-    private void gtlcore$importAutoExpand(CompoundTag input, Player player, CallbackInfo ci) {
-        if (input.contains(AUTO_EXPAND_KEY)) {
-            gtlcore$autoExpand = input.getBoolean(AUTO_EXPAND_KEY);
+    private void gtlcore$importAutoExpand(DataComponentMap input, Player player, CallbackInfo ci) {
+        if (input.has(GTLDataComponents.AUTO_EXPAND.get())) {
+            gtlcore$autoExpand = input.get(GTLDataComponents.AUTO_EXPAND.get());
             saveChanges();
         }
     }
 
     @Inject(method = "updatePatterns", at = @At("TAIL"), remap = false)
     public void updatePatternsHook(CallbackInfo ci) {
-        patternInputs.remove(AEItemKey.of(GTItems.INTEGRATED_CIRCUIT.get()));
+        patternInputs.remove(AEItemKey.of(GTItems.PROGRAMMED_CIRCUIT.get()));
     }
 
     @Unique
@@ -220,7 +223,7 @@ public abstract class PatternProviderLogicMixin implements IAutoExpandSettings, 
         for (var direction : getActiveSides()) {
             var targetPosition = blockEntity.getBlockPos().relative(direction);
             var targetBlockEntity = level.getBlockEntity(targetPosition);
-            var machine = ICraftingMachine.of(level, targetPosition, direction.getOpposite(), targetBlockEntity);
+            var machine = ICraftingMachine.of(level, targetPosition, direction.getOpposite());
             if (machine != null && machine.acceptsPlans()) {
                 if (MAE2Compat.isPatternP2PTunnelLogic(machine)) {
                     // MAE2 pattern P2P tunnels route one whole batch to a single output.
@@ -323,9 +326,13 @@ public abstract class PatternProviderLogicMixin implements IAutoExpandSettings, 
             return gtlcore$targetAcceptsAll(target, baseInputs, operations);
         }
 
-        var itemCap = targetBE.getCapability(ForgeCapabilities.ITEM_HANDLER, side);
-        var fluidCap = targetBE.getCapability(ForgeCapabilities.FLUID_HANDLER, side);
-        boolean hasHandler = itemCap.isPresent() || fluidCap.isPresent();
+        Level targetLevel = targetBE.getLevel();
+        if (targetLevel == null) return gtlcore$targetAcceptsAll(target, baseInputs, operations);
+        var itemCap = targetLevel.getCapability(Capabilities.ItemHandler.BLOCK,
+                targetBE.getBlockPos(), targetBE.getBlockState(), targetBE, side);
+        var fluidCap = targetLevel.getCapability(Capabilities.FluidHandler.BLOCK,
+                targetBE.getBlockPos(), targetBE.getBlockState(), targetBE, side);
+        boolean hasHandler = itemCap != null || fluidCap != null;
 
         // First pass: each key must fit its own available space (cheap reject).
         // Slot reality is verified precisely below; the aggregate slot heuristic only
@@ -334,13 +341,13 @@ public abstract class PatternProviderLogicMixin implements IAutoExpandSettings, 
             return false;
         }
 
-        if (itemCap.isPresent() &&
-                !gtlcore$canItemHandlerAcceptAll(itemCap.orElseThrow(NullPointerException::new), baseInputs, operations)) {
+        if (itemCap != null &&
+                !gtlcore$canItemHandlerAcceptAll(itemCap, baseInputs, operations)) {
             return false;
         }
 
-        if (fluidCap.isPresent() &&
-                !gtlcore$canFluidHandlerAcceptAll(fluidCap.orElseThrow(NullPointerException::new), baseInputs, operations)) {
+        if (fluidCap != null &&
+                !gtlcore$canFluidHandlerAcceptAll(fluidCap, baseInputs, operations)) {
             return false;
         }
 
@@ -537,7 +544,7 @@ public abstract class PatternProviderLogicMixin implements IAutoExpandSettings, 
             }
 
             long available = target.insert(itemKey, Long.MAX_VALUE, Actionable.SIMULATE);
-            int maxStack = Math.max(1, itemKey.getItem().getMaxStackSize());
+            int maxStack = Math.max(1, itemKey.getMaxStackSize());
             requiredItemSlots = NumberUtils.saturatedAdd(requiredItemSlots, gtlcore$ceilDiv(amount, maxStack));
             availableItemSlots = Math.max(availableItemSlots, gtlcore$ceilDiv(available, maxStack));
         }

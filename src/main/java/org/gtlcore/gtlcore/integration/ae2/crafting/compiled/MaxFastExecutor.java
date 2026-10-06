@@ -685,7 +685,7 @@ public final class MaxFastExecutor {
 
     private static CandidateAnalysis analyzeCandidate(AEKey nodeKey, IPatternDetails details,
                                                       ICraftingService craftingService, Level level) {
-        GenericStack[] outputs = details.getOutputs().clone();
+        GenericStack[] outputs = details.getOutputs().toArray(GenericStack[]::new);
         long outputPerPattern = getOutputCount(outputs, nodeKey);
         boolean aggregateSafe = outputPerPattern > 0;
         boolean structurallyExactInputs = hasStructurallyExactInputs(details);
@@ -2403,7 +2403,7 @@ public final class MaxFastExecutor {
     private static boolean validateSccProgram(ICraftingTreeNode root, SccProgram program) {
         Level level = root.gtlcore$getMaxFastLevel();
         for (SccNode node : program.nodes()) {
-            if (getOutputCount(node.details().getOutputs(), node.key()) != node.outputPerPattern()) {
+            if (getOutputCount(node.details().getOutputs().toArray(GenericStack[]::new), node.key()) != node.outputPerPattern()) {
                 return false;
             }
             for (SccInput input : node.inputs()) {

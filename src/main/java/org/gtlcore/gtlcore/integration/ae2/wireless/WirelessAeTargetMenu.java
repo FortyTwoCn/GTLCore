@@ -12,7 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.NetworkHooks;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -81,9 +80,7 @@ public class WirelessAeTargetMenu extends AbstractContainerMenu {
                     disconnectable));
         }
 
-        NetworkHooks.openScreen(
-                player,
-                new MenuProvider() {
+        player.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {

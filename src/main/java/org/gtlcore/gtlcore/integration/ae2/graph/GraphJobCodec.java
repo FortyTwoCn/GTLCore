@@ -3,6 +3,7 @@ package org.gtlcore.gtlcore.integration.ae2.graph;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.*;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
@@ -26,14 +27,22 @@ public final class GraphJobCodec {
     private static final int SCHEMA = 9;
     private static final int MAX_ENTRIES = 100_000;
 
-    private GraphJobCodec() {}
+    private final HolderLookup.Provider registries;
+    private GraphJobCodec(HolderLookup.Provider registries) { this.registries = Objects.requireNonNull(registries); }
 
-    public static CompoundTag write(GraphJobRuntime.Snapshot<AEKey> state) {
+    public static CompoundTag write(GraphJobRuntime.Snapshot<AEKey> state, HolderLookup.Provider registries) {
+        return new GraphJobCodec(registries).encode(state);
+    }
+    public static GraphJobRuntime.Snapshot<AEKey> read(CompoundTag tag, HolderLookup.Provider registries) {
+        return new GraphJobCodec(registries).decode(tag);
+    }
+
+    private CompoundTag encode(GraphJobRuntime.Snapshot<AEKey> state) {
         CompoundTag tag = new CompoundTag();
         tag.putInt("schemaVersion", SCHEMA);
         tag.putString("engineKind", "graph");
         GraphPlan<AEKey> plan = state.plan();
-        tag.put("target", plan.target().toTagGeneric());
+        tag.put("target", plan.target().toTagGeneric(registries));
         tag.putLong("amount", plan.amount());
         tag.putBoolean("preserve", plan.preserveSeeds());
         tag.put("initial", amounts(plan.initial()));
@@ -60,7 +69,7 @@ public final class GraphJobCodec {
             ListTag slots = new ListTag();
             recipe.slots().forEach(slot -> {
                 CompoundTag input = new CompoundTag();
-                input.put("key", slot.key().toTagGeneric());
+                input.put("key", slot.key().toTagGeneric(registries));
                 input.putLong("amount", slot.amount());
                 input.putInt("inputSlot", slot.inputSlot());
                 input.putBoolean("configuration", slot.configuration());
@@ -124,7 +133,7 @@ public final class GraphJobCodec {
         return tag;
     }
 
-    public static GraphJobRuntime.Snapshot<AEKey> read(CompoundTag tag) {
+    private GraphJobRuntime.Snapshot<AEKey> decode(CompoundTag tag) {
         int schema = tag.getInt("schemaVersion");
         if ((schema < 1 || schema > SCHEMA) || !tag.getString("engineKind").equals("graph"))
             throw new IllegalArgumentException("Unsupported graph task schema");
@@ -197,18 +206,18 @@ public final class GraphJobCodec {
                 schema >= 7 ? exactAmounts(tag, "deferredExternal") : Map.of());
     }
 
-    private static ListTag exactAmounts(Map<AEKey, BigInteger> amounts) {
+    private ListTag exactAmounts(Map<AEKey, BigInteger> amounts) {
         ListTag entries = new ListTag();
         amounts.forEach((key, count) -> {
             CompoundTag entry = new CompoundTag();
-            entry.put("key", key.toTagGeneric());
+            entry.put("key", key.toTagGeneric(registries));
             exact(entry, "amount", count);
             entries.add(entry);
         });
         return entries;
     }
 
-    private static Map<AEKey, BigInteger> exactAmounts(CompoundTag tag, String name) {
+    private Map<AEKey, BigInteger> exactAmounts(CompoundTag tag, String name) {
         Map<AEKey, BigInteger> result = new LinkedHashMap<>();
         for (Tag entry : list(tag, name)) {
             CompoundTag row = (CompoundTag) entry;
@@ -218,18 +227,18 @@ public final class GraphJobCodec {
         return ExactAmounts.copy(result);
     }
 
-    public static ListTag amounts(Map<AEKey, Long> amounts) {
+    private ListTag amounts(Map<AEKey, Long> amounts) {
         ListTag entries = new ListTag();
         amounts.forEach((key, count) -> {
             CompoundTag entry = new CompoundTag();
-            entry.put("key", key.toTagGeneric());
+            entry.put("key", key.toTagGeneric(registries));
             entry.putLong("amount", CheckedAmounts.nonNegative(count));
             entries.add(entry);
         });
         return entries;
     }
 
-    public static Map<AEKey, Long> amounts(CompoundTag tag, String name) {
+    private Map<AEKey, Long> amounts(CompoundTag tag, String name) {
         Map<AEKey, Long> result = new LinkedHashMap<>();
         for (Tag entry : list(tag, name)) {
             CompoundTag row = (CompoundTag) entry;
@@ -395,7 +404,7 @@ public final class GraphJobCodec {
         return CheckedAmounts.nonNegative(tag.getLong(name));
     }
 
-    private static AEKey key(CompoundTag tag) {
-        return Objects.requireNonNull(AEKey.fromTagGeneric(tag), "Unknown AE key");
+    private AEKey key(CompoundTag tag) {
+        return Objects.requireNonNull(AEKey.fromTagGeneric(registries, tag), "Unknown AE key");
     }
 }

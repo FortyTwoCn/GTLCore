@@ -12,7 +12,7 @@ import appeng.crafting.pattern.AECraftingPattern;
 import appeng.crafting.pattern.AEProcessingPattern;
 import appeng.crafting.pattern.EncodedPatternItem;
 import appeng.menu.SlotSemantics;
-import com.glodblock.github.extendedae.common.inventory.PatternModifierInventory;
+import com.glodblock.github.extendedae.common.me.itemhost.HostPatternModifier;
 import com.glodblock.github.extendedae.container.ContainerPatternModifier;
 import com.glodblock.github.extendedae.util.Ae2Reflect;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import org.gtlcore.gtlcore.integration.ae2.pattern.NativePatternModifierAmounts;
 
 @Mixin(ContainerPatternModifier.class)
 public abstract class ContainerPatternModifierMixin {
@@ -43,17 +43,24 @@ public abstract class ContainerPatternModifierMixin {
         return Integer.MAX_VALUE;
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"), remap = false)
-    private void gtlcore$registerActions(int id, Inventory playerInventory, PatternModifierInventory host,
+    @Inject(method = "<init>(ILnet/minecraft/world/entity/player/Inventory;Lcom/glodblock/github/extendedae/common/me/itemhost/HostPatternModifier;)V", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$registerActions(int id, Inventory playerInventory, HostPatternModifier host,
                                          CallbackInfo ci) {
         var self = (ContainerPatternModifier) (Object) this;
-        self.getActionMap().put("modify",
-                o -> gtlcore$modify(o.get(0), o.get(1), o.getParaAmount() > 2 ? o.get(2) : GTLCORE$SCOPE_ALL));
-        self.getActionMap().put("gtlReplace", o -> gtlcore$replace(o.get(0)));
+        self.getActionMap().put("modify", o -> {
+            if (o.getParaAmount() != 2 && o.getParaAmount() != 3) return;
+            Object scale = o.getSoft(0), divide = o.getSoft(1);
+            Object scope = o.getParaAmount() == 3 ? o.getSoft(2) : GTLCORE$SCOPE_ALL;
+            if (scale instanceof Integer value && divide instanceof Boolean div && scope instanceof Integer area)
+                gtlcore$modify(value, div, area);
+        });
+        self.getActionMap().put("gtlReplace", o -> {
+            if (o.getParaAmount() == 1 && o.getSoft(0) instanceof Boolean force) gtlcore$replace(force);
+        });
         self.getActionMap().put("swapReplace", o -> gtlcore$swapReplace());
     }
 
-    @Inject(method = "setPage", at = @At("TAIL"), remap = false)
+    @Inject(method = "setPage", at = @At("TAIL"), remap = false, require = 1)
     private void gtlcore$onSetPage(int page, CallbackInfo ci) {
         // 修复上游 bug：切换页面后槽位内容不重新同步，导致样板与标记不显示
         var self = (ContainerPatternModifier) (Object) this;
@@ -82,25 +89,29 @@ public abstract class ContainerPatternModifierMixin {
 
     @Unique
     private void gtlcore$modify(int scale, boolean div, int scope) {
-        if (scale <= 0) {
+        if (scale <= 0 || scope < GTLCORE$SCOPE_ALL || scope > GTLCORE$SCOPE_OUTPUTS) {
             return;
         }
         var self = (ContainerPatternModifier) (Object) this;
         for (var slot : self.getSlots(SlotSemantics.ENCODED_PATTERN)) {
             var stack = slot.getItem();
             if (stack.getItem() instanceof EncodedPatternItem pattern) {
-                var detail = pattern.decode(stack, self.getPlayer().level(), false);
+                var detail = pattern.decode(AEItemKey.of(stack), self.getPlayer().level());
                 if (detail instanceof AEProcessingPattern process) {
-                    var input = process.getSparseInputs();
-                    var output = process.getOutputs();
-                    boolean modifyInput = scope != GTLCORE$SCOPE_OUTPUTS;
-                    boolean modifyOutput = scope != GTLCORE$SCOPE_INPUTS;
-                    if ((!modifyInput || gtlcore$checkModify(input, scale, div)) &&
-                            (!modifyOutput || gtlcore$checkModify(output, scale, div))) {
-                        var mulInput = modifyInput ? gtlcore$modifyStacks(input, scale, div) : input;
-                        var mulOutput = modifyOutput ? gtlcore$modifyStacks(output, scale, div) : output;
-                        slot.set(gtlcore$encodeProcessingPreservingMeta(stack, gtlcore$compact(mulInput),
-                                gtlcore$compact(mulOutput)));
+                    try {
+                        var input = process.getSparseInputs().toArray(GenericStack[]::new);
+                        var output = process.getOutputs().toArray(GenericStack[]::new);
+                        boolean modifyInput = scope != GTLCORE$SCOPE_OUTPUTS;
+                        boolean modifyOutput = scope != GTLCORE$SCOPE_INPUTS;
+                        if ((!modifyInput || gtlcore$checkModify(input, scale, div)) &&
+                                (!modifyOutput || gtlcore$checkModify(output, scale, div))) {
+                            var mulInput = modifyInput ? gtlcore$modifyStacks(input, scale, div) : input;
+                            var mulOutput = modifyOutput ? gtlcore$modifyStacks(output, scale, div) : output;
+                            slot.set(gtlcore$encodeProcessingPreservingMeta(stack, gtlcore$compact(mulInput),
+                                    gtlcore$compact(mulOutput)));
+                        }
+                    } catch (IllegalArgumentException | ArithmeticException invalid) {
+                        // Keep the original pattern when a merged or scaled quantity is invalid.
                     }
                 }
             }
@@ -109,23 +120,7 @@ public abstract class ContainerPatternModifierMixin {
 
     @Unique
     private boolean gtlcore$checkModify(GenericStack[] stacks, int scale, boolean div) {
-        if (div) {
-            for (var stack : stacks) {
-                if (stack != null && stack.amount() % scale != 0) {
-                    return false;
-                }
-            }
-        } else {
-            for (var stack : stacks) {
-                if (stack != null) {
-                    long upper = (long) Integer.MAX_VALUE * stack.what().getAmountPerUnit();
-                    if (stack.amount() * scale > upper) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
+        return NativePatternModifierAmounts.canScale(stacks, scale, div);
     }
 
     /**
@@ -135,41 +130,21 @@ public abstract class ContainerPatternModifierMixin {
      */
     @Unique
     private GenericStack[] gtlcore$compact(GenericStack[] stacks) {
-        var merged = new LinkedHashMap<AEKey, Long>();
-        for (var stack : stacks) {
-            if (stack != null) {
-                merged.merge(stack.what(), stack.amount(), Long::sum);
-            }
-        }
-        var compacted = new GenericStack[merged.size()];
-        int i = 0;
-        for (var entry : merged.entrySet()) {
-            compacted[i++] = new GenericStack(entry.getKey(), entry.getValue());
-        }
-        return compacted;
+        return NativePatternModifierAmounts.compact(stacks);
     }
 
     @Unique
     private ItemStack gtlcore$encodeProcessingPreservingMeta(ItemStack original, GenericStack[] inputs,
                                                              GenericStack[] outputs) {
-        var newPattern = PatternDetailsHelper.encodeProcessingPattern(inputs, outputs);
+        var newPattern = PatternDetailsHelper.encodeProcessingPattern(Arrays.asList(inputs), Arrays.asList(outputs));
         gtlcore$copyNonStructuralTags(original, newPattern);
         return newPattern;
     }
 
-    /** 重编码后保留原样板的非结构 NBT（如 gtlcore 的编码者信息、快速上传配方类型等）。 */
+    /** 重编码后保留名称、自定义组件和 custom_data 元数据。 */
     @Unique
     private void gtlcore$copyNonStructuralTags(ItemStack original, ItemStack newPattern) {
-        var originalTag = original.getTag();
-        var newTag = newPattern.getTag();
-        if (originalTag == null || newTag == null) {
-            return;
-        }
-        for (String key : originalTag.getAllKeys()) {
-            if (!newTag.contains(key)) {
-                newTag.put(key, originalTag.get(key).copy());
-            }
-        }
+        NativePatternModifierAmounts.copyMetadata(original, newPattern);
     }
 
     @Unique
@@ -213,82 +188,82 @@ public abstract class ContainerPatternModifierMixin {
         for (var slot : self.getSlots(SlotSemantics.ENCODED_PATTERN)) {
             var stack = slot.getItem();
             if (stack.getItem() instanceof EncodedPatternItem pattern) {
-                var detail = pattern.decode(stack, self.getPlayer().level(), false);
+                var detail = pattern.decode(AEItemKey.of(stack), self.getPlayer().level());
                 if (detail instanceof AEProcessingPattern process) {
-                    // 压缩并合并同 key 条目：去除占位槽，替换/插入产生的重复条目也会合并
-                    var replaceInput = gtlcore$compact(gtlcore$replace(process.getSparseInputs(), targetKey, withKey,
-                            targetAmt, withAmt, deleteMode));
-                    var replaceOutput = gtlcore$compact(gtlcore$replace(process.getOutputs(), targetKey, withKey,
-                            targetAmt, withAmt, deleteMode));
-                    if (insertMode) {
-                        // 已有同 key 条目则就地合并；新增条目受 AE2 输入槽上限约束，超出则跳过该样板
-                        boolean merged = false;
-                        for (int i = 0; i < replaceInput.length; i++) {
-                            if (replaceInput[i].what().equals(withKey)) {
-                                replaceInput[i] = new GenericStack(withKey, replaceInput[i].amount() + withAmt);
-                                merged = true;
-                                break;
-                            }
-                        }
-                        if (!merged) {
-                            if (replaceInput.length >= AEProcessingPattern.MAX_INPUT_SLOTS) {
-                                gtlcore$insertLimitExceeded = true;
-                                continue;
-                            }
-                            replaceInput = Arrays.copyOf(replaceInput, replaceInput.length + 1);
-                            replaceInput[replaceInput.length - 1] = new GenericStack(withKey, withAmt);
-                        }
-                    }
                     try {
+                        // 压缩并合并同 key 条目：去除占位槽，替换/插入产生的重复条目也会合并
+                        var replaceInput = gtlcore$compact(gtlcore$replace(process.getSparseInputs().toArray(GenericStack[]::new), targetKey, withKey,
+                                targetAmt, withAmt, deleteMode));
+                        var replaceOutput = gtlcore$compact(gtlcore$replace(process.getOutputs().toArray(GenericStack[]::new), targetKey, withKey,
+                                targetAmt, withAmt, deleteMode));
+                        if (insertMode) {
+                            // 已有同 key 条目则就地合并；新增条目受 AE2 输入槽上限约束，超出则跳过该样板
+                            boolean merged = false;
+                            for (int i = 0; i < replaceInput.length; i++) {
+                                if (replaceInput[i].what().equals(withKey)) {
+                                    replaceInput[i] = new GenericStack(withKey, Math.addExact(replaceInput[i].amount(), withAmt));
+                                    merged = true;
+                                    break;
+                                }
+                            }
+                            if (!merged) {
+                                if (replaceInput.length >= AEProcessingPattern.MAX_INPUT_SLOTS) {
+                                    gtlcore$insertLimitExceeded = true;
+                                    continue;
+                                }
+                                replaceInput = Arrays.copyOf(replaceInput, replaceInput.length + 1);
+                                replaceInput[replaceInput.length - 1] = new GenericStack(withKey, withAmt);
+                            }
+                        }
                         slot.set(gtlcore$encodeProcessingPreservingMeta(stack, replaceInput, replaceOutput));
                     } catch (Exception e) {
                         // It is an invalid change
                     }
                 } else if (!insertMode && detail instanceof AECraftingPattern craft &&
                         targetKey instanceof AEItemKey && (withKey == null || withKey instanceof AEItemKey)) {
-                            var replaceInput = gtlcore$replace(craft.getSparseInputs(), targetKey, withKey, targetAmt, withAmt,
-                                    deleteMode);
                             try {
-                                var newPattern = PatternDetailsHelper.encodeCraftingPattern(
-                                        Ae2Reflect.getCraftRecipe(craft),
-                                        gtlcore$itemize(replaceInput),
-                                        gtlcore$itemize(craft.getPrimaryOutput()),
-                                        craft.canSubstitute,
-                                        craft.canSubstituteFluids);
-                                // noinspection DataFlowIssue
-                                var check = new AECraftingPattern(AEItemKey.of(newPattern), self.getPlayer().level());
-                                // noinspection ConstantValue
-                                if (check != null) {
-                                    gtlcore$copyNonStructuralTags(stack, newPattern);
-                                    slot.set(newPattern);
+                                    var replaceInput = gtlcore$replace(craft.getSparseInputs().toArray(GenericStack[]::new), targetKey, withKey, targetAmt, withAmt,
+                                            deleteMode);
+                                    var newPattern = PatternDetailsHelper.encodeCraftingPattern(
+                                            Ae2Reflect.getCraftRecipe(craft),
+                                            gtlcore$itemize(replaceInput),
+                                            gtlcore$itemize(craft.getPrimaryOutput()),
+                                            craft.canSubstitute,
+                                            craft.canSubstituteFluids);
+                                    // noinspection DataFlowIssue
+                                    var check = new AECraftingPattern(AEItemKey.of(newPattern), self.getPlayer().level());
+                                    // noinspection ConstantValue
+                                    if (check != null) {
+                                        gtlcore$copyNonStructuralTags(stack, newPattern);
+                                        slot.set(newPattern);
+                                    }
+                                } catch (Exception e) {
+                                    // It is an invalid change
                                 }
-                            } catch (Exception e) {
-                                // It is an invalid change
                             }
-                        }
             }
         }
         if (gtlcore$insertLimitExceeded) {
             self.getPlayer().displayClientMessage(
-                    Component.translatable("message.gtlcore.pattern_modifier.insert_limit_exceeded"), true);
+                        Component.translatable("message.gtlcore.pattern_modifier.insert_limit_exceeded"), true);
         }
     }
 
     @Unique
     private GenericStack[] gtlcore$replace(GenericStack[] stacks, @Nullable AEKey target, @Nullable AEKey with,
-                                           long targetAmt, long withAmt, boolean deleteMode) {
+                                               long targetAmt, long withAmt, boolean deleteMode) {
         var des = new GenericStack[stacks.length];
         for (int i = 0; i < stacks.length; i++) {
             if (stacks[i] != null) {
                 if (targetAmt > 0 && stacks[i].what().equals(target)) {
-                    if (deleteMode) {
-                        des[i] = null;
-                    } else {
-                        long newAmt = Math.max(1, (long) ((double) stacks[i].amount() * withAmt / targetAmt));
-                        des[i] = new GenericStack(with, newAmt);
-                    }
+                        if (deleteMode) {
+                            des[i] = null;
+                        } else {
+                            long newAmt = NativePatternModifierAmounts.replacement(stacks[i].amount(), withAmt, targetAmt);
+                            des[i] = new GenericStack(with, newAmt);
+                        }
                 } else {
-                    des[i] = new GenericStack(stacks[i].what(), stacks[i].amount());
+                        des[i] = new GenericStack(stacks[i].what(), stacks[i].amount());
                 }
             }
         }

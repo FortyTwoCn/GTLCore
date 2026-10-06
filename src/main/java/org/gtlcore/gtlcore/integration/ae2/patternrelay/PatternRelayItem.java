@@ -28,7 +28,7 @@ public final class PatternRelayItem extends PartItem<PatternRelayPart> {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.gtlcore.me_pattern_relay.description").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.gtlcore.me_pattern_relay.wrench").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable(

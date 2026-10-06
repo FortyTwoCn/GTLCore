@@ -9,7 +9,7 @@ public final class GTLItemTags {
 
     public static final TagKey<Item> SIFTABLES = TagKey.create(
             Registries.ITEM,
-            new ResourceLocation("forge", "siftables"));
+            ResourceLocation.fromNamespaceAndPath("forge", "siftables"));
 
     private GTLItemTags() {}
 }

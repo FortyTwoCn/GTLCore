@@ -3,52 +3,53 @@ package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 import org.gtlcore.gtlcore.api.machine.multiblock.IModularMachineModule;
 import org.gtlcore.gtlcore.common.data.GTLRecipeModifiers;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineLife;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.PanelSyncManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class SuprachronalAssemblyLineModuleMachine extends WorkableElectricMultiblockMachine
-                                                   implements IModularMachineModule<SuprachronalAssemblyLineMachine, SuprachronalAssemblyLineModuleMachine>, IMachineLife {
+                                                   implements IModularMachineModule<SuprachronalAssemblyLineMachine, SuprachronalAssemblyLineModuleMachine> {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            SuprachronalAssemblyLineModuleMachine.class,
-            WorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
+    @SaveField
     @Nullable
-    @Getter
-    @Setter
     private BlockPos hostPosition;
 
     @Nullable
-    @Getter
-    @Setter
     private SuprachronalAssemblyLineMachine host;
 
-    public SuprachronalAssemblyLineModuleMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    public SuprachronalAssemblyLineModuleMachine(BlockEntityCreationInfo holder) {
+        super(holder);
     }
+
+    @Override
+    public BlockPos getHostPosition() { return hostPosition; }
+    @Override
+    public void setHostPosition(@Nullable BlockPos pos) { hostPosition = pos == null ? null : pos.immutable(); setChanged(); }
+    @Override
+    public SuprachronalAssemblyLineMachine getHost() { return host; }
+    @Override
+    public void setHost(@Nullable SuprachronalAssemblyLineMachine host) { this.host = host; }
 
     @Override
     public @NotNull Class<SuprachronalAssemblyLineMachine> getHostType() {
@@ -57,7 +58,7 @@ public class SuprachronalAssemblyLineModuleMachine extends WorkableElectricMulti
 
     @Override
     public BlockPos[] getHostScanPositions() {
-        final BlockPos pos = getPos();
+        final BlockPos pos = getBlockPos();
         return new BlockPos[] {
                 pos.offset(3, 0, 0),
                 pos.offset(-3, 0, 0),
@@ -99,16 +100,16 @@ public class SuprachronalAssemblyLineModuleMachine extends WorkableElectricMulti
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String name) {
+        super.formStructure(name);
         if (!findAndConnectToHost()) {
             removeFromHost(this.host);
         }
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String name) {
+        super.invalidateStructure(name);
         removeFromHost(this.host);
     }
 
@@ -119,13 +120,19 @@ public class SuprachronalAssemblyLineModuleMachine extends WorkableElectricMulti
     }
 
     @Override
-    public void onMachineRemoved() {
+    public void onUnload() {
         removeFromHost(this.host);
+        super.onUnload();
     }
 
     @Override
-    public void addDisplayText(@NotNull List<Component> textList) {
-        super.addDisplayText(textList);
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager sync) {
+        var widgets = new ArrayList<>(super.getWidgetsForDisplay(sync));
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("suprachronalModule", (controller, lines) -> addDisplayText(lines)).apply(this, sync));
+        return widgets;
+    }
+
+    private void addDisplayText(@NotNull List<Component> textList) {
         if (!this.isFormed) return;
         textList.add(Component.translatable("gtceu.multiblock.parallel",
                 Component.literal(FormattingUtil.formatNumbers(getParallel()))
@@ -135,8 +142,4 @@ public class SuprachronalAssemblyLineModuleMachine extends WorkableElectricMulti
                 isConnectedToHost() ? "tooltip.gtlcore.module_installed" : "tooltip.gtlcore.module_not_installed"));
     }
 
-    @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
 }

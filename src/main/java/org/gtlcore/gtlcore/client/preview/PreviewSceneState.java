@@ -1,7 +1,7 @@
 package org.gtlcore.gtlcore.client.preview;
 
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
-import com.lowdragmc.lowdraglib.utils.TrackedDummyWorld;
+import com.lowdragmc.lowdraglib.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -92,6 +92,8 @@ public final class PreviewSceneState {
     public boolean compiling() {
         return !fallback && (mesh == null || !mesh.complete());
     }
+
+    public boolean fallback() { return fallback; }
 
     public Iterator<BlockPos> rayCandidates(Vec3 start, Vec3 end) {
         // No mesh is visible while its snapshot is being prepared.

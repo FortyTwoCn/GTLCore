@@ -4,12 +4,8 @@ import org.gtlcore.gtlcore.integration.wildcard.MEWildcardPatternBufferPartMachi
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 public class WildcardRecipeHandlerTrait extends MEPatternBufferRecipeHandlerTraitBase {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEWildcardPatternBufferPartMachine.class);
 
     public WildcardRecipeHandlerTrait(MEPatternBufferPartMachineBase ioBuffer, IO io) {
         super(ioBuffer, io);
@@ -31,11 +27,6 @@ public class WildcardRecipeHandlerTrait extends MEPatternBufferRecipeHandlerTrai
     }
 
     @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
-    @Override
     public WildcardItemInputHandler getMeItemHandler() {
         return (WildcardItemInputHandler) this.meItemHandler;
     }
@@ -53,7 +44,7 @@ public class WildcardRecipeHandlerTrait extends MEPatternBufferRecipeHandlerTrai
 
         @Override
         public MEWildcardPatternBufferPartMachine getMachine() {
-            return (MEWildcardPatternBufferPartMachine) this.machine;
+            return (MEWildcardPatternBufferPartMachine) super.getMachine();
         }
     }
 
@@ -65,7 +56,7 @@ public class WildcardRecipeHandlerTrait extends MEPatternBufferRecipeHandlerTrai
 
         @Override
         public MEWildcardPatternBufferPartMachine getMachine() {
-            return (MEWildcardPatternBufferPartMachine) this.machine;
+            return (MEWildcardPatternBufferPartMachine) super.getMachine();
         }
     }
 }

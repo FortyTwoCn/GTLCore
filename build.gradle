@@ -1,333 +1,146 @@
 plugins {
-    id "dev.architectury.loom" version "1.6-SNAPSHOT"
-    id "maven-publish"
-    id "com.diffplug.spotless" version "6.25.0"
+    id 'java-library'
+    id 'maven-publish'
+    alias libs.plugins.modDevGradle
+    alias libs.plugins.lombok
 }
 
-base {
-    archivesName = project.archives_base_name
-}
-
-String buildNumber = System.getenv("GITHUB_ACTION_NUMBER")
-version = "${mod_version}" + (buildNumber != null ? "-build_${System.getenv("GITHUB_RUN_NUMBER")}" : "")
-//version = project.mod_version
 group = project.maven_group
-
+version = project.mod_version
+base { archivesName = "${project.archives_base_name}-${libs.versions.minecraft.get()}" }
 java {
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+lombok { version = '1.18.38' }
+sourceSets.main.resources.srcDir('src/generated/resources')
+
+apply from: 'gradle/repositories.gradle'
+apply from: 'gradle/native-common-storage-api.gradle'
+
+// AE2's published POM also lists a legacy Forge GuideME; use the verified native artifact below.
+configurations.configureEach { exclude group: 'org.appliedenergistics', module: 'guideme' }
+configurations {
+    maybeCreate('localRuntime').canBeResolved = false
+    runtimeClasspath.extendsFrom(localRuntime)
 }
 
-def mixinConfigNames = [
-        "gtlcore.mixin.json"
-]
-
-loom {
-    silentMojangMappingsLicense()
-    forge {
-        mixinConfigs = mixinConfigNames
-
-        dataGen {
-            mod(mod_id)
-        }
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
     }
-
-    runConfigs.named("data").configure {
-        programArg("--existing=" + file("src/main/resources").absolutePath)
+    mods {
+        "${project.mod_id}" { sourceSet(sourceSets.main) }
+    }
+    runs {
+        client { client(); gameDirectory = file('run/client') }
+        server {
+            server()
+            gameDirectory = file(providers.gradleProperty('native_server_directory').orElse('run/server').get())
+            programArgument '--nogui'
+        }
+        data {
+            data()
+            gameDirectory = file('run/data')
+            programArguments.addAll('--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources').absolutePath,
+                    '--existing', file('src/main/resources').absolutePath)
+        }
+        configureEach {
+            systemProperty 'mixin.debug.verify', 'true'
+            systemProperty 'mixin.debug.strict.unique', 'true'
+            systemProperty 'mixin.checks', 'true'
+            logLevel = org.slf4j.event.Level.INFO
+        }
     }
 }
 
-repositories {
-    mavenLocal()
-    flatDir {
-        dir 'libs'
-    }
-    mavenCentral()
-    maven {
-        name 'FirstDarkDev'
-        url "https://maven.firstdarkdev.xyz/snapshots/"
-    }
-    maven {
-        name 'Quilt'
-        url 'https://maven.quiltmc.org/repository/release/'
-    }
-    maven {
-        name = 'ParchmentMC'
-        url = 'https://maven.parchmentmc.org'
-    }
-    maven {
-        url "https://maven.saps.dev/releases/"
-        content {
-            includeGroup "dev.latvian.mods"
-            includeGroup "dev.ftb.mods"
-        }
-    }
-    maven { // Registrate
-        url = "https://maven.tterrag.com/"
-        content {
-            // need to be specific here due to version overlaps
-            includeGroup("com.jozufozu.flywheel")
-            includeGroup("com.tterrag.registrate")
-            includeGroup("com.simibubi.create")
-        }
-    }
-    maven {
-        // Patchouli, JEI
-        name = "BlameJared"
-        url = "https://maven.blamejared.com/"
-    }
-    maven {
-        url = "https://maven.theillusivec4.top/"
-    }
-    maven {
-        // Curse Forge File
-        url "https://cursemaven.com/"
-        content {
-            includeGroup "curse.maven"
-        }
-    }
-    maven {
-        url "https://maven.architectury.dev/"
-    }
-    maven { // ModernUI
-        name 'IzzelAliz Maven'
-        url 'https://maven.izzel.io/releases/'
-    }
-    maven { // Ad Astra
-        url "https://maven.teamresourceful.com/repository/maven-public/"
-    }
-}
+// The existing preview regressions use Minecraft's JOML dependency as well as production classes.
+neoForge.addModdingDependenciesTo(sourceSets.test)
 
 dependencies {
-    minecraft "com.mojang:minecraft:$project.minecraft_version"
-    forge "net.minecraftforge:forge:$project.minecraft_version-$project.forge_version"
-    // layered mappings - Mojmap names, parchment and QM docs and parameters
-    mappings loom.layered {
-        it.mappings("org.quiltmc:quilt-mappings:$project.minecraft_version+build.$project.quilt_mappings:intermediary-v2")
-        it.parchment("org.parchmentmc.data:parchment-$project.minecraft_version:$project.parchment_mappings@zip")
-        it.officialMojangMappings { nameSyntheticMembers = false }
-    }
+    implementation('com.gregtechceu.gtceu:gtceu-1.21.1:8.0.0')
+    implementation('com.hepdd.gtmthings:gtmthings:1.6.0')
+    implementation(forge.ae2)
+    implementation(forge.registrate)
+    implementation(forge.configuration)
+    implementation(forge.mui)
+    // Published NeoForge artifacts verified through Modrinth's loader and game-version metadata.
+    implementation('maven.modrinth:ldlib:oe3VmoEH')
+    implementation('maven.modrinth:ad-astra:9pnKHdCG')
+    implementation('org.gtlcore.dependencies:ad_astra_rocketed-neoforge:1.0.5-gtl.1')
+    implementation(forge.resourcefullib)
+    implementation('maven.modrinth:resourceful-config:lSbyRD6v')
+    implementation('maven.modrinth:common-storage-lib:SCkdlli6')
+    implementation('maven.modrinth:extended-ae:bC302UUP')
+    implementation('maven.modrinth:applied-energistics-2-wireless-terminals:6feJ9h09')
+    // The implementation bundles this API for runtime; expose its published artifact to javac.
+    compileOnly('de.mari_023:ae2wtlib_api:19.2.0') { transitive = false }
+    implementation('maven.modrinth:glodium:pfbmdJ3b')
+    implementation('maven.modrinth:guideme:hFpGwC6q')
+    // 1.2.0 is the newest native release compatible with the reference AE2 19.2.8 API.
+    implementation('maven.modrinth:merequester:E46AplqZ')
+    implementation('maven.modrinth:re-avaritia:uY1x1LTC')
+    compileOnly(forge.bundles.kjs)
+    compileOnly(forge.bundles.jei)
+    compileOnly('tamaized.ae2jeiintegration:ae2jeiintegration:1.2.0')
+    localRuntime('tamaized.ae2jeiintegration:ae2jeiintegration:1.2.0')
+    localRuntime(forge.bundles.jei)
+    compileOnly(forge.emi)
+    // Native 1.21.1 REI and its public geometry API; optional in a player's installation.
+    compileOnly('maven.modrinth:rei:b8gfS9Je')
+    compileOnly('maven.modrinth:cloth-config:DqgODWcH')
+    compileOnly(forge.jade)
+    compileOnly(forge.curios)
+    compileOnly(forge.ftblibrary)
+    compileOnly(forge.ftbteams)
+    compileOnly(forge.ftbchunks)
+    implementation('dev.ftb.mods:ftb-ultimine-neoforge:2101.1.1')
+    implementation('org.gtlcore.dependencies:travelanchors-neoforge:6.0.0-gtl.1')
+    implementation('org.gtlcore.dependencies:mae2-neoforge:2.1.0-gtl.1')
+    implementation('org.gtlcore.dependencies:wildcard-pattern-neoforge:0.1.2-gtl.1')
+    runtimeOnly(forge.bundles.kjs)
+    runtimeOnly(forge.jade)
+    runtimeOnly(forge.curios)
 
-    modCompileOnly("mezz.jei:jei-$project.minecraft_version-forge-api:$project.jei_version") { transitive = false }
-    modCompileOnly("mezz.jei:jei-$project.minecraft_version-common-api:$project.jei_version") { transitive = false }
-    // The preview header compatibility Mixin references JEI's existing screen bounds type.
-    modCompileOnly("mezz.jei:jei-$project.minecraft_version-forge:$project.jei_version") { transitive = false }
-    modCompileOnly("curse.maven:emi-580555:6420945") { transitive = false }
-    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api:12.1.725") { transitive = false }
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    modImplementation("com.gregtechceu.gtceu:gtceu-$project.minecraft_version:$project.gtceu_version") { transitive = false }
-    modImplementation("com.lowdragmc.ldlib:ldlib-forge-$project.minecraft_version:$project.ldlib_version") { transitive = false }
-    modImplementation("com.tterrag.registrate:Registrate:$project.registrate_version")
-    modImplementation("curse.maven:kubejs-238086:5012072")
-    modImplementation("curse.maven:rhino-416294:6186971")
+}
 
-    modImplementation("curse.maven:jade-324717:6855440")
+test { useJUnitPlatform() }
 
-    // Mixin Extras
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:$project.mixinextras_version"))
-    implementation(include("io.github.llamalad7:mixinextras-forge:$project.mixinextras_version"))
-
-    // lombok
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
-
-    modImplementation('curse.maven:applied-energistics-2-223794:7148487')
-    modImplementation("curse.maven:applied-energistics-2-wireless-terminals-459929:5162352") { transitive = false }
-
-    modImplementation("dev.architectury:architectury-forge:${project.architectury_version}")
-
-    modImplementation("dev.toma.configuration:configuration-forge-$project.minecraft_version:$project.configuration_version")
-
-    forgeRuntimeLibrary("com.teamresourceful:yabn:1.0.3")
-    forgeRuntimeLibrary("com.teamresourceful:bytecodecs:1.0.2")
-    modImplementation("com.teamresourceful.resourcefullib:resourcefullib-forge-${project.minecraft_version}:${project.resourcefullib_version}")
-    modImplementation("com.teamresourceful.resourcefulconfig:resourcefulconfig-forge-${project.minecraft_version}:${project.resourcefulconfig_version}")
-    modImplementation("earth.terrarium.botarium:botarium-forge-${project.minecraft_version}:${project.botarium_version}")
-    modImplementation("earth.terrarium.adastra:ad_astra-forge-${project.minecraft_version}:${ad_astra_version}") { transitive false }
-
-    modImplementation("dev:gtmthings-1.3.5.b")
-    modImplementation("curse.maven:spark-361579:4738952")
-    modImplementation("curse.maven:glodium-957920:5006780")
-    modImplementation("curse.maven:ex-pattern-provider-892005:7144417")
-    modImplementation("curse.maven:guideme-1173950:7127447")
-    modImplementation("dev:merequester-forge-1.20.1-1.1.5")
-
-    modImplementation("org.moddingx:LibX:1.20.1-5.0.1")
-    modImplementation("dev:TravelAnchors-1.20.1-5.0.1")
-
-    modCompileOnly("dev:Re-Avaritia-forged-1.20.1-1.3.8.3")
-    modCompileOnly("dev:wildcard_pattern-0.1.2-gtl")
-
-    // ftb-chunk
-    modImplementation("curse.maven:ftb-chunks-forge-314906:5378090"){ transitive = false }
-    modRuntimeOnly("curse.maven:ftb-library-forge-404465:5567591"){ transitive = false }
-    modRuntimeOnly("curse.maven:ftb-teams-forge-404468:5267190"){ transitive = false }
-
-    // ftbu
-    modImplementation("curse.maven:ftb-ultimine-forge-386134:5363345"){ transitive = false }
-
-
-    modRuntimeOnly("mezz.jei:jei-$project.minecraft_version-forge:$project.jei_version") { transitive = false }
-
-    modRuntimeOnly("maven.modrinth:embeddium:0.3.30+mc1.20.1")
-
-    modRuntimeOnly("dev:rubidium-extra:0.5.4.3+mc1.20.1-build.121")
-
-    modRuntimeOnly("dev:jecharacters:1.20.1-forge-4.5.11-dev-shadow")
-
-    forgeRuntimeLibrary(runtimeOnly("icyllis.modernui:ModernUI-Core:3.10.1")) // Modern UI core framework
-    forgeRuntimeLibrary(runtimeOnly("icyllis.modernui:ModernUI-Markdown:3.10.1")) { transitive = false }
-    // Modern UI core extensions
-    modRuntimeOnly("icyllis.modernui:ModernUI-Forge:1.20.1-3.10.1.4") { transitive = false } // ModernUI
-
-    //Packet Fixer
-    include(modRuntimeOnly("curse.maven:packet-fixer-forge-689467:6195870"))
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+    options.compilerArgs.add('-Xmaxerrs')
+    options.compilerArgs.add('1000')
 }
 
 processResources {
-    // set up properties for filling into metadata
-    var properties = [
-            "mod_license"      : mod_license,
-            "mod_id"           : mod_id,
-            "version"          : version,
-            "mod_name"         : mod_name,
-            "mod_url"          : mod_url,
-            "mod_author"       : mod_author,
-            "forge_version"    : forge_version.split("\\.")[0], // only specify major version of forge
-            "minecraft_version": minecraft_version,
-            "gtceu_version"    : gtceu_version,
-            "ad_astra_version" : ad_astra_version,
-            "kubejs_version"   : kubejs_version,
-            "jei_version"      : jei_version,
-    ]
+    def properties = [mod_id: mod_id, mod_name: mod_name, mod_license: mod_license,
+                      mod_author: mod_author, mod_url: mod_url, version: project.version,
+                      minecraft_version: libs.versions.minecraft.get(),
+                      neo_version: libs.versions.neoForge.get(), loader_version: libs.versions.loader.get(),
+                      gtceu_version: '8.0.0', ae2_version: forge.versions.ae2.get()]
     inputs.properties(properties)
-
-    filesMatching("META-INF/mods.toml") {
-        expand properties
-    }
+    filesMatching('META-INF/neoforge.mods.toml') { expand(properties) }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    // ensure that the encoding is set to UTF-8, no matter what the system default is
-    // this fixes some edge cases with special characters not displaying correctly
-    // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-    // If Javadoc is generated, this must be specified in that task too.
-    options.encoding = "UTF-8"
-    options.release.set(17)
-    // 禁用 deprecation 和 removal 警告
-    options.compilerArgs.addAll(["-Xlint:-deprecation", "-Xlint:-removal"])
-}
-
-java {
-    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-    // if it is present.
-    // If you remove this line, sources will not be generated.
-    withSourcesJar()
-}
-
-jar {
-    // add some additional metadata to the jar manifest
-    manifest {
-        attributes([
-                "Specification-Title"     : mod_id,
-                "Specification-Vendor"    : mod_author,
-                "Specification-Version"   : "1",
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : version,
-                "Implementation-Vendor"   : mod_author,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
-}
-
-// configure the maven publication
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            artifactId = base.archivesName.get()
             from components.java
         }
     }
-
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-        // Notice: This block does NOT have the same function as the block in the top level.
-        // The repositories here will be used for publishing your artifact, not for
-        // retrieving dependencies.
-    }
 }
 
-spotless {
-    encoding 'UTF-8'
+apply from: 'gradle/migration-regression.gradle'
+apply from: 'gradle/native-validation.gradle'
+apply from: 'gradle/native-machine-validation.gradle'
 
-    java {
-        target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
-
-        def orderFile = file("$rootDir/spotless/spotless.importorder")
-        def formatFile = file("$rootDir/spotless/spotless.eclipseformat.xml")
-
-        toggleOffOn()
-        importOrderFile(orderFile)
-        removeUnusedImports('cleanthat-javaparser-unnecessaryimport')
-        endWithNewline()
-        eclipse('4.31').configFile(formatFile)
-    }
-}
-
-tasks.register("checkMixinPackageClasses") {
-    group = "verification"
-    description = "Fails when helper classes are placed in declared Mixin packages."
-
-    inputs.dir("src/main/java")
-    inputs.files(mixinConfigNames.collect { file("src/main/resources/$it") })
-
-    doLast {
-        def javaRoot = file("src/main/java")
-        def offenders = []
-
-        mixinConfigNames.each { mixinConfig ->
-            def configFile = file("src/main/resources/$mixinConfig")
-            def mixinPackage = new groovy.json.JsonSlurper().parse(configFile).package
-            def mixinRoot = new File(javaRoot, mixinPackage.replace('.', '/'))
-
-            if (!mixinRoot.exists()) {
-                return
-            }
-
-            fileTree(mixinRoot) {
-                include "**/*.java"
-            }.each { javaFile ->
-                if (!javaFile.getText("UTF-8").contains("@Mixin")) {
-                    offenders << javaRoot.toPath().relativize(javaFile.toPath()).toString()
-                }
-            }
-        }
-
-        if (!offenders.isEmpty()) {
-            throw new GradleException("Non-mixin classes found in Mixin package:\n - " + offenders.join("\n - "))
-        }
-    }
-}
-
-tasks.named("check") {
-    dependsOn(tasks.named("checkMixinPackageClasses"))
-    dependsOn(tasks.named("multiblockPreviewTest"))
-    dependsOn(tasks.named("tagExprFilterTest"))
-}
-
-tasks.register("multiblockPreviewTest", JavaExec) {
-    group = "verification"
-    description = "Checks preview bounds, camera-plane panning, cache ownership and cancellation."
-    dependsOn(testClasses)
-    // Pure checks do not launch Minecraft or need the runtime-only client mods.
-    classpath = files(sourceSets.main.output, sourceSets.test.output, sourceSets.test.compileClasspath)
-    mainClass = "org.gtlcore.gtlcore.client.preview.MultiblockPreviewTest"
-    workingDir = projectDir
-}
-
-tasks.register("tagExprFilterTest", JavaExec) {
-    group = "verification"
-    description = "Checks set-based tag filters, legacy patterns and incomplete expressions."
-    dependsOn(testClasses)
-    classpath = files(sourceSets.main.output, sourceSets.test.output, sourceSets.test.compileClasspath)
-    mainClass = "org.gtlcore.gtlcore.utils.TagExprFilterTest"
-}
+apply from: 'gradle/native-avaritia-validation.gradle'

@@ -7,6 +7,8 @@ import org.gtlcore.gtlcore.mixin.mc.SlotAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,8 +19,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -31,14 +32,14 @@ import appeng.helpers.IConfigInvHost;
 import appeng.helpers.externalstorage.GenericStackInv;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
-import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.MenuHostLocator;
 import appeng.menu.locator.MenuLocators;
 import appeng.menu.slot.AppEngSlot;
 import appeng.menu.slot.FakeSlot;
 import appeng.parts.automation.AbstractLevelEmitterPart;
 import appeng.util.Platform;
-import de.mari_023.ae2wtlib.terminal.WTMenuHost;
-import de.mari_023.ae2wtlib.wut.ItemWUT;
+import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
+import de.mari_023.ae2wtlib.api.terminal.ItemWUT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,7 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
 
     public static EmitterManagerTerminalMenu createWirelessClientMenu(int containerId, Inventory inventory,
                                                                       FriendlyByteBuf data) {
-        MenuLocator locator = MenuLocators.readFromPacket(data);
+        MenuHostLocator locator = MenuLocators.readFromPacket(data);
         boolean returningFromSubmenu = data.readBoolean();
         WTMenuHost host = locator.locate(inventory.player, WTMenuHost.class);
         return new EmitterManagerTerminalMenu(
@@ -103,7 +104,7 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
 
     private EmitterManagerTerminalMenu(MenuType<?> menuType, int containerId, Inventory inventory,
                                        @Nullable EmitterManagerTerminalPart terminal,
-                                       @Nullable WTMenuHost wirelessHost, @Nullable MenuLocator locator,
+                                       @Nullable WTMenuHost wirelessHost, @Nullable MenuHostLocator locator,
                                        boolean returningFromSubmenu) {
         super(menuType, containerId, inventory, terminal == null ? wirelessHost : terminal);
         this.terminal = terminal;
@@ -282,9 +283,7 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
     }
 
     public static void open(ServerPlayer player, EmitterManagerTerminalPart terminal) {
-        NetworkHooks.openScreen(
-                player,
-                new MenuProvider() {
+        player.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {
@@ -307,19 +306,17 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
                 buffer -> {});
     }
 
-    public static boolean openWireless(Player player, MenuLocator locator, boolean returningFromSubmenu) {
+    public static boolean openWireless(Player player, MenuHostLocator locator, boolean returningFromSubmenu) {
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return false;
         }
 
         WTMenuHost host = locator.locate(player, WTMenuHost.class);
-        if (host == null || !host.rangeCheck()) {
+        if (host == null || !host.isValid() || !host.getLinkStatus().connected()) {
             return false;
         }
 
-        NetworkHooks.openScreen(
-                serverPlayer,
-                new MenuProvider() {
+        serverPlayer.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {
@@ -415,8 +412,7 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
             return;
         }
         entries = currentEntries;
-        WirelessAePackets.CHANNEL.send(
-                PacketDistributor.PLAYER.with(() -> player),
+        PacketDistributor.sendToPlayer(player,
                 new WirelessAePackets.SyncEmitterManagerTerminalPacket(containerId, entries));
     }
 
@@ -428,7 +424,7 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
             Entry left = first.get(index);
             Entry right = second.get(index);
             if (!left.address().equals(right.address()) ||
-                    !ItemStack.isSameItemSameTags(left.icon(), right.icon()) ||
+                    !ItemStack.isSameItemSameComponents(left.icon(), right.icon()) ||
                     !left.name().equals(right.name()) || left.function() != right.function() ||
                     !Objects.equals(left.configuredKey(), right.configuredKey()) ||
                     left.monitoredValue() != right.monitoredValue() ||
@@ -520,12 +516,12 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
         }
     }
 
-    public static void writeEntries(FriendlyByteBuf buffer, List<Entry> entries) {
+    public static void writeEntries(RegistryFriendlyByteBuf buffer, List<Entry> entries) {
         buffer.writeVarInt(entries.size());
         for (Entry entry : entries) {
             entry.address().write(buffer);
-            buffer.writeItem(entry.icon());
-            buffer.writeComponent(entry.name());
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, entry.icon());
+            ComponentSerialization.STREAM_CODEC.encode(buffer, entry.name());
             buffer.writeEnum(entry.function());
             AEKey.writeOptionalKey(buffer, entry.configuredKey());
             buffer.writeVarLong(entry.monitoredValue());
@@ -546,7 +542,7 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
         }
     }
 
-    public static List<Entry> readEntries(FriendlyByteBuf buffer) {
+    public static List<Entry> readEntries(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
         if (size < 0 || size > MAX_SYNC_ENTRIES) {
             throw new IllegalArgumentException("Invalid emitter manager entry count: " + size);
@@ -554,8 +550,8 @@ public final class EmitterManagerTerminalMenu extends AEBaseMenu {
         List<Entry> entries = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             Address address = Address.read(buffer);
-            ItemStack icon = buffer.readItem();
-            Component name = buffer.readComponent();
+            ItemStack icon = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
+            Component name = ComponentSerialization.STREAM_CODEC.decode(buffer);
             Function function = buffer.readEnum(Function.class);
             AEKey configuredKey = AEKey.readOptionalKey(buffer);
             long monitoredValue = buffer.readVarLong();

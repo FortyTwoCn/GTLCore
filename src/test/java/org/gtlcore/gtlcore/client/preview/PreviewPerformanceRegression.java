@@ -13,29 +13,9 @@ final class PreviewPerformanceRegression {
     private static int assertions;
 
     static int run() throws Exception {
-        var base = java.nio.file.Path.of("src/main/java/org/gtlcore/gtlcore");
-        for (var file : java.util.List.of("client/preview/PreviewScenes.java", "client/preview/WorldPreview.java",
-                "mixin/gtm/client/PreviewShapesMixin.java", "api/gui/PatternPreviewWidget.java")) {
-            var source = java.nio.file.Files.readString(base.resolve(file));
-            check(!source.contains("PreviewScenes.targets") && !source.contains("getNamespace()"),
-                    "shared preview cannot depend on a machine whitelist: " + file);
-        }
-        check(java.nio.file.Files.readString(base.resolve("client/preview/PreviewSceneState.java"))
-                .contains("positions.size() < PreviewSettings.minPositions()"), "small scenes retain native renderer");
-        check(java.nio.file.Files.readString(base.resolve("client/preview/WorldPreview.java"))
-                .contains("!PreviewShapeCache.isLarge(shapes.get(0))"), "world previews use automatic geometry threshold");
-        check(java.nio.file.Files.readString(base.resolve("mixin/gtm/client/PreviewShapesMixin.java"))
-                .contains("\"setShapes\", \"setPatternFactory\""), "definition changes invalidate cached shapes");
-        var shapes = java.nio.file.Files.readString(base.resolve("client/preview/PreviewShapeCache.java"));
-        check(shapes.contains("if (shape == null) continue;") && !shapes.contains("List.copyOf(shapes)"),
-                "upstream nullable preview pages remain supported");
-        check(shapes.contains("row.length * 64L"), "shape cache budgets retained objects, not just references");
-        check(java.nio.file.Files.readString(base.resolve("client/preview/SparsePreviewShape.java"))
-                .contains("positions.length * 64L"), "sparse cache budgets retained block information");
-        check(java.nio.file.Files.readString(base.resolve("api/gui/PatternPreviewWidget.java"))
-                .replaceAll("\\s+", " ")
-                .contains("!(machine.getDefinition() instanceof MultiblockMachineDefinition)) return null"),
-                "controller discovery does not allocate throwaway hatch inventories");
+        // Native preview pages, rotation and invalidation are exercised by
+        // NativePreviewGeometryIntegrationTest and the complete client runs.
+        // Keep these standalone checks focused on actual cache ownership and cancellation.
         var released = new ArrayList<Integer>();
         var cache = new WeightedCache<String, Integer>(10, Integer::longValue, released::add);
         cache.put("a", 4);

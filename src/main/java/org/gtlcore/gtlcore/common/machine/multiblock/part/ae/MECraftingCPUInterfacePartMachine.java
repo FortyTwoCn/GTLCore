@@ -3,19 +3,22 @@ package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 import org.gtlcore.gtlcore.common.machine.multiblock.electric.TransfiniteComputationArrayMachine;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
-
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
+import net.minecraft.core.HolderLookup;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
+public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine implements IMuiMachine {
 
     private static final int MAX_CPU_NAME_LENGTH = 64;
     private static final int UI_WIDTH = 176;
@@ -52,29 +55,28 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
     private static final String NBT_LINKED_CONTROLLER = "LinkedController";
     private static final long NO_LINKED_CONTROLLER = Long.MIN_VALUE;
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MECraftingCPUInterfacePartMachine.class, MEIOPartMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
-    @DescSynced
+    @SaveField
+    @SyncToClient
     private String customName = "";
 
-    @DescSynced
+    @SaveField
+    @SyncToClient
     private long parallelism = TransfiniteComputationArrayMachine.DEFAULT_PARALLELISM;
 
-    @DescSynced
+    @SaveField
+    @SyncToClient
     private long linkedControllerPos = NO_LINKED_CONTROLLER;
 
     @Nullable
     private TickableSubscription updateSubs;
     private boolean needsCraftingCpuSync = true;
 
-    public MECraftingCPUInterfacePartMachine(IMachineBlockEntity holder) {
+    public MECraftingCPUInterfacePartMachine(BlockEntityCreationInfo holder) {
         super(holder, IO.NONE);
     }
 
     @Override
-    public boolean canShared() {
+    public boolean canShared(MultiblockControllerMachine controller, String structureName) {
         return false;
     }
 
@@ -96,11 +98,12 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
         if (controllerPos == null) {
             return List.of();
         }
+        if (!level.hasChunkAt(controllerPos)) return List.of();
         MetaMachine machine = MetaMachine.getMachine(level, controllerPos);
-        if (machine instanceof TransfiniteComputationArrayMachine controller && controller.isFormed()) {
+        if (machine instanceof TransfiniteComputationArrayMachine controller && controller.isFormed() && controller.getParts().contains(this)) {
             if (this.linkedControllerPos != controllerPos.asLong()) {
                 this.linkedControllerPos = controllerPos.asLong();
-                markDirty();
+                markAsChanged();
             }
             controller.restoreNetworkInterface(this);
             return List.of(controller);
@@ -111,9 +114,10 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
     @Nullable
     private BlockPos findAdjacentController(Level level) {
         for (Direction direction : Direction.values()) {
-            BlockPos candidate = getPos().relative(direction);
+            BlockPos candidate = getBlockPos().relative(direction);
+            if (!level.hasChunkAt(candidate)) continue;
             MetaMachine machine = MetaMachine.getMachine(level, candidate);
-            if (machine instanceof TransfiniteComputationArrayMachine controller && controller.isFormed()) {
+            if (machine instanceof TransfiniteComputationArrayMachine controller && controller.isFormed() && controller.getParts().contains(this)) {
                 return candidate;
             }
         }
@@ -121,25 +125,25 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
     }
 
     @Override
-    public void addedToController(@NotNull IMultiController controller) {
-        super.addedToController(controller);
+    public void addedToController(@NotNull MultiblockControllerMachine controller, String structureName) {
+        super.addedToController(controller, structureName);
         if (controller instanceof TransfiniteComputationArrayMachine transfiniteController) {
-            long controllerPos = transfiniteController.getPos().asLong();
+            long controllerPos = transfiniteController.getBlockPos().asLong();
             if (this.linkedControllerPos != controllerPos) {
                 this.linkedControllerPos = controllerPos;
-                markDirty();
+                markAsChanged();
             }
             notifyCraftingCpuChange();
         }
     }
 
     @Override
-    public void removedFromController(@NotNull IMultiController controller) {
+    public void removedFromController(@NotNull MultiblockControllerMachine controller) {
         super.removedFromController(controller);
         if (controller instanceof TransfiniteComputationArrayMachine transfiniteController &&
-                this.linkedControllerPos == transfiniteController.getPos().asLong()) {
+                this.linkedControllerPos == transfiniteController.getBlockPos().asLong()) {
             this.linkedControllerPos = NO_LINKED_CONTROLLER;
-            markDirty();
+            markAsChanged();
             notifyCraftingCpuChange();
         }
     }
@@ -153,60 +157,39 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
     }
 
     @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        this.customName = normalizeCpuName(this.customName);
-        this.parallelism = tag.contains(NBT_PARALLELISM, Tag.TAG_ANY_NUMERIC) ?
-                Math.max(TransfiniteComputationArrayMachine.MIN_PARALLELISM, tag.getLong(NBT_PARALLELISM)) :
-                TransfiniteComputationArrayMachine.DEFAULT_PARALLELISM;
-        this.linkedControllerPos = tag.contains(NBT_LINKED_CONTROLLER, Tag.TAG_ANY_NUMERIC) ?
-                tag.getLong(NBT_LINKED_CONTROLLER) : NO_LINKED_CONTROLLER;
+    public void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        customName = normalizeCpuName(customName);
+        parallelism = Math.max(TransfiniteComputationArrayMachine.MIN_PARALLELISM, parallelism);
     }
 
     @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        super.saveCustomPersistedData(tag, forDrop);
-        tag.putLong(NBT_PARALLELISM, this.parallelism);
-        if (this.linkedControllerPos != NO_LINKED_CONTROLLER) {
-            tag.putLong(NBT_LINKED_CONTROLLER, this.linkedControllerPos);
-        } else {
-            tag.remove(NBT_LINKED_CONTROLLER);
-        }
+    public void buildMainUI(ParentWidget<?> contents, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        contents.child(settings(sync, () -> this));
     }
 
-    @Override
-    public @NotNull Widget createUIWidget() {
-        var group = new WidgetGroup(0, 0, UI_WIDTH, UI_HEIGHT);
-        group.addWidget(new LabelWidget(CONTENT_X, NETWORK_STATUS_Y, () -> this.isOnline ?
-                "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline"));
-        group.addWidget(new LabelWidget(CONTENT_X, CPU_NAME_LABEL_Y, () -> Component.translatable(
-                "gui.gtlcore.me_crafting_cpu_interface.cpu_name", getDisplayedCpuName()).getString()));
-        group.addWidget(new AETextInputButtonWidget(
-                CONTENT_X, CPU_NAME_FIELD_Y, CPU_NAME_FIELD_WIDTH, CPU_NAME_FIELD_HEIGHT)
-                .setText(this.customName)
-                .setOnConfirm(this::setCustomName)
-                .setButtonTooltips(
-                        Component.translatable("gui.gtlcore.me_crafting_cpu_interface.cpu_name.rename"),
-                        Component.translatable("gui.gtlcore.me_crafting_cpu_interface.cpu_name.tooltip")));
-        group.addWidget(new LabelWidget(CONTENT_X, PARALLELISM_LABEL_Y,
-                "gui.gtlcore.transfinite_computation_array.parallelism"));
-        group.addWidget(new TextFieldWidget(
-                CONTENT_X, PARALLELISM_FIELD_Y, PARALLELISM_FIELD_WIDTH, PARALLELISM_FIELD_HEIGHT,
-                this::getParallelismText, this::setParallelismFromText)
-                .setNumbersOnly(
-                        TransfiniteComputationArrayMachine.MIN_PARALLELISM,
-                        TransfiniteComputationArrayMachine.MAX_PARALLELISM)
-                .setMaxStringLength(MAX_PARALLELISM_TEXT_LENGTH));
-        return group;
+    /** The controller popup uses the same settings with a live server-owned interface binding. */
+    public static Flow settings(PanelSyncManager sync, java.util.function.Supplier<MECraftingCPUInterfacePartMachine> binding) {
+        var online = SyncHandlers.bool(() -> binding.get() != null && binding.get().isOnline(), null);
+        var name = SyncHandlers.string(() -> binding.get() == null ? "" : binding.get().customName, value -> {
+            var part = binding.get(); if (part != null && !part.isRemoved()) part.setCustomName(value);
+        }).allowC2S();
+        var parallel = SyncHandlers.string(() -> binding.get() == null ? "1" : binding.get().getParallelismText(), value -> {
+            var part = binding.get(); if (part != null && !part.isRemoved()) part.setParallelismFromText(value);
+        }).allowC2S();
+        sync.syncValue("craftingCpuOnline", online); sync.syncValue("craftingCpuName", name); sync.syncValue("craftingCpuParallelism", parallel);
+        return Flow.col().name("craftingCpuInterfaceSettings").width(160).coverChildrenHeight().childPadding(4)
+                .child(Text.dynamic(() -> Component.translatable(online.getBoolValue() ? "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline")).asWidget())
+                .child(Text.dynamic(() -> Component.translatable("gui.gtlcore.me_crafting_cpu_interface.cpu_name", Component.literal(name.getStringValue()))).asWidget())
+                .child(new TextFieldWidget().name("craftingCpuNameField").width(160).height(18).value(name).setMaxLength(MAX_CPU_NAME_LENGTH * 2)
+                        .tooltip(t -> t.addLine(Component.translatable("gui.gtlcore.me_crafting_cpu_interface.cpu_name.tooltip"))))
+                .child(Text.lang("gui.gtlcore.transfinite_computation_array.parallelism").asWidget())
+                .child(new TextFieldWidget().name("craftingCpuParallelismField").width(160).height(18).value(parallel)
+                        .setMaxLength(MAX_PARALLELISM_TEXT_LENGTH).setNumbersLong(() -> 1L, () -> Long.MAX_VALUE));
     }
 
     @Override
     public void onMainNodeStateChanged(IGridNodeListener.@NotNull State reason) {
-        var controllerPositions = getTransfiniteControllers().stream()
-                .map(TransfiniteComputationArrayMachine::getPos)
-                .toList();
-
-        boolean onlineBefore = this.isOnline;
         super.onMainNodeStateChanged(reason);
         updateSubscription();
         notifyCraftingCpuChange();
@@ -285,7 +268,8 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
             return;
         }
         this.parallelism = clamped;
-        markDirty();
+        syncDataHolder.markClientSyncFieldDirty("parallelism");
+        markAsChanged();
         notifyCraftingCpuChange();
     }
 
@@ -295,7 +279,8 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
             return;
         }
         this.customName = normalizedName;
-        markDirty();
+        syncDataHolder.markClientSyncFieldDirty("customName");
+        markAsChanged();
         notifyCraftingCpuChange();
     }
 
@@ -311,8 +296,4 @@ public final class MECraftingCPUInterfacePartMachine extends MEIOPartMachine {
         return normalizedName;
     }
 
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
 }

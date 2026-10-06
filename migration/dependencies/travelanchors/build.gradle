@@ -1,0 +1,31 @@
+plugins { id 'java-library'; alias libs.plugins.modDevGradle }
+group = 'org.gtlcore.dependencies'
+version = '6.0.0-gtl.1'
+base { archivesName = 'travelanchors-neoforge' }
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty('travelanchors_source'))
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.withSourcesJar()
+sourceSets.main {
+    java.setSrcDirs([new File(nativeSource, 'src/main/java')])
+    resources.setSrcDirs([new File(nativeSource, 'src/main/resources'), new File(nativeSource, 'src/generated/resources')])
+    resources.exclude('.cache/**')
+}
+apply from: '../../../gradle/repositories.gradle'
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+    mods { travelanchors { sourceSet(sourceSets.main) } }
+}
+dependencies {
+    implementation('maven.modrinth:libx:ADxNEmse')
+    annotationProcessor('maven.modrinth:libx:ADxNEmse')
+    annotationProcessor('net.neoforged:neoforge:21.1.248')
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 21; options.compilerArgs.addAll(['-Xmaxerrs','1000']) }
+tasks.named('processResources') { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+apply from: '../native-source.gradle'

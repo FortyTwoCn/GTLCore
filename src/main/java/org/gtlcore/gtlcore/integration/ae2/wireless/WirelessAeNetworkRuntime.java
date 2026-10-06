@@ -12,10 +12,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.bus.api.IEventBus;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridConnection;
@@ -202,7 +202,7 @@ public final class WirelessAeNetworkRuntime {
         forgeBus.addListener(WirelessAeNetworkRuntime::onServerStopped);
     }
 
-    private static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
+    private static void onServerStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) {
         // No node references or deadlines may survive into another integrated server.
         CONNECTIONS.clear();
         PENDING_FAVORITE_BINDS.clear();
@@ -239,11 +239,7 @@ public final class WirelessAeNetworkRuntime {
         }
     }
 
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-
+    public static void onServerTick(ServerTickEvent.Post event) {
         tickCounter++;
         maintenanceTick++;
         beginTickCaches();
@@ -549,7 +545,7 @@ public final class WirelessAeNetworkRuntime {
     public static boolean isWirelessMeTarget(Level level, BlockPos pos) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         if (blockEntity instanceof WirelessNetworkCoreBlockEntity) return false;
-        ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(level.getBlockState(pos).getBlock());
+        ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock());
         if (isWirelessMeTargetObject(blockEntity, blockId)) return true;
         Object metaMachine = invokeObject(blockEntity, "getMetaMachine");
         return isWirelessMeTargetObject(metaMachine, blockId) || isWirelessMeTargetId(blockId);
@@ -783,7 +779,7 @@ public final class WirelessAeNetworkRuntime {
         }
 
         BlockPos pos = event.getPos();
-        if (!isWirelessMeTarget(level, pos) && !isWirelessMeTargetId(ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()))) {
+        if (!isWirelessMeTarget(level, pos) && !isWirelessMeTargetId(BuiltInRegistries.BLOCK.getKey(event.getPlacedBlock().getBlock()))) {
             return;
         }
 

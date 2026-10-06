@@ -1,0 +1,6 @@
+plugins {
+    id 'java-library'
+    alias libs.plugins.modDevGradle
+}
+ext.nativeFtbId = 'ftbranks'
+apply from: '../ftb-native.gradle'

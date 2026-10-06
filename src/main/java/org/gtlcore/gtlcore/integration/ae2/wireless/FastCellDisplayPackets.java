@@ -2,14 +2,15 @@ package org.gtlcore.gtlcore.integration.ae2.wireless;
 
 import org.gtlcore.gtlcore.GTLCore;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import appeng.api.stacks.AEKey;
 import appeng.menu.me.common.MEStorageMenu;
@@ -28,32 +29,33 @@ public final class FastCellDisplayPackets {
 
     private FastCellDisplayPackets() {}
 
-    public static void register(SimpleChannel channel, IntSupplier ids) {
-        channel.registerMessage(ids.getAsInt(), Response.class, Response::encode, Response::decode, Response::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        channel.registerMessage(ids.getAsInt(), Ready.class,
-                (packet, buffer) -> buffer.writeVarInt(packet.containerId()),
-                buffer -> new Ready(buffer.readVarInt()), Ready::handle,
-                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+    public static void register(PayloadRegistrar registrar) {
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Response.TYPE, Response::encode, Response::decode, Response::handle, PacketFlow.CLIENTBOUND);
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Ready.TYPE, (packet, buffer) -> buffer.writeVarInt(packet.containerId()), buffer -> new Ready(buffer.readVarInt()), Ready::handle, PacketFlow.SERVERBOUND);
     }
 
     public static void ready(MEStorageMenu menu) {
-        WirelessAePackets.CHANNEL.sendToServer(new Ready(menu.containerId));
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(new Ready(menu.containerId));
     }
 
-    private record Ready(int containerId) {
+    private record Ready(int containerId) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Ready> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "fast_cell_display/ready"));
 
-        private static void handle(Ready packet, Supplier<NetworkEvent.Context> supplier) {
-            NetworkEvent.Context context = supplier.get();
+        @Override
+        public CustomPacketPayload.Type<Ready> type() { return TYPE; }
+
+
+        private static void handle(Ready packet, IPayloadContext context) {
             context.enqueueWork(() -> {
-                ServerPlayer player = context.getSender();
+                ServerPlayer player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player != null && player.containerMenu instanceof MEStorageMenu menu &&
                         menu.containerId == packet.containerId() && menu.isValidMenu()) {
                     // Duplicate readiness messages must not repeatedly force full snapshots.
                     READY.add(menu);
                 }
             });
-            context.setPacketHandled(true);
+
         }
     }
 
@@ -86,14 +88,14 @@ public final class FastCellDisplayPackets {
         boolean first = true;
         for (var entry : changes.entrySet()) {
             if (chunk.size() == MAX_KEYS) {
-                WirelessAePackets.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                PacketDistributor.sendToPlayer(player,
                         new Response(menu.containerId, first, false, Map.copyOf(chunk)));
                 first = false;
                 chunk.clear();
             }
             chunk.put(entry.getKey(), entry.getValue());
         }
-        WirelessAePackets.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+        PacketDistributor.sendToPlayer(player,
                 new Response(menu.containerId, first, true, Map.copyOf(chunk)));
         Map<AEKey, BigInteger> updated = new HashMap<>(previous);
         changes.forEach((key, amount) -> {
@@ -108,9 +110,15 @@ public final class FastCellDisplayPackets {
                 amount.bitLength() < MAX_AMOUNT_BYTES * Byte.SIZE;
     }
 
-    public record Response(int containerId, boolean reset, boolean complete, Map<AEKey, BigInteger> amounts) {
+    public record Response(int containerId, boolean reset, boolean complete, Map<AEKey, BigInteger> amounts) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Response> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "fast_cell_display/response"));
 
-        private static void encode(Response packet, FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<Response> type() { return TYPE; }
+
+
+        private static void encode(Response packet, RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(packet.containerId);
             buffer.writeBoolean(packet.reset);
             buffer.writeBoolean(packet.complete);
@@ -121,7 +129,7 @@ public final class FastCellDisplayPackets {
             });
         }
 
-        private static Response decode(FriendlyByteBuf buffer) {
+        private static Response decode(RegistryFriendlyByteBuf buffer) {
             int containerId = buffer.readVarInt();
             boolean reset = buffer.readBoolean();
             boolean complete = buffer.readBoolean();
@@ -137,10 +145,9 @@ public final class FastCellDisplayPackets {
             return new Response(containerId, reset, complete, amounts);
         }
 
-        private static void handle(Response packet, Supplier<NetworkEvent.Context> supplier) {
-            NetworkEvent.Context context = supplier.get();
-            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> receive(packet)));
-            context.setPacketHandled(true);
+        private static void handle(Response packet, IPayloadContext context) {
+            context.enqueueWork(() -> receive(packet));
+
         }
     }
 

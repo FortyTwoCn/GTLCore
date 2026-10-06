@@ -8,7 +8,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,14 +22,13 @@ public abstract class LevelChunkMixin {
     @Shadow
     Level level;
 
-    @Inject(method = "setBlockState",
-            at = @At(value = "INVOKE",
-                     opcode = Opcodes.GETFIELD,
-                     target = "Lnet/minecraft/world/level/block/state/BlockState;onPlace(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)V"))
+    @Inject(method = "setBlockState", at = @At("RETURN"))
     private void notifyBlockStateWatchers(BlockPos pos, BlockState state, boolean isMoving,
                                           CallbackInfoReturnable<BlockState> cir) {
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> BlockStateWatcher.notifyWatchersInternal(serverLevel, pos, state));
+        if (cir.getReturnValue() != null && level instanceof ServerLevel serverLevel) {
+            // onPlace may replace the requested block again; publish the committed state.
+            BlockState currentState = serverLevel.getChunkAt(pos).getBlockState(pos);
+            BlockStateWatcher.notifyWatchersInternal(serverLevel, pos, currentState);
         }
     }
 }

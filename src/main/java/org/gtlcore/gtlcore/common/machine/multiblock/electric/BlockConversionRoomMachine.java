@@ -6,11 +6,13 @@ import org.gtlcore.gtlcore.utils.Registries;
 
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.PanelSyncManager;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -57,9 +59,9 @@ public class BlockConversionRoomMachine extends StorageMachine {
     private final int am;
     private final List<int[]> poses;
 
-    private Set<BlockBusPartMachine> blockBusPartMachine = new HashSet<>();
+    private final Set<BlockBusPartMachine> blockBusPartMachine = new HashSet<>();
 
-    public BlockConversionRoomMachine(IMachineBlockEntity holder, boolean isLarge) {
+    public BlockConversionRoomMachine(BlockEntityCreationInfo holder, boolean isLarge) {
         super(holder, 1);
         this.am = isLarge ? 64 : 4;
         this.poses = isLarge ? poses2 : poses1;
@@ -72,9 +74,10 @@ public class BlockConversionRoomMachine extends StorageMachine {
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
-        for (IMultiPart part : getParts()) {
+    public void formStructure(String name) {
+        super.formStructure(name);
+        blockBusPartMachine.clear();
+        for (var part : getParts()) {
             if (part instanceof BlockBusPartMachine busPartMachine) {
                 blockBusPartMachine.add(busPartMachine);
             }
@@ -82,9 +85,9 @@ public class BlockConversionRoomMachine extends StorageMachine {
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
-        blockBusPartMachine = null;
+    public void invalidateStructure(String name) {
+        super.invalidateStructure(name);
+        blockBusPartMachine.clear();
     }
 
     @Override
@@ -92,13 +95,13 @@ public class BlockConversionRoomMachine extends StorageMachine {
         boolean value = super.onWorking();
         if (getOffsetTimer() % 20 == 0) {
             int amount = getTier() * am - 7;
-            if (blockBusPartMachine != null && !getMachineStorageItem().isEmpty()) {
+            if (!getMachineStorageItem().isEmpty()) {
                 int a = amount;
                 if (getMachineStorageItem().is(GTLItems.FAST_CONVERSION_SIMULATE_CARD.get())) {
                     a = 81 * 64 * 3;
                 }
                 for (BlockBusPartMachine busPartMachine : blockBusPartMachine) {
-                    ItemStackTransfer stackTransfer = busPartMachine.getInventory().storage;
+                    CustomItemStackHandler stackTransfer = busPartMachine.getInventory().storage;
 
                     for (int i = 0; a > 0 && i < stackTransfer.getSlots(); i++) {
                         ItemStack itemStack = stackTransfer.getStackInSlot(i);
@@ -118,7 +121,7 @@ public class BlockConversionRoomMachine extends StorageMachine {
                         int[] pos_0 = poses.get((int) (Math.random() * poses.size()));
                         if (pos_0 != pos) {
                             pos = pos_0;
-                            BlockPos blockPos = getPos().offset(pos[0], pos[1], pos[2]);
+                            BlockPos blockPos = getBlockPos().offset(pos[0], pos[1], pos[2]);
                             Block block = level.getBlockState(blockPos).getBlock();
                             if (covRecipe.containsKey(block)) {
                                 level.setBlockAndUpdate(blockPos, covRecipe.get(block).defaultBlockState());
@@ -141,8 +144,10 @@ public class BlockConversionRoomMachine extends StorageMachine {
     }
 
     @Override
-    public void addDisplayText(@NotNull List<Component> textList) {
-        super.addDisplayText(textList);
-        textList.add(Component.translatable("gtceu.machine.block_conversion_room.am", getConversionCount()));
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager sync) {
+        var widgets = new ArrayList<>(super.getWidgetsForDisplay(sync));
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("gtlConversionCount", (controller, lines) ->
+                lines.add(Component.translatable("gtceu.machine.block_conversion_room.am", getConversionCount()))).apply(this, sync));
+        return widgets;
     }
 }

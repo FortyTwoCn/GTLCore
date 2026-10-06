@@ -5,7 +5,8 @@ import org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -16,7 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.NetworkHooks;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -31,19 +31,20 @@ public class PatternQuickUploadSelectionMenu extends AbstractContainerMenu {
     private boolean selected;
     private boolean uploaded;
 
-    public PatternQuickUploadSelectionMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
+    public PatternQuickUploadSelectionMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf data) {
         super(GTLWirelessAeContent.PATTERN_QUICK_UPLOAD_SELECTION_MENU.get(), containerId);
-        this.patternStack = data.readItem();
-        this.cancelStack = data.readItem();
+        this.patternStack = ItemStack.OPTIONAL_STREAM_CODEC.decode(data);
+        this.cancelStack = ItemStack.OPTIONAL_STREAM_CODEC.decode(data);
         int size = data.readVarInt();
+        if (size < 0 || size > 4096) throw new IllegalArgumentException("Invalid rapid upload target count: " + size);
         this.entries = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             this.entries.add(new Entry(
                     ResourceKey.create(Registries.DIMENSION, data.readResourceLocation()),
                     data.readBlockPos(),
-                    data.readComponent(),
+                    ComponentSerialization.STREAM_CODEC.decode(data),
                     data.readResourceLocation(),
-                    data.readComponent(),
+                    ComponentSerialization.STREAM_CODEC.decode(data),
                     data.readBoolean()));
         }
     }
@@ -68,9 +69,7 @@ public class PatternQuickUploadSelectionMenu extends AbstractContainerMenu {
                         target.showsSinglePosition()))
                 .toList();
 
-        NetworkHooks.openScreen(
-                player,
-                new MenuProvider() {
+        player.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {
@@ -143,17 +142,17 @@ public class PatternQuickUploadSelectionMenu extends AbstractContainerMenu {
         }
     }
 
-    private static void write(FriendlyByteBuf buffer, ItemStack patternStack, ItemStack cancelStack,
+    private static void write(RegistryFriendlyByteBuf buffer, ItemStack patternStack, ItemStack cancelStack,
                               List<Entry> entries) {
-        buffer.writeItem(patternStack);
-        buffer.writeItem(cancelStack);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, patternStack);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, cancelStack);
         buffer.writeVarInt(entries.size());
         for (Entry entry : entries) {
             buffer.writeResourceLocation(entry.levelKey().location());
             buffer.writeBlockPos(entry.bufferPos());
-            buffer.writeComponent(entry.targetName());
+            ComponentSerialization.STREAM_CODEC.encode(buffer, entry.targetName());
             buffer.writeResourceLocation(entry.recipeTypeId());
-            buffer.writeComponent(entry.recipeTypeName());
+            ComponentSerialization.STREAM_CODEC.encode(buffer, entry.recipeTypeName());
             buffer.writeBoolean(entry.showPosition());
         }
     }

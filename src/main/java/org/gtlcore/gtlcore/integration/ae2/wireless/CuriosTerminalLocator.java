@@ -3,53 +3,32 @@ package org.gtlcore.gtlcore.integration.ae2.wireless;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
 
-import appeng.api.implementations.menuobjects.IMenuItem;
-import appeng.api.implementations.menuobjects.ItemMenuHost;
-import appeng.items.tools.powered.WirelessTerminalItem;
-import appeng.menu.MenuOpener;
-import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.ItemMenuHostLocator;
 import appeng.menu.locator.MenuLocators;
-import appeng.menu.me.common.MEStorageMenu;
-import de.mari_023.ae2wtlib.terminal.IUniversalWirelessTerminalItem;
 import org.jetbrains.annotations.Nullable;
 
-public record CuriosTerminalLocator(String identifier, int index) implements MenuLocator {
+/** AE2 reads the equipped stack through this locator for validation and power consumption. */
+public record CuriosTerminalLocator(String identifier, int index) implements ItemMenuHostLocator {
+
+    public CuriosTerminalLocator {
+        if (identifier == null || identifier.isBlank() || index < 0) {
+            throw new IllegalArgumentException("Invalid Curios terminal slot");
+        }
+    }
 
     public static void register() {
         MenuLocators.register(CuriosTerminalLocator.class, CuriosTerminalLocator::write, CuriosTerminalLocator::read);
     }
 
     @Override
-    public @Nullable <T> T locate(Player player, Class<T> clazz) {
-        ItemStack stack = CuriosCompat.locateItem(identifier, index, player);
-        if (stack.isEmpty()) {
-            return null;
-        }
+    public ItemStack locateItem(Player player) {
+        return CuriosCompat.locateItem(identifier, index, player);
+    }
 
-        ItemMenuHost host;
-        if (stack.getItem() instanceof IUniversalWirelessTerminalItem terminalItem) {
-            host = terminalItem.getMenuHost(player, this, stack);
-        } else if (stack.getItem() instanceof WirelessTerminalItem) {
-            // Use null slot so the host does not try to validate an inventory index.
-            host = new CuriosWirelessTerminalMenuHost(
-                    player,
-                    stack,
-                    identifier,
-                    index,
-                    (p, sub) -> MenuOpener.open(MEStorageMenu.WIRELESS_TYPE, p, this));
-        } else if (stack.getItem() instanceof IMenuItem menuItem) {
-            host = menuItem.getMenuHost(player, -1, stack, null);
-        } else {
-            return null;
-        }
-
-        if (host == null) {
-            return null;
-        }
-        if (clazz.isInstance(host)) {
-            return clazz.cast(host);
-        }
+    @Override
+    public @Nullable BlockHitResult hitResult() {
         return null;
     }
 

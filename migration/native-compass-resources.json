@@ -1,0 +1,21 @@
+{
+  "source": "libs/gtceu-1.20.1-1.4.4.jar (resource files only)",
+  "jarSha256": "e7b5239e1fedd1096f55e9408cf673b01ddbed14c806f0368f02386137289f12",
+  "resources": {
+    "assets/gtceu/compass/nodes/parts/dual_hatch.json": "c8e25d3543a3b3a59b34d7a2fae1f6cbb2fc9fdaa992e68fe5f8d93537c430fb",
+    "assets/gtceu/compass/nodes/parts/fluid_hatch.json": "d834bae0e2aa7c128540471cf4dfd29d5e3c95c79a6aaa02469bff5b18347015",
+    "assets/gtceu/compass/nodes/parts/item_bus.json": "72913946b598ef328220609700744b925b5dd1382ad293dece837605e8375489",
+    "assets/gtceu/compass/nodes/parts/steam_hatch.json": "a572b2cba6118bcdcf448e2fc5a497318027d26e04bf2db6e95971757bab3321",
+    "assets/gtceu/compass/nodes/steam/steam_hatch.json": "2467e5c424b143035a89357079096a19f501f6038bd7bd3be3d6b4be90fb9bf5",
+    "assets/gtceu/compass/pages/en_us/parts/fluid_hatch.xml": "f08166ffa164c89a50a303997476e6721c92c8ce89064d14f238f28e72f43936",
+    "assets/gtceu/compass/pages/en_us/parts/item_bus.xml": "f9d1bf1ae1575d0cf165222ff8a8c83c43441ccf5af12401ca65f877389d3440",
+    "assets/gtceu/compass/pages/en_us/steam/steam_hatch.xml": "226ca259dcee627bc214572a06e9a6b257c50e339d94551a72b9903fee3d4237",
+    "assets/gtceu/compass/pages/zh_cn/parts/fluid_hatch.xml": "fd65e51fce406abd0a983d75941d9ca815f2f71f4a0f054f6c8e42cf2dbfb211",
+    "assets/gtceu/compass/pages/zh_cn/parts/item_bus.xml": "9bcab44fb91245763b516a39520c5e759b9dba9826fc370761f854400e29039b",
+    "assets/gtceu/compass/pages/zh_cn/steam/steam_hatch.xml": "4b8fd7248f509bcd15394030dfa4cc2f67f3c81046d4439b4da3582fed6d5759",
+    "assets/gtceu/compass/sections/iv.json": "129431de1a194320286ee5d4287f8ebb628c62850ed98918ad53a0282f321355",
+    "assets/gtceu/compass/sections/machines.json": "c89d7087754ace0ed294334a16e7e6ad0ca78e71ecebda26b84a504d67089bfd",
+    "assets/gtceu/compass/sections/parts.json": "279180eeff8d9a931a09f4016938ec6158e9d9ceb3b3f0be9b1750746f09f4b1",
+    "assets/gtceu/compass/sections/steam.json": "b9d9de34dcb842d58540b51e6c1c193199673ad9c96fbc40e8d5f55bae4927a1"
+  }
+}

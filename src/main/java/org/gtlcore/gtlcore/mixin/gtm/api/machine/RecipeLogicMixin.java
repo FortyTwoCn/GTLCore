@@ -1,352 +1,131 @@
 package org.gtlcore.gtlcore.mixin.gtm.api.machine;
 
 import org.gtlcore.gtlcore.api.machine.ISuspendableMachine;
-import org.gtlcore.gtlcore.api.machine.trait.ILockRecipe;
-import org.gtlcore.gtlcore.api.machine.trait.IRecipeStatus;
-import org.gtlcore.gtlcore.api.recipe.BatchProcessing;
-import org.gtlcore.gtlcore.api.recipe.IGTRecipe;
-import org.gtlcore.gtlcore.api.recipe.RecipeResult;
-
+import org.gtlcore.gtlcore.api.machine.trait.*;
+import org.gtlcore.gtlcore.api.recipe.*;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.capability.recipe.IRecipeCapabilityHolder;
-import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
+import com.gregtechceu.gtceu.api.capability.recipe.CWURecipeCapability;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
+import com.gregtechceu.gtceu.api.machine.trait.feature.IAttachConfiguratorsTrait;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
+import com.gregtechceu.gtceu.api.recipe.ActionResult;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
-import com.gregtechceu.gtceu.common.machine.multiblock.electric.research.ResearchStationMachine;
-
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import brachy.modularui.screen.ModularPanel;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widgets.layout.Flow;
 import net.minecraft.network.chat.Component;
-
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import lombok.Getter;
-import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
-
+import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.callback.*;
 import java.util.*;
-import java.util.function.Predicate;
 
-import static org.gtlcore.gtlcore.api.recipe.RecipeRunnerHelper.*;
-
+/** Core locking/batching around native recipe search, working, waiting, prerolls, tick IO and pause lifecycle. */
 @Mixin(RecipeLogic.class)
-public abstract class RecipeLogicMixin implements ILockRecipe, IRecipeStatus {
+public abstract class RecipeLogicMixin implements ILockRecipe, IRecipeStatus, IAttachConfiguratorsTrait {
+    @SaveField private boolean isLock;
+    @SaveField private @Nullable GTRecipe lockRecipe;
+    @Unique private boolean gtlcore$preparingBatch, gtlcore$retryComputation;
+    @Unique private @Nullable RecipeResult gtlcore$recipeStatus, gtlcore$workingStatus;
+    @Shadow(remap = false) protected @Nullable GTRecipe lastRecipe;
+    @Shadow(remap = false) protected @Nullable GTRecipe lastOriginRecipe;
+    @Shadow(remap = false) public abstract IRecipeLogicMachine getRLMachine();
+    @Shadow(remap = false) public abstract RecipeLogic.Status getStatus();
+    @Shadow(remap = false) public abstract void markLastRecipeDirty();
+    @Shadow(remap = false) public abstract void updateTickSubscription();
+    @Shadow(remap = false) public abstract void setWaiting(@Nullable Component reason);
+    @Shadow(remap = false) public abstract void setSuspendAfterFinish(boolean suspend);
 
-    @Persisted
-    @Getter
-    private boolean isLock = false;
-    @Persisted
-    @Getter
-    @Setter
-    private GTRecipe lockRecipe;
-    @Getter
-    @Setter
-    private RecipeResult recipeStatus;
-    @Getter
-    @Setter
-    private RecipeResult workingStatus;
-
-    @Shadow(remap = false)
-    @Final
-    public IRecipeLogicMachine machine;
-    @Shadow(remap = false)
-    @Final
-    protected Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches;
-    @Shadow(remap = false)
-    public List<GTRecipe> lastFailedMatches;
-    @Shadow(remap = false)
-    protected @Nullable GTRecipe lastRecipe;
-    @Shadow(remap = false)
-    protected @Nullable GTRecipe lastOriginRecipe;
-    @Shadow(remap = false)
-    protected OCParams ocParams;
-    @Shadow(remap = false)
-    protected OCResult ocResult;
-    @Shadow(remap = false)
-    protected boolean recipeDirty;
-    @Shadow(remap = false)
-    protected int progress;
-    @Shadow(remap = false)
-    protected int duration;
-    @Shadow(remap = false)
-    private boolean isActive;
-    @Shadow(remap = false)
-    private RecipeLogic.Status status;
-    @Shadow(remap = false)
-    protected long totalContinuousRunningTime;
-
-    @Shadow(remap = false)
-    public abstract void markLastRecipeDirty();
-
-    @Shadow(remap = false)
-    public abstract void setStatus(RecipeLogic.Status status);
-
-    @Shadow(remap = false)
-    public abstract RecipeLogic.Status getStatus();
-
-    @Shadow(remap = false)
-    public abstract void updateTickSubscription();
-
-    @Shadow(remap = false)
-    public abstract GTRecipe.ActionResult handleTickRecipe(GTRecipe recipe);
-
-    @Shadow(remap = false)
-    public abstract void interruptRecipe();
-
-    @Shadow(remap = false)
-    public abstract void setWaiting(@Nullable Component reason);
-
-    @Shadow(remap = false)
-    protected abstract void doDamping();
-
-    public void setLock(boolean look) {
-        isLock = look;
-        lockRecipe = null;
+    @Override public boolean isLock() { return isLock; }
+    @Override public GTRecipe getLockRecipe() { return lockRecipe; }
+    @Override public void setLockRecipe(GTRecipe recipe) { lockRecipe = recipe == null ? null : recipe.copy(); }
+    @Override public void setLock(boolean locked) {
+        if (isLock == locked) return;
+        isLock = locked;
+        lockRecipe = locked && lastOriginRecipe != null ? lastOriginRecipe.copy() : null;
+        getRLMachine().self().setChanged();
+        markLastRecipeDirty();
         updateTickSubscription();
     }
+    @Override public RecipeResult getRecipeStatus() { return gtlcore$recipeStatus; }
+    @Override public void setRecipeStatus(RecipeResult result) { gtlcore$recipeStatus = result; }
+    @Override public RecipeResult getWorkingStatus() { return gtlcore$workingStatus; }
+    @Override public void setWorkingStatus(RecipeResult result) { gtlcore$workingStatus = result; }
 
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    protected boolean handleRecipeIO(GTRecipe recipe, IO io) {
-        if (!(this.machine.hasProxies() && io != IO.BOTH)) return false;
-        if (io == IO.IN && !BatchProcessing.applyInPlace(this.machine.self(), this.lastOriginRecipe, recipe))
-            return false;
-        return handleRecipeInput(this.machine, recipe);
+    @Inject(method = "searchRecipe", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$searchLocked(CallbackInfoReturnable<Iterator<GTRecipe>> cir) {
+        if (isLock && lockRecipe != null) cir.setReturnValue(Collections.singleton(lockRecipe).iterator());
+    }
+    @ModifyArg(method = "checkMatchedRecipeAvailable", at = @At(value = "INVOKE", target =
+            "Lcom/gregtechceu/gtceu/api/machine/feature/IRecipeLogicMachine;fullModifyRecipe(Lcom/gregtechceu/gtceu/api/recipe/GTRecipe;)Lcom/gregtechceu/gtceu/api/recipe/GTRecipe;"),
+            index = 0, remap = false, require = 1)
+    private GTRecipe gtlcore$copyBeforeModifiers(GTRecipe recipe) { return recipe.copy(); }
+    @Inject(method = "checkMatchedRecipeAvailable", at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$captureLock(GTRecipe match, CallbackInfoReturnable<Boolean> cir) {
+        if (cir.getReturnValueZ() && isLock && lockRecipe == null) setLockRecipe(match);
     }
 
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public void handleRecipeWorking() {
-        assert this.lastRecipe != null;
-        var result = this.handleTickRecipe(this.lastRecipe);
-        if (result.isSuccess()) {
-            this.setStatus(RecipeLogic.Status.WORKING);
-            if (!this.machine.onWorking()) {
-                this.interruptRecipe();
-                return;
-            }
-            ++this.progress;
-            ++this.totalContinuousRunningTime;
+    @Inject(method = "setupRecipe", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$prepareBatch(GTRecipe recipe, CallbackInfo ci) {
+        var machine = getRLMachine();
+        if (gtlcore$preparingBatch || !BatchProcessing.isEnabled(machine.self()) || IGTRecipe.of(recipe).isBatchProcessed()) return;
+        // Work on a copy before native prerolls and consumption. The processed flag makes this re-entry run once.
+        var prepared = BatchProcessing.apply(machine.self(), recipe.copy(), IGTRecipe.of(recipe).isSubTickParallelized());
+        if (prepared != null) {
+            gtlcore$preparingBatch = true;
+            try { ((RecipeLogic) (Object) this).setupRecipe(prepared); }
+            finally { gtlcore$preparingBatch = false; }
         } else {
-            this.setWaiting(result.reason().get());
+            ((RecipeLogic) (Object) this).resetRecipeLogic();
+            gtlcore$recipeStatus = RecipeResult.FAIL_INPUT;
         }
-        if (this.status == RecipeLogic.Status.WAITING) {
-            this.doDamping();
+        ci.cancel();
+    }
+    @Inject(method = "onRecipeFinish", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$waitForBatchOutput(CallbackInfo ci) {
+        if (lastRecipe != null && IGTRecipe.of(lastRecipe).getBatchSize() > 1) {
+            // At finish, consumed inputs cannot be matched again. Only output capacity determines this wait.
+            var output = RecipeRunnerHelper.handleRecipe(IO.OUT, getRLMachine(), lastRecipe.outputs, Map.of(), false, lastRecipe, true);
+            if (!output.isSuccess()) { setWaiting(output.reason()); ci.cancel(); return; }
+        }
+        if (getRLMachine() instanceof ISuspendableMachine suspend && suspend.gtlcore$isSuspendAfterFinish()) {
+            setSuspendAfterFinish(true);
+            suspend.gtlcore$setSuspendAfterFinish(false);
         }
     }
+    @Inject(method = "findAndHandleRecipe", at = @At("HEAD"), remap = false, require = 1)
+    private void gtlcore$clearSearchStatus(CallbackInfo ci) { gtlcore$recipeStatus = gtlcore$workingStatus = null; gtlcore$retryComputation = false; }
+    @Inject(method = "checkRecipe", at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$matchStatus(GTRecipe recipe, CallbackInfoReturnable<ActionResult> cir) {
+        var result = cir.getReturnValue();
+        gtlcore$recipeStatus = result.isSuccess() ? RecipeResult.SUCCESS : RecipeResult.fail(result.reason());
+        gtlcore$retryComputation |= !result.isSuccess() && result.io() == IO.IN && result.capability() == CWURecipeCapability.CAP;
+    }
+    @Inject(method = "setWaiting", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$waitingStatus(Component reason, CallbackInfo ci) { gtlcore$workingStatus = RecipeResult.fail(reason); }
+    @Inject(method = "setStatus", at = @At("HEAD"), remap = false, require = 1)
+    private void gtlcore$workingStatus(RecipeLogic.Status status, CallbackInfo ci) {
+        if (status == RecipeLogic.Status.WORKING) { gtlcore$workingStatus = null; gtlcore$retryComputation = false; }
+    }
+    @Inject(method = "resetRecipeLogic", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$resetStatus(CallbackInfo ci) { gtlcore$recipeStatus = gtlcore$workingStatus = null; gtlcore$retryComputation = false; }
 
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public void setupRecipe(GTRecipe recipe) {
-        if (!this.machine.beforeWorking(recipe)) {
-            this.setStatus(RecipeLogic.Status.IDLE);
-            this.progress = 0;
-            this.duration = 0;
-            this.isActive = false;
-            return;
-        }
-        if (this.handleRecipeIO(recipe, IO.IN)) {
-            if (this.lastRecipe != null && !recipe.equals(this.lastRecipe)) {
-                this.chanceCaches.clear();
-            }
-            this.recipeDirty = false;
-            this.lastRecipe = recipe;
-            this.setStatus(RecipeLogic.Status.WORKING);
-            this.progress = 0;
-            this.duration = recipe.duration;
-            this.isActive = true;
-        }
+    @ModifyExpressionValue(method = "serverTick", at = @At(value = "FIELD", target =
+            "Lcom/gregtechceu/gtceu/api/machine/trait/recipe/RecipeLogic;keepSubscribing:Z"),
+            remap = false, require = 2, expect = 2, allow = 2)
+    private boolean gtlcore$retryOpticalSupply(boolean nativeKeepSubscribing) {
+        return nativeKeepSubscribing || gtlcore$retryComputation || RecipeResult.FAIL_NO_ENOUGH_CWU_IN.equals(gtlcore$recipeStatus);
     }
 
-    /**
-     * @author Dragons
-     * @reason 删除lastFailedMatches操作
-     */
-    @Overwrite(remap = false)
-    private void handleSearchingRecipes(Iterator<GTRecipe> matches) {
-        while (matches != null && matches.hasNext()) {
-            var match = matches.next();
-            if (match != null) {
-                if (this.checkMatchedRecipeAvailable(match)) {
-                    return;
-                }
-            }
+    @Override public void attachRightConfigurators(Flow flow, ModularPanel<?> panel, PanelSyncManager syncManager) {
+        if (!(getRLMachine() instanceof WorkableElectricMultiblockMachine electric)) return;
+        ILockRecipe.attachRecipeLockable(flow, (RecipeLogic) (Object) this);
+        if (!electric.isGenerator()) {
+            IRecipeCapabilityMachine.attachConfigurators(flow, electric);
+            IBatchMachine.attachBatchConfigurator(flow, electric);
         }
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public void findAndHandleRecipe() {
-        GTRecipe previousOriginRecipe = this.lastOriginRecipe;
-        this.lastRecipe = null;
-        this.recipeStatus = null;
-        this.workingStatus = null;
-        if (this.isLock && lockRecipe != null) {
-            this.lastOriginRecipe = lockRecipe;
-            var modified = machine.fullModifyRecipe(lastOriginRecipe.copy(), this.ocParams, this.ocResult);
-            if (modified != null && this.gtlcore$checkLastRecipe(modified)) {
-                setupRecipe(modified);
-            }
-        } else {
-            this.lastOriginRecipe = null;
-            if (!this.recipeDirty && previousOriginRecipe != null && this.gtlcore$trySetupLastOriginRecipe(previousOriginRecipe)) {
-                this.recipeDirty = false;
-                return;
-            }
-            this.handleSearchingRecipes(gtlcore$searchRecipe(this.machine, this.machine instanceof ResearchStationMachine ?
-                    (r) -> {
-                        if (!this.machine.hasProxies()) return false;
-                        if (((IGTRecipe) r).getEuTier() > ((ITieredMachine) machine).getTier()) {
-                            RecipeResult.of(machine, RecipeResult.FAIL_VOLTAGE_TIER);
-                            return false;
-                        }
-                        var result = r.matchRecipeContents(IO.IN, this.machine, r.inputs, false);
-                        if (!result.isSuccess()) {
-                            RecipeResult.of(this.machine, RecipeResult.FAIL_FIND);
-                            return false;
-                        } else if (r.hasTick()) {
-                            result = r.matchRecipeContents(IO.IN, this.machine, r.tickInputs, true);
-                            if (!result.isSuccess() && result.reason() != null) {
-                                var s = result.reason().get().toString();
-                                if (s.contains("cwu")) RecipeResult.of(this.machine, RecipeResult.FAIL_NO_ENOUGH_CWU_IN);
-                                else if (s.contains("eu.name")) RecipeResult.of(this.machine, RecipeResult.FAIL_NO_ENOUGH_EU_IN);
-                            }
-                            return result.isSuccess();
-                        } else return true;
-                    } : this::gtlcore$checkLastRecipe));
-        }
-        this.recipeDirty = false;
-    }
-
-    @Unique
-    private boolean gtlcore$trySetupLastOriginRecipe(@NotNull GTRecipe originRecipe) {
-        var modified = this.machine.fullModifyRecipe(originRecipe.copy(), this.ocParams, this.ocResult);
-        if (modified != null && this.gtlcore$checkLastRecipe(modified)) {
-            this.setupRecipe(modified);
-            if (this.lastRecipe != null && this.getStatus() == RecipeLogic.Status.WORKING) {
-                this.lastOriginRecipe = originRecipe;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public boolean checkMatchedRecipeAvailable(GTRecipe match) {
-        var modified = this.machine.fullModifyRecipe(match.copy(), this.ocParams, this.ocResult);
-        if (modified != null) {
-            if (gtlcore$checkLastRecipe(modified)) {
-                this.setupRecipe(modified);
-            }
-            if (this.lastRecipe != null && this.getStatus() == RecipeLogic.Status.WORKING) {
-                this.lastOriginRecipe = match;
-                if (this.isLock) this.lockRecipe = match;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public void onRecipeFinish() {
-        if (this.lastRecipe != null && IGTRecipe.of(this.lastRecipe).getBatchSize() > 1 &&
-                !matchRecipeOutput(this.machine, this.lastRecipe)) {
-            this.setWaiting(null);
-            return;
-        }
-        this.machine.afterWorking();
-        if (this.lastRecipe != null) {
-            handleRecipeOutput(this.machine, this.lastRecipe);
-            if (this.machine instanceof ISuspendableMachine suspendableMachine && suspendableMachine.gtlcore$isSuspendAfterFinish()) {
-                this.setStatus(RecipeLogic.Status.SUSPEND);
-                suspendableMachine.gtlcore$setSuspendAfterFinish(false);
-            } else {
-                if (this.machine.alwaysTryModifyRecipe()) {
-                    if (this.lastOriginRecipe != null) {
-                        var modified = this.machine.fullModifyRecipe(this.lastOriginRecipe.copy(), this.ocParams, this.ocResult);
-                        if (modified == null) {
-                            this.markLastRecipeDirty();
-                        } else {
-                            this.lastRecipe = modified;
-                        }
-                    } else {
-                        this.markLastRecipeDirty();
-                    }
-                }
-                if (!this.recipeDirty && gtlcore$checkLastRecipe(this.lastRecipe)) {
-                    this.setupRecipe(this.lastRecipe);
-                    return;
-                } else {
-                    this.setStatus(RecipeLogic.Status.IDLE);
-                }
-            }
-            this.progress = 0;
-            this.duration = 0;
-            this.isActive = false;
-        }
-    }
-
-    @Unique
-    public Iterator<GTRecipe> gtlcore$searchRecipe(IRecipeCapabilityHolder holder,
-                                                   @NotNull Predicate<GTRecipe> canHandle) {
-        if (!holder.hasProxies()) {
-            return null;
-        } else {
-            var iterator = this.machine.getRecipeType().getLookup().getRecipeIterator(holder, canHandle);
-
-            boolean any = false;
-            GTRecipe recipe = null;
-            while (iterator.hasNext()) {
-                recipe = iterator.next();
-                if (recipe != null) {
-                    any = true;
-                    break;
-                }
-            }
-
-            if (any) {
-                iterator.reset();
-                return Collections.singleton(recipe).iterator();
-            } else {
-                for (var logic : this.machine.getRecipeType().getCustomRecipeLogicRunners()) {
-                    recipe = logic.createCustomRecipe(holder);
-                    if (recipe != null) return Collections.singleton(recipe).iterator();
-                }
-                if (recipeStatus == null || recipeStatus.isSuccess()) RecipeResult.of(this.machine, RecipeResult.FAIL_FIND);
-                return Collections.emptyIterator();
-            }
-        }
-    }
-
-    @Unique
-    private boolean gtlcore$checkLastRecipe(GTRecipe lastRecipe) {
-        return matchRecipe(this.machine, lastRecipe) &&
-                lastRecipe.matchTickRecipe(this.machine).isSuccess() &&
-                lastRecipe.checkConditions(this.machine.getRecipeLogic()).isSuccess();
     }
 }

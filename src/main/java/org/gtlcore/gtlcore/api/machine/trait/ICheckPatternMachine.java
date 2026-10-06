@@ -1,15 +1,14 @@
 package org.gtlcore.gtlcore.api.machine.trait;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import brachy.modularui.drawable.UITexture;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.layout.Flow;
 
 import net.minecraft.network.chat.Component;
-
-import java.util.List;
 
 /**
  * 代码参考自gto
@@ -18,7 +17,7 @@ import java.util.List;
 
 public interface ICheckPatternMachine {
 
-    ResourceTexture STRUCTURE_CHECK = new ResourceTexture(GTCEu.id("textures/gui/structure_check.png"));
+    UITexture STRUCTURE_CHECK = UITexture.fullImage(GTCEu.id("textures/gui/structure_check.png"));
 
     default void setTime(int time) {}
 
@@ -30,14 +29,16 @@ public interface ICheckPatternMachine {
         return false;
     }
 
-    static void attachConfigurators(ConfiguratorPanel configuratorPanel, MetaMachine machine) {
+    static void attachConfigurators(Flow configuratorPanel, PanelSyncManager sync, MetaMachine machine) {
         if (machine instanceof ICheckPatternMachine checkPatternMachine) {
-            configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                    STRUCTURE_CHECK.getSubTexture(0, 0, 1, 0.5),
-                    STRUCTURE_CHECK.getSubTexture(0, 0.5, 1, 0.5),
-                    () -> checkPatternMachine.getTime() < 1, (clickData, pressed) -> {
-                        if (checkPatternMachine.getTime() > 0) checkPatternMachine.setTime(0);
-                    }).setTooltipsSupplier(pressed -> List.of(Component.translatable("gtceu.machine.structure_check"))));
+            var ready = SyncHandlers.bool(() -> checkPatternMachine.getTime() < 1, pressed -> {
+                if (checkPatternMachine.getTime() > 0) checkPatternMachine.setTime(0);
+            }).allowC2S();
+            sync.syncValue("gtlcoreStructureCheck", ready);
+            configuratorPanel.child(new ToggleButton().name("gtlcoreStructureCheckButton").size(18).value(ready)
+                    .overlay(false, STRUCTURE_CHECK.getSubArea(0, 0, 1, 0.5f))
+                    .overlay(true, STRUCTURE_CHECK.getSubArea(0, 0.5f, 1, 1))
+                    .tooltip(tooltip -> tooltip.addLine(Component.translatable("gtceu.machine.structure_check"))));
         }
     }
 }

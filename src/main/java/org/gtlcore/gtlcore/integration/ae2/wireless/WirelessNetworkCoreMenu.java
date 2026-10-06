@@ -11,7 +11,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.network.NetworkHooks;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -71,9 +70,7 @@ public class WirelessNetworkCoreMenu extends AbstractContainerMenu {
         String networkName = data.getNetworkName(frequency);
         boolean linked = core.isLinkedToAeNetwork();
         BlockPos pos = core.getBlockPos();
-        NetworkHooks.openScreen(
-                player,
-                new MenuProvider() {
+        player.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {

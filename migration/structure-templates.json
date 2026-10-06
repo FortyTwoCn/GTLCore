@@ -1,0 +1,11625 @@
+{
+  "baseline": "5b6cd0ec6a9d2be99d9031404176e84b9cd342ea",
+  "original_gtceu_jar_sha256": "e7b5239e1fedd1096f55e9408cf673b01ddbed14c806f0368f02386137289f12",
+  "direction_contract": "Original JAR: start(char, row, slice), default LEFT/UP/FRONT. Native: start(slice, row, char).",
+  "scope": "Template shape, repeat bounds, native directions and independent builders. Registry predicate bindings and world formation are separate validations.",
+  "templates": [
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdditionalMultiBlockMachineStructure",
+      "field": "ADVANCED_RARE_EARTH_CENTRIFUGAL",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdditionalMultiBlockMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        24,
+        13,
+        23
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIJ",
+      "shape_sha256": "afd30031262af46dd34e75a4760ef3b87e48a34267ea0614609cdae5c3e7fb15"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdditionalMultiBlockMachineStructure",
+      "field": "ADVANCED_VACUUM_DRYING_FURNACE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdditionalMultiBlockMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        27,
+        14,
+        19
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDFGHIJKLMNOPQ",
+      "shape_sha256": "bbab812db67364e5b18c8aa601a1e103e1eb10999d7334b48e684720823687b0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdditionalMultiBlockMachineStructure",
+      "field": "HUGE_INCUBATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdditionalMultiBlockMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        30,
+        26,
+        29
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIJKLMNOPR~",
+      "shape_sha256": "7516d68fb1a7f6ac0576c0b56026f29d1d45bdf4e46a3b6e32e569a37e8dddfc"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdditionalMultiBlockMachineStructure",
+      "field": "HUGE_INCUBATOR_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdditionalMultiBlockMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        40,
+        21
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIJK",
+      "shape_sha256": "196a5d81f8160018837f6a71acadfa7923a69e80b04098441fa6fed62de38319"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdditionalMultiBlockMachineStructure",
+      "field": "MOLECULAR_ASSEMBLER_MATRIX",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdditionalMultiBlockMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        37,
+        19,
+        37
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIJKLMNOPQR",
+      "shape_sha256": "fc0f33bd9b8df2527791924d42b11ed81100c3c84305b46159d091ced9a6cdf0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdditionalMultiBlockMachineStructure",
+      "field": "MOLECULAR_ASSEMBLER_MATRIX_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdditionalMultiBlockMachineStructure.java",
+      "directions": [
+        "LEFT",
+        "UP",
+        "FRONT"
+      ],
+      "dimensions": [
+        19,
+        20,
+        19
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHJKLMNOPQRSTUW",
+      "shape_sha256": "5467837a928a1480d45f9a66cb37dd49b87b3a3f6c70c827a4895ece181751e0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "SIMULATION_MACHINE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        1,
+        2,
+        1
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ac",
+      "shape_sha256": "6a3320beeaff15a27fb36df5b78a5dc344ef0013a674ce7819f2812106d611f6"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "GREENHOUSE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        4,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#0BEG",
+      "shape_sha256": "c2b46b6c911f531fbbbc11f006553e954ab9ad4784464f0cf9bc643c6bbac8a4"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "EYE_OF_HARMONY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        33,
+        33,
+        33
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABDEFG~",
+      "shape_sha256": "4d74251ff5a67c36fa7f87ae6dbdcc9400c7ef9476b6f688c2f91fa4d6228e25"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "SPACE_PROBE_SURFACE_RECEPTION",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        10,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef",
+      "shape_sha256": "52cb92fc21315b8cb0056b514583d463662b9ebd05ab7becf3f57d70dbc62316"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "SPACE_COSMIC_PROBE_RECEIVERS",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        38,
+        31,
+        37
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIJKLM~",
+      "shape_sha256": "52a53049420106d9031a1415da366fb5c50dcb68795277d61f03b9acc07247b7"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "CIRCUIT_ASSEMBLY_LINE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          16,
+          16
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abcdefg",
+      "shape_sha256": "c1eca7ef1553c3d70ac6f9987ef751f0d7627eff3538461626357abcbd068065",
+      "origin_offset": [
+        -1,
+        -1,
+        -17
+      ]
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "ASSEMBLER_MODULE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        5,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc~",
+      "shape_sha256": "029029d03c487dcbcba649f6f5888c5ec2bf294a529f0167ecde1f64733079a7"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "RESOURCE_COLLECTION",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        5,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc~",
+      "shape_sha256": "029029d03c487dcbcba649f6f5888c5ec2bf294a529f0167ecde1f64733079a7"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "BLOCK_CONVERSION_ROOM",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        8,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "0e81bc1248c7edaad93359343d7189aeb4309f8a4222ac485d70c4350437f9bf"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "LARGE_BLOCK_CONVERSION_ROOM",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        10,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "6e3f821112a36ba6ed69a213d0e97bd4ea49e4cf88165537a63a3ce492bc59ce"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "PCB_FACTORY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        10,
+        17
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdeghijkl",
+      "shape_sha256": "961107392d9b7e7851a0fe143daf655c03a1d2256d7ba08379f9638a72d94efb"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "BLAZE_BLAST_FURNACE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        4,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#CMSX",
+      "shape_sha256": "b9d9d856a4b71a87ac8bcc689540dda7ef6de7b92ee39d288d538af768720073"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "COLD_ICE_FREEZER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#MSX",
+      "shape_sha256": "b2c30f1a2d8bba448f2f5934a8f64d197ce951bc6a2d1e572466d55719a016ac"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "DOOR_OF_CREATE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        29,
+        29,
+        29
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "e7b41d7b7ece03af7447eaf83bdc3a1846aa26d236f57e3e682d0add20dbe92d"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "BEDROCK_DRILLING_RIG",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        9,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdefg~",
+      "shape_sha256": "d8b223a7b89195f6096b6ca21087711b0ac8ba971a2bae703710473de7c29253"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "CREATE_AGGREGATION",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        27,
+        33,
+        27
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef~",
+      "shape_sha256": "41ca1f18db9bb7cef06c92875e250efa1baded76c7c8d9052d2fdfbb3bda73b1"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "SUPRACHRONAL_ASSEMBLY_LINE_MODULE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        6,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDE~",
+      "shape_sha256": "f79f790c7923dff98a88c1a34a4eef001914ebaeb3278e486b3c1f444a316062"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "PROCESSING_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc",
+      "shape_sha256": "c8aabf56f03728d972071a321a5c6e5090bfbf0a0b1e0cd5b42ca889df238de0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureA",
+      "field": "ASSEMBLE_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc",
+      "shape_sha256": "c8aabf56f03728d972071a321a5c6e5090bfbf0a0b1e0cd5b42ca889df238de0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "SEPARATED_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc",
+      "shape_sha256": "c8aabf56f03728d972071a321a5c6e5090bfbf0a0b1e0cd5b42ca889df238de0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "MIXED_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc",
+      "shape_sha256": "c8aabf56f03728d972071a321a5c6e5090bfbf0a0b1e0cd5b42ca889df238de0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "WEATHER_CONTROL",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        7,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABC~",
+      "shape_sha256": "f5dd3f5cb6d463aefb5d870440485274574d0dbc01017b272e0de1841a6ee875"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "NANO_FORGE_1",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        38,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABC~",
+      "shape_sha256": "559894e88a3cbe8fd5a92aef4766256523cbe8ece03f7f853a3f90b9eb7777cf"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "NANO_FORGE_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        13,
+        38,
+        19
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCD~",
+      "shape_sha256": "3c43c034a665ef90b6c9758c2c7af8b9192630c3c282fac2b62b00061e3662dc"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "NANO_FORGE_3",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        13,
+        38,
+        29
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCD~",
+      "shape_sha256": "58135fe513ec02d863821ebfb09fd70edb4aecc3d62ef3cbecafabd67d92e61c"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "ISA_MILL",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ABC~",
+      "shape_sha256": "afe2f79cec862bdee3ad6758404a07592f17aa88ce1ce9026b772909bdbf4714"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "HEAT_EXCHANGER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        6,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDS",
+      "shape_sha256": "d953d8a7888b1f3afd4e9f8d1964cd2253e3af04daab3da03769e103bc37cef9"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "HEAT_EXCHANGER_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        7,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#CFSX",
+      "shape_sha256": "fb5871827717d752053c07f1ac1942d1e4ecd07f848dcd8a6f54e9b5876d53ed"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "FISSION_REACTOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        9,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ABC~",
+      "shape_sha256": "1c8e1556cbbe7532dcd0f5c8aa918fe4f0f1b1c92e9b85486c49981e7f27881b"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "SLAUGHTERHOUSE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        10,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDE~",
+      "shape_sha256": "b38bf8bc3831d0ddea5f2bd42eedcf29cc9ebefc80592c8a085e5f249bd3104c"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "SLAUGHTERHOUSE_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        3,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ACEGIKOS",
+      "shape_sha256": "04f3bb720c60c88e001e53853d2724951e269997cc16ff9b40f87f033655ba99"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "SLAUGHTERHOUSE_3",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        47,
+        7,
+        47
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " #BCEFHIPS",
+      "shape_sha256": "7e7c9c4f36bb4d901e45b6ad7eb6e6c8b25d145c367388fc0ff643eaa4cbe069"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "SUPER_COMPUTATION",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        9,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdefg~",
+      "shape_sha256": "0ba07467f79caa16f0923423bcc65bbb6338507d2ec23ce8a00cbfe19201f926"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "CREATE_COMPUTATION",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        2
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc~",
+      "shape_sha256": "ce01f7d3f7176b4afdd36e508212ae82628ded81119f3cb1f3ee77ba20bdc5d6"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "ADVANCED_INFINITE_DRILLER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        26,
+        42,
+        25
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " #ABCEFGHIJKLMNQ",
+      "shape_sha256": "8571d2cae0be81e3e20fde1f0e095ce20b0d0b80e0709c7030151f3978650c5c"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "SUPRACHRONAL_ASSEMBLY_LINE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "LEFT",
+        "BACK",
+        "UP"
+      ],
+      "dimensions": [
+        35,
+        131,
+        35
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIJLM~",
+      "shape_sha256": "d1a114dbb65d9163e64d135d2fc31b9b8be0210508a2dcb9049c42b2d23e3c94"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "ISA_MILL_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "UP",
+        "BACK",
+        "RIGHT"
+      ],
+      "dimensions": [
+        3,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          4,
+          200
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFG",
+      "shape_sha256": "8a59df3168a4624d81a0296e622ffba3fa3cb45f629f3ed56dff261a92a07669"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "ADVANCED_ASSEMBLY_LINE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "RIGHT",
+        "UP",
+        "BACK"
+      ],
+      "dimensions": [
+        3,
+        4,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          7,
+          63
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ADFGIORSTY",
+      "shape_sha256": "2bdbd4849b7de38a775d08d500ee5942ff19e820ba001822ddf11ffd97271d32"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.AdvancedMultiBlockMachineStructureB",
+      "field": "SPACE_ELEVATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/AdvancedMultiBlockMachineStructureB.java",
+      "directions": [
+        "FRONT",
+        "DOWN",
+        "RIGHT"
+      ],
+      "dimensions": [
+        35,
+        43,
+        35
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " -ACDEFGHMVX~",
+      "shape_sha256": "db4c663b3bb4c26b7754e439780fba5e784d7ed8c5c721230ed3d601da501418"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_MACERATION_TOWER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        4,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "AGSX",
+      "shape_sha256": "3cc1b1157e683d74c8dd188a4c10fbb7826e0a1d5efe3121e27f17e1f7cd1638"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_CHEMICAL_BATH",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " STX",
+      "shape_sha256": "986232de964bf34706c7450d28794c23f823c883caade6a872a8b0da95f7ffc5"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_CENTRIFUGE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#APSX",
+      "shape_sha256": "b1431eb99948031e87a60a608b242fad1c7760dc300eb23a2a04f9c222a7d7df"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_MIXER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        6,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AFGPSX",
+      "shape_sha256": "09b7f3c51fc944b2ae368d5057a679c3db5dc037fe7bb295c93c771b4995e5e9"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_ELECTROLYZER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        4,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "CSX",
+      "shape_sha256": "549790f4423951ce546a060d8eaeac647cfdaf4bc0a071a2393d278ee76a3dbc"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_ELECTROMAGNET",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        4,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "CSX",
+      "shape_sha256": "98dd1abf7011b2b822047e9bf072764257539a477f40989c827724464708f3f8"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_PACKER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        6,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ASX",
+      "shape_sha256": "54947fad0e7c15f65275631af57bb1c457c1cecebb54ef40a3f69a3c6c0f8f2a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_ASSEMBLER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AGSX",
+      "shape_sha256": "41560af6b12b811d2f33c542b3bf1c9289de44738383e09c6c639dbbbc8bd1dd"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_CIRCUIT_ASSEMBLER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        3,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AGPSTX",
+      "shape_sha256": "f32e3759bf3877fd619344247ee5f595025e61acd11782dd408d3239b9d5c367"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_ARC_SMELTER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        4,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ACMSX",
+      "shape_sha256": "487dc1d2e7c5f3598e15fdbf93a2df6b96527fb8491798968e0ebcd14bb132d2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_ENGRAVING_LASER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        4,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ACGKSX",
+      "shape_sha256": "37ef558dc0c2d089bce287ca2dd8d23e85bc708e3144254893ab93dc3f7c97cd"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_SIFTING_FUNNEL",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AKSX",
+      "shape_sha256": "59c574e108cde0ec3c8f54ea72d65ca3d77a126b45ac7f125774b617b2cbd240"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "BLAST_ALLOY_SMELTER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ACGMSX",
+      "shape_sha256": "cc71ecc045c59d33bc5007e37e0e13a826ffc63faa61ce1769fe36dd6a163e28"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_AUTOCLAVE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "STX",
+      "shape_sha256": "954c93e0ffc402bd3edc3614bd4e89081866dfc786dff0e0d8c4d4c35f103a11"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_MATERIAL_PRESS",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ACGSX",
+      "shape_sha256": "78891abc3ab805e209530311a1ba43399edd4bec88611ca81897b7f32ef6fe5e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_BREWER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ACMPSX",
+      "shape_sha256": "61a400b5f7b61fd6a751f242451b3b74d564b8a7313903cf7fc8d4fefe311673"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_CUTTER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        4,
+        4,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ACGSX",
+      "shape_sha256": "4cfc2947ed3f02f4f9f4df6af143dbce019e50633da5e82d314ec0e6732b1c6a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_EXTRACTOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ACSX",
+      "shape_sha256": "ba15ec93109d5d873d051317eed01e30fc997ca7d6f712a08d90123a8c7f68c0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_EXTRUDER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AGPSX",
+      "shape_sha256": "f776a3b3d3bafe94271c48a1cf91d23802154e1ed68e2c91a19224c4e944be5a",
+      "origin_offset": [
+        -1,
+        -1,
+        -5
+      ]
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_SOLIDIFIER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        4,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ACSX",
+      "shape_sha256": "fac8faf970d0bfcc1b69052f3beb1d09b5c787fd6ec01cb7fb37f08c2f6b034a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_WIREMILL",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#CSX",
+      "shape_sha256": "a2503d1c85204e7b5c7a877be62890f2f76d9b256283d62abddc8c7214d9af11"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "MEGA_BLAST_FURNACE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        13,
+        17,
+        13
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ABCFHIMPSTVX",
+      "shape_sha256": "2b335f7354b064a2ba5fe9a4b220bca282b822fecb0f35540025815614e8587e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "MEGA_VACUUM_FREEZER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        6,
+        7,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AGKPSVX",
+      "shape_sha256": "b808ea2580e44b933b0cc4497cf40edb078f177dd82c00086cec239261754bf2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GCyMMachinesStructure",
+      "field": "LARGE_DISTILLERY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GCyMMachinesStructure.java",
+      "directions": [
+        "UP",
+        "BACK",
+        "RIGHT"
+      ],
+      "dimensions": [
+        4,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          12
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#ACPSXYZ",
+      "shape_sha256": "e94f78b753c079edb83c2c2af63a7933f5edefc20deae8f0c930c467c4dc5c2f"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "CHEMICAL_ENERGY_DEVOURER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        10,
+        7,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ABCDEFGHIPS",
+      "shape_sha256": "65f5219eda3450aa16f6fca827166bd634c77bed0fc7025366db99818166648f"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "CHEMICAL_ENERGY_DEVOURER_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        7,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ABCDEMS",
+      "shape_sha256": "ab93b3055509102a8c67d4ccaa53d29e7a6a253a170b45b20faf0035dd7bafcc"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "DYSON_SPHERE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        32,
+        27,
+        31
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIJKLMNOPQRST",
+      "shape_sha256": "784dadec4906dd457507e6c9f61443c5806a0e239f9861985bb0f599be83f31c"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "LARGE_NAQUADAH_REACTOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        8,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef",
+      "shape_sha256": "70d4c22cac7653921551868eae1d3fecab5f1328ec589da6ad35c87ed14638c2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "ADVANCED_HYPER_REACTOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        16,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " -abce",
+      "shape_sha256": "0d16942d9570b49f0756fc755e401466c8006db36c6907c66136b3331d270f4b"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "HYPER_REACTOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "0dbbba3426c8df15ac6c9b73db7af6ad859c3f3163e4e83bc47b4666d2d78abf"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "HYPER_REACTOR_2",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#CSX",
+      "shape_sha256": "03ee03ee8da645c151ed53084968e1bc1563408726310008e3ee6af366ff2511"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.GeneratorMachineStructure",
+      "field": "ANNIHILATE_GENERATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/GeneratorMachineStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        109,
+        112,
+        121
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHPRST~",
+      "shape_sha256": "b1a359e37018f5a4eca8e125ed79965ae9a79269f7ccff641116d29395fbe7d2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "PLASMA_CONDENSER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        7,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "230a92ac92e28d893e6a090d4b351314c33c3a2714e73d3bc817f48818140bf8"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "RARE_EARTH_CENTRIFUGAL",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "8799d91ca1e2943e4b18e89d09a66e2733aef995b289ee4d16a7225889dc3dbd"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "SLAUGHTERHOUSE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        4,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdefghi",
+      "shape_sha256": "13c1dbdb85f3c75a4eabdf4f424595304ca109c11250241703bfaf6e59882031"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "SPS_CRAFTING",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        7,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdefg",
+      "shape_sha256": "528cbb6b4b904a71364dedca482ed1d0685d440075c19959f8d056167ff11bc4"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "ADVANCED_SPS_CRAFTING",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        13,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcegi",
+      "shape_sha256": "2bbe57b9e16a174ef7173d8fc30b96d6fd4f4584544ac2cf04bf6b7b7ad48bca"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "MATTER_FABRICATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abcd",
+      "shape_sha256": "f733222179631f227ff01b9ca7b0bcd5bff5ad5c660c8df9f732e139404d5b9b"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "VOID_FLUID_DRILLING_RIG",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        7,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#CFSX",
+      "shape_sha256": "fb5871827717d752053c07f1ac1942d1e4ecd07f848dcd8a6f54e9b5876d53ed"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "VOID_MINER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        7,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#CFSX",
+      "shape_sha256": "fb5871827717d752053c07f1ac1942d1e4ecd07f848dcd8a6f54e9b5876d53ed"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LARGE_VOID_MINER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        10,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "dcfb3061383d6dfd166323769028b5fa3c0ff9aa488575f242fd417db127f1a0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "CHEMICAL_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "f244b63dc4d6b0fff71b4a4d374c46c400239b3f51c142c5dc117019aca384c1"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "DECAY_HASTENER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abcd",
+      "shape_sha256": "2c2f184a0317097871b51ef18d5c1d98c4f0faefdf5c00f320f30b427d11e3dc"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LARGE_RECYCLER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc",
+      "shape_sha256": "c8aabf56f03728d972071a321a5c6e5090bfbf0a0b1e0cd5b42ca889df238de0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "MASS_FABRICATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        8,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef",
+      "shape_sha256": "71c231c6a0973c9aa9579315e4b59099ed963f71cd443d4551eb184b9ff72f9e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "A_MASS_FABRICATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        14,
+        7,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFIS",
+      "shape_sha256": "75be0201306ede9f0c9906494773ea9fbb8923c8be4194c06bc29ec9ca823fbe"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "PRECISION_ASSEMBLER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " -abcd",
+      "shape_sha256": "b739e94482f5f2a2cbfb055176da8768108ee0e75f5543654e478051166e9015"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "FISHING_GROUND",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        3,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abc",
+      "shape_sha256": "f86d0b3164e92dbb7bfc4fac5b0fe1a6f95561ab2cbcadd748209a7f295bd426"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "INCUBATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcde",
+      "shape_sha256": "80a5ab6cb263617db7bb4f548eb88d22b85be1f4868e475f37e0569f71a66d0c"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LARGE_INCUBATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        13,
+        7,
+        13
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcde",
+      "shape_sha256": "82f7256e2e1d60987d9c22228cc07c716038d98104edc8396632eb964201d0cc"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LAVA_FURNACE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ACDM",
+      "shape_sha256": "be9c22db42bb9296dcd29111a9f6d898a3c1e899c5ec4ce0c1d22def434b970e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LARGE_GAS_COLLECTOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abcde",
+      "shape_sha256": "ec58e048602315fe4089e321d9d71a8882308106c6d443fa95f05d2ad60ff699"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "AGGREGATION_DEVICE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        7,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdegi~",
+      "shape_sha256": "74ea4a2cff8849db673f397e49621b9e82c822cc23b377c34453c0b60b0109c9"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "SUPER_PARTICLE_COLLIDER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        47,
+        7,
+        47
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef",
+      "shape_sha256": "7e6d79a816658dadd5a14b8c0164c28aae92b7444afd0bb24a22877652f2f232"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "ENGRAVING_LASER_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        7,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEF~",
+      "shape_sha256": "fac774096168705a54063a3041d4fb0fc179b8a20ae7d55da7fa2eaadb4ea487"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "MEGA_ALLOY_BLAST_SMELTER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        18,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcefghijk~",
+      "shape_sha256": "e4e1e2cc5b942e221abe39d98296dfb0f1233c843f9dcbba6593b1c90f08904f"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "DIMENSIONALLY_TRANSCENDENT_MIXER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        13,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " acdef~",
+      "shape_sha256": "2641a65bbacb16ec9847c9a28f22bd97fc43837cda669077c62bf2ae7185910f"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "QFT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        21,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef~",
+      "shape_sha256": "47c092cec9566ccd2c8583ead92fa6a713b1dba660c26786c8e3be67f5b126fb"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "SUPER_BLAST_SMELTER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        23,
+        42,
+        23
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdefghijklmnopqrst",
+      "shape_sha256": "b5a40ff119f759381a9f6085ba4b3131455782e86385a2e73fbeb273a7d544a3"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LARGE_CHEMICAL_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        9,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd~",
+      "shape_sha256": "5e639e04d7e6277e962301159629e0be802f0dac7ff8d4762de1bd141b1cd017"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "INTEGRATED_ORE_PROCESSOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        6,
+        12,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdefg~",
+      "shape_sha256": "221116340c216d950652ec9cac3a7961ac196b8c778e83dc2ab69308fb1953b2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "DRAGON_EGG_COPIER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "abcd",
+      "shape_sha256": "b6613cb6a071bbe1711dd6aad77c34234e1fcbe81603a28a4ff6f77cc02f1271"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LARGE_CRACKER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        13,
+        7,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abc~",
+      "shape_sha256": "47ee74583ed40ca32f790e7d788636a30b497637d6932d053006aafb2a53d737"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "MAGE_ASSEMBLER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        33,
+        10,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " -acdefghi~",
+      "shape_sha256": "30600cc7a58be9cc0a008d87ccf3889e90f345c97314236ccdf22a76013ca7f9"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureA",
+      "field": "LARGE_GREENHOUSE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureA.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        10,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef~",
+      "shape_sha256": "95f95bbc65b3bb7306eb9e720c1ac9c8947d31db4fff8d31a48a2364014fd526"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureB",
+      "field": "COOLING_TOWER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureB.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        64,
+        69,
+        64
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " CDEFGHIJKLMNOPQRSTUW~",
+      "shape_sha256": "478a12c925eb16618c94fce2f4562ddeb4665ca11e2413fe8d0ac762b132785d"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "MEGA_DISTILLERY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        31,
+        52,
+        31
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdef~",
+      "shape_sha256": "c47e1fc8dab8122600f86197a25a02ec4b0aaff5a3084c7840e1b442710a85bb"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "SUPERCONDUCTING_ELECTROMAGNETISM",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        21,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFH~",
+      "shape_sha256": "29f87693669635f4ae1e526ee67d4d66d66baf89eb04c22378002c7cd044289b"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "STAR_ULTIMATE_MATERIAL_FORGE_FACTORY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        61,
+        17,
+        61
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGI~",
+      "shape_sha256": "25c4f0f1f93af8fb6fb1ffeed0095b2f98015729676eafd3ea281c16ef7e30a3"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "STEAM_PISTON_HAMMER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        5,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " #ABCDES",
+      "shape_sha256": "6d72b0d612c1cfcf41f7c2c786f1a97c0da916b131735104547a65203e4c4256"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "STEAM_PRESSOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        4,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#SX",
+      "shape_sha256": "e7c940b282cb063fc725d6bfe7d81a8456750cd8794fc721d12a206da49e424e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "STEAM_FOUNDRY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#FSX",
+      "shape_sha256": "395f3054024b435a8acd371a448bf99ac12cc98ab9af2108508130d3233e848f"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_STEAM_MACERATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        5,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDES",
+      "shape_sha256": "f2b2f6bf4ab819754b1de5e43dd5d1c63d8f87057856cc71a30673432453ffa0"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_STEAM_CIRCUIT_ASSEMBLER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        10,
+        4,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDS",
+      "shape_sha256": "9b4c5dd863a3b9d1075f1d613ddf99169d99d7ef9bf45a7afacca18bbac44a5b"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_STEAM_MIXER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        7,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDS",
+      "shape_sha256": "f16166e1e4a0f8d35a02d3e326e52d1be3e1a64f00e650bd8f68e55815c25b2b"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "STEAM_MIXER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDES",
+      "shape_sha256": "853152546f004b1ce0a78404dd0b9a136ec60d86a97341677f37c6be0905390e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_STEAM_CENTRIFUGE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        5,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCEFS",
+      "shape_sha256": "6deaaed7c2b4ecf7515811be8d47bbf797ff64812040915f63654e830bb3600a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_STEAM_THERMAL_CENTRIFUGE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        5,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDES",
+      "shape_sha256": "1fb5333f96eda171c5bd270f672e8fa1fa3eca770c04c467e254d95d4db55916"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_STEAM_BATH",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        10,
+        5,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDS",
+      "shape_sha256": "51ebf0892d54bfcd80eff1aa136eda7546827724b11415465ccdb177715152c2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "STEAM_BATH",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        4,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ABCDS",
+      "shape_sha256": "ac07c36208defeedcaeda48be09d3db8d1d7417185063af43dfa3e128a83b4ca"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_STEAM_ORE_WASHER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        5,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDS",
+      "shape_sha256": "7049309daf446f7e47b792dae1bafd8dc28b6a8b31cdaf4cbabc4e271d02072f"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "steam_ore_washer",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        3,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ACDES",
+      "shape_sha256": "5e409cf3828983c9e22da716a331ddb1aa00fcd718bcda8ea632f48b3c6cfabf"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "HOLY_SEPARATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        71,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcdefgh",
+      "shape_sha256": "6dca437336375b8f8f011114c557051017b3d135f04312165b4422f7c1ee6d7e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "PETROCHEMICAL_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        14,
+        10
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHIKM",
+      "shape_sha256": "92d64f579fe04c4de8cbe8f11126dab875b5b71dd3eeea28b70942049d445ba1"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_PYROLYSE_OVEN",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        8,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABC~",
+      "shape_sha256": "3314b3f0bd90056b9c799adcca5025e5acce8b156eebef0b08e7b59420974871"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "LARGE_ROCK_CRUSHER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        4,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABC~",
+      "shape_sha256": "4ab2d73e7b2e57b64a0884e5fd956471d43fbf388010c086a0c4e8ebd539f1fa"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "FIELD_EXTRUDER_FACTORY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        63,
+        9,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFG~",
+      "shape_sha256": "8f8836548b2eee112ec82c86db85e8fc2314918afdc0430f713488f8038c18ff"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "CHEMICAL_DISTORT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        28,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDE~",
+      "shape_sha256": "9f7deaa8f4cc221ad8fdba7119ec71741d017d1c1becd15f1527193c0ae8bf8f"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "MEGA_WIREMILL",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        27,
+        7,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHI~",
+      "shape_sha256": "ac226769b957d3598ef0bc1cd7ec09f9f2c98a5ee57328990ee5e15e38c2941a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "MEGA_PRESSER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        25,
+        15,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFG~",
+      "shape_sha256": "7a396bac1c1fa3acf9a05848861d17a72dbb9a84da0e3ed98d2cc0e0464c791c"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureC",
+      "field": "MEGA_EXTRACTOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureC.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        20,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEF~",
+      "shape_sha256": "88ac940f9bb55e9b668e812fe23463dcadc9053adebb3927d92f9d172622f686"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "MEGA_CANNER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        18,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFG",
+      "shape_sha256": "99a8ed9d7353c727e56ddc5c7a0fd68b5c05ac0037bab22108e71b9b8a7e834c"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "DISASSEMBLY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "AB~",
+      "shape_sha256": "cdec1b7b400de1ec9a7719943379252e592b70db7eda6c007f92f86d6bb53ca9"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "ELEMENT_COPYING",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        3,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEF~",
+      "shape_sha256": "74a4901074ae59f63bc5c98cc82e39fff4a5b4abd8c3eaca02790279895b36e7"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "ATOMIC_ENERGY_EXCITATION_PLANT",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        13,
+        19
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " #ABCDEFGHIJ~",
+      "shape_sha256": "65ab514e20163fc7e0c3e3f5fe966c9ed668fb950f29ce8f9802ddfcb116da48"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "FLOTATION_CELL_REGULATOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        7,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " #ABCDE~",
+      "shape_sha256": "dc485da2f18981f268e511eb23230b633f5c8c150bf6fe40a29cf209c202cc32"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "VACUUM_DRYING_FURNACE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        5,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABC~",
+      "shape_sha256": "6b38989a8b0844eec7069b44c1e5f4f7bb12d056b04e4504cede90252b5ec761"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "MEGA_FLUID_HEATER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        11,
+        17,
+        11
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGH~",
+      "shape_sha256": "c5a9df042b9390e8193669979c6e262e5c91f5244a8b3fd287ec18b897d5e7db"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "ELECTRIC_IMPLOSION_COMPRESSOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        8,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AFGMPSX",
+      "shape_sha256": "ba1fcfa57ab516fcaa0ca732bb58830a8ac6993e8c703632808f8f107772b450"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "STELLAR_FORGE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        9,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abcd",
+      "shape_sha256": "c765c0e61cc49dae7224713ed86b7860aa97a15659b1ec581b499d6d99e091e7"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "COMPONENT_ASSEMBLY_LINE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        33,
+        10,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDFGHIJKLMN~",
+      "shape_sha256": "6b4f823864192c95e4eae60a132c9dcb3a3f83fec4cf2bf2937bee7cd9dfb543"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "ADVANCED_INTEGRATED_ORE_PROCESSOR",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        32,
+        12,
+        15
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHI~",
+      "shape_sha256": "c91f59c23fbafc386e7002aeb3d0af83957dd0d2342fb00ce5644c421e7f694a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "DIMENSIONALLY_TRANSCENDENT_STEAM_OVEN",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#CMSX",
+      "shape_sha256": "6c31752ac754d132a1700402573dfd25750dfbf38d39de361338eb4b2120d3a2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureD",
+      "field": "CRYSTALLINE_INFINITY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureD.java",
+      "directions": [
+        "DOWN",
+        "BACK",
+        "LEFT"
+      ],
+      "dimensions": [
+        36,
+        32,
+        31
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFG~",
+      "shape_sha256": "ff9b5001dd8868a7da6cd0e9633aa5442d8006677200dbc5a53a82a18409f4ef"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureE",
+      "field": "DIMENSIONAL_FOCUS_ENGRAVING_ARRAY",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureE.java",
+      "directions": [
+        "RIGHT",
+        "UP",
+        "BACK"
+      ],
+      "dimensions": [
+        89,
+        89,
+        89
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFGHI",
+      "shape_sha256": "c625e777bcafe3bacb9f9a6bb1bee92a58def9d5c1473e2fdec468c168e8e504"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineAStructureF",
+      "field": "NANO_CORE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineAStructureF.java",
+      "directions": [
+        "RIGHT",
+        "UP",
+        "BACK"
+      ],
+      "dimensions": [
+        81,
+        128,
+        81
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEFG~",
+      "shape_sha256": "6679adef2ce32f3089acdd82582fe8a7e46de473f9afea19c111e686fc40ef0a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure",
+      "field": "LARGE_FRAGMENT_WORLD_COLLECTION_MACHINE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineBStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        7,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "AIOSX",
+      "shape_sha256": "2031888652349499a00006dd886d8c5a85d7e3aebba4e1c3504365b894905c44"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure",
+      "field": "PRIMITIVE_VOID_ORE",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineBStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        3,
+        3,
+        3
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "ASX",
+      "shape_sha256": "f1cdf65b84f9df441b8423579dece3158580957486f2f8b09a6fa9c22ba52f90"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure",
+      "field": "DESULFURIZER",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineBStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        6,
+        6,
+        12
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " CDGILPX~",
+      "shape_sha256": "9975d46d1b3903c5635b380e0c05aae0399ba71786d099b2eb3b26028557dff2"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure",
+      "field": "WOOD_DISTILLATION",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineBStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        15,
+        20,
+        23
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " ABCDEGHIJKLMN",
+      "shape_sha256": "0dbd0b4a37ffad3358ab9d1741aaed591da829738c6aaffd66ce4b517c68af9e"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure",
+      "field": "DIGESTION_TANK",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineBStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        7,
+        4,
+        7
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AKMOSXY",
+      "shape_sha256": "12d7349a92580b299cbc1c318185e8c6fc4f35d54218c41247c95aa5570d3955"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure",
+      "field": "DISSOLVING_TANK",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineBStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        5,
+        5,
+        5
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": "#AGKOSX",
+      "shape_sha256": "ece12a14315ad30fbc570b062e538f3a2ed4b791b561579ced573c7622bda444"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.MultiBlockMachineBStructure",
+      "field": "GRAVITATION_SHOCKBURST",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/MultiBlockMachineBStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        9,
+        7,
+        9
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " abc~",
+      "shape_sha256": "8cf810f3129b7981a99db8c5b3534800dc55579e7f8749e119f080b3f91be09a"
+    },
+    {
+      "class": "org.gtlcore.gtlcore.common.data.machines.structure.DirtForgeStructure",
+      "field": "DTPF",
+      "source": "src/main/java/org/gtlcore/gtlcore/common/data/machines/structure/DirtForgeStructure.java",
+      "directions": [
+        "FRONT",
+        "UP",
+        "LEFT"
+      ],
+      "dimensions": [
+        33,
+        24,
+        33
+      ],
+      "repeats": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "symbols": " Cabdes",
+      "shape_sha256": "9ff884a19f3d7443e7e3288f47bd3ed87c3b8a13816ffaa40c22ec19c24e98e2",
+      "original_source": "src/main/java/org/gtlcore/gtlcore/common/data/GTLMachines.java",
+      "original_field": "DTPF"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.common.block;
 
+import com.gregtechceu.gtceu.common.data.GTMaterialBlocks;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.common.data.GTLBlocks;
 
@@ -41,11 +42,11 @@ public class GTLFusionCasingBlock extends FusionCasingBlock {
 
     public static Block getFrameState(int tier) {
         return switch (tier) {
-            case LuV -> GTBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.NaquadahAlloy).get();
-            case ZPM -> GTBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Duranium).get();
-            case UV -> GTBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Naquadria).get();
-            case UHV -> GTBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Trinium).get();
-            default -> GTBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Neutronium).get();
+            case LuV -> GTMaterialBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.NaquadahAlloy).get();
+            case ZPM -> GTMaterialBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Duranium).get();
+            case UV -> GTMaterialBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Naquadria).get();
+            case UHV -> GTMaterialBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Trinium).get();
+            default -> GTMaterialBlocks.MATERIAL_BLOCKS.get(TagPrefix.frameGt, GTMaterials.Neutronium).get();
         };
     }
 

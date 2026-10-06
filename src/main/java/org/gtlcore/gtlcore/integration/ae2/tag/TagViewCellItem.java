@@ -3,7 +3,10 @@ package org.gtlcore.gtlcore.integration.ae2.tag;
 import org.gtlcore.gtlcore.integration.ae2.wireless.GTLWirelessAeContent;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.phys.BlockHitResult;
+import appeng.menu.locator.ItemMenuHostLocator;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -45,12 +48,12 @@ public final class TagViewCellItem extends Item implements IMenuItem {
     }
 
     @Override
-    public ItemMenuHost getMenuHost(Player player, int inventorySlot, ItemStack stack, @Nullable BlockPos pos) {
-        return new ItemMenuHost(player, inventorySlot, stack);
+    public ItemMenuHost<TagViewCellItem> getMenuHost(Player player, ItemMenuHostLocator locator, @Nullable BlockHitResult hit) {
+        return new ItemMenuHost<>(this, player, locator);
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.gtlcore.tag_view_cell.configure").withStyle(ChatFormatting.GRAY));
         appendExpression(tooltip, "gui.gtlcore.tag_whitelist", getWhitelist(stack));
         appendExpression(tooltip, "gui.gtlcore.tag_blacklist", getBlacklist(stack));
@@ -69,12 +72,17 @@ public final class TagViewCellItem extends Item implements IMenuItem {
     }
 
     public static void setExpressions(ItemStack stack, String whitelist, String blacklist) {
-        CompoundTag filter = stack.getOrCreateTagElement(FILTER_TAG);
+        CompoundTag data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        CompoundTag filter = data.getCompound(FILTER_TAG);
         putExpression(filter, WHITELIST_TAG, whitelist);
         putExpression(filter, BLACKLIST_TAG, blacklist);
         if (filter.isEmpty()) {
-            stack.removeTagKey(FILTER_TAG);
+            data.remove(FILTER_TAG);
+        } else {
+            data.put(FILTER_TAG, filter);
         }
+        if (data.isEmpty()) stack.remove(DataComponents.CUSTOM_DATA);
+        else stack.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
     }
 
     public static String normalizeExpression(@Nullable String expression) {
@@ -86,8 +94,8 @@ public final class TagViewCellItem extends Item implements IMenuItem {
     }
 
     private static String getExpression(ItemStack stack, String key) {
-        CompoundTag filter = stack.getTagElement(FILTER_TAG);
-        return filter == null ? "" : filter.getString(key);
+        CompoundTag data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        return data.getCompound(FILTER_TAG).getString(key);
     }
 
     private static void putExpression(CompoundTag filter, String key, String expression) {

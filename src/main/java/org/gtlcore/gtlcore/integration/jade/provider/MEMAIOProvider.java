@@ -4,7 +4,8 @@ import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEMolecularAssemble
 import org.gtlcore.gtlcore.integration.ae2.MEFluidUnits;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import net.minecraft.core.HolderLookup;
 import com.gregtechceu.gtceu.integration.jade.GTElementHelper;
 
 import net.minecraft.ChatFormatting;
@@ -31,24 +32,24 @@ public class MEMAIOProvider implements IBlockComponentProvider, IServerDataProvi
 
     @Override
     public void appendTooltip(ITooltip iTooltip, BlockAccessor blockAccessor, IPluginConfig iPluginConfig) {
-        if (blockAccessor.getBlockEntity() instanceof IMachineBlockEntity blockEntity) {
-            if (blockEntity.getMetaMachine() instanceof MEMolecularAssemblerIOPartMachine) {
+        if (blockAccessor.getBlockEntity() instanceof MetaMachine blockEntity) {
+            if (blockEntity instanceof MEMolecularAssemblerIOPartMachine) {
                 CompoundTag serverData = blockAccessor.getServerData();
-                readBufferContents(iTooltip, serverData);
+                readBufferContents(iTooltip, serverData, blockAccessor.getLevel().registryAccess());
             }
         }
     }
 
     @Override
     public void appendServerData(CompoundTag compoundTag, BlockAccessor blockAccessor) {
-        if (blockAccessor.getBlockEntity() instanceof IMachineBlockEntity blockEntity) {
-            if (blockEntity.getMetaMachine() instanceof MEMolecularAssemblerIOPartMachine ioPartMachine) {
+        if (blockAccessor.getBlockEntity() instanceof MetaMachine blockEntity) {
+            if (blockEntity instanceof MEMolecularAssemblerIOPartMachine ioPartMachine) {
                 putTag(compoundTag, ioPartMachine);
             }
         }
     }
 
-    public static void readBufferContents(ITooltip iTooltip, CompoundTag serverData) {
+    public static void readBufferContents(ITooltip iTooltip, CompoundTag serverData, HolderLookup.Provider registries) {
         // Display pending refunds
         ListTag pending = serverData.getList("pending", Tag.TAG_COMPOUND);
         if (!pending.isEmpty()) {
@@ -56,25 +57,25 @@ public class MEMAIOProvider implements IBlockComponentProvider, IServerDataProvi
                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             for (var tag : pending) {
                 if (!(tag instanceof CompoundTag keyTag) || keyTag.isEmpty()) continue;
-                var key = AEKey.fromTagGeneric((CompoundTag) keyTag.get("key"));
+                var key = AEKey.fromTagGeneric(registries, keyTag.getCompound("key"));
                 if (key instanceof AEItemKey itemKey) {
                     var stack = itemKey.toStack();
                     long count = keyTag.getLong("count");
-                    iTooltip.add(iTooltip.getElementHelper().smallItem(stack));
+                    iTooltip.add(snownee.jade.api.ui.IElementHelper.get().smallItem(stack));
                     Component text = Component.literal(" ")
                             .append(String.valueOf(count))
                             .append(" × ")
-                            .append(wrapInSquareBrackets(stack.getItem().getDescription()).withStyle(ChatFormatting.WHITE))
+                            .append(wrapInSquareBrackets(stack.getHoverName()).withStyle(ChatFormatting.WHITE))
                             .withStyle(ChatFormatting.WHITE);
                     iTooltip.append(text);
                 } else if (key instanceof AEFluidKey fluidKey) {
                     long count = keyTag.getLong("count");
                     var fluid = fluidKey.toStack(Ints.saturatedCast(count));
-                    iTooltip.add(GTElementHelper.smallFluid(JadeFluidObject.of(fluid.getFluid(), count)));
+                    iTooltip.add(GTElementHelper.smallFluid(JadeFluidObject.of(fluid.getFluid(), count, fluid.getComponentsPatch())));
                     Component text = Component.literal(" ")
                             .append(MEFluidUnits.formatDisplayAmount(count))
                             .append(" ")
-                            .append(wrapInSquareBrackets(fluid.getDisplayName()).withStyle(ChatFormatting.WHITE))
+                            .append(wrapInSquareBrackets(fluidKey.getDisplayName()).withStyle(ChatFormatting.WHITE))
                             .withStyle(ChatFormatting.WHITE);
                     iTooltip.append(text);
                 }
@@ -85,12 +86,11 @@ public class MEMAIOProvider implements IBlockComponentProvider, IServerDataProvi
     public static void putTag(CompoundTag compoundTag, MEMolecularAssemblerIOPartMachine maMachine) {
         // Add pending refund data
         ListTag listTag = new ListTag();
-        for (var it = maMachine.getBuffer().object2LongEntrySet().fastIterator(); it.hasNext();) {
-            var entry = it.next();
+        for (var entry : it.unimi.dsi.fastutil.objects.Object2LongMaps.fastIterable(maMachine.getBuffer())) {
             var count = entry.getLongValue();
             if (count > 0) {
                 CompoundTag itemTag = new CompoundTag();
-                itemTag.put("key", entry.getKey().toTagGeneric());
+                itemTag.put("key", entry.getKey().toTagGeneric(maMachine.getLevel().registryAccess()));
                 itemTag.putLong("count", count);
                 listTag.add(itemTag);
             }

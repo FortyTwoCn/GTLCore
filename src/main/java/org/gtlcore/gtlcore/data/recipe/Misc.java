@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.data.recipe;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.common.data.GTLItems;
 import org.gtlcore.gtlcore.common.data.GTLMachines;
@@ -9,17 +10,17 @@ import org.gtlcore.gtlcore.common.recipe.condition.GravityCondition;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 import org.gtlcore.gtlcore.utils.Registries;
 
-import com.gregtechceu.gtceu.api.data.chemical.material.stack.UnificationEntry;
+import com.gregtechceu.gtceu.api.data.chemical.material.stack.MaterialEntry;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import com.gregtechceu.gtceu.data.recipe.VanillaRecipeHelper;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -32,7 +33,7 @@ import appeng.core.definitions.AEItems;
 import java.util.function.Consumer;
 
 import static appeng.core.definitions.AEBlocks.CRAFTING_MONITOR;
-import static com.glodblock.github.extendedae.common.EPPItemAndBlock.*;
+import static com.glodblock.github.extendedae.common.EAESingletons.*;
 import static com.gregtechceu.gtceu.api.GTValues.*;
 import static com.gregtechceu.gtceu.api.data.tag.TagPrefix.*;
 import static com.gregtechceu.gtceu.common.data.GTItems.*;
@@ -47,7 +48,7 @@ import static org.gtlcore.gtlcore.common.data.machines.MultiBlockMachineB.PRIMIT
 
 public class Misc {
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         VanillaRecipeHelper.addShapelessRecipe(provider, "programmed_circuit", IntCircuitBehaviour.stack(0),
                 "A", CustomTags.LV_CIRCUITS);
         VanillaRecipeHelper.addShapelessRecipe(provider, "structure_detect", GTLItems.STRUCTURE_DETECT.asStack(),
@@ -65,7 +66,7 @@ public class Misc {
                 GTLMachines.HEAT_SENSOR.asStack(),
                 "FDF", "BAB", "CEC",
                 'A', GTMachines.HULL[12].asStack(),
-                'B', new UnificationEntry(wireFine, EnrichedNaquadahTriniumEuropiumDuranide),
+                'B', new MaterialEntry(wireFine, EnrichedNaquadahTriniumEuropiumDuranide),
                 'C', SENSOR_ZPM.asStack(),
                 'D', Registries.getItemStack("gtceu:advanced_activity_detector_cover"),
                 'E', Registries.getItemStack("gtceu:computer_monitor_cover"),
@@ -89,7 +90,7 @@ public class Misc {
                     PRIMITIVE_VOID_ORE.asStack(), "DCD", "CGC", "DCD",
                     'D', Blocks.DIRT.asItem(),
                     'C', Items.STONE_PICKAXE.asItem(),
-                    'G', new UnificationEntry(TagPrefix.block, GTMaterials.Iron));
+                    'G', new MaterialEntry(TagPrefix.block, GTMaterials.Iron));
             PRIMITIVE_VOID_ORE_RECIPES.recipeBuilder("primitive_void_ore_recipes")
                     .inputFluids(GTMaterials.Steam.getFluid(1000))
                     .duration(200)
@@ -175,7 +176,7 @@ public class Misc {
 
         AUTOCLAVE_RECIPES.recipeBuilder("gravi_star")
                 .inputItems(QUANTUM_STAR)
-                .inputFluids(Neutronium.getFluid(L * 2))
+                .inputFluids(GTLRecipeContents.fluid(Neutronium, L * 2))
                 .outputItems(GRAVI_STAR)
                 .duration(480).EUt(VA[IV])
                 .addCondition(new GravityCondition(true))

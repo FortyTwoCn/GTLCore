@@ -10,12 +10,12 @@ import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.*;
 
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = GTLCore.MOD_ID, value = Dist.CLIENT)
 public final class JeiPatternStatus {
 
     // The wireless cache and its in-flight download survive all screen/menu changes.
@@ -67,7 +67,7 @@ public final class JeiPatternStatus {
                 requestedRevision = revision;
                 requestedSnapshot = craftable;
                 // Reuse a completed wireless snapshot after the server confirms the same network/version.
-                WirelessAePackets.CHANNEL.sendToServer(new JeiPatternQuery.Request(requestId, context, requestedRevision));
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(new JeiPatternQuery.Request(requestId, context, requestedRevision));
             }
         }
 
@@ -103,11 +103,12 @@ public final class JeiPatternStatus {
                 GTLCore.LOGGER.warn("JEI pattern snapshot exceeds 64 MiB receive limit; request={}", requestId);
                 return;
             }
+            var registries = appeng.util.Platform.getClientRegistryAccess();
             long generation = decodeGeneration;
             long id = requestId;
             decoding = decoding.thenApplyAsync(keys -> {
                 if (decodeGeneration != generation) throw new CancellationException();
-                packet.addKeysTo(keys);
+                packet.addKeysTo(keys, registries);
 
                 return keys;
             }, DECODER);
@@ -180,8 +181,7 @@ public final class JeiPatternStatus {
     }
 
     @SubscribeEvent
-    public static void tick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public static void tick(ClientTickEvent.Post event) {
         ticks++;
 
         var mc = Minecraft.getInstance();

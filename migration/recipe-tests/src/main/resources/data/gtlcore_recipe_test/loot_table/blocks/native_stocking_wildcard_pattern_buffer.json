@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gtlcore_recipe_test:native_stocking_wildcard_pattern_buffer"
+        }
+      ]
+    }
+  ]
+}

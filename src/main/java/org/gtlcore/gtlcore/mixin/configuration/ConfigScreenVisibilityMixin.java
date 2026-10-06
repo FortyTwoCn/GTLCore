@@ -26,10 +26,10 @@ public abstract class ConfigScreenVisibilityMixin {
     @Mutable
     private Map<String, ConfigValue<?>> valueMap;
 
-    @Inject(method = "<init>(Lnet/minecraft/network/chat/Component;Ljava/lang/String;Ljava/util/Map;Lnet/minecraft/client/gui/screens/Screen;)V", at = @At("RETURN"))
-    private void gtlcore$hideDiagnosticLogging(Component title, String configId,
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void gtlcore$hideDiagnosticLogging(dev.toma.configuration.config.ConfigHolder<?> holder, Component title,
                                                Map<String, ConfigValue<?>> values, Screen parent, CallbackInfo ci) {
-        if (!GTLCore.MOD_ID.equals(configId) || !valueMap.containsKey("ae2GraphDiagnosticLogging")) {
+        if (!GTLCore.MOD_ID.equals(holder.getConfigId()) || !valueMap.containsKey("ae2GraphDiagnosticLogging")) {
             return;
         }
         // Filter only this screen's copy so the diagnostic option still loads and saves in the config file.

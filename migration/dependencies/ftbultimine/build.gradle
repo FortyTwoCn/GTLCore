@@ -1,0 +1,11 @@
+plugins {
+    id 'java-library'
+    alias libs.plugins.modDevGradle
+}
+ext.nativeFtbId = 'ftbultimine'
+apply from: '../ftb-native.gradle'
+dependencies {
+    // Optional upstream integration: compile its complete native API without
+    // requiring the ranks mod in a player's installation.
+    compileOnly('dev.ftb.mods:ftb-ranks-neoforge:2101.1.5')
+}

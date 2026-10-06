@@ -3,7 +3,6 @@ package org.gtlcore.gtlcore.integration.jade;
 import org.gtlcore.gtlcore.api.machine.trait.MEStock.IOptimizedMEList;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.MEDualHatchStockPartMachine;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEStockingPatternBufferPartMachine;
-import org.gtlcore.gtlcore.mixin.gtm.ae.machine.MEInputBusPartMachineAccessor;
 import org.gtlcore.gtlcore.utils.NumberUtils;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -13,6 +12,8 @@ import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEItemList;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEItemSlot;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
@@ -61,9 +62,7 @@ public final class MEStockingItemJadeHelper {
     }
 
     private static @Nullable ExportOnlyAEItemList getStockingItemHandler(MetaMachine machine) {
-        if (machine instanceof MEInputBusPartMachine) {
-            return ((MEInputBusPartMachineAccessor) machine).gtlcore$getAeItemHandler();
-        }
+        if (machine instanceof MEInputBusPartMachine input) return (ExportOnlyAEItemList) input.getInventory();
 
         ExportOnlyAEItemList itemHandler = null;
         if (machine instanceof MEDualHatchStockPartMachine dualHatch) {
@@ -101,7 +100,7 @@ public final class MEStockingItemJadeHelper {
             }
             ItemStack stack = entry.getKey().toStack(1);
             if (!stack.isEmpty()) {
-                stack.getOrCreateTag().putLong(LONG_AMOUNT_TAG, amount);
+                annotate(stack, amount);
                 views.add(stack);
             }
         }
@@ -122,7 +121,7 @@ public final class MEStockingItemJadeHelper {
             }
             stack = stack.copy();
             stack.setCount(1);
-            stack.getOrCreateTag().putLong(LONG_AMOUNT_TAG, amount);
+            annotate(stack, amount);
             views.add(stack);
         }
         return views;
@@ -133,23 +132,23 @@ public final class MEStockingItemJadeHelper {
         if (amount <= 0L) {
             return new ItemView(stack);
         }
-        return new ItemView(removeLongAmountTag(stack), NumberUtils.formatLong(amount));
+        return new ItemView(removeLongAmountTag(stack)).amountText(NumberUtils.formatLong(amount));
     }
 
     private static long getLongAmount(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.contains(LONG_AMOUNT_TAG, Tag.TAG_LONG) ? tag.getLong(LONG_AMOUNT_TAG) : 0L;
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getLong(LONG_AMOUNT_TAG);
+    }
+
+    private static void annotate(ItemStack stack, long amount) {
+        var tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        tag.putLong(LONG_AMOUNT_TAG, amount); stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
     private static ItemStack removeLongAmountTag(ItemStack stack) {
-        ItemStack displayStack = stack.copy();
-        CompoundTag tag = displayStack.getTag();
-        if (tag != null) {
-            tag.remove(LONG_AMOUNT_TAG);
-            if (tag.isEmpty()) {
-                displayStack.setTag(null);
-            }
-        }
+        var displayStack = stack.copy();
+        var tag = displayStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag(); tag.remove(LONG_AMOUNT_TAG);
+        if (tag.isEmpty()) displayStack.remove(DataComponents.CUSTOM_DATA);
+        else displayStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         return displayStack;
     }
 }

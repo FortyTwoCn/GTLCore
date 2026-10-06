@@ -1,0 +1,70 @@
+// Complete pinned native AE2WTLib source, with the recorded dedicated-server fix.
+plugins {
+    id 'java-library'
+    alias libs.plugins.modDevGradle
+}
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty('ae2wtlib_source'))
+def manifest = new groovy.json.JsonSlurper().parse(file('patch-manifest.json'))
+def patchFile = file('client-registration.patch')
+def sourceRoot = project.projectDir
+
+tasks.register('verifyNativeSource') {
+    inputs.file(patchFile)
+    inputs.file('patch-manifest.json')
+    doLast {
+        def git = { List<String> args -> providers.exec {
+            commandLine(['git', '-C', nativeSource.absolutePath] + args)
+        }.standardOutput.asText.get() }
+        def canonicalDiff = { String value -> value.replaceAll(/(?m)^index [0-9a-f]+\.\.[0-9a-f]+(?=\s|$)/, 'index <objects>') }
+        if (git(['rev-parse', 'HEAD']).trim() != manifest.revision ||
+                canonicalDiff(git(['diff', 'HEAD', '--binary'])) != canonicalDiff(patchFile.text) ||
+                !git(['ls-files', '--others', '--exclude-standard']).trim().isEmpty()) {
+            throw new GradleException('AE2WTLib checkout differs from its pinned source and recorded client-registration patch')
+        }
+        def hash = java.security.MessageDigest.getInstance('SHA-256').digest(patchFile.bytes).encodeHex().toString()
+        if (hash != manifest.patch_sha256) throw new GradleException('AE2WTLib patch hash differs from its manifest')
+    }
+}
+
+allprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'net.neoforged.moddev'
+    group = 'de.mari_023'
+    version = manifest.version
+    java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+    def apiModule = project.name == 'ae2wtlib_api'
+    base { archivesName = apiModule ? 'ae2wtlib_api' : 'ae2wtlib' }
+    def moduleSource = apiModule ? new File(nativeSource, 'ae2wtlib_api') : nativeSource
+    sourceSets.main {
+        java.setSrcDirs([new File(moduleSource, 'src/main/java')])
+        resources.setSrcDirs([new File(moduleSource, 'src/main/resources')])
+    }
+    apply from: new File(sourceRoot, '../../../gradle/repositories.gradle')
+    repositories { maven { url = 'https://maven.shedaniel.me/' } }
+    configurations.configureEach { exclude group: 'org.appliedenergistics', module: 'guideme' }
+    neoForge {
+        version = libs.versions.neoForge.get()
+        parchment { minecraftVersion = libs.versions.minecraft.get(); mappingsVersion = libs.versions.parchment.get() }
+        mods { "${apiModule ? 'ae2wtlib_api' : 'ae2wtlib'}" { sourceSet(sourceSets.main) } }
+        accessTransformers = files(new File(moduleSource, 'src/main/resources/META-INF/accesstransformer.cfg'))
+    }
+    dependencies { implementation(forge.ae2); compileOnly('com.google.code.findbugs:jsr305:3.0.2') }
+    tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; dependsOn rootProject.tasks.named('verifyNativeSource') }
+    tasks.named('processResources') {
+        inputs.property('version', project.version)
+        inputs.property('ae2_version', forge.versions.ae2.get())
+        filesMatching('META-INF/neoforge.mods.toml') {
+            expand(version: project.version, ae2_version: forge.versions.ae2.get())
+        }
+    }
+}
+dependencies {
+    api(project(':ae2wtlib_api'))
+    jarJar(project(':ae2wtlib_api'))
+    compileOnly(forge.bundles.jei)
+    compileOnly(forge.emi)
+    // Same optional REI API declared by the pinned upstream source.
+    compileOnly('me.shedaniel:RoughlyEnoughItems-neoforge:16.0.788')
+}

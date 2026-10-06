@@ -1,6 +1,7 @@
 package org.gtlcore.gtlcore.integration.wildcard;
 
-import org.gtlcore.gtlcore.common.data.GTLMachines;
+import org.gtlcore.gtlcore.common.data.GTLRegistryTooltips;
+import com.gregtechceu.gtceu.api.registry.registrate.entry.MachineEntry;
 
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -13,10 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 import appeng.api.crafting.IPatternDetails;
-import org.leodreamer.wildcard_pattern.WildcardItems;
-import org.leodreamer.wildcard_pattern.wildcard.WildcardPatternLogic;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.gregtechceu.gtceu.common.registry.GTRegistration.REGISTRATE;
@@ -27,8 +25,8 @@ import static com.gregtechceu.gtceu.common.registry.GTRegistration.REGISTRATE;
  */
 public class WildcardPatternCompatImpl {
 
-    public static MachineDefinition ME_WILDCARD_PATTERN_BUFFER;
-    public static MachineDefinition ME_STOCKING_WILDCARD_PATTERN_BUFFER;
+    public static MachineEntry<MachineDefinition> ME_WILDCARD_PATTERN_BUFFER;
+    public static MachineEntry<MachineDefinition> ME_STOCKING_WILDCARD_PATTERN_BUFFER;
 
     static void init() {
         // Initialization logic if needed
@@ -42,7 +40,7 @@ public class WildcardPatternCompatImpl {
                 .rotationState(RotationState.ALL)
                 .abilities(PartAbility.IMPORT_ITEMS, PartAbility.IMPORT_FLUIDS, PartAbility.EXPORT_ITEMS,
                         PartAbility.EXPORT_FLUIDS)
-                .overlayTieredHullRenderer("me_pattern_buffer")
+                .colorOverlayTieredHullModel(com.gregtechceu.gtceu.GTCEu.id("block/overlay/appeng/me_buffer_hatch"))
                 .tooltips(
                         Component.translatable("block.gtceu.pattern_buffer.desc.0"),
                         Component.translatable("gtceu.machine.me_wildcard_pattern_buffer.desc.0"),
@@ -51,7 +49,7 @@ public class WildcardPatternCompatImpl {
                         Component.translatable("gtceu.machine.me_pattern_buffer.desc.5"),
                         Component.translatable("block.gtceu.pattern_buffer.desc.2"),
                         Component.translatable("gtceu.universal.enabled"))
-                .tooltipBuilder(GTLMachines.GTL_ADD)
+                .tooltipBuilder(GTLRegistryTooltips.ADD)
                 .register();
 
         ME_STOCKING_WILDCARD_PATTERN_BUFFER = REGISTRATE
@@ -60,7 +58,7 @@ public class WildcardPatternCompatImpl {
                 .tier(GTValues.UIV)
                 .rotationState(RotationState.ALL)
                 .abilities(PartAbility.IMPORT_ITEMS, PartAbility.IMPORT_FLUIDS, PartAbility.EXPORT_ITEMS, PartAbility.EXPORT_FLUIDS)
-                .overlayTieredHullRenderer("me_pattern_buffer")
+                .colorOverlayTieredHullModel(com.gregtechceu.gtceu.GTCEu.id("block/overlay/appeng/me_buffer_hatch"))
                 .tooltips(
                         Component.translatable("block.gtceu.pattern_buffer.desc.0"),
                         Component.translatable("gtceu.machine.me_wildcard_pattern_buffer.desc.0"),
@@ -71,16 +69,16 @@ public class WildcardPatternCompatImpl {
                         Component.translatable("gtceu.machine.me_pattern_buffer.desc.5"),
                         Component.translatable("block.gtceu.pattern_buffer.desc.2"),
                         Component.translatable("gtceu.universal.enabled"))
-                .tooltipBuilder(GTLMachines.GTL_ADD)
+                .tooltipBuilder(GTLRegistryTooltips.ADD)
                 .register();
     }
 
     public static MachineDefinition getWildcardPatternBufferDefinition() {
-        return ME_WILDCARD_PATTERN_BUFFER;
+        return ME_WILDCARD_PATTERN_BUFFER.get();
     }
 
     public static MachineDefinition getStockingWildcardPatternBufferDefinition() {
-        return ME_STOCKING_WILDCARD_PATTERN_BUFFER;
+        return ME_STOCKING_WILDCARD_PATTERN_BUFFER.get();
     }
 
     /**
@@ -90,7 +88,7 @@ public class WildcardPatternCompatImpl {
      * @return true if the stack is a wildcard pattern
      */
     static boolean isWildcardPattern(ItemStack stack) {
-        return !stack.isEmpty() && stack.is(WildcardItems.WILDCARD_PATTERN.asItem());
+        return NativeWildcardPatternDecoder.isWildcardPattern(stack);
     }
 
     /**
@@ -105,8 +103,6 @@ public class WildcardPatternCompatImpl {
             return List.of();
         }
 
-        List<IPatternDetails> result = new ArrayList<>();
-        WildcardPatternLogic.decodePatterns(wildcardStack, level).forEach(result::add);
-        return result;
+        return NativeWildcardPatternDecoder.expand(wildcardStack, level);
     }
 }

@@ -2,7 +2,7 @@ package org.gtlcore.gtlcore.mixin.meRequester;
 
 import org.gtlcore.gtlcore.integration.ae2.requester.RequesterStorageSync;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.entity.player.Player;
 
 import appeng.util.SettingsFrom;
@@ -29,8 +29,8 @@ public abstract class RequesterBlockEntityMixin {
     }
 
     @Inject(method = "importSettings", at = @At("RETURN"))
-    private void gtlcore$importedRequests(SettingsFrom mode, CompoundTag input, Player player, CallbackInfo ci) {
-        if (mode == SettingsFrom.MEMORY_CARD && input.contains("requests")) {
+    private void gtlcore$importedRequests(SettingsFrom mode, DataComponentMap input, Player player, CallbackInfo ci) {
+        if (mode == SettingsFrom.MEMORY_CARD) {
             ((RequesterStorageSync) storageManager).gtlcore$requestsChanged();
             ((RequesterBlockEntity) (Object) this).saveChanges();
         }

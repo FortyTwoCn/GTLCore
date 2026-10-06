@@ -1,38 +1,35 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 
-import org.gtlcore.gtlcore.api.gui.AdvancedMEConfigurator;
-import org.gtlcore.gtlcore.api.gui.MEPatternCatalystUIManager;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IModifiableSyncOffset;
 import org.gtlcore.gtlcore.api.machine.trait.MEStock.ExportOnlyAEConfigureFluidSlot;
 import org.gtlcore.gtlcore.api.machine.trait.MEStock.ExportOnlyAEConfigureItemSlot;
 import org.gtlcore.gtlcore.api.machine.trait.MEStock.IMESlot;
-import org.gtlcore.gtlcore.client.gui.widget.AEDualConfigWidget;
 import org.gtlcore.gtlcore.integration.ae2.AEUtils;
-import org.gtlcore.gtlcore.integration.ae2.widget.AEPatternViewExtendSlotWidget;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
 import com.gregtechceu.gtceu.integration.ae2.slot.*;
-import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import net.neoforged.neoforge.fluids.FluidStack;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
+import com.gregtechceu.gtceu.integration.ae2.gui.AEConfigWidget;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
@@ -52,28 +49,25 @@ import static org.gtlcore.gtlcore.utils.NumberUtils.saturatedAdd;
 
 public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachine implements IModifiableSyncOffset {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEStockingPatternBufferPartMachine.class, MEPatternBufferPartMachine.MANAGED_FIELD_HOLDER);
-
     protected static final int CONFIG_SIZE = 32;
 
-    @Persisted
+    @SaveField
     protected final ExportOnlyAEStockingItemList stockItemHandler;
 
-    @Persisted
+    @SaveField
     protected final ExportOnlyAEStockingFluidList stockFluidHandler;
 
-    @Persisted
+    @SaveField
     private int syncOffset;
 
-    @DescSynced
+    @SaveField
     @Setter
     protected int page = 1;
 
-    public MEStockingPatternBufferPartMachine(IMachineBlockEntity holder, int maxPatternCount, IO io) {
+    public MEStockingPatternBufferPartMachine(BlockEntityCreationInfo holder, int maxPatternCount, IO io) {
         super(holder, maxPatternCount, io);
-        this.stockItemHandler = new ExportOnlyAEStockingItemList(this, CONFIG_SIZE);
-        this.stockFluidHandler = new ExportOnlyAEStockingFluidList(this, CONFIG_SIZE);
+        this.stockItemHandler = attachTrait(new ExportOnlyAEStockingItemList(this, CONFIG_SIZE));
+        this.stockFluidHandler = attachTrait(new ExportOnlyAEStockingFluidList(this, CONFIG_SIZE));
     }
 
     @Override
@@ -90,101 +84,117 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
     public void onLoad() {
         super.onLoad();
         if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(1, () -> {
+            scheduleForNextServerTick(() -> {
+                if (isRemoved()) return;
                 stockItemHandler.onConfigChanged();
                 stockFluidHandler.onConfigChanged();
                 syncStockInput();
-            }));
+            });
         }
     }
 
     @Override
     protected void update() {
         super.update();
-        int offset = getOffset();
-        if (getOffsetTimer() % (offset == 0 ? ME_UPDATE_INTERVAL : offset) == 0) {
+        int offset = getMEUpdateInterval();
+        if (getOffsetTimer() % Math.max(1, offset == 0 ? com.gregtechceu.gtceu.config.ConfigHolder.INSTANCE.compat.ae2.updateIntervals : offset) == 0) {
             syncStockInput();
         }
     }
 
     @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        super.attachConfigurators(configuratorPanel);
-        configuratorPanel.attachConfigurators(new AdvancedMEConfigurator(this::setOffset, this::getOffset));
+    public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var builder = super.getPanelBuilder(data, sync, settings);
+        var inherited = builder.leftConfigurators();
+        var itemPanel = sync.syncedPanel("patternStockItems", true, (manager, handler) -> stockPanel(manager, false));
+        var fluidPanel = sync.syncedPanel("patternStockFluids", true, (manager, handler) -> stockPanel(manager, true));
+        var intervalPanel = sync.syncedPanel("patternStockInterval", true, (manager, handler) -> {
+            var value = SyncHandlers.string(() -> Integer.toString(getMEUpdateInterval()), text -> {
+                try { setMEUpdateInterval(Integer.parseInt(text)); } catch (NumberFormatException ignored) {}
+            }).allowC2S();
+            manager.syncValue("stockUpdateInterval", value);
+            return PopupPanel.createPopupPanel("patternStockIntervalPanel", 150, 54)
+                    .child(Text.lang("gtceu.gui.title.adv_me_config.ticks_per_cycle").asWidget().pos(4, 4))
+                    .child(new TextFieldWidget().value(value).size(140, 18).pos(4, 28));
+        });
+        return builder.leftConfigurators(flow -> {
+            inherited.accept(flow);
+            flow.child(new ButtonWidget<>().size(18).overlay(Text.str("I"))
+                            .tooltipDynamic(t -> t.addLine(Component.translatable("gui.gtlcore.stock_input_config")))
+                            .onMousePressed((context, button) -> { if (button != 0) return false; itemPanel.openPanel(); return true; }))
+                    .child(new ButtonWidget<>().size(18).overlay(Text.str("F"))
+                            .tooltipDynamic(t -> t.addLine(Component.translatable("gui.gtlcore.stock_input_config")))
+                            .onMousePressed((context, button) -> { if (button != 0) return false; fluidPanel.openPanel(); return true; }))
+                    .child(new ButtonWidget<>().size(18).overlay(Text.str("T"))
+                            .tooltipDynamic(t -> t.addLine(Component.translatable("gtceu.gui.adv_me_config.ticks_per_cycle")))
+                            .onMousePressed((context, button) -> { if (button != 0) return false; intervalPanel.openPanel(); return true; }));
+        });
     }
 
-    @Override
-    public @NotNull Widget createUIWidget() {
-        int rowSize = 9;
-        int colSize = maxPatternCount / rowSize;
-        int width = 18 * rowSize + 16;
-        int patternBottom = 18 * colSize + 16;
-        int stockLabelY = patternBottom + 6;
-        int stockWidgetY = stockLabelY + 12;
-        var group = new WidgetGroup(0, 0, width, stockWidgetY + 95);
+    private PopupPanel stockPanel(PanelSyncManager manager, boolean fluid) {
+        registerStockConfigActions(manager, fluid);
+        return PopupPanel.createPopupPanel(fluid ? "patternStockFluidsPanel" : "patternStockItemsPanel", 170, 194)
+                .child(Text.lang("gui.gtlcore.stock_input_config").asWidget().pos(4, 4))
+                .child(new AEConfigWidget(fluid ? stockFluidHandler : stockItemHandler, CONFIG_SIZE, fluid)
+                        .syncManager(manager).size(144, 152).pos(12, 22));
+    }
 
-        group.addWidget(new LabelWidget(8, 2,
-                () -> this.isOnline ? "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline"));
+    private void registerStockConfigActions(PanelSyncManager manager, boolean fluid) {
+        manager.registerServerSyncedAction("ae_config_set", packet -> {
+            int slot = packet.readVarInt(); if (slot < 0 || slot >= CONFIG_SIZE) return;
+            var carried = manager.getPlayer().containerMenu.getCarried();
+            if (carried.isEmpty()) return;
+            if (fluid) net.neoforged.neoforge.fluids.FluidUtil.getFluidContained(carried).ifPresent(value ->
+                    configureStock(slot, GenericStack.fromFluidStack(value)));
+            else configureStock(slot, GenericStack.fromItemStack(carried));
+        });
+        manager.registerServerSyncedAction("ae_config_clear", packet -> {
+            int slot = packet.readVarInt(); if (slot < 0 || slot >= CONFIG_SIZE) return;
+            if (fluid) stockFluidHandler.getInventory()[slot].setConfig(null);
+            else stockItemHandler.getInventory()[slot].setConfig(null);
+        });
+        manager.registerServerSyncedAction("ae_config_set_ghost", packet -> {
+            int slot = packet.readVarInt(); if (slot < 0 || slot >= CONFIG_SIZE) return;
+            boolean fluidPayload = packet.readBoolean(); if (fluidPayload != fluid) return;
+            GenericStack config = fluid ? GenericStack.fromFluidStack(FluidStack.STREAM_CODEC.decode(packet)) :
+                    GenericStack.fromItemStack(ItemStack.STREAM_CODEC.decode(packet));
+            if (config != null) configureStock(slot, config);
+        });
+    }
 
-        group.addWidget(new AETextInputButtonWidget(18 * rowSize + 8 - 70, 2, 70, 10)
-                .setText(customName)
-                .setOnConfirm(this::setCustomName)
-                .setButtonTooltips(Component.translatable("gui.gtceu.rename.desc")));
-
-        final var catalystUIManager = new MEPatternCatalystUIManager(group.getSizeWidth() + 4, catalystItems, catalystFluids, cacheRecipeCount, this::removeSlotFromGTRecipeCache);
-        group.waitToAdded(catalystUIManager);
-
-        int index = 0;
-        for (int y = 0; y < colSize; ++y) {
-            for (int x = 0; x < rowSize; ++x) {
-                int finalI = index;
-
-                var slot = new AEPatternViewExtendSlotWidget(getPatternInventory(), index++, x * 18 + 8, y * 18 + 14)
-                        .setOnMiddleClick(() -> catalystUIManager.toggleFor(finalI))
-                        .setOnPatternSlotChanged(() -> this.onPatternChange(finalI))
-                        .setOccupiedTexture(GuiTextures.SLOT)
-                        .setItemHook(stack -> {
-                            if (!stack.isEmpty() && stack.getItem() instanceof EncodedPatternItem iep) {
-                                final ItemStack out = iep.getOutput(stack);
-                                if (!out.isEmpty()) return out;
-                            }
-                            return stack;
-                        })
-                        .setOnAddedTooltips((s, l) -> {
-                            if (cacheRecipe[finalI]) {
-                                l.add(Component.translatable("gtceu.machine.pattern.recipe.cache"));
-                            }
-                        })
-                        .setBackground(GuiTextures.SLOT, GuiTextures.PATTERN_OVERLAY);
-                group.addWidget(slot);
-            }
+    /** Item/fluid configuration share the original 32 positions. They never duplicate network availability. */
+    public void configureStock(int slot, @Nullable GenericStack config) {
+        if (slot < 0 || slot >= CONFIG_SIZE || config != null && config.amount() <= 0) return;
+        if (config == null || config.what() instanceof AEItemKey) {
+            stockFluidHandler.getInventory()[slot].setConfig(null);
+            stockItemHandler.getInventory()[slot].setConfig(config == null ? null : new GenericStack(config.what(), 1));
+        } else if (config.what() instanceof AEFluidKey) {
+            stockItemHandler.getInventory()[slot].setConfig(null);
+            stockFluidHandler.getInventory()[slot].setConfig(new GenericStack(config.what(), 1000));
         }
+        markAsChanged();
+    }
 
-        group.addWidget(new LabelWidget(8, stockLabelY, () -> Component.translatable("gui.gtlcore.stock_input_config").getString()));
-        group.addWidget(new LabelWidget(width - 30, stockLabelY,
-                () -> FormattingUtil.formatNumbers(stockItemHandler.configList.size() + stockFluidHandler.configList.size()) + " / " + CONFIG_SIZE));
-        group.addWidget(new AEDualConfigWidget((width - 144) / 2, stockWidgetY, stockItemHandler, stockFluidHandler, this::setPage, page));
-
-        return group;
+    public @Nullable GenericStack getConfiguredStock(int slot) {
+        if (slot < 0 || slot >= CONFIG_SIZE) return null;
+        var item = stockItemHandler.getInventory()[slot].getConfig();
+        return item != null ? item : stockFluidHandler.getInventory()[slot].getConfig();
     }
 
     @Override
-    public int getOffset() {
+    public int getMEUpdateInterval() {
         return syncOffset;
     }
 
     @Override
-    public void setOffset(int offset) {
+    public void setMEUpdateInterval(int offset) {
         this.syncOffset = Math.max(0, offset);
-    }
-
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+        markAsChanged();
     }
 
     protected void onStockInputConfigChanged(boolean removedConfig) {
         if (!isRemote()) {
+            markAsChanged();
             syncStockInput();
             if (removedConfig) {
                 invalidateRecipeCaches();
@@ -242,62 +252,13 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
         stockFluidHandler.syncStock(networkStorage);
     }
 
-    protected @Nullable AEItemKey findStockItemKey(Ingredient ingredient, Object2LongMap<AEItemKey> internal, Object2LongMap<AEItemKey> catalyst, long needAmount, boolean includeCatalyst) {
-        for (ItemStack item : ingredient.getItems()) {
-            if (item.isEmpty()) continue;
-            AEItemKey key = AEItemKey.of(item);
-            long amount = saturatedAdd(internal.getLong(key), stockItemHandler.getAvailableAmount(key));
-            if (includeCatalyst) amount = saturatedAdd(amount, catalyst.getLong(key));
-            if (amount >= needAmount) return key;
-        }
-        for (AEItemKey key : stockItemHandler.configList) {
-            if (!key.matches(ingredient)) continue;
-            long amount = saturatedAdd(internal.getLong(key), stockItemHandler.getAvailableAmount(key));
-            if (includeCatalyst) amount = saturatedAdd(amount, catalyst.getLong(key));
-            if (amount >= needAmount) return key;
-        }
-        return null;
-    }
-
-    protected @Nullable AEFluidKey findStockFluidKey(FluidIngredient ingredient, Object2LongMap<AEFluidKey> internal, Object2LongMap<AEFluidKey> catalyst, long needAmount, boolean includeCatalyst) {
-        for (FluidStack stack : ingredient.getStacks()) {
-            if (stack.isEmpty()) continue;
-            AEFluidKey key = AEFluidKey.of(stack.getFluid());
-            long amount = saturatedAdd(internal.getLong(key), stockFluidHandler.getAvailableAmount(key));
-            if (includeCatalyst) amount = saturatedAdd(amount, catalyst.getLong(key));
-            if (amount >= needAmount) return key;
-        }
-        for (AEFluidKey key : stockFluidHandler.configList) {
-            if (!AEUtils.testFluidIngredient(ingredient, key)) continue;
-            long amount = saturatedAdd(internal.getLong(key), stockFluidHandler.getAvailableAmount(key));
-            if (includeCatalyst) amount = saturatedAdd(amount, catalyst.getLong(key));
-            if (amount >= needAmount) return key;
-        }
-        return null;
-    }
-
-    protected boolean consumeStockItem(Object2LongMap<AEItemKey> internal, AEItemKey key, long needAmount) {
-        long internalAmount = internal.getLong(key);
-        long consumedInternal = Math.min(internalAmount, needAmount);
-        if (consumedInternal > 0) {
-            long leftInternal = internalAmount - consumedInternal;
-            if (leftInternal <= 0) internal.removeLong(key);
-            else internal.put(key, leftInternal);
-            needAmount -= consumedInternal;
-        }
-        return needAmount <= 0 || stockItemHandler.extractStock(key, needAmount) >= needAmount;
-    }
-
-    protected boolean consumeStockFluid(Object2LongMap<AEFluidKey> internal, AEFluidKey key, long needAmount) {
-        long internalAmount = internal.getLong(key);
-        long consumedInternal = Math.min(internalAmount, needAmount);
-        if (consumedInternal > 0) {
-            long leftInternal = internalAmount - consumedInternal;
-            if (leftInternal <= 0) internal.removeLong(key);
-            else internal.put(key, leftInternal);
-            needAmount -= consumedInternal;
-        }
-        return needAmount <= 0 || stockFluidHandler.extractStock(key, needAmount) >= needAmount;
+    private <K extends AEKey, T> boolean handleStockedInputs(Object2LongMap<T> demands, Object2LongMap<K> owned,
+            Object2LongMap<K> catalysts, List<K> configured, java.util.function.BiPredicate<T, K> matches,
+            java.util.function.ToLongFunction<K> availableInNetwork, boolean simulate) {
+        var grid = getMainNode().getGrid();
+        return org.gtlcore.gtlcore.integration.ae2.StockingInputTransactions.handle(demands, owned, catalysts, configured,
+                matches, availableInNetwork, simulate, grid == null ? null : grid.getStorageService().getInventory(), actionSource,
+                buffer, () -> { markAsChanged(); getMETrait().notifySelfIO(); syncStockInput(); });
     }
 
     protected void appendStockItemContents(List<ItemStack> inputs) {
@@ -313,7 +274,7 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
         for (var entry : Object2LongMaps.fastIterable(stockFluidHandler.stockMap)) {
             long amount = entry.getLongValue();
             if (amount > 0) {
-                inputs.add(FluidStack.create(entry.getKey().getFluid(), amount));
+                inputs.add(entry.getKey().toStack((int) Math.min(amount, Integer.MAX_VALUE)));
             }
         }
     }
@@ -337,9 +298,15 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
         for (var entry : Object2LongMaps.fastIterable(stockFluidHandler.stockMap)) {
             long amount = entry.getLongValue();
             if (amount > 0) {
-                map.addTo(FluidStack.create(entry.getKey().getFluid(), 1), amount);
+                map.addTo(entry.getKey().toStack(1), amount);
             }
         }
+    }
+
+    public @NotNull Object2LongMap<FluidStack> getStockingFluidMap() {
+        var map = new Object2LongOpenHashMap<FluidStack>();
+        addStockFluidMap(map);
+        return map;
     }
 
     protected class StockingPatternBufferInternalSlot extends PatternBufferInternalSlot {
@@ -401,79 +368,19 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
         }
 
         @Override
-        public boolean handleItemInternal(Object2LongMap<Ingredient> left, int leftCircuit, boolean simulate) {
-            if (!stockItemHandler.hasConfig()) {
-                return super.handleItemInternal(left, leftCircuit, simulate);
-            }
-            if (left.isEmpty() && leftCircuit < 0) return true;
-
-            if (simulate && leftCircuit > 0 && leftCircuit != getCacheManager().getCircuitCache()) {
-                return false;
-            }
-
-            var itemInventory = getItemInventory();
-            var catalystInventory = getItemCatalystInventory();
-            for (var entry : Object2LongMaps.fastIterable(left)) {
-                Ingredient ingredient = entry.getKey();
-                long needAmount = entry.getLongValue();
-                if (needAmount <= 0) continue;
-                AEItemKey key = findStockItemKey(ingredient, itemInventory, catalystInventory, needAmount, simulate);
-                if (key == null) return false;
-            }
-
-            if (!simulate) {
-                for (var it = Object2LongMaps.fastIterator(left); it.hasNext();) {
-                    var entry = it.next();
-                    Ingredient ingredient = entry.getKey();
-                    long needAmount = entry.getLongValue();
-                    if (needAmount <= 0) {
-                        it.remove();
-                        continue;
-                    }
-
-                    AEItemKey key = findStockItemKey(ingredient, itemInventory, Object2LongMaps.emptyMap(), needAmount, false);
-                    if (key == null || !consumeStockItem(itemInventory, key, needAmount)) return false;
-                    it.remove();
-                }
-            }
-
-            return true;
+        public boolean handleItemInternal(Object2LongMap<SizedIngredient> left, int leftCircuit, boolean simulate) {
+            if (!stockItemHandler.hasConfig()) return super.handleItemInternal(left, leftCircuit, simulate);
+            if (simulate && leftCircuit >= 0 && leftCircuit != getCacheManager().getCircuitCache()) return false;
+            return handleStockedInputs(left, getItemInventory(), getItemCatalystInventory(), stockItemHandler.configList,
+                    (ingredient, key) -> org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient.matchingIngredient(ingredient).test(key.toStack(1)),
+                    stockItemHandler::getAvailableAmount, simulate);
         }
 
         @Override
-        public boolean handleFluidInternal(Object2LongMap<FluidIngredient> left, boolean simulate) {
-            if (!stockFluidHandler.hasConfig()) {
-                return super.handleFluidInternal(left, simulate);
-            }
-            if (left.isEmpty()) return true;
-
-            var fluidInventory = getFluidInventory();
-            var catalystInventory = getFluidCatalystInventory();
-            for (var entry : Object2LongMaps.fastIterable(left)) {
-                FluidIngredient ingredient = entry.getKey();
-                long needAmount = entry.getLongValue();
-                if (needAmount <= 0) continue;
-                AEFluidKey key = findStockFluidKey(ingredient, fluidInventory, catalystInventory, needAmount, simulate);
-                if (key == null) return false;
-            }
-
-            if (!simulate) {
-                for (var it = Object2LongMaps.fastIterator(left); it.hasNext();) {
-                    var entry = it.next();
-                    FluidIngredient ingredient = entry.getKey();
-                    long needAmount = entry.getLongValue();
-                    if (needAmount <= 0) {
-                        it.remove();
-                        continue;
-                    }
-
-                    AEFluidKey key = findStockFluidKey(ingredient, fluidInventory, Object2LongMaps.emptyMap(), needAmount, false);
-                    if (key == null || !consumeStockFluid(fluidInventory, key, needAmount)) return false;
-                    it.remove();
-                }
-            }
-
-            return true;
+        public boolean handleFluidInternal(Object2LongMap<SizedFluidIngredient> left, boolean simulate) {
+            if (!stockFluidHandler.hasConfig()) return super.handleFluidInternal(left, simulate);
+            return handleStockedInputs(left, getFluidInventory(), getFluidCatalystInventory(), stockFluidHandler.configList,
+                    AEUtils::testFluidIngredient, stockFluidHandler::getAvailableAmount, simulate);
         }
     }
 
@@ -484,7 +391,7 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
         protected final Object2LongOpenHashMap<AEItemKey> stockMap = new Object2LongOpenHashMap<>();
 
         public ExportOnlyAEStockingItemList(MetaMachine holder, int slots) {
-            super(holder, slots, ExportOnlyAEStockingItemSlot::new);
+            super(slots, ExportOnlyAEStockingItemSlot::new);
             stockMap.defaultReturnValue(0);
             for (ExportOnlyAEItemSlot slot : inventory) {
                 ((IMESlot) slot).setOnConfigChanged(() -> {
@@ -492,6 +399,9 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
                 });
             }
         }
+
+        @Override public boolean isStocking() { return true; }
+        @Override public IO getHandlerIO() { return IO.NONE; }
 
         public void clearInventory(int startIndex) {
             for (int i = startIndex; i < this.getConfigurableSlots(); ++i) {
@@ -517,7 +427,7 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
                     long amount = networkStorage.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, actionSource);
                     if (amount > 0) {
                         slot.setStock(new GenericStack(key, amount));
-                        stockMap.addTo(key, amount);
+                        stockMap.put(key, amount);
                         continue;
                     }
                 }
@@ -532,7 +442,7 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
             for (int i = 0; i < inventory.length; i++) {
                 GenericStack config = inventory[i].getConfig();
                 if (config != null && config.what() instanceof AEItemKey key) {
-                    configList.add(key);
+                    if (!configList.contains(key)) configList.add(key);
                     configIndexList.add(i);
                     previousConfig.remove(key);
                 }
@@ -603,6 +513,9 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
             }
         }
 
+        @Override public boolean isStocking() { return true; }
+        @Override public IO getHandlerIO() { return IO.NONE; }
+
         public void clearInventory(int startIndex) {
             for (int i = startIndex; i < this.getConfigurableSlots(); ++i) {
                 IConfigurableSlot slot = this.getConfigurableSlot(i);
@@ -627,7 +540,7 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
                     long amount = networkStorage.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, actionSource);
                     if (amount > 0) {
                         slot.setStock(new GenericStack(key, amount));
-                        stockMap.addTo(key, amount);
+                        stockMap.put(key, amount);
                         continue;
                     }
                 }
@@ -642,7 +555,7 @@ public class MEStockingPatternBufferPartMachine extends MEPatternBufferPartMachi
             for (int i = 0; i < inventory.length; i++) {
                 GenericStack config = inventory[i].getConfig();
                 if (config != null && config.what() instanceof AEFluidKey key) {
-                    configList.add(key);
+                    if (!configList.contains(key)) configList.add(key);
                     configIndexList.add(i);
                     previousConfig.remove(key);
                 }

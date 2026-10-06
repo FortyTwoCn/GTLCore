@@ -11,8 +11,8 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.jetbrains.annotations.Nullable;
@@ -35,11 +35,15 @@ public abstract class WrappedItemRenderer implements IRenderer {
     protected void vanillaRender(ItemStack stack, ItemDisplayContext transformType,
                                  boolean leftHand, PoseStack poseStack, MultiBufferSource buffer,
                                  int combinedLight, int combinedOverlay, BakedModel model) {
+        boolean wasDisabled = IItemRendererProvider.disabled.get();
         IItemRendererProvider.disabled.set(true);
-        Minecraft.getInstance()
-                .getItemRenderer()
-                .render(stack, transformType, leftHand, poseStack, buffer, combinedLight,
-                        combinedOverlay, model);
-        IItemRendererProvider.disabled.set(false);
+        try {
+            Minecraft.getInstance()
+                    .getItemRenderer()
+                    .render(stack, transformType, leftHand, poseStack, buffer, combinedLight,
+                            combinedOverlay, model);
+        } finally {
+            IItemRendererProvider.disabled.set(wasDisabled);
+        }
     }
 }

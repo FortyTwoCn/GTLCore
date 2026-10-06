@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.mixin.gtm.machine;
 import org.gtlcore.gtlcore.api.recipe.RecipeResult;
 
 import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -31,7 +31,7 @@ public abstract class DataAccessHatchMachineMixin extends TieredPartMachine impl
     @Shadow(remap = false)
     public abstract GTRecipe modifyRecipe(GTRecipe recipe);
 
-    public DataAccessHatchMachineMixin(IMachineBlockEntity holder, int tier, Set<GTRecipe> recipes) {
+    public DataAccessHatchMachineMixin(BlockEntityCreationInfo holder, int tier, Set<GTRecipe> recipes) {
         super(holder, tier);
         this.recipes = recipes;
     }

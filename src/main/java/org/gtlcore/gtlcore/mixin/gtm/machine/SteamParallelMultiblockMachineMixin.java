@@ -1,49 +1,52 @@
 package org.gtlcore.gtlcore.mixin.gtm.machine;
 
 import org.gtlcore.gtlcore.api.machine.ISteamMachine;
-
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import org.gtlcore.gtlcore.api.machine.trait.IRecipeCapabilityMachine;
+import org.gtlcore.gtlcore.api.machine.trait.IRecipeInputHandlerPolicy;
+import org.gtlcore.gtlcore.api.machine.trait.RecipeInputExclusion;
+import org.gtlcore.gtlcore.api.recipe.CoreRecipeModifiers;
+import org.gtlcore.gtlcore.api.recipe.IAdvancedContentModifier;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.capability.recipe.IRecipeHandler;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
+import com.gregtechceu.gtceu.api.machine.steam.SteamEnergyRecipeHandler;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
-import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.common.machine.multiblock.steam.SteamParallelMultiblockMachine;
-
-import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import static com.gregtechceu.gtceu.common.data.GTMachines.STEAM_OVEN;
+import static com.gregtechceu.gtceu.common.data.machines.GTMultiMachines.STEAM_OVEN;
 
 @Mixin(SteamParallelMultiblockMachine.class)
-public abstract class SteamParallelMultiblockMachineMixin extends WorkableMultiblockMachine implements ISteamMachine {
+public abstract class SteamParallelMultiblockMachineMixin implements ISteamMachine, IRecipeInputHandlerPolicy {
+    @Shadow(remap = false) private SteamEnergyRecipeHandler steamEnergy;
 
-    public SteamParallelMultiblockMachineMixin(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    @Inject(method = "<init>(Lcom/gregtechceu/gtceu/api/blockentity/BlockEntityCreationInfo;I)V", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$ovenLimit(BlockEntityCreationInfo info, int maximum, CallbackInfo ci) {
+        var machine = (SteamParallelMultiblockMachine) (Object) this;
+        if (machine.getDefinition() == STEAM_OVEN.get()) machine.setMaxParallels(256);
     }
 
-    @Inject(method = "recipeModifier", at = @At("HEAD"), remap = false, cancellable = true)
-    private static void recipeModifier(MetaMachine machine, GTRecipe recipe, OCParams params, OCResult result, CallbackInfoReturnable<GTRecipe> cir) {
-        if (machine.getDefinition() == STEAM_OVEN) {
-            var recipe1 = GTRecipeModifiers.accurateParallel(machine, recipe, 256, false)
-                    .getFirst();
-            recipe1.duration = (int) Math.max(1, recipe1.duration * 0.5);
-            cir.setReturnValue(recipe1);
-        }
+    @Inject(method = "recipeModifier", at = @At("HEAD"), remap = false, cancellable = true, require = 1)
+    private static void gtlcore$oven(MetaMachine machine, GTRecipe recipe, CallbackInfoReturnable<ModifierFunction> cir) {
+        if (machine.getDefinition() != STEAM_OVEN.get()) return;
+        int parallels = CoreRecipeModifiers.parallelAmount(machine, recipe, 256);
+        cir.setReturnValue(parallels == 0 ? ModifierFunction.NULL : ModifierFunction.builder()
+                .modifyAllContents(IAdvancedContentModifier.preciseMultiplier(parallels)).eutMultiplier(parallels)
+                .parallels(parallels).durationMultiplier(.5).build());
     }
 
-    @ModifyConstant(method = "addDisplayText", remap = false, constant = @Constant(intValue = 8))
-    private int modifyConsume(int constant) {
-        return this.getDefinition() == STEAM_OVEN ? 256 : 8;
+    @Inject(method = "formStructure", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$reserveSteam(String structure, CallbackInfo ci) {
+        if (steamEnergy == null) return;
+        var machine = (SteamParallelMultiblockMachine) (Object) this;
+        RecipeInputExclusion.exclude(machine, steamEnergy.getSteamTank());
+        ((IRecipeCapabilityMachine) (Object) this).upDate();
     }
 
-    @Override
-    public double getConversionRate() {
-        return 0.5;
-    }
+    @Override public boolean isRecipeInputHandlerExcluded(IRecipeHandler<?> handler) { return steamEnergy != null && handler == steamEnergy.getSteamTank(); }
+    @Override public double getSteamPerEU() { return ((SteamParallelMultiblockMachine) (Object) this).getConversionRate(); }
 }

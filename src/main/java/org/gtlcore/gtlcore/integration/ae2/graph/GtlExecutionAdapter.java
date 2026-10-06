@@ -137,10 +137,10 @@ public final class GtlExecutionAdapter implements GraphJobRuntime.Adapter<AEKey>
     }
 
     private boolean matches(IPatternDetails pattern, GraphRecipe<AEKey> recipe, boolean equivalentProcessing) {
-        String fingerprint = PatternFingerprint.of(pattern);
+        String fingerprint = PatternFingerprint.of(pattern, host.level().registryAccess());
         if (!fingerprint.equals(recipe.binding())) {
             if (bindingFailure.equals("NO_REGISTERED_PATTERN")) mismatch("PATTERN_FINGERPRINT_CHANGED",
-                    "current=" + fingerprint + " pattern=" + pattern.getClass().getName() + " outputs=" + java.util.Arrays.toString(pattern.getOutputs()));
+                    "current=" + fingerprint + " pattern=" + pattern.getClass().getName() + " outputs=" + pattern.getOutputs().toString());
             // Custom patterns may have additional dispatch semantics encoded in NBT.
             if (!equivalentProcessing || pattern.getClass() != AEProcessingPattern.class) return false;
         }

@@ -1,6 +1,5 @@
 package org.gtlcore.gtlcore.common.player;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.network.GTLNetworkHandler;
 import org.gtlcore.gtlcore.network.packet.SSetNoClip;
 import org.gtlcore.gtlcore.utils.MachineUtil;
@@ -8,23 +7,23 @@ import org.gtlcore.gtlcore.utils.MachineUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = GTLNetworkHandler.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
 public final class NoClipManager {
 
-    private static final String PERSISTENT_KEY = GTLCore.MOD_ID + ":no_clip_enabled";
-    private static final String FLYING_KEY = GTLCore.MOD_ID + ":flying";
-    private static final String LEGACY_INFINITY_FLYING_KEY = GTLCore.MOD_ID + ":infinity_flying";
-    private static final String STATE_VERSION_KEY = GTLCore.MOD_ID + ":no_clip_state_version";
+    private static final String PERSISTENT_KEY = GTLNetworkHandler.MOD_ID + ":no_clip_enabled";
+    private static final String FLYING_KEY = GTLNetworkHandler.MOD_ID + ":flying";
+    private static final String LEGACY_INFINITY_FLYING_KEY = GTLNetworkHandler.MOD_ID + ":infinity_flying";
+    private static final String STATE_VERSION_KEY = GTLNetworkHandler.MOD_ID + ":no_clip_state_version";
     private static final int STATE_VERSION = 2;
     private static final int FLIGHT_RESTORE_TIMEOUT_TICKS = 200;
     private static final Set<Player> ENABLED_PLAYERS = ConcurrentHashMap.newKeySet();
@@ -102,16 +101,16 @@ public final class NoClipManager {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer serverPlayer)) {
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer serverPlayer)) {
             return;
         }
         updateFlightState(serverPlayer);
-        if (!ENABLED_PLAYERS.contains(event.player)) {
+        if (!ENABLED_PLAYERS.contains(event.getEntity())) {
             return;
         }
-        if (!MachineUtil.hasNoClipArmorSet(event.player)) {
-            setEnabled(event.player, false);
+        if (!MachineUtil.hasNoClipArmorSet(event.getEntity())) {
+            setEnabled(event.getEntity(), false);
         }
     }
 

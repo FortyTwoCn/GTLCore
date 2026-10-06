@@ -28,6 +28,18 @@ public final class TerminalSourceIndex {
         positions.defaultReturnValue(-1);
     }
 
+    /** Invalidate every reader after a failed disk decode without publishing partial contents. */
+    public void clear() {
+        positions.clear();
+        Arrays.fill(keys, null);
+        Arrays.fill(amounts, 0);
+        exact.clear();
+        size = 0;
+        live = 0;
+        revision = 0;
+        epoch++;
+    }
+
     public void set(AEKey key, long amount, BigInteger overflow) {
         int id = positions.getInt(key);
         if (id < 0) {

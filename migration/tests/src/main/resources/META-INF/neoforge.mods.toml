@@ -1,0 +1,7 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "LGPL-3.0"
+[[mods]]
+modId = "gtlcore_migration_test"
+version = "1"
+displayName = "GTLCore migration regression harness"

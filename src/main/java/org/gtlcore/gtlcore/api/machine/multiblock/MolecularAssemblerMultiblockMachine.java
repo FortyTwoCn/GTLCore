@@ -2,49 +2,44 @@ package org.gtlcore.gtlcore.api.machine.multiblock;
 
 import org.gtlcore.gtlcore.api.machine.trait.AECraft.IMECraftSpeedCore;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IInteractedMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDisplayUIMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
-
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.*;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.PanelSyncManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.*;
 
-public class MolecularAssemblerMultiblockMachine extends MolecularAssemblerMultiblockMachineBase implements IFancyUIMachine, IDisplayUIMachine, IInteractedMachine {
+public class MolecularAssemblerMultiblockMachine extends MolecularAssemblerMultiblockMachineBase {
 
-    public MolecularAssemblerMultiblockMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    public MolecularAssemblerMultiblockMachine(BlockEntityCreationInfo holder) {
+        super(holder);
+    }
+
+    public MolecularAssemblerMultiblockMachine(BlockEntityCreationInfo info, RecipeLogic logic) {
+        super(info, logic);
     }
 
     // ========================================
     // GUI
     // ========================================
 
-    @Override
     public void addDisplayText(List<Component> textList) {
-        IDisplayUIMachine.super.addDisplayText(textList);
+        textList.add(Component.translatable(getBlockState().getBlock().getDescriptionId()));
         if (isFormed()) {
             int coreCount = 0;
-            for (IMultiPart part : this.getParts()) {
+            for (var part : this.getParts()) {
                 if (part instanceof IMECraftSpeedCore) {
                     coreCount++;
                 }
             }
-            textList.add(Component.translatable(getRecipeType().registryName.toLanguageKey())
+            textList.add(Component.translatable(getRecipeType().id.toLanguageKey())
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                     Component.translatable("gtceu.gui.machinemode.title")))));
@@ -82,40 +77,13 @@ public class MolecularAssemblerMultiblockMachine extends MolecularAssemblerMulti
                     .withStyle(Style.EMPTY.withColor(ChatFormatting.RED)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
         }
-        getDefinition().getAdditionalDisplay().accept(this, textList);
     }
 
     @Override
-    public Widget createUIWidget() {
-        var group = new WidgetGroup(0, 0, 182 + 8, 117 + 8);
-        group.addWidget(new DraggableScrollableWidgetGroup(4, 4, 182, 117)
-                .setBackground(getScreenTexture())
-                .addWidget(new LabelWidget(4, 5, self().getBlockState().getBlock().getDescriptionId()))
-                .addWidget(new ComponentPanelWidget(4, 17, this::addDisplayText)
-                        .setMaxWidthLimit(150)
-                        .clickHandler(this::handleDisplayClick)));
-        group.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        return group;
-    }
-
-    @Override
-    public ModularUI createUI(Player entityPlayer) {
-        return new ModularUI(198, 208, this, entityPlayer)
-                .widget(new FancyMachineUIWidget(this, 198, 208));
-    }
-
-    @Override
-    public List<IFancyUIProvider> getSubTabs() {
-        return getParts().stream()
-                .filter(Objects::nonNull)
-                .map(IFancyUIProvider.class::cast)
-                .toList();
-    }
-
-    @Override
-    public void attachTooltips(TooltipsPanel tooltipsPanel) {
-        for (IMultiPart part : getParts()) {
-            part.attachFancyTooltipsToController(this, tooltipsPanel);
-        }
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager sync) {
+        var widgets = new ArrayList<>(GTLMultiblockDisplays.syncedLines("gtlMolecular",
+                (controller, text) -> ((MolecularAssemblerMultiblockMachine) controller).addDisplayText(text)).apply(this, sync));
+        widgets.addAll(getDefinition().getAdditionalDisplay().apply(this, sync));
+        return widgets;
     }
 }

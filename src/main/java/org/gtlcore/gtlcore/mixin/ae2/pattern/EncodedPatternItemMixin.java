@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
@@ -28,7 +29,7 @@ public abstract class EncodedPatternItemMixin {
     private static final String GTLCORE$RECIPE_TYPE_SEPARATOR = ", ";
 
     @Inject(method = "appendHoverText", at = @At("TAIL"))
-    private void gtlcore$appendQuickUploadRecipeTypes(ItemStack stack, Level level, List<Component> tooltip,
+    private void gtlcore$appendQuickUploadRecipeTypes(ItemStack stack, Item.TooltipContext context, List<Component> tooltip,
                                                       TooltipFlag flag, CallbackInfo ci) {
         PatternEncoderMetadata.readEncoder(stack).ifPresent(encoder -> tooltip.add(Component.translatable(
                 "tooltip.gtlcore.pattern_encoder",

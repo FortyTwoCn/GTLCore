@@ -1,13 +1,13 @@
 package org.gtlcore.gtlcore.integration.ae2.pattern;
 
-import org.gtlcore.gtlcore.GTLCore;
-
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -19,7 +19,7 @@ import java.util.Set;
 
 public final class PatternQuickUploadMetadata {
 
-    private static final String ROOT_KEY = GTLCore.MOD_ID;
+    private static final String ROOT_KEY = "gtlcore";
     private static final String RECIPE_TYPES_KEY = "patternQuickUploadRecipeTypes";
 
     private PatternQuickUploadMetadata() {}
@@ -31,8 +31,8 @@ public final class PatternQuickUploadMetadata {
 
         Set<ResourceLocation> seen = new LinkedHashSet<>();
         for (GTRecipeType recipeType : recipeTypes) {
-            if (recipeType != null && isValidRecipeTypeId(recipeType.registryName)) {
-                seen.add(recipeType.registryName);
+            if (recipeType != null && isValidRecipeTypeId(recipeType.id)) {
+                seen.add(recipeType.id);
             }
         }
         writeRecipeTypeIds(patternStack, seen);
@@ -63,17 +63,18 @@ public final class PatternQuickUploadMetadata {
             return;
         }
 
-        CompoundTag tag = patternStack.getOrCreateTag();
+        CompoundTag tag = patternStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         CompoundTag gtlcoreTag = tag.contains(ROOT_KEY, Tag.TAG_COMPOUND) ?
                 tag.getCompound(ROOT_KEY) :
                 new CompoundTag();
         gtlcoreTag.put(RECIPE_TYPES_KEY, recipeTypeTags);
         tag.put(ROOT_KEY, gtlcoreTag);
+        patternStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
     public static Set<ResourceLocation> readRecipeTypeIds(ItemStack patternStack) {
-        CompoundTag tag = patternStack.getTag();
-        if (tag == null || !tag.contains(ROOT_KEY, Tag.TAG_COMPOUND)) {
+        CompoundTag tag = patternStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (!tag.contains(ROOT_KEY, Tag.TAG_COMPOUND)) {
             return Set.of();
         }
         CompoundTag gtlcoreTag = tag.getCompound(ROOT_KEY);
@@ -97,7 +98,7 @@ public final class PatternQuickUploadMetadata {
             return null;
         }
         try {
-            ResourceLocation recipeTypeId = new ResourceLocation(value);
+            ResourceLocation recipeTypeId = ResourceLocation.parse(value);
             if (!isValidRecipeTypeId(recipeTypeId)) {
                 return null;
             }
@@ -116,8 +117,8 @@ public final class PatternQuickUploadMetadata {
     }
 
     static void removeRecipeTypes(ItemStack patternStack) {
-        CompoundTag tag = patternStack.getTag();
-        if (tag == null || !tag.contains(ROOT_KEY, Tag.TAG_COMPOUND)) {
+        CompoundTag tag = patternStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (!tag.contains(ROOT_KEY, Tag.TAG_COMPOUND)) {
             return;
         }
         CompoundTag gtlcoreTag = tag.getCompound(ROOT_KEY);
@@ -127,5 +128,7 @@ public final class PatternQuickUploadMetadata {
         } else {
             tag.put(ROOT_KEY, gtlcoreTag);
         }
+        if (tag.isEmpty()) patternStack.remove(DataComponents.CUSTOM_DATA);
+        else patternStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 }

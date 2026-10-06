@@ -1,0 +1,63 @@
+plugins {
+    id 'java-library'
+    alias libs.plugins.modDevGradle
+}
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty('ae2jei_source'))
+def upstreamProperties = new Properties()
+new File(nativeSource, 'gradle.properties').withInputStream { upstreamProperties.load(it) }
+group = upstreamProperties.getProperty('mod_group_id')
+version = upstreamProperties.getProperty('mod_version')
+base { archivesName = upstreamProperties.getProperty('mod_id') }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.withSourcesJar()
+sourceSets.main {
+    java.setSrcDirs([new File(nativeSource, 'src/main/java')])
+    resources.setSrcDirs([new File(nativeSource, 'src/main/resources'),
+                          new File(nativeSource, 'src/generated/resources')])
+    resources.exclude('.cache/**')
+}
+apply from: '../../../gradle/repositories.gradle'
+configurations.configureEach { exclude group: 'org.appliedenergistics', module: 'guideme' }
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+    mods { ae2jeiintegration { sourceSet(sourceSets.main) } }
+}
+dependencies {
+    implementation(forge.ae2)
+    compileOnly(forge.bundles.jei)
+    compileOnly('maven.modrinth:applied-energistics-2-wireless-terminals:6feJ9h09')
+}
+tasks.register('verifyNativeSource') {
+    doLast {
+        def git = { List<String> args -> providers.exec {
+            commandLine(['git', '-C', nativeSource.absolutePath] + args)
+        }.standardOutput.asText.get() }
+        if (git(['rev-parse', 'HEAD']).trim() != coreProperties.getProperty('ae2jei_revision') ||
+                !git(['diff', 'HEAD', '--binary']).isEmpty() ||
+                !git(['ls-files', '--others', '--exclude-standard']).trim().isEmpty()) {
+            throw new GradleException('AE2 JEI Integration checkout differs from its pinned native source')
+        }
+        if (upstreamProperties.getProperty('minecraft_version') != libs.versions.minecraft.get()) {
+            throw new GradleException('AE2 JEI Integration source does not target the Minecraft baseline')
+        }
+    }
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+    dependsOn 'verifyNativeSource'
+}
+tasks.named('processResources') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    def metadata = upstreamProperties.collectEntries { key, value -> [(key): value] }
+    metadata.minecraft_version = libs.versions.minecraft.get()
+    metadata.neo_version = libs.versions.neoForge.get()
+    inputs.properties(metadata)
+    filesMatching('META-INF/neoforge.mods.toml') { expand(metadata) }
+}

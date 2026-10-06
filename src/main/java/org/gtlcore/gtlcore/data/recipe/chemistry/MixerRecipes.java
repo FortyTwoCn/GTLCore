@@ -1,9 +1,10 @@
 package org.gtlcore.gtlcore.data.recipe.chemistry;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import java.util.function.Consumer;
 
@@ -14,7 +15,7 @@ import static org.gtlcore.gtlcore.common.data.GTLMaterials.*;
 
 public class MixerRecipes {
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         MIXER_RECIPES.recipeBuilder("absolute_ethanol")
                 .inputFluids(Ethanol.getFluid(1000))
                 .inputItems(TagPrefix.dust, ZeoliteSievingPellets)

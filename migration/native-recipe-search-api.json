@@ -1,0 +1,40 @@
+{
+  "gtceu_reference_commit": "c72dc16b52795cbb0456b6e15e13cc4a85c0ed1b",
+  "reason": "GT 1.21 replaces GTRecipeLookup with RecipeDB and its public nested RecipeIterator. Core input grouping must preserve independent ME slots, physical buses, shared fluids and ghost circuits.",
+  "native_entrypoint": "GTRecipeType.searchRecipe(IRecipeCapabilityHolder, Predicate<GTRecipe>)",
+  "native_iterator": "RecipeDB.RecipeIterator",
+  "replacement_sources": [
+    "src/main/java/org/gtlcore/gtlcore/mixin/gtm/api/recipe/GTRecipeLookupMixin.java",
+    "src/main/java/org/gtlcore/gtlcore/api/recipe/IRecipeIterator.java",
+    "src/main/java/org/gtlcore/gtlcore/api/recipe/NativeGroupedRecipeIterator.java",
+    "src/main/java/org/gtlcore/gtlcore/api/recipe/IMultipleRecipeSearch.java"
+  ],
+  "retired_mixin_targets": [
+    "com.gregtechceu.gtceu.api.recipe.lookup.RecipeIterator",
+    "com.gregtechceu.gtceu.api.recipe.lookup.GTRecipeLookup"
+  ],
+  "component_fluid_index": {
+    "registration": "NativeRecipeSearchIndex.register(IEventBus) during common setup, after GT native ingredient registration",
+    "production_registration": "src/main/java/org/gtlcore/gtlcore/common/CommonProxy.java",
+    "implementation": "Public MapIngredientTypeManager registrations; quantities are unwrapped, each matching component predicate gets its own lookup key, weak predicate references allow obsolete databases to be collected.",
+    "reason": "Equivalent fluid identities use different direct/tag HolderSets, and partial component predicates may match keys with additional components; the native hash/index cannot discover all overlapping predicates.",
+    "gtceu_java_changes": false
+  },
+  "additions_search_callers": [
+    "api/machine/logic/MutableRecipesLogic.kt",
+    "api/machine/logic/GTLAddMultipleRecipesLogic.kt",
+    "api/machine/logic/GTLAddMultipleTypeRecipesLogic.kt",
+    "api/machine/logic/GTLAddMultipleTypeWirelessRecipesLogic.kt",
+    "common/machine/multiblock/controller/ArcanicAstrograph.kt",
+    "common/machine/multiblock/controller/BiologicalSimulationLaboratory.kt",
+    "common/machine/multiblock/controller/TaixuTurbidArray.kt"
+  ],
+  "validation_scope": "Selected real production search classes and both composed Core/Additions Mixins are loaded with native GT and NeoForge. Mutable multiple-mode behavior is checked using a native RecipeLogic fixture implementing IMultipleRecipeSearch; the complete Additions MutableRecipesLogic and its callers are not yet compiled or run. Full production component-index performance has not been profiled.",
+  "preserved_behavior": [
+    "Native ordinary-machine and colored input routing",
+    "Independent Core item bus and ME slot groups with shared fluids/catalysts/circuit inputs",
+    "One candidate per group or multiple candidates according to recipe logic mode",
+    "Stable recipe-ID deduplication, reset, repeated hasNext and isolated concurrent holders",
+    "Custom recipe runners only when no accepted indexed or cached candidate exists"
+  ]
+}

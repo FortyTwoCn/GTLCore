@@ -1,6 +1,5 @@
 package org.gtlcore.gtlcore.api.machine;
 
-import org.gtlcore.gtlcore.common.machine.multiblock.electric.TransfiniteComputationArrayMachine;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -32,7 +31,7 @@ public final class MachineStartupTickBudget {
         synchronized (LEVEL_BUDGETS) {
             LevelBudget levelBudget = LEVEL_BUDGETS.computeIfAbsent(level, ignored -> new LevelBudget());
             levelBudget.beginTick(level, level.getGameTime(), normalBudget, aeBudget, timeBudgetMillis);
-            if (machine instanceof TransfiniteComputationArrayMachine) {
+            if (machine instanceof IStartupCriticalMachine) {
                 levelBudget.critical++;
                 return true;
             }

@@ -21,8 +21,9 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
-import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.CraftingJobStatusPacket;
+import net.neoforged.neoforge.network.PacketDistributor;
+import appeng.core.network.clientbound.CraftingJobStatusPacket;
+import net.minecraft.core.component.DataComponents;
 import appeng.crafting.CraftingLink;
 import appeng.crafting.execution.CraftingCpuHelper;
 import appeng.crafting.execution.CraftingSubmitResult;
@@ -100,7 +101,7 @@ public final class GraphCpuController {
                         "[Graph Crafting] submit rejected plan={} target={} amount={} recipe={} binding={} reason={} detail={} provider_revision={} captured_current={} selected_slots={} selected_outputs={} catalog_invalidated=true",
                         view.id(), plan.target(), plan.amount(), recipe, selected.binding(), preparedAdapter.bindingFailure(), preparedAdapter.bindingDetail(),
                         ((GraphRequestTracker) grid.getCraftingService()).gtlcore$graphProviderGeneration(),
-                        captured == null ? "absent" : PatternFingerprint.of(captured), selected.slots(), selected.executionOutputs());
+                        captured == null ? "absent" : PatternFingerprint.of(captured, host.level().registryAccess()), selected.slots(), selected.executionOutputs());
                 return CraftingSubmitResult.INCOMPLETE_PLAN;
             }
         }
@@ -193,7 +194,7 @@ public final class GraphCpuController {
         // Match the existing GTL named-book completion convention without
         // inventing the marker as physical output or dropping other returns.
         if (runtime.plan().target() instanceof AEItemKey item && item.getItem() == Items.WRITTEN_BOOK &&
-                item.hasTag() && item.getTag().contains("display"))
+                (item.get(DataComponents.CUSTOM_NAME) != null || item.get(DataComponents.LORE) != null || item.get(DataComponents.DYED_COLOR) != null))
             runtime.completePlaceholder();
         usedOps[2] = usedOps[1];
         usedOps[1] = usedOps[0];
@@ -303,7 +304,7 @@ public final class GraphCpuController {
     public void read(CompoundTag parent) {
         CompoundTag tag = parent.getCompound(GraphJobCodec.NBT_KEY);
         try {
-            runtime = new GraphJobRuntime<>(GraphJobCodec.read(tag));
+            runtime = new GraphJobRuntime<>(GraphJobCodec.read(tag, host.level().registryAccess()));
             link = new CraftingLink(tag.getCompound("link"), host.cpu());
             adapter = new GtlExecutionAdapter(host, link);
             tracker = new ElapsedTimeTracker(tag.getCompound("time"));
@@ -335,7 +336,7 @@ public final class GraphCpuController {
             parent.remove(GraphJobCodec.NBT_KEY);
             return;
         }
-        CompoundTag tag = GraphJobCodec.write(runtime.snapshot());
+        CompoundTag tag = GraphJobCodec.write(runtime.snapshot(), host.level().registryAccess());
         CompoundTag linkTag = new CompoundTag();
         link.writeToNBT(linkTag);
         tag.put("link", linkTag);
@@ -444,8 +445,8 @@ public final class GraphCpuController {
     private void notifyOwner(CraftingJobStatusPacket.Status status) {
         if (playerId == null || runtime == null) return;
         ServerPlayer player = IPlayerRegistry.getConnected(host.level().getServer(), playerId);
-        if (player != null) NetworkHandler.instance().sendTo(new CraftingJobStatusPacket(link.getCraftingID(),
-                runtime.plan().target(), runtime.plan().amount(), runtime.remainingDelivery(), status), player);
+        if (player != null) PacketDistributor.sendToPlayer(player, new CraftingJobStatusPacket(link.getCraftingID(),
+                runtime.plan().target(), runtime.plan().amount(), runtime.remainingDelivery(), status));
     }
 
     private void clearReplan() {
@@ -584,14 +585,14 @@ public final class GraphCpuController {
         }
     }
 
-    private static Map<AEKey, List<String>> bindingSignatures(CraftingService service, Set<AEKey> keys) {
+    private Map<AEKey, List<String>> bindingSignatures(CraftingService service, Set<AEKey> keys) {
         Map<AEKey, List<String>> result = new LinkedHashMap<>();
         for (AEKey key : keys) {
             List<String> values = new ArrayList<>();
             for (var pattern : service.getCraftingFor(key)) {
                 int priority = Integer.MIN_VALUE;
                 for (var provider : service.getProviders(pattern)) priority = Math.max(priority, provider.getPatternPriority());
-                values.add(PatternFingerprint.of(pattern) + ':' + priority);
+                values.add(PatternFingerprint.of(pattern, host.level().registryAccess()) + ':' + priority);
             }
             result.put(key, List.copyOf(values));
         }

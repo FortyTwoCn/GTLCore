@@ -1,11 +1,12 @@
 package org.gtlcore.gtlcore.mixin.gtm.recipe.change;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.data.recipe.serialized.chemistry.PlatGroupMetalsRecipes;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -27,7 +28,7 @@ public abstract class PlatGroupMetalsRecipesMixin {
      * @reason
      */
     @Overwrite(remap = false)
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         // Primary Chain
 
         // Platinum Group Sludge Production
@@ -67,16 +68,19 @@ public abstract class PlatGroupMetalsRecipesMixin {
                 .outputFluids(AquaRegia.getFluid(3000))
                 .save(provider);
 
-        CENTRIFUGE_RECIPES.recipeBuilder("pgs_separation").duration(20).EUt(VA[HV])
+        {
+            var gtlRecipeBuilder70 = CENTRIFUGE_RECIPES.recipeBuilder("pgs_separation").duration(20).EUt(VA[HV])
                 .inputItems(dust, PlatinumGroupSludge, 6)
-                .inputFluids(AquaRegia.getFluid(1200))
-                .chancedOutput(dust, PlatinumSlag, 6, 7500, 500)
-                .chancedOutput(dust, PlatinumRaw, 4, 8000, 500)
-                .chancedOutput(dust, PalladiumRaw, 4, 8000, 500)
-                .chancedOutput(dust, PlatinumSludgeResidue, 2, 8500, 500)
-                .chancedOutput(dustTiny, InertMetalMixture, 4, 9000, 500)
-                .chancedOutput(dustTiny, RarestMetalMixture, 1, 9000, 100)
+                .inputFluids(AquaRegia.getFluid(1200));
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder70, dust, PlatinumSlag, 6, 7500, 500);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder70, dust, PlatinumRaw, 4, 8000, 500);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder70, dust, PalladiumRaw, 4, 8000, 500);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder70, dust, PlatinumSludgeResidue, 2, 8500, 500);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder70, dustTiny, InertMetalMixture, 4, 9000, 500);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder70, dustTiny, RarestMetalMixture, 1, 9000, 100);
+            gtlRecipeBuilder70
                 .save(provider);
+        }
 
         BLAST_RECIPES.recipeBuilder("leach_residue")
                 .inputItems(dust, PlatinumSlag, 6)
@@ -220,15 +224,18 @@ public abstract class PlatGroupMetalsRecipesMixin {
                 .outputItems(dust, Salt, 4)
                 .duration(60).EUt(VA[LV]).save(provider);
 
-        SIFTER_RECIPES.recipeBuilder("rhodium_filter_cake")
-                .inputItems(dust, RhodiumNitrate, 13)
-                .chancedOutput(dust, RhodiumFilterCake, 8000, 200)
-                .chancedOutput(dust, RhodiumFilterCake, 8000, 200)
-                .chancedOutput(dust, RhodiumFilterCake, 6000, 100)
-                .chancedOutput(dust, RhodiumFilterCake, 6000, 100)
-                .chancedOutput(dust, RhodiumFilterCake, 4000, 50)
-                .chancedOutput(dust, RhodiumFilterCake, 4000, 50)
+        {
+            var gtlRecipeBuilder223 = SIFTER_RECIPES.recipeBuilder("rhodium_filter_cake")
+                .inputItems(dust, RhodiumNitrate, 13);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder223, dust, RhodiumFilterCake, 8000, 200);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder223, dust, RhodiumFilterCake, 8000, 200);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder223, dust, RhodiumFilterCake, 6000, 100);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder223, dust, RhodiumFilterCake, 6000, 100);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder223, dust, RhodiumFilterCake, 4000, 50);
+            GTLRecipeContents.chancedOutput(gtlRecipeBuilder223, dust, RhodiumFilterCake, 4000, 50);
+            gtlRecipeBuilder223
                 .duration(50).EUt(VA[LV]).save(provider);
+        }
 
         MIXER_RECIPES.recipeBuilder("rhodium_filter_cake_solution")
                 .inputItems(dust, RhodiumFilterCake, 6)
@@ -288,9 +295,9 @@ public abstract class PlatGroupMetalsRecipesMixin {
 
         CHEMICAL_RECIPES.recipeBuilder("iridium_chloride_separation").duration(100).EUt(GTValues.VA[1])
                 .inputItems(TagPrefix.dust, GTMaterials.IridiumChloride, 4)
-                .inputFluids(GTMaterials.Hydrogen.getFluid(3000L))
+                .inputFluids(GTMaterials.Hydrogen.getFluid(3000))
                 .outputItems(TagPrefix.dust, GTMaterials.Iridium)
-                .outputFluids(GTMaterials.HydrochloricAcid.getFluid(3000L))
+                .outputFluids(GTMaterials.HydrochloricAcid.getFluid(3000))
                 .save(provider);
     }
 }

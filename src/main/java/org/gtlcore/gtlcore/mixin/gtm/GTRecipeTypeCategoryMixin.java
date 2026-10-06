@@ -1,179 +1,92 @@
 package org.gtlcore.gtlcore.mixin.gtm;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 import org.gtlcore.gtlcore.integration.jei.GTRecipeJeiTiming;
-
-import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
-import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
+import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
-import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeTypeCategory;
-import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeWrapper;
-
-import com.lowdragmc.lowdraglib.Platform;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.BuiltInRegistries;
-
+import com.gregtechceu.gtceu.integration.recipeviewer.jei.recipe.GTRecipeJEICategory;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-@Mixin(GTRecipeTypeCategory.class)
+/** Keep native categories and representative recipes; batch unique catalyst links without legacy wrappers. */
+@Mixin(value = GTRecipeJEICategory.class, remap = false)
 public abstract class GTRecipeTypeCategoryMixin {
+    @Shadow @Final public static Function<GTRecipeCategory, RecipeType<GTRecipe>> TYPES;
+    @Unique private static final org.slf4j.Logger gtlcore$LOGGER = org.slf4j.LoggerFactory.getLogger("GTLCore/JEI");
 
-    @Shadow(remap = false)
-    @Final
-    public static Function<GTRecipeType, RecipeType<GTRecipeWrapper>> TYPES;
-
-    @Inject(method = "registerRecipes", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "registerRecipes", at = @At("HEAD"), cancellable = true, require = 1)
     private static void gtlcore$registerRecipes(IRecipeRegistration registration, CallbackInfo ci) {
-        if (!gtlcore$isOptimizationEnabled()) {
-            return;
-        }
+        if (!GTRecipeJeiTiming.isEnabled()) return;
         ci.cancel();
-
-        var connection = Objects.requireNonNull(Minecraft.getInstance().getConnection());
-        var recipeManager = connection.getRecipeManager();
-        int registeredTypes = 0;
-        int registeredRecipes = 0;
-        long startedNanos = System.nanoTime();
+        long started = System.nanoTime();
         GTRecipeJeiTiming.reset();
-        long wrapperNanos = 0;
-        long registrationNanos = 0;
-
-        for (net.minecraft.world.item.crafting.RecipeType<?> vanillaRecipeType : BuiltInRegistries.RECIPE_TYPE) {
-            if (!(vanillaRecipeType instanceof GTRecipeType recipeType) || !gtlcore$isVisible(recipeType)) {
-                continue;
-            }
-
-            List<GTRecipe> recipes = recipeManager.getAllRecipesFor(recipeType);
-            List<GTRecipe> representatives = recipeType.isScanner() ? recipeType.getRepresentativeRecipes() : List.of();
-            if (recipes.isEmpty() && representatives.isEmpty()) {
-                continue;
-            }
-
-            long typeStartedNanos = System.nanoTime();
-            List<GTRecipeWrapper> wrappers = new ArrayList<>(recipes.size() + representatives.size());
-            for (GTRecipe recipe : recipes) {
-                wrappers.add(gtlcore$createTimedWrapper(recipe));
-            }
-            for (GTRecipe recipe : representatives) {
-                wrappers.add(gtlcore$createTimedWrapper(recipe));
-            }
-            long registrationStartedNanos = System.nanoTime();
-            registration.addRecipes(TYPES.apply(recipeType), wrappers);
-            GTRecipeJeiTiming.record(recipeType, GTRecipeJeiTiming.Phase.REGISTRATION,
-                    System.nanoTime() - registrationStartedNanos);
-
-            long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - typeStartedNanos);
-            GTRecipeJeiTiming.Timing timing = GTRecipeJeiTiming.get(recipeType);
-            wrapperNanos += timing.wrapperNanos();
-            registrationNanos += timing.registrationNanos();
-            if (elapsedMillis >= gtlcore$slowTypeWarningMillis()) {
-                GTLCore.LOGGER.warn(
-                        "Slow GTCEu JEI recipe type registration: type={}, recipes={}, wrapper_ms={}, " +
-                                "registration_ms={}, elapsed_ms={}",
-                        recipeType.registryName, wrappers.size(), gtlcore$toMillis(timing.wrapperNanos()),
-                        gtlcore$toMillis(timing.registrationNanos()),
-                        elapsedMillis);
-            }
-            registeredTypes++;
-            registeredRecipes += wrappers.size();
+        var subcategories = new ArrayList<GTRecipeCategory>();
+        int categories = 0, recipes = 0;
+        // Native virtual/scanner recipes can add entries to subcategories: finish main types first.
+        for (var category : GTRegistries.RECIPE_CATEGORIES) {
+            if (!category.shouldRegisterDisplays()) continue;
+            var type = category.getRecipeType();
+            if (category != type.getCategory()) { subcategories.add(category); continue; }
+            type.buildRepresentativeRecipes();
+            recipes += gtlcore$registerCategory(registration, category);
+            categories++;
         }
-
-        GTLCore.LOGGER.info(
-                "Optimized GTCEu JEI recipe registration: types={}, recipes={}, wrapper_ms={}, " +
-                        "registration_ms={}, elapsed_ms={}",
-                registeredTypes, registeredRecipes, gtlcore$toMillis(wrapperNanos),
-                gtlcore$toMillis(registrationNanos),
-                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNanos));
+        for (var category : subcategories) {
+            recipes += gtlcore$registerCategory(registration, category);
+            categories++;
+        }
+        gtlcore$LOGGER.info("Optimized native GT JEI registration: categories={}, recipes={}, elapsed_ms={}",
+                categories, recipes, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started));
     }
 
-    @Inject(method = "registerRecipeCatalysts", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void gtlcore$registerRecipeCatalysts(IRecipeCatalystRegistration registration, CallbackInfo ci) {
-        if (!gtlcore$isOptimizationEnabled()) {
-            return;
-        }
+    @Unique
+    private static int gtlcore$registerCategory(IRecipeRegistration registration, GTRecipeCategory category) {
+        long started = System.nanoTime();
+        var type = category.getRecipeType();
+        var recipes = List.copyOf(type.getRecipesInCategory(category));
+        long copied = System.nanoTime();
+        GTRecipeJeiTiming.record(type, GTRecipeJeiTiming.Phase.WRAPPER, copied - started);
+        registration.addRecipes(TYPES.apply(category), recipes);
+        long registered = System.nanoTime();
+        GTRecipeJeiTiming.record(type, GTRecipeJeiTiming.Phase.REGISTRATION, registered - copied);
+        int threshold = ConfigHolder.INSTANCE == null ? ConfigHolder.DEFAULT_GTCEU_JEI_SLOW_RECIPE_TYPE_WARNING_MILLIS :
+                ConfigHolder.INSTANCE.debugLogging.gtceuJeiSlowRecipeTypeWarningMillis;
+        if (TimeUnit.NANOSECONDS.toMillis(registered - started) >= threshold)
+            gtlcore$LOGGER.warn("Slow native GT JEI category: category={}, recipes={}, snapshot_ms={}, registration_ms={}, elapsed_ms={}",
+                    category.id, recipes.size(), TimeUnit.NANOSECONDS.toMillis(copied - started),
+                    TimeUnit.NANOSECONDS.toMillis(registered - copied), TimeUnit.NANOSECONDS.toMillis(registered - started));
+        return recipes.size();
+    }
+
+    @Inject(method = "registerRecipeCatalysts", at = @At("HEAD"), cancellable = true, require = 1)
+    private static void gtlcore$registerCatalysts(IRecipeCatalystRegistration registration, CallbackInfo ci) {
+        if (!GTRecipeJeiTiming.isEnabled()) return;
         ci.cancel();
-
-        int registeredMachines = 0;
-        int registeredLinks = 0;
-        long startedNanos = System.nanoTime();
-        for (MachineDefinition machine : GTRegistries.MACHINES) {
-            GTRecipeType[] machineRecipeTypes = machine.getRecipeTypes();
-            if (machineRecipeTypes == null || machineRecipeTypes.length == 0) {
-                continue;
-            }
-
-            Set<GTRecipeType> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-            List<RecipeType<?>> jeiRecipeTypes = new ArrayList<>(machineRecipeTypes.length);
-            for (GTRecipeType recipeType : machineRecipeTypes) {
-                if (recipeType != null && seen.add(recipeType) && gtlcore$isVisible(recipeType)) {
-                    jeiRecipeTypes.add(TYPES.apply(recipeType));
+        int machines = 0, links = 0;
+        long started = System.nanoTime();
+        for (var machine : GTRegistries.MACHINES) {
+            var categories = new LinkedHashSet<RecipeType<?>>();
+            for (var type : machine.getRecipeTypes()) {
+                for (var category : type.getCategories()) {
+                    if (!category.isXEIVisible() && !GTCEu.isDev()) continue;
+                    // The native furnace category is vanilla smelting, not a GT-only category.
+                    categories.add(GTRecipeJEICategory.machineType(category));
                 }
             }
-            if (jeiRecipeTypes.isEmpty()) {
-                continue;
-            }
-
-            RecipeType<?>[] recipeTypes = jeiRecipeTypes.toArray(RecipeType[]::new);
-            registration.addRecipeCatalyst(machine.asStack(), recipeTypes);
-            registeredMachines++;
-            registeredLinks += recipeTypes.length;
+            if (categories.isEmpty()) continue;
+            registration.addRecipeCatalyst(machine.asStack(), categories.toArray(RecipeType[]::new));
+            machines++; links += categories.size();
         }
-
-        GTLCore.LOGGER.info("Optimized GTCEu JEI catalyst registration: machines={}, links={}, elapsed_ms={}",
-                registeredMachines, registeredLinks,
-                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNanos));
-    }
-
-    @Unique
-    private static boolean gtlcore$isOptimizationEnabled() {
-        return ConfigHolder.INSTANCE == null || ConfigHolder.INSTANCE.optimizeGtceuJeiRegistration;
-    }
-
-    @Unique
-    private static boolean gtlcore$isVisible(GTRecipeType recipeType) {
-        GTRecipeTypeUI recipeUI = recipeType.getRecipeUI();
-        return recipeUI != null && (Platform.isDevEnv() || recipeUI.isXEIVisible());
-    }
-
-    @Unique
-    private static int gtlcore$slowTypeWarningMillis() {
-        return ConfigHolder.INSTANCE == null ? ConfigHolder.DEFAULT_GTCEU_JEI_SLOW_RECIPE_TYPE_WARNING_MILLIS :
-                ConfigHolder.INSTANCE.debugLogging.gtceuJeiSlowRecipeTypeWarningMillis;
-    }
-
-    @Unique
-    private static GTRecipeWrapper gtlcore$createTimedWrapper(GTRecipe recipe) {
-        long startedNanos = System.nanoTime();
-        GTRecipeWrapper wrapper = new GTRecipeWrapper(recipe);
-        GTRecipeJeiTiming.record(recipe.recipeType, GTRecipeJeiTiming.Phase.WRAPPER,
-                System.nanoTime() - startedNanos);
-        return wrapper;
-    }
-
-    @Unique
-    private static long gtlcore$toMillis(long nanos) {
-        return TimeUnit.NANOSECONDS.toMillis(nanos);
+        gtlcore$LOGGER.info("Optimized native GT JEI catalysts: machines={}, links={}, elapsed_ms={}",
+                machines, links, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started));
     }
 }

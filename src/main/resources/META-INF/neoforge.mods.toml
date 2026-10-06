@@ -1,0 +1,111 @@
+modLoader = "javafml"
+loaderVersion = "[${loader_version},)"
+license = "${mod_license}"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${version}"
+displayName = "${mod_name}"
+displayURL = "${mod_url}"
+authors = "${mod_author}"
+description = "GregTech Leisure"
+
+[[mixins]]
+config = "${mod_id}.mixin.json"
+
+[[mixins]]
+config = "${mod_id}.ae2-jei.mixins.json"
+requiredMods = ["ae2jeiintegration", "jei"]
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neo_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.21.2)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "gtceu"
+type = "required"
+versionRange = "[${gtceu_version},8.1)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "ae2"
+type = "required"
+versionRange = "[${ae2_version},20)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "gtmthings"
+type = "required"
+versionRange = "[1.6.0,1.7)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "ad_astra"
+type = "required"
+versionRange = "[1.16.26,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "ad_astra_rocketed"
+type = "required"
+versionRange = "[1.0.5-gtl.1]"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "ae2wtlib"
+type = "required"
+versionRange = "[19.2.0,19.3)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Skyblock machine structures and recipes reference mae2:256x_crafting_accelerator.
+# Build the native MAE2 source adaptation from migration/dependencies/mae2.
+[[dependencies.${mod_id}]]
+modId = "mae2"
+type = "required"
+versionRange = "[2.1.0-gtl.1,3)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "travelanchors"
+type = "required"
+versionRange = "[6.0.0-gtl.1,7)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "ae2jeiintegration"
+type = "optional"
+versionRange = "[1.2.0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+modId = "avaritia"
+type = "required"
+versionRange = "[1.4.2,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "wildcard_pattern"
+type = "optional"
+versionRange = "[0.1.2-gtl.1,0.2)"
+ordering = "AFTER"
+side = "BOTH"

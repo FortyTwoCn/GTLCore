@@ -1,0 +1,41 @@
+{
+  "name": "ad_astra_rocketed",
+  "mod_id": "ad_astra_rocketed",
+  "source_property": "adastrarocketed_source",
+  "source_url": "https://github.com/celsiusqc/AdAstraRocketed",
+  "revision": "71c1fc449a35125f253930d15c5850b8747f3ea6",
+  "version": "1.0.5-gtl.1",
+  "patch_file": "native-port.patch",
+  "patch_sha256": "d3c174767f9527e8b1b5df32f48aaf22b2b763bed2f550b2333167467425e3d6",
+  "licenses_sha256": {
+    "forge/src/main/resources/META-INF/mods.toml": "589469655f98228b6337350d6db8d05f4c000dbda3a823bf7215077fbea196d2",
+    "README.md": "bc58b9ce98f49f08e49a56b69e45dd64e6a65a2cc52f0025d91b845bf6d91f35"
+  },
+  "source_files_sha256": {
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/client/AdAstraRocketedClient.java": "8a72b37f6530b294d9721fc308d35142e7afd1f94a5471ef45d519e07649a778",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/client/models/entities/RocketedRocketModel.java": "deb91c64be7c308ac2fbeb08bf5f4f7f4137430c69aaa47d9e7950629b780374",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/client/renderers/entities/AdAstraRocketedRenderer.java": "aebbb595dcdfd442ce3b417dca6eaf4d59487cae271d94afd973a8912b420a62",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/common/entities/RocketedRocket.java": "0d52481893d70a39b565bb37e69452581b41674b53c093bdef3592fcaf4512ce",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/common/registry/ModCreativeTab.java": "c700251c23162135715fd97fdda37e3f879eae39e820a4a7dc0e3feaf590283d",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/common/registry/ModEntityTypes.java": "d202638933bc4b2f0ac64e9e0b3dfc869b090500a2f80e48eb1fdc728d4b5cd8",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/common/registry/ModFluidTags.java": "20a9153bb29e558165231e1b01b2cafee914cca60fa49816c5b412988f8e9b31",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/common/registry/ModItems.java": "9a2321aa67664e108b41de3a9ef6694f3e2bdd53f388275c5dacec944819dbd9",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/common/tags/AdAstraRocketed.java": "54e8e1d3259e5ff30b1a26f499f965c90796124460b770cddcd756f0df7e9535",
+    "src/main/java/net/celsiusqc/ad_astra_rocketed/neoforge/AdAstraRocketedNeoForge.java": "c9a29591ed71fd6b0a3d272a52409975baec50908436accd9a8a3b9a1deeb90b",
+    "src/main/resources/META-INF/neoforge.mods.toml": "38111f1f0afce2eb76a93b8f9423254b955be04c866567ecad46d33c93da63e7",
+    "src/main/resources/assets/ad_astra_rocketed/lang/en_us.json": "a1d6cd2963b5beb6f74809ff3b89b511ae141fab09904f29f7d2d748f65e82a9",
+    "src/main/resources/assets/ad_astra_rocketed/models/item/tier_5_rocket.json": "a1e06942f393072e8a8d4908d4be3c9b821b000eee4b6ef273bfe60db82759c3",
+    "src/main/resources/assets/ad_astra_rocketed/models/item/tier_6_rocket.json": "a1e06942f393072e8a8d4908d4be3c9b821b000eee4b6ef273bfe60db82759c3",
+    "src/main/resources/assets/ad_astra_rocketed/models/item/tier_7_rocket.json": "a1e06942f393072e8a8d4908d4be3c9b821b000eee4b6ef273bfe60db82759c3",
+    "src/main/resources/assets/ad_astra_rocketed/textures/entity/rocket/tier_5_rocket.png": "bea9352d58d4d6edd7c5a4d5d13740797c180a89eae4fd82efed6cf46c852c48",
+    "src/main/resources/assets/ad_astra_rocketed/textures/entity/rocket/tier_6_rocket.png": "bea9352d58d4d6edd7c5a4d5d13740797c180a89eae4fd82efed6cf46c852c48",
+    "src/main/resources/assets/ad_astra_rocketed/textures/entity/rocket/tier_7_rocket.png": "1988671d3d48a43507cdcd5db72378eace702888b5a6c831337233319fa72b5d",
+    "src/main/resources/data/ad_astra_rocketed/recipe/nasa_workbench/default/tier_5_rocket_from_nasa_workbench.json": "ed8ed2bd6ae8ca429a397f1d32b2975593d1e7d1431e79f127059552b16c718c",
+    "src/main/resources/data/ad_astra_rocketed/recipe/nasa_workbench/default/tier_6_rocket_from_nasa_workbench.json": "78bed73afc75a9fe8cfcf48b6beb1eb3ba2c54d6a6b7e58c7fb1b4fda7518178",
+    "src/main/resources/data/ad_astra_rocketed/recipe/nasa_workbench/default/tier_7_rocket_from_nasa_workbench.json": "7191e877cae5d7e3c55d740ea91a70dae02358ca3f9de785d33c8bad061cd7ba",
+    "src/main/resources/data/ad_astra_rocketed/tags/fluid/tier_5_rocket_fuel.json": "8b2bf36172d245046be3dbdacbd092526f9a94188471e07ec793e01e91418727",
+    "src/main/resources/data/ad_astra_rocketed/tags/fluid/tier_6_rocket_fuel.json": "8b2bf36172d245046be3dbdacbd092526f9a94188471e07ec793e01e91418727",
+    "src/main/resources/data/ad_astra_rocketed/tags/fluid/tier_7_rocket_fuel.json": "8b2bf36172d245046be3dbdacbd092526f9a94188471e07ec793e01e91418727",
+    "src/main/resources/icon.png": "cf53e437956b01f27ccba873303b730228677f2b960b31cdca13f3b74c59f023"
+  }
+}

@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+}
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs { from(files('../../../gradle/libs.versions.toml')) }
+        forge { from(files('../../../gradle/forge.versions.toml')) }
+    }
+}
+rootProject.name = 'ae2wtlib-native'
+// Use the published native API coordinate so JarJar selects one copy shared with ExtendedAE.
+include 'ae2wtlib_api'
+project(':ae2wtlib_api').projectDir = file('api')

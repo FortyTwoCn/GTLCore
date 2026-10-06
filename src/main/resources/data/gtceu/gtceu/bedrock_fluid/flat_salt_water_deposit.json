@@ -1,0 +1,14 @@
+{
+  "weight": 10,
+  "yield": {
+    "min": 50,
+    "max": 100
+  },
+  "depletion_amount": 1,
+  "depletion_chance": 100,
+  "depleted_yield": 15,
+  "fluid": "gtceu:salt_water",
+  "dimension_filter": [
+    "kubejs:flat"
+  ]
+}

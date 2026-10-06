@@ -63,7 +63,7 @@ public abstract class TerminalDisplayMenuMixin implements PreciseDisplayMenu {
     @Final
     private ITerminalHost host;
     @Shadow(remap = false)
-    private IGridNode networkNode;
+    public abstract IGridNode getGridNode();
 
     @Shadow(remap = false)
     protected abstract boolean showsCraftables();
@@ -134,7 +134,7 @@ public abstract class TerminalDisplayMenuMixin implements PreciseDisplayMenu {
         }
         // An addon may implement a dynamic visibility predicate. Preserve its native refresh behavior.
         if (!gtlcore$nativeVisibility) return ImmutableSet.copyOf(original.call(menu));
-        IGridNode node = networkNode;
+        IGridNode node = getGridNode();
         if (node == null && host instanceof IActionHost actionHost) node = actionHost.getActionableNode();
         if (!showsCraftables() || node == null || !node.isActive()) return ImmutableSet.of();
         if (!(node.getGrid().getCraftingService() instanceof TerminalCraftables source)) {

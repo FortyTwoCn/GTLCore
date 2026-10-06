@@ -1,0 +1,14 @@
+{
+  "weight": 10,
+  "yield": {
+    "min": 80,
+    "max": 260
+  },
+  "depletion_amount": 1,
+  "depletion_chance": 100,
+  "depleted_yield": 40,
+  "fluid": "gtceu:charcoal_byproducts",
+  "dimension_filter": [
+    "kubejs:titan"
+  ]
+}

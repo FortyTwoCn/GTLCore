@@ -14,7 +14,7 @@ import appeng.api.storage.MEStorage;
 import appeng.api.storage.cells.StorageCell;
 import appeng.blockentity.storage.IOPortBlockEntity;
 import appeng.core.stats.AeStats;
-import appeng.util.ConfigManager;
+import appeng.api.util.IConfigManager;
 import com.google.common.primitives.Ints;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +27,7 @@ public abstract class IOPortBlockEntityMixin {
 
     @Shadow(remap = false)
     @Final
-    private ConfigManager manager;
+    private IConfigManager manager;
 
     @Shadow(remap = false)
     @Final

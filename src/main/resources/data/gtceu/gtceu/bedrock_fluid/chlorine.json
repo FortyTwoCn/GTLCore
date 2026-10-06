@@ -1,0 +1,14 @@
+{
+  "weight": 20,
+  "yield": {
+    "min": 180,
+    "max": 420
+  },
+  "depletion_amount": 1,
+  "depletion_chance": 100,
+  "depleted_yield": 40,
+  "fluid": "gtceu:chlorine",
+  "dimension_filter": [
+    "kubejs:enceladus"
+  ]
+}

@@ -5,6 +5,7 @@ import org.gtlcore.gtlcore.mixin.ae2.logic.ElapsedTimeTrackerAccessor;
 import org.gtlcore.gtlcore.utils.NumberUtils;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
@@ -76,10 +77,10 @@ final class TransfiniteCraftingJob {
 
     TransfiniteCraftingJob(CompoundTag data, TransfiniteCraftingLogic logic) {
         this.link = new CraftingLink(data.getCompound(NBT_LINK), logic.getCpu());
-        this.finalOutput = GenericStack.readTag(data.getCompound(NBT_FINAL_OUTPUT));
+        this.finalOutput = GenericStack.readTag(logic.getCpu().getLevel().registryAccess(), data.getCompound(NBT_FINAL_OUTPUT));
         this.remainingAmount = data.getLong(NBT_REMAINING_AMOUNT);
         this.waitingFor = new ListCraftingInventory(logic::onWaitingForChanged);
-        this.waitingFor.readFromNBT(data.getList(NBT_WAITING_FOR, Tag.TAG_COMPOUND));
+        this.waitingFor.readFromNBT(data.getList(NBT_WAITING_FOR, Tag.TAG_COMPOUND), logic.getCpu().getLevel().registryAccess());
         this.timeTracker = new ElapsedTimeTracker(data.getCompound(NBT_TIME_TRACKER));
         this.playerId = data.contains(NBT_PLAYER_ID, Tag.TAG_INT) ? data.getInt(NBT_PLAYER_ID) : null;
         this.suspended = data.getBoolean(CraftingJobSuspensionState.NBT_SUSPENDED);
@@ -87,7 +88,7 @@ final class TransfiniteCraftingJob {
         ListTag taskList = data.getList(NBT_TASKS, Tag.TAG_COMPOUND);
         for (int i = 0; i < taskList.size(); i++) {
             CompoundTag taskTag = taskList.getCompound(i);
-            AEItemKey pattern = AEItemKey.fromTag(taskTag);
+            AEItemKey pattern = AEItemKey.fromTag(logic.getCpu().getLevel().registryAccess(), taskTag);
             IPatternDetails details = PatternDetailsHelper.decodePattern(pattern, logic.getCpu().getLevel());
             long progress = taskTag.getLong(NBT_CRAFTING_PROGRESS);
             if (details != null && progress > 0) {
@@ -96,18 +97,18 @@ final class TransfiniteCraftingJob {
         }
     }
 
-    CompoundTag writeToNbt() {
+    CompoundTag writeToNbt(HolderLookup.Provider registries) {
         CompoundTag data = new CompoundTag();
         CompoundTag linkData = new CompoundTag();
         this.link.writeToNBT(linkData);
         data.put(NBT_LINK, linkData);
-        data.put(NBT_FINAL_OUTPUT, GenericStack.writeTag(this.finalOutput));
-        data.put(NBT_WAITING_FOR, this.waitingFor.writeToNBT());
+        data.put(NBT_FINAL_OUTPUT, GenericStack.writeTag(registries, this.finalOutput));
+        data.put(NBT_WAITING_FOR, this.waitingFor.writeToNBT(registries));
         data.put(NBT_TIME_TRACKER, this.timeTracker.writeToNBT());
 
         ListTag taskList = new ListTag();
         for (var entry : this.tasks.object2LongEntrySet()) {
-            CompoundTag taskTag = entry.getKey().getDefinition().toTag();
+            CompoundTag taskTag = entry.getKey().getDefinition().toTag(registries);
             taskTag.putLong(NBT_CRAFTING_PROGRESS, entry.getLongValue());
             taskList.add(taskTag);
         }

@@ -4,36 +4,48 @@ import org.gtlcore.gtlcore.api.gui.MEPatternCatalystUIManager;
 import org.gtlcore.gtlcore.api.gui.PatternCircuitConfigurator;
 import org.gtlcore.gtlcore.api.machine.trait.*;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEPatternTrait;
-import org.gtlcore.gtlcore.common.data.GTLItems;
-import org.gtlcore.gtlcore.common.data.GTLMachines;
 import org.gtlcore.gtlcore.common.item.VirtualIngredientBehavior;
 import org.gtlcore.gtlcore.integration.ae2.AEUtils;
-import org.gtlcore.gtlcore.integration.ae2.widget.AEPatternViewExtendSlotWidget;
-import org.gtlcore.gtlcore.utils.GTLUtil;
-import org.gtlcore.gtlcore.utils.Registries;
 
 import com.gregtechceu.gtceu.api.capability.recipe.*;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
 import com.gregtechceu.gtceu.api.machine.*;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.*;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import com.gregtechceu.gtceu.api.transfer.fluid.FluidHandlerList;
+import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
+import org.gtlcore.gtlcore.integration.ae2.gui.PatternBufferItemSlot;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.value.sync.ItemSlotSyncHandler;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.widgets.layout.Grid;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.slot.SlotGroup;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
+import brachy.modularui.widget.ParentWidget;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.utils.*;
 
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.*;
-import com.lowdragmc.lowdraglib.misc.*;
-import com.lowdragmc.lowdraglib.side.fluid.*;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.LazyManaged;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -43,7 +55,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.implementations.blockentities.PatternContainerGroup;
@@ -53,7 +65,6 @@ import appeng.api.networking.ticking.*;
 import appeng.api.stacks.*;
 import appeng.core.definitions.AEItems;
 import appeng.crafting.pattern.EncodedPatternItem;
-import appeng.crafting.pattern.ProcessingPatternItem;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import it.unimi.dsi.fastutil.Pair;
@@ -66,15 +77,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.gtlcore.gtlcore.api.pattern.AdvancedBlockPattern.foundItem;
 
 public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEPatternBufferPartMachine.class, MEPatternBufferPartMachineBase.MANAGED_FIELD_HOLDER);
 
-    @DescSynced
-    @Persisted
+    @SyncToClient
+    @SaveField
     public boolean isHiddenTerminal = false;
 
     @Override
@@ -97,8 +105,6 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         @Override
         public void setItemDirect(int slotIndex, ItemStack stack) {
             patternInventory.setStackInSlot(slotIndex, stack);
-            patternInventory.onContentsChanged(slotIndex);
-            onPatternChange(slotIndex);
         }
 
         @Override
@@ -113,34 +119,35 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
     protected final int maxPatternCount;
     private final boolean[] hasPatternArray;
-    @DescSynced
+    @SyncToClient
     protected final boolean[] cacheRecipe;
-    @Persisted
+    @SaveField
     protected boolean keepByProduct = false;
-    @DescSynced
-    @Persisted
+    @SyncToClient
+    @SaveField
     private int embeddedCircuitConfig = 1;
-    @DescSynced
-    @Persisted
+    @SyncToClient
+    @SaveField
     private boolean skipExistingCircuitPatterns = true;
 
     // ========================================
     // Inventory
     // ========================================
 
+    @SaveField
+    @SyncToClient
+    private final CustomItemStackHandler patternInventory;
+
+    public CustomItemStackHandler getPatternInventory() { return patternInventory; }
+
+    @SaveField
+    protected final CustomItemStackHandler[] catalystItems;
+
+    @SaveField
+    protected final FluidHandlerList[] catalystFluids;
+
     @Getter
-    @Persisted
-    private final ItemStackTransfer patternInventory;
-
-    @Persisted
-    protected final ItemStackTransfer[] catalystItems;
-
-    @Persisted
-    @LazyManaged
-    protected final FluidTransferList[] catalystFluids;
-
-    @Getter
-    @Persisted
+    @SaveField
     protected final InternalSlot[] internalInventory;
 
     // ========================================
@@ -154,41 +161,51 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
     // ========================================
 
     protected final Int2ReferenceMap<ObjectSet<@NotNull GTRecipe>> recipeMultipleCacheMap;
-    protected final byte[] cacheRecipeCount;
+    @SaveField
+    protected byte[] cacheRecipeCount;
+    @SaveField
+    private final PersistedRecipeCache persistedRecipeCache = new PersistedRecipeCache();
+    private CompoundTag pendingRecipeCache = new CompoundTag();
     private final BiMap<@NotNull IPatternDetails, Integer> patternSlotMap;
     private final Int2ObjectMap<IPatternDetails> slot2PatternMap;
     protected IntConsumer removeSlotFromMap = i -> {};
 
-    public MEPatternBufferPartMachine(IMachineBlockEntity holder, int maxPatternCount, IO io) {
+    public MEPatternBufferPartMachine(BlockEntityCreationInfo holder, int maxPatternCount, IO io) {
         super(holder, io);
 
         this.maxPatternCount = maxPatternCount;
 
         this.hasPatternArray = new boolean[maxPatternCount];
         this.cacheRecipe = new boolean[maxPatternCount];
+        org.gtlcore.gtlcore.integration.ae2.PatternCacheSyncTransformer.bind(getClass());
         this.internalInventory = new InternalSlot[maxPatternCount];
-        this.catalystItems = new ItemStackTransfer[maxPatternCount];
-        this.catalystFluids = new FluidTransferList[maxPatternCount];
+        this.catalystItems = new CustomItemStackHandler[maxPatternCount];
+        this.catalystFluids = new FluidHandlerList[maxPatternCount];
         this.cacheRecipeCount = new byte[maxPatternCount];
 
         this.patternSlotMap = HashBiMap.create();
         this.slot2PatternMap = new Int2ObjectOpenHashMap<>();
         this.recipeMultipleCacheMap = new Int2ReferenceOpenHashMap<>();
 
-        this.patternInventory = new ItemStackTransfer(maxPatternCount);
-        this.patternInventory.setFilter(AEUtils.PROCESS_FILTER);
+        this.patternInventory = new CustomItemStackHandler(maxPatternCount) {
+            @Override public void onContentsChanged(int slot) {
+                super.onContentsChanged(slot);
+                if (!isRemote() && getLevel() != null) onPatternChange(slot);
+                markAsChanged();
+                syncDataHolder.markClientSyncFieldDirty("patternInventory");
+            }
+        };
+        this.patternInventory.setFilter(AEUtils.PROCESS_FILTER::apply);
         Arrays.setAll(internalInventory, this::createInternalSlot);
         Arrays.setAll(catalystItems, i -> {
-            var transfer = new ItemStackTransfer(9);
-            transfer.setFilter(stack -> !(stack.getItem() instanceof ProcessingPatternItem));
+            var transfer = new CustomItemStackHandler(9);
+            transfer.setFilter(stack -> !(stack.getItem() instanceof EncodedPatternItem<?>));
             return transfer;
         });
-        Arrays.setAll(catalystFluids, i -> new FluidTransferList(Stream.generate(() -> (IFluidTransfer) new FluidStorage(16 * FluidHelper.getBucket()))
-                .limit(9)
-                .toList()));
+        Arrays.setAll(catalystFluids, i -> createCatalystTanks());
         Arrays.fill(cacheRecipeCount, (byte) 1);
 
-        this.recipeHandler = createRecipeHandler(io);
+        this.recipeHandler = attachTrait(createRecipeHandler(io));
 
         for (InternalSlot internalSlot : internalInventory) {
             internalSlot.setOnContentsChanged(() -> {
@@ -218,7 +235,10 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
     public void onLoad() {
         super.onLoad();
         if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> {
+            scheduleForNextServerTick(() -> {
+                if (isRemoved()) return;
+                slot2PatternMap.clear();
+                Arrays.fill(hasPatternArray, false);
                 for (int i = 0; i < patternInventory.getSlots(); i++) {
                     var pattern = patternInventory.getStackInSlot(i);
                     var realPattern = getRealPattern(i, pattern);
@@ -227,6 +247,8 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
                         hasPatternArray[i] = true;
                     }
                 }
+                for (int slot = 0; slot < maxPatternCount; slot++) { reCalculateCatalystItemMap(slot); reCalculateCatalystFluidMap(slot); }
+                restoreRecipeCache();
                 reCalculatePatternSlotMap();
                 needPatternSync = true;
             });
@@ -237,8 +259,8 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
                     recipeHandler.getMeItemHandler().notifyListeners();
                 });
                 catalystItems[index].setOnContentsChanged(() -> reCalculateCatalystItemMap(index));
-                for (IFluidTransfer transfer : catalystFluids[index].transfers) {
-                    if (transfer instanceof FluidStorage storage) {
+                for (IFluidHandler transfer : catalystFluids[index].handlers) {
+                    if (transfer instanceof CustomFluidTank storage) {
                         storage.setOnContentsChanged(() -> reCalculateCatalystFluidMap(index));
                     }
                 }
@@ -247,9 +269,10 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
     }
 
     protected void onPatternChange(int index) {
-        if (isRemote()) return;
+        if (isRemote() || destroying) return;
 
         var internalInv = internalInventory[index];
+        internalInv.getCacheManager().clearAllCaches();
         var newPattern = patternInventory.getStackInSlot(index);
         var newPatternDetailsWithOutCircuit = getRealPattern(index, newPattern);
         var oldPatternDetails = slot2PatternMap.get(index);
@@ -263,8 +286,9 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         }
 
         if (oldPatternDetails != null && !oldPatternDetails.equals(newPatternDetailsWithOutCircuit)) {
-            internalInv.getCacheManager().clearAllCaches();
             internalInv.clearVirtualSupply();
+            // A dispatched virtual circuit may own the old cache. Restore the newly decoded circuit afterwards.
+            getRealPattern(index, newPattern);
             removeSlotFromGTRecipeCache(index);
             refundSlot(internalInv.getItemInventory(), internalInv.getFluidInventory());
             AEUtils.reFunds(buffer, getMainNode().getGrid(), actionSource);
@@ -275,12 +299,11 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
     }
 
     @Override
-    public void onMachineRemoved() {
-        super.onMachineRemoved();
-        clearInventory(patternInventory);
-        for (ItemStackTransfer catalystItem : catalystItems) {
-            clearInventory(catalystItem);
-        }
+    public void onMachineDestroyed() {
+        destroying = true;
+        patternInventory.dropInventoryInWorld(getLevel(), getBlockPos());
+        for (CustomItemStackHandler catalystItem : catalystItems) catalystItem.dropInventoryInWorld(getLevel(), getBlockPos());
+        super.onMachineDestroyed();
     }
 
     private void reCalculateCatalystItemMap(int slot) {
@@ -294,7 +317,8 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
             ItemStack stack = catalystItem.getStackInSlot(i);
             if (stack.isEmpty()) continue;
 
-            if (GTLItems.VIRTUAL_INGREDIENT.isIn(stack)) {
+            if (VirtualIngredientBehavior.isVirtualIngredient(stack)) {
+                if (!VirtualIngredientBehavior.isBound(stack)) continue;
                 // A wrapper parked here vouches for its payload without the slot ever holding it. The wrapper itself
                 // is not a catalyst, so it must not reach the catalyst map, or recipes would start matching against
                 // the wrapper item instead of what it stands for.
@@ -305,7 +329,7 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
                 continue;
             }
 
-            itemCatalystInventory.mergeLong(AEItemKey.of(stack), stack.getCount(), Long::sum);
+            itemCatalystInventory.mergeLong(AEItemKey.of(stack), stack.getCount(), Math::addExact);
         }
         removeSlotFromGTRecipeCache(slot);
         internalSlot.getOnContentsChanged().run();
@@ -318,7 +342,7 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         for (int i = 0; i < catalystFluid.getTanks(); i++) {
             FluidStack stack = catalystFluid.getFluidInTank(i);
             if (!stack.isEmpty()) {
-                fluidCatalystInventory.mergeLong(AEFluidKey.of(stack.getFluid()), stack.getAmount(), Long::sum);
+                fluidCatalystInventory.mergeLong(AEFluidKey.of(stack), stack.getAmount(), Math::addExact);
             }
         }
         internalInventory[slot].getOnContentsChanged().run();
@@ -338,6 +362,8 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
     protected void removeSlotFromGTRecipeCache(int slot) {
         cacheRecipe[slot] = false;
+        syncDataHolder.markClientSyncFieldDirty("cacheRecipe");
+        markAsChanged();
         recipeMultipleCacheMap.remove(slot);
         removeSlotFromMap.accept(slot);
         notifyProxySlotRemoved(slot);
@@ -390,323 +416,257 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
     // Persistence
     // ========================================
 
-    @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        super.saveCustomPersistedData(tag, forDrop);
-        if (!recipeMultipleCacheMap.isEmpty()) {
-            final CompoundTag recipeCacheTag = new CompoundTag();
+    private final class PersistedRecipeCache implements INBTSerializable<CompoundTag> {
+        @Override public CompoundTag serializeNBT(HolderLookup.Provider registries) {
+            if (!pendingRecipeCache.isEmpty()) return pendingRecipeCache.copy();
+            var tag = new CompoundTag();
             for (var entry : Int2ReferenceMaps.fastIterable(recipeMultipleCacheMap)) {
-                var recipeSet = entry.getValue();
-                if (recipeSet.isEmpty()) continue;
-
-                final ListTag list = new ListTag();
-                for (GTRecipe recipe : recipeSet) {
-                    list.add(GTLUtil.serializeNBT(recipe));
-                }
-
-                recipeCacheTag.put(Integer.toString(entry.getIntKey()), list);
+                var recipes = new ListTag();
+                for (var recipe : entry.getValue()) recipes.add(StringTag.valueOf(recipe.id.toString()));
+                if (!recipes.isEmpty()) tag.put(Integer.toString(entry.getIntKey()), recipes);
             }
-            tag.put("recipeMultipleCacheIdMap", recipeCacheTag);
+            return tag;
         }
-
-        tag.putByteArray("cacheRecipeCount", cacheRecipeCount);
-    }
-
-    @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-
-        var byteArray = tag.getByteArray("cacheRecipeCount");
-        System.arraycopy(byteArray, 0, cacheRecipeCount, 0, byteArray.length);
-
-        recipeMultipleCacheMap.clear();
-        var recipeManager = Registries.getRecipeManager();
-        if (tag.contains("recipeMultipleCacheIdMap")) {
-            CompoundTag recipeCacheTag = tag.getCompound("recipeMultipleCacheIdMap");
-            for (String key : recipeCacheTag.getAllKeys()) {
-                final int slotIndex = Integer.parseInt(key);
-                final ListTag recipeTags = recipeCacheTag.getList(key, Tag.TAG_COMPOUND);
-                for (Tag recipeTag : recipeTags) {
-                    GTRecipe recipe = GTLUtil.deserializeNBT(recipeTag);
-                    if (recipe != null && slotIndex >= 0 && slotIndex < maxPatternCount) {
-                        var real = recipe.recipeType.getRecipe(recipeManager, recipe.id);
-                        if (real != null) {
-                            var set = recipeMultipleCacheMap.computeIfAbsent(slotIndex, integer -> new ObjectArraySet<>());
-                            set.add(real);
-                            if (set.size() >= cacheRecipeCount[slotIndex]) cacheRecipe[slotIndex] = true;
-                        }
-                    }
-                }
-            }
-        } else if (tag.contains("gtRecipeCache")) {
-            CompoundTag oldRecipeCacheTag = tag.getCompound("gtRecipeCache");
-            for (String key : oldRecipeCacheTag.getAllKeys()) {
-                int slotIndex = Integer.parseInt(key);
-                Tag recipeTag = oldRecipeCacheTag.get(key);
-                GTRecipe recipe = GTLUtil.deserializeNBT(recipeTag);
-                if (recipe != null && slotIndex >= 0 && slotIndex < maxPatternCount) {
-                    var real = recipe.recipeType.getRecipe(recipeManager, recipe.id);
-                    if (real != null) {
-                        var set = recipeMultipleCacheMap.computeIfAbsent(slotIndex, integer -> new ObjectArraySet<>());
-                        set.add(real);
-                        if (set.size() >= cacheRecipeCount[slotIndex]) cacheRecipe[slotIndex] = true;
-                    }
-                }
-            }
+        @Override public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag) {
+            recipeMultipleCacheMap.clear();
+            Arrays.fill(cacheRecipe, false);
+            pendingRecipeCache = tag.copy();
         }
     }
 
-    public void copyFromTag(CompoundTag tag, ServerPlayer serverPlayer) {
-        this.setCustomName(tag.getString("name"));
+    private void restoreRecipeCache() {
+        for (int i = 0; i < cacheRecipeCount.length; i++) if (cacheRecipeCount[i] <= 0) cacheRecipeCount[i] = 1;
+        if (getLevel() == null) return;
+        for (String key : pendingRecipeCache.getAllKeys()) {
+            int slot;
+            try { slot = Integer.parseInt(key); } catch (NumberFormatException invalid) { continue; }
+            if (slot < 0 || slot >= maxPatternCount) continue;
+            for (Tag value : pendingRecipeCache.getList(key, Tag.TAG_STRING)) {
+                var id = ResourceLocation.tryParse(value.getAsString());
+                if (id == null) continue;
+                getLevel().getRecipeManager().byKey(id).ifPresent(holder -> {
+                    if (holder.value() instanceof GTRecipe recipe) getMETrait().setSlotCacheRecipe(slot, recipe);
+                });
+            }
+        }
+        pendingRecipeCache = new CompoundTag();
+    }
+
+    public void copyFromTag(CompoundTag tag, ServerPlayer player) {
+        var registries = player.level().registryAccess();
         var list = tag.getList("patterns", Tag.TAG_COMPOUND);
-
-        int listIndex = 0;
-        for (int index = 0; index < internalPatternInventory.size() && listIndex < list.size(); index++) {
-            if (!internalPatternInventory.getStackInSlot(index).isEmpty()) {
-                continue;
+        int cursor = 0;
+        for (int slot = 0; slot < maxPatternCount && cursor < list.size(); slot++) {
+            if (!patternInventory.getStackInSlot(slot).isEmpty()) continue;
+            var data = list.getCompound(cursor);
+            var pattern = ItemStack.parse(registries, data.getCompound("pattern")).orElse(ItemStack.EMPTY);
+            if (pattern.isEmpty() || !AEUtils.PROCESS_FILTER.apply(pattern) || data.getByte("cacheCount") <= 0) return;
+            int blank = -1;
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                if (AEItems.BLANK_PATTERN.is(player.getInventory().getItem(i))) { blank = i; break; }
             }
-
-            var result = foundItem(serverPlayer, List.of(AEItems.BLANK_PATTERN.stack()), AEItems.BLANK_PATTERN.stack()::is);
-            if (result.getA() == null) break;
-
-            CompoundTag patternData = list.getCompound(listIndex);
-            var patternTag = patternData.getCompound("pattern");
-            var sourceCacheCount = patternData.getByte("cacheCount");
-            if (sourceCacheCount <= 0) break;
-
-            internalPatternInventory.setItemDirect(index, ItemStack.of(patternTag));
-            this.cacheRecipeCount[index] = sourceCacheCount;
-            var handler = result.getB();
-            if (handler != null) handler.extractItem(result.getC(), 1, false);
-
-            listIndex++;
+            if (blank < 0) break;
+            player.getInventory().removeItem(blank, 1);
+            cacheRecipeCount[slot] = data.getByte("cacheCount");
+            internalPatternInventory.setItemDirect(slot, pattern.copyWithCount(1));
+            cursor++;
         }
+        setCustomName(tag.getString("name"));
+        markAsChanged();
     }
 
-    public CompoundTag copyToTag(CompoundTag tags) {
+    public CompoundTag copyToTag(CompoundTag target) {
         var tag = new CompoundTag();
         tag.putString("name", customName);
-
-        var listPattern = new ListTag();
-        for (int slotIndex : patternSlotMap.values()) {
-            ItemStack stack = internalPatternInventory.getStackInSlot(slotIndex);
-            if (!stack.isEmpty()) {
-                CompoundTag patternData = new CompoundTag();
-                patternData.put("pattern", stack.serializeNBT());
-                patternData.putByte("cacheCount", cacheRecipeCount[slotIndex]);
-                listPattern.add(patternData);
-            }
+        var patterns = new ListTag();
+        for (int slot = 0; slot < maxPatternCount; slot++) {
+            var stack = patternInventory.getStackInSlot(slot);
+            if (stack.isEmpty()) continue;
+            var data = new CompoundTag();
+            data.put("pattern", stack.save(getLevel().registryAccess()));
+            data.putByte("cacheCount", cacheRecipeCount[slot]);
+            patterns.add(data);
         }
-        tag.put("patterns", listPattern);
-
-        tags.put("tag", tag);
-        return tags;
+        tag.put("patterns", patterns);
+        target.put("tag", tag);
+        return target;
     }
 
     public boolean pasteFromTag(CompoundTag tag) {
-        var patternList = tag.getList("patterns", Tag.TAG_COMPOUND);
-        int usedCount = 0;
-        for (ItemStack ignored : internalPatternInventory) {
-            usedCount++;
-        }
-        if (internalPatternInventory.size() - usedCount < patternList.size()) return false;
-
-        this.setCustomName(tag.getString("name"));
-        this.keepByProduct = tag.getBoolean("keepByProduct");
-
-        int listIndex = 0;
-        for (int slotIndex = 0; slotIndex < internalPatternInventory.size() && listIndex < patternList.size(); slotIndex++) {
-            if (!internalPatternInventory.getStackInSlot(slotIndex).isEmpty()) {
-                continue;
+        var registries = getLevel().registryAccess();
+        var list = tag.getList("patterns", Tag.TAG_COMPOUND);
+        // A cut transfers owned inventory. Never overwrite an occupied destination's shared catalysts.
+        if (!sharedCatalystInventory.isEmpty() || !sharedCatalystTank.isEmpty() ||
+                !sharedCircuitInventory.storage.getStackInSlot(0).isEmpty()) return false;
+        var available = new IntArrayList();
+        for (int i = 0; i < maxPatternCount; i++) {
+            var slot = internalInventory[i];
+            boolean fluidsEmpty = true;
+            for (int tank = 0; tank < catalystFluids[i].getTanks(); tank++) {
+                if (!catalystFluids[i].getFluidInTank(tank).isEmpty()) { fluidsEmpty = false; break; }
             }
-
-            CompoundTag patternData = patternList.getCompound(listIndex);
-            var patternTag = patternData.getCompound("pattern");
-            var sourceCacheCount = patternData.getByte("cacheCount");
-            var catalystItemsTag = patternData.getCompound("catalystItems");
-            var catalystFluidsTag = patternData.getCompound("catalystFluids");
-
-            internalPatternInventory.setItemDirect(slotIndex, ItemStack.of(patternTag));
-            this.catalystItems[slotIndex].deserializeNBT(catalystItemsTag);
-            this.catalystFluids[slotIndex].deserializeNBT(catalystFluidsTag);
-            if (sourceCacheCount > 0) this.cacheRecipeCount[slotIndex] = sourceCacheCount;
-
-            this.catalystItems[slotIndex].onContentsChanged();
-            this.catalystFluids[slotIndex].onContentsChanged();
-
-            listIndex++;
+            if (patternInventory.getStackInSlot(i).isEmpty() && slot.getItemInventory().isEmpty() && slot.getFluidInventory().isEmpty() &&
+                    catalystItems[i].getStacks().stream().allMatch(ItemStack::isEmpty) && fluidsEmpty) available.add(i);
         }
-
-        this.sharedCatalystInventory.storage.deserializeNBT(tag.getCompound("sharedCatalystInventory"));
-        this.sharedCircuitInventory.storage.deserializeNBT(tag.getCompound("sharedCircuitInventory"));
-
-        var catalystTanks = tag.getList("sharedCatalystTank", Tag.TAG_COMPOUND);
-        var tankStorages = this.sharedCatalystTank.getStorages();
-        for (int i = 0; i < Math.min(catalystTanks.size(), tankStorages.length); i++) {
-            tankStorages[i].deserializeNBT(catalystTanks.getCompound(i));
+        if (available.size() < list.size()) return false;
+        var patterns = new ArrayList<ItemStack>();
+        var items = new ArrayList<CustomItemStackHandler>();
+        var fluids = new ArrayList<FluidHandlerList>();
+        var inputs = new ArrayList<CompoundTag>();
+        var sharedItems = new CustomItemStackHandler(9);
+        var sharedCircuit = new CustomItemStackHandler(1);
+        var sharedFluids = createCatalystTanks();
+        try {
+        for (Tag value : list) {
+            var data = (CompoundTag) value;
+            var pattern = ItemStack.parse(registries, data.getCompound("pattern")).orElse(ItemStack.EMPTY);
+            if (pattern.isEmpty() || !AEUtils.PROCESS_FILTER.apply(pattern) || data.getByte("cacheCount") <= 0) return false;
+            patterns.add(pattern);
+            var itemHandler = new CustomItemStackHandler(9);
+            itemHandler.deserializeNBT(registries, data.getCompound("catalystItems"));
+            items.add(itemHandler);
+            var tanks = createCatalystTanks();
+            tanks.deserializeNBT(registries, data.getCompound("catalystFluids"));
+            fluids.add(tanks);
+            var stock = new InternalSlot(available.getInt(inputs.size()));
+            stock.deserializeNBT(registries, data.getCompound("inputs"));
+            inputs.add(stock.serializeNBT(registries));
         }
-
-        this.sharedCatalystTank.onContentsChanged();
-        this.sharedCatalystInventory.onContentsChanged();
-        this.sharedCircuitInventory.onContentsChanged();
-
+        sharedItems.deserializeNBT(registries, tag.getCompound("sharedCatalystInventory"));
+        sharedCircuit.deserializeNBT(registries, tag.getCompound("sharedCircuitInventory"));
+        var savedTanks = tag.getList("sharedCatalystTank", Tag.TAG_COMPOUND);
+        for (int i = 0; i < sharedFluids.getTanks(); i++) ((CustomFluidTank) sharedFluids.handlers[i]).deserializeNBT(
+                registries, i < savedTanks.size() ? savedTanks.getCompound(i) : new CompoundTag());
+        } catch (RuntimeException invalidData) { return false; }
+        setCustomName(tag.getString("name"));
+        keepByProduct = tag.getBoolean("keepByProduct");
+        for (int index = 0; index < list.size(); index++) {
+            int slot = available.getInt(index);
+            var data = list.getCompound(index);
+            cacheRecipeCount[slot] = data.getByte("cacheCount");
+            internalPatternInventory.setItemDirect(slot, patterns.get(index).copyWithCount(1));
+            catalystItems[slot].deserializeNBT(registries, items.get(index).serializeNBT(registries));
+            catalystFluids[slot].deserializeNBT(registries, fluids.get(index).serializeNBT(registries));
+            internalInventory[slot].deserializeNBT(registries, inputs.get(index));
+            reCalculateCatalystItemMap(slot); reCalculateCatalystFluidMap(slot);
+        }
+        sharedCatalystInventory.storage.deserializeNBT(registries, sharedItems.serializeNBT(registries));
+        sharedCircuitInventory.storage.deserializeNBT(registries, sharedCircuit.serializeNBT(registries));
+        for (int i = 0; i < sharedCatalystTank.getTanks(); i++) {
+            sharedCatalystTank.getStorages()[i].deserializeNBT(registries, ((CustomFluidTank) sharedFluids.handlers[i]).serializeNBT(registries));
+        }
+        sharedCatalystTank.onContentsChanged(); sharedCatalystInventory.onContentsChanged(); sharedCircuitInventory.onContentsChanged();
         releaseProxies();
-
-        for (long l : tag.getLongArray("proxies")) {
-            var pos = BlockPos.of(l);
-            if (MetaMachine.getMachine(Objects.requireNonNull(getLevel()), pos) instanceof MEPatternBufferProxyPartMachine proxy) {
-                proxy.setBuffer(getPos());
-            }
+        for (long position : tag.getLongArray("proxies")) {
+            var pos = BlockPos.of(position);
+            if (getLevel().hasChunkAt(pos) && MetaMachine.getMachine(getLevel(), pos) instanceof MEPatternBufferProxyPartMachine proxy) proxy.setBuffer(getBlockPos());
         }
-
-        refreshAllByProduct();
-        markDirty();
-
+        refreshAllByProduct(); markAsChanged();
         return true;
     }
 
-    public CompoundTag cutToTag(CompoundTag tags) {
+    private static FluidHandlerList createCatalystTanks() {
+        return new FluidHandlerList(Stream.generate(() -> (IFluidHandler) new CustomFluidTank(16 * FluidType.BUCKET_VOLUME))
+                .limit(9).toArray(IFluidHandler[]::new));
+    }
+
+    public CompoundTag cutToTag(CompoundTag target) {
+        var registries = getLevel().registryAccess();
         var tag = new CompoundTag();
         tag.putString("name", customName);
-        tag.putString("dimension", Objects.requireNonNull(getLevel()).dimension().location().toString());
-        tag.putLong("bufferPos", getPos().asLong());
-
-        var listPattern = new ListTag();
-        for (int slotIndex = 0; slotIndex < internalPatternInventory.size(); slotIndex++) {
-            ItemStack stack = internalPatternInventory.getStackInSlot(slotIndex);
-            if (stack.isEmpty()) continue;
-
-            CompoundTag patternData = new CompoundTag();
-            patternData.put("pattern", stack.serializeNBT());
-            patternData.putByte("cacheCount", cacheRecipeCount[slotIndex]);
-            patternData.put("catalystItems", catalystItems[slotIndex].serializeNBT());
-            patternData.put("catalystFluids", catalystFluids[slotIndex].serializeNBT());
-            listPattern.add(patternData);
-
-            internalPatternInventory.setItemDirect(slotIndex, ItemStack.EMPTY);
-            for (int i = 0; i < catalystItems[slotIndex].getSlots(); i++) {
-                catalystItems[slotIndex].setStackInSlot(i, ItemStack.EMPTY);
-            }
-            for (int i = 0; i < catalystFluids[slotIndex].getTanks(); i++) {
-                catalystFluids[slotIndex].setFluidInTank(i, FluidStack.empty());
-            }
-
-            catalystItems[slotIndex].onContentsChanged();
-            catalystFluids[slotIndex].onContentsChanged();
-            cacheRecipeCount[slotIndex] = 1;
-        }
-        tag.put("patterns", listPattern);
-        tag.put("sharedCatalystInventory", sharedCatalystInventory.storage.serializeNBT());
-        tag.put("sharedCircuitInventory", sharedCircuitInventory.storage.serializeNBT());
+        tag.putString("dimension", getLevel().dimension().location().toString());
+        tag.putLong("bufferPos", getBlockPos().asLong());
         tag.putBoolean("keepByProduct", keepByProduct);
         tag.put("proxies", new LongArrayTag(getProxyPosList()));
-
-        var tankList = new ListTag();
-        Arrays.stream(sharedCatalystTank.getStorages())
-                .map(FluidStorage::serializeNBT)
-                .forEach(tankList::add);
-        tag.put("sharedCatalystTank", tankList);
-
-        for (int i = 0; i < sharedCatalystInventory.getSlots(); i++) {
-            sharedCatalystInventory.setStackInSlot(i, ItemStack.EMPTY);
+        var patterns = new ListTag();
+        // Snapshot all data before changing a slot; the portable cut carries its unconsumed inputs as well.
+        for (int slot = 0; slot < maxPatternCount; slot++) {
+            var pattern = patternInventory.getStackInSlot(slot);
+            if (pattern.isEmpty()) continue;
+            var data = new CompoundTag();
+            data.putInt("sourceSlot", slot);
+            data.put("pattern", pattern.save(registries));
+            data.putByte("cacheCount", cacheRecipeCount[slot]);
+            data.put("catalystItems", catalystItems[slot].serializeNBT(registries));
+            data.put("catalystFluids", catalystFluids[slot].serializeNBT(registries));
+            data.put("inputs", internalInventory[slot].serializeNBT(registries));
+            patterns.add(data);
         }
-        for (int i = 0; i < sharedCatalystTank.getTanks(); i++) {
-            sharedCatalystTank.setFluidInTank(i, FluidStack.empty());
+        tag.put("patterns", patterns);
+        tag.put("sharedCatalystInventory", sharedCatalystInventory.storage.serializeNBT(registries));
+        tag.put("sharedCircuitInventory", sharedCircuitInventory.storage.serializeNBT(registries));
+        var sharedTanks = new ListTag();
+        for (var tank : sharedCatalystTank.getStorages()) sharedTanks.add(tank.serializeNBT(registries));
+        tag.put("sharedCatalystTank", sharedTanks);
+        for (Tag value : patterns) {
+            int slot = ((CompoundTag) value).getInt("sourceSlot");
+            internalInventory[slot].getItemInventory().clear(); internalInventory[slot].getFluidInventory().clear();
+            internalInventory[slot].clearVirtualSupply();
+            internalPatternInventory.setItemDirect(slot, ItemStack.EMPTY);
+            for (int i = 0; i < catalystItems[slot].getSlots(); i++) catalystItems[slot].setStackInSlot(i, ItemStack.EMPTY);
+            for (int i = 0; i < catalystFluids[slot].getTanks(); i++) catalystFluids[slot].setFluidInTank(i, FluidStack.EMPTY);
+            reCalculateCatalystItemMap(slot); reCalculateCatalystFluidMap(slot);
+            cacheRecipeCount[slot] = 1;
         }
+        for (int i = 0; i < sharedCatalystInventory.getSlots(); i++) sharedCatalystInventory.setStackInSlot(i, ItemStack.EMPTY);
+        for (int i = 0; i < sharedCatalystTank.getTanks(); i++) sharedCatalystTank.setFluidInTank(i, FluidStack.EMPTY);
         sharedCircuitInventory.setStackInSlot(0, ItemStack.EMPTY);
-        sharedCatalystInventory.onContentsChanged();
-        sharedCatalystTank.onContentsChanged();
-        sharedCircuitInventory.onContentsChanged();
-
         releaseProxies();
-
-        tags.put("cut", tag);
-        markDirty();
-        return tags;
+        target.put("cut", tag); markAsChanged();
+        return target;
     }
 
     @Override
-    @NotNull
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
-    // ========================================
-    // GUI SYSTEM
-    // ========================================
-
-    @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        super.attachConfigurators(configuratorPanel);
-        configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                org.gtlcore.gtlcore.api.gui.GuiTextures.BUTTON_DISABLE_BYPRODUCT.getSubTexture(0, 0, 1, 0.5),
-                org.gtlcore.gtlcore.api.gui.GuiTextures.BUTTON_DISABLE_BYPRODUCT.getSubTexture(0, 0.5, 1, 0.5),
-                () -> !this.keepByProduct, (clickData, pressed) -> {
-                    this.keepByProduct = !pressed;
-                    refreshAllByProduct();
-                })
-                .setTooltipsSupplier(pressed -> List.of(Component.translatable("tooltip.gtlcore.disable_by_product").setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW))
-                        .append(Component.translatable(pressed ? "gtceu.multiblock.universal.distinct.yes" : "gtceu.multiblock.universal.distinct.no")))));
-
-        // Visibility in ME Pattern Access Terminal
-        configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                org.gtlcore.gtlcore.api.gui.GuiTextures.BUTTON_VISIBLE.getSubTexture(0, 0, 1, 0.5),
-                org.gtlcore.gtlcore.api.gui.GuiTextures.BUTTON_VISIBLE.getSubTexture(0, 0.5, 1, 0.5),
-                () -> this.isHiddenTerminal, (clickData, pressed) -> this.isHiddenTerminal = pressed)
-                .setTooltipsSupplier(pressed -> List.of(
-                        Component.translatable(pressed ? "gui.gtlcore.hidden_in_terminal" : "gui.gtlcore.visible_in_terminal"))));
-
-        configuratorPanel.attachConfigurators(new PatternCircuitConfigurator(
-                () -> embeddedCircuitConfig,
-                this::setEmbeddedCircuitConfig,
-                () -> skipExistingCircuitPatterns,
-                (clickData, pressed) -> skipExistingCircuitPatterns = pressed,
-                this::applyConfiguredCircuit,
-                this::removeAllPatternCircuits));
+    public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var builder = super.getPanelBuilder(data, sync, settings);
+        var inherited = builder.leftConfigurators();
+        var byproducts = SyncHandlers.bool(() -> keepByProduct, value -> {
+            if (keepByProduct != value) { keepByProduct = value; refreshAllByProduct(); markAsChanged(); }
+        }).allowC2S();
+        var hidden = SyncHandlers.bool(() -> isHiddenTerminal, value -> {
+            isHiddenTerminal = value; markAsChanged(); syncDataHolder.markClientSyncFieldDirty("isHiddenTerminal");
+        }).allowC2S();
+        sync.syncValue("patternKeepByProducts", byproducts);
+        sync.syncValue("patternHiddenTerminal", hidden);
+        var circuit = new PatternCircuitConfigurator(() -> embeddedCircuitConfig, this::setEmbeddedCircuitConfig,
+                () -> skipExistingCircuitPatterns, value -> { skipExistingCircuitPatterns = value; markAsChanged(); },
+                this::applyConfiguredCircuit, this::removeAllPatternCircuits);
+        var circuitPanel = sync.syncedPanel("patternCircuitConfig", true, (manager, handler) -> circuit.createPanel(manager));
+        var renamePanel = sync.syncedPanel("patternRename", true, (manager, handler) -> {
+            var name = SyncHandlers.string(() -> customName, this::setCustomName).allowC2S();
+            manager.syncValue("patternCustomName", name);
+            return PopupPanel.createPopupPanel("patternRenamePanel", 150, 52)
+                    .child(Text.lang("gtceu.gui.pattern_buffer.set_custom_name").asWidget().pos(4, 4))
+                    .child(new TextFieldWidget().value(name).size(140, 18).pos(4, 26));
+        });
+        return builder.leftConfigurators(flow -> {
+            inherited.accept(flow);
+            flow.child(new ToggleButton().size(18).value(byproducts).overlay(Text.str("B"))
+                            .tooltipDynamic(t -> t.addLine(Component.translatable("tooltip.gtlcore.disable_by_product"))))
+                    .child(new ToggleButton().size(18).value(hidden).overlay(Text.str("V"))
+                            .tooltipDynamic(t -> t.addLine(Component.translatable(isHiddenTerminal ? "gui.gtlcore.hidden_in_terminal" : "gui.gtlcore.visible_in_terminal"))))
+                    .child(new ButtonWidget<>().size(18).overlay(Text.str("#"))
+                            .onMousePressed((context, button) -> { if (button != 0) return false; circuitPanel.openPanel(); return true; }))
+                    .child(new ButtonWidget<>().size(18).overlay(Text.str("✎"))
+                            .onMousePressed((context, button) -> { if (button != 0) return false; renamePanel.openPanel(); return true; }));
+        });
     }
 
     @Override
-    public @NotNull Widget createUIWidget() {
-        int rowSize = 9;
-        int colSize = maxPatternCount / rowSize;
-        var group = new WidgetGroup(0, 0, 18 * rowSize + 16, 18 * colSize + 16);
+    public void buildMainUI(ParentWidget<?> parent, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var online = SyncHandlers.bool(this::isOnline, null);
+        sync.syncValue("patternBufferOnline", online);
+        var catalysts = new MEPatternCatalystUIManager(sync, catalystItems, catalystFluids, cacheRecipeCount,
+                this::removeSlotFromGTRecipeCache);
+        parent.child(Flow.col().coverChildren()
+                .child(Text.dynamic(() -> Component.translatable(online.getBoolValue() ?
+                        "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline")).asWidget().height(16))
+                .child(buildPatternPagination(sync, catalysts)));
+    }
 
-        group.addWidget(new LabelWidget(8, 2,
-                () -> this.isOnline ? "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline"));
-
-        group.addWidget(new AETextInputButtonWidget(18 * rowSize + 8 - 70, 2, 70, 10)
-                .setText(customName)
-                .setOnConfirm(this::setCustomName)
-                .setButtonTooltips(Component.translatable("gui.gtceu.rename.desc")));
-
-        final var catalystUIManager = new MEPatternCatalystUIManager(group.getSizeWidth() + 4, catalystItems, catalystFluids, cacheRecipeCount, this::removeSlotFromGTRecipeCache);
-        group.waitToAdded(catalystUIManager);
-
-        int index = 0;
-        for (int y = 0; y < colSize; ++y) {
-            for (int x = 0; x < rowSize; ++x) {
-                int finalI = index;
-
-                var slot = new AEPatternViewExtendSlotWidget(patternInventory, index++, x * 18 + 8, y * 18 + 14)
-                        .setOnMiddleClick(() -> catalystUIManager.toggleFor(finalI))
-                        .setOnPatternSlotChanged(() -> this.onPatternChange(finalI))
-                        .setOccupiedTexture(GuiTextures.SLOT)
-                        .setItemHook(stack -> {
-                            if (!stack.isEmpty() && stack.getItem() instanceof EncodedPatternItem iep) {
-                                final ItemStack out = iep.getOutput(stack);
-                                if (!out.isEmpty()) return out;
-                            }
-                            return stack;
-                        })
-                        .setOnAddedTooltips((s, l) -> {
-                            if (cacheRecipe[finalI])
-                                l.add(Component.translatable("gtceu.machine.pattern.recipe.cache"));
-                        })
-                        .setBackground(GuiTextures.SLOT, GuiTextures.PATTERN_OVERLAY);
-                group.addWidget(slot);
-            }
-        }
-        return group;
+    protected brachy.modularui.api.widget.IWidget buildPatternPagination(PanelSyncManager sync, MEPatternCatalystUIManager catalysts) {
+        return org.gtlcore.gtlcore.integration.ae2.gui.MolecularPatternPagination.build(
+                patternInventory, maxPatternCount, sync, this::onPatternChange, catalysts::toggleFor, slot -> cacheRecipe[slot]);
     }
 
     // ========================================
@@ -715,15 +675,17 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
     private void setEmbeddedCircuitConfig(int embeddedCircuitConfig) {
         this.embeddedCircuitConfig = Math.max(1, Math.min(IntCircuitBehaviour.CIRCUIT_MAX, embeddedCircuitConfig));
+        markAsChanged();
+        syncDataHolder.markClientSyncFieldDirty("embeddedCircuitConfig");
     }
 
-    private void applyConfiguredCircuit(ClickData clickData) {
-        if (clickData.isRemote) return;
+    private void applyConfiguredCircuit() {
+        if (isRemote()) return;
         embedCircuitToPatterns(embeddedCircuitConfig, !skipExistingCircuitPatterns);
     }
 
-    private void removeAllPatternCircuits(ClickData clickData) {
-        if (clickData.isRemote) return;
+    private void removeAllPatternCircuits() {
+        if (isRemote()) return;
         for (int i = 0; i < internalPatternInventory.size(); i++) {
             ItemStack stack = internalPatternInventory.getStackInSlot(i);
             if (stack.isEmpty()) continue;
@@ -776,7 +738,7 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         }
         String state = controllers.isEmpty() ? "NO_FORMED_CONTROLLER" : controllers.stream().limit(8).map(controller -> {
             var machine = controller.self();
-            return machine.getDefinition().getId() + "@" + machine.getPos() + ":" +
+            return machine.getDefinition().getId() + "@" + machine.getBlockPos() + ":" +
                     (machine instanceof com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine working ?
                             working.getRecipeLogic().getStatus() : "connected");
         }).toList().toString();
@@ -786,7 +748,7 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
             inputs = "; items=" + buffer.getItemInventory().object2LongEntrySet().stream().limit(4).toList() +
                     "; fluids=" + buffer.getFluidInventory().object2LongEntrySet().stream().limit(4).toList();
         }
-        return "buffer=" + getPos() + "; online=" + getMainNode().isActive() + "; slot=" + slot + "; controllers=" + state + inputs;
+        return "buffer=" + getBlockPos() + "; online=" + getMainNode().isActive() + "; slot=" + slot + "; controllers=" + state + inputs;
     }
 
     // ========================================
@@ -800,11 +762,11 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
     @Override
     public PatternContainerGroup getTerminalGroup() {
-        List<IMultiController> controllers = getControllers();
+        var controllers = getControllers();
 
         if (!controllers.isEmpty()) {
-            IMultiController controller = controllers.get(0);
-            MultiblockMachineDefinition controllerDefinition = controller.self().getDefinition();
+            var controller = controllers.first();
+            MultiblockMachineDefinition controllerDefinition = controller.getDefinition();
 
             if (!customName.isEmpty()) {
                 return new PatternContainerGroup(
@@ -827,13 +789,13 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         } else {
             if (!customName.isEmpty()) {
                 return new PatternContainerGroup(
-                        AEItemKey.of(GTLMachines.GTAEMachines.ME_EXTEND_PATTERN_BUFFER.getItem()),
+                        AEItemKey.of(getDefinition().asStack()),
                         Component.literal(customName),
                         Collections.emptyList());
             } else {
                 return new PatternContainerGroup(
-                        AEItemKey.of(GTLMachines.GTAEMachines.ME_EXTEND_PATTERN_BUFFER.getItem()),
-                        GTLMachines.GTAEMachines.ME_EXTEND_PATTERN_BUFFER.get().getDefinition().getItem().getDescription(),
+                        AEItemKey.of(getDefinition().asStack()),
+                        getDefinition().asStack().getHoverName(),
                         Collections.emptyList());
             }
         }
@@ -845,11 +807,11 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
     @Override
     protected @NotNull MEPatternTrait createMETrait() {
-        return new MEPatternTrait(this);
+        return new MEPatternTrait();
     }
 
     @Override
-    public Pair<IMERecipeHandlerTrait<Ingredient, ItemStack>, IMERecipeHandlerTrait<FluidIngredient, FluidStack>> getMERecipeHandlerTraits() {
+    public Pair<IMERecipeHandlerTrait<net.neoforged.neoforge.common.crafting.SizedIngredient, ItemStack>, IMERecipeHandlerTrait<net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient, net.neoforged.neoforge.fluids.FluidStack>> getMERecipeHandlerTraits() {
         return Pair.of(recipeHandler.meItemHandler, recipeHandler.meFluidHandler);
     }
 
@@ -887,15 +849,15 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         @Override
         protected void appendLimitFluidCatalystInputs(ObjectList<FluidStack> limitInput) {
             for (var entry : Object2LongMaps.fastIterable(fluidCatalystInventory)) {
-                limitInput.add(FluidStack.create(entry.getKey().getFluid(), entry.getLongValue()));
+                limitInput.add(entry.getKey().toStack((int) Math.min(Integer.MAX_VALUE, entry.getLongValue())));
             }
         }
 
         @Override
         public boolean testCatalystItemInternal(GTRecipe recipe) {
             for (var content : recipe.getInputContents(ItemRecipeCapability.CAP)) {
-                if (content.chance <= 0) continue;
-                var ingredient = (Ingredient) content.getContent();
+                if (content.chance() <= 0) continue;
+                var ingredient = LongIngredient.matchingIngredient((SizedIngredient) content.content());
                 for (ItemStack item : ingredient.getItems()) {
                     AEItemKey key = AEItemKey.of(item);
                     if (itemCatalystInventory.containsKey(key)) return false;
@@ -907,10 +869,10 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         @Override
         public boolean testCatalystFluidInternal(GTRecipe recipe) {
             for (var content : recipe.getInputContents(FluidRecipeCapability.CAP)) {
-                if (content.chance <= 0) continue;
-                var fluidIngredient = (FluidIngredient) content.getContent();
+                if (content.chance() <= 0) continue;
+                var fluidIngredient = LongFluidIngredient.matchingIngredient((SizedFluidIngredient) content.content());
                 for (FluidStack stack : fluidIngredient.getStacks()) {
-                    AEFluidKey key = AEFluidKey.of(stack.getFluid());
+                    AEFluidKey key = AEFluidKey.of(stack);
                     if (fluidCatalystInventory.containsKey(key)) return false;
                 }
             }
@@ -918,29 +880,29 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
         }
 
         @Override
-        public CompoundTag serializeNBT() {
-            CompoundTag tag = super.serializeNBT();
+        public CompoundTag serializeNBT(HolderLookup.Provider registries) {
+            CompoundTag tag = super.serializeNBT(registries);
 
-            ListTag itemCatalystTag = AEUtils.createListTag(AEItemKey::toTag, itemCatalystInventory);
+            ListTag itemCatalystTag = AEUtils.createListTag(key -> key.toTag(registries), itemCatalystInventory);
             if (!itemCatalystTag.isEmpty()) tag.put("catalystInventory", itemCatalystTag);
 
-            ListTag fluidCatalystTag = AEUtils.createListTag(AEFluidKey::toTag, fluidCatalystInventory);
+            ListTag fluidCatalystTag = AEUtils.createListTag(key -> key.toTag(registries), fluidCatalystInventory);
             if (!fluidCatalystTag.isEmpty()) tag.put("catalystFluidInventory", fluidCatalystTag);
 
             return tag;
         }
 
         @Override
-        public void deserializeNBT(CompoundTag tag) {
-            super.deserializeNBT(tag);
+        public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag) {
+            super.deserializeNBT(registries, tag);
 
             itemCatalystInventory.clear();
             ListTag catalystItems = tag.getList("catalystInventory", Tag.TAG_COMPOUND);
-            AEUtils.loadInventory(catalystItems, AEItemKey::fromTag, itemCatalystInventory);
+            AEUtils.loadInventory(catalystItems, key -> AEItemKey.fromTag(registries, key), itemCatalystInventory);
 
             fluidCatalystInventory.clear();
             ListTag catalystFluids = tag.getList("catalystFluidInventory", Tag.TAG_COMPOUND);
-            AEUtils.loadInventory(catalystFluids, AEFluidKey::fromTag, fluidCatalystInventory);
+            AEUtils.loadInventory(catalystFluids, key -> AEFluidKey.fromTag(registries, key), fluidCatalystInventory);
         }
     }
 
@@ -948,7 +910,7 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
         @Override
         public TickingRequest getTickingRequest(IGridNode node) {
-            return new TickingRequest(MEExtendedOutputPartMachineBase.MIN_FREQUENCY, MEExtendedOutputPartMachineBase.MAX_FREQUENCY, false, true);
+            return new TickingRequest(MEExtendedOutputPartMachineBase.MIN_FREQUENCY, MEExtendedOutputPartMachineBase.MAX_FREQUENCY, false);
         }
 
         @Override
@@ -963,19 +925,23 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
                     isSleeping = true;
                     return TickRateModulation.SLEEP;
                 } else return TickRateModulation.SLOWER;
-            } else return AEUtils.reFunds(buffer, getMainNode().getGrid(), actionSource) ? TickRateModulation.URGENT : TickRateModulation.SLOWER;
+            } else {
+                boolean changed = AEUtils.reFunds(buffer, getMainNode().getGrid(), actionSource);
+                if (changed) markAsChanged();
+                return changed ? TickRateModulation.URGENT : TickRateModulation.SLOWER;
+            }
         }
     }
 
     protected class MEPatternTrait extends MEIOTrait implements IMEPatternTrait {
 
-        public MEPatternTrait(MEPatternBufferPartMachine machine) {
-            super(machine);
+        public MEPatternTrait() {
+            super();
         }
 
         @Override
         public MEPatternBufferPartMachine getMachine() {
-            return (MEPatternBufferPartMachine) machine;
+            return (MEPatternBufferPartMachine) super.getMachine();
         }
 
         @Override
@@ -993,9 +959,14 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
         @Override
         public void setSlotCacheRecipe(int index, GTRecipe recipe) {
-            if (recipe != null && recipe.recipeType != GTRecipeTypes.DUMMY_RECIPES) {
+            if (index >= 0 && index < maxPatternCount && recipe != null && recipe.recipeType != GTRecipeTypes.DUMMY_RECIPES.get()) {
                 var set = recipeMultipleCacheMap.computeIfAbsent(index, integer -> new ObjectArraySet<>());
-                if (set.add(recipe)) cacheRecipe[index] = set.size() >= cacheRecipeCount[index];
+                if (set.add(recipe)) {
+                    cacheRecipe[index] = set.size() >= cacheRecipeCount[index];
+                    syncDataHolder.markClientSyncFieldDirty("cacheRecipe");
+                    markAsChanged();
+                    reCalculatePatternSlotMap();
+                }
             }
         }
 
@@ -1011,7 +982,7 @@ public class MEPatternBufferPartMachine extends MEPatternBufferPartMachineBase {
 
         @Override
         public boolean hasCacheInSlot(int slot) {
-            return cacheRecipe[slot];
+            return slot >= 0 && slot < cacheRecipe.length && cacheRecipe[slot];
         }
     }
 }

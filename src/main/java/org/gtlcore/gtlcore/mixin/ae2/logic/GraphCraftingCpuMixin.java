@@ -3,6 +3,7 @@ package org.gtlcore.gtlcore.mixin.ae2.logic;
 import org.gtlcore.gtlcore.integration.ae2.graph.*;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
@@ -144,9 +145,9 @@ public abstract class GraphCraftingCpuMixin implements GraphCpuAccess {
     }
 
     @Inject(method = "readFromNBT", at = @At("HEAD"), cancellable = true, remap = false)
-    private void gtlcore$read(CompoundTag data, CallbackInfo ci) {
+    private void gtlcore$read(CompoundTag data, HolderLookup.Provider registries, CallbackInfo ci) {
         if (data.contains(GraphJobCodec.NBT_KEY, CompoundTag.TAG_COMPOUND)) {
-            inventory.readFromNBT(data.getList("inventory", CompoundTag.TAG_COMPOUND));
+            inventory.readFromNBT(data.getList("inventory", CompoundTag.TAG_COMPOUND), registries);
             job = null;
             gtlcore$graph.read(data);
             ci.cancel();
@@ -154,7 +155,7 @@ public abstract class GraphCraftingCpuMixin implements GraphCpuAccess {
     }
 
     @Inject(method = "writeToNBT", at = @At("RETURN"), remap = false)
-    private void gtlcore$write(CompoundTag data, CallbackInfo ci) {
+    private void gtlcore$write(CompoundTag data, HolderLookup.Provider registries, CallbackInfo ci) {
         gtlcore$graph.write(data);
     }
 }

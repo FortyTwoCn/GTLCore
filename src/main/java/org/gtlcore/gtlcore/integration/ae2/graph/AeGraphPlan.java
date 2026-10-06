@@ -5,6 +5,8 @@ import org.gtlcore.gtlcore.integration.ae2.graph.core.CraftingCostModel;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.ExactAmounts;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.GraphPlan;
 
+import net.minecraft.core.RegistryAccess;
+
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.stacks.AEKey;
@@ -23,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 public final class AeGraphPlan implements ICraftingPlan {
 
     private final GraphPlan<AEKey> graph;
+    private final RegistryAccess registries;
     private final Map<String, IPatternDetails> bindings;
     private final Map<AEKey, BigInteger> emitted;
     private final long bytes;
@@ -36,12 +39,13 @@ public final class AeGraphPlan implements ICraftingPlan {
     private CompletableFuture<GraphRingView> displayWork;
 
     public AeGraphPlan(GraphPlan<AEKey> graph, Map<String, IPatternDetails> bindings, Set<AEKey> emitable,
-                       Map<AEKey, Long> stock) {
-        this(graph, bindings, emitable, stock, false);
+                       Map<AEKey, Long> stock, RegistryAccess registries) {
+        this(graph, bindings, emitable, stock, false, registries);
     }
 
     public AeGraphPlan(GraphPlan<AEKey> graph, Map<String, IPatternDetails> bindings, Set<AEKey> emitable,
-                       Map<AEKey, Long> stock, boolean fallback) {
+                       Map<AEKey, Long> stock, boolean fallback, RegistryAccess registries) {
+        this.registries = java.util.Objects.requireNonNull(registries);
         this.graph = graph;
         this.fallback = fallback;
         this.bindings = Collections.unmodifiableMap(new LinkedHashMap<>(bindings));
@@ -79,13 +83,13 @@ public final class AeGraphPlan implements ICraftingPlan {
     }
 
     public synchronized GraphRingView display() {
-        if (display == null) display = new GraphRingView(id, graph, ExactAmounts.longView(selectedCounts));
+        if (display == null) display = new GraphRingView(id, graph, ExactAmounts.longView(selectedCounts), registries);
         return display;
     }
 
     public synchronized CompletableFuture<GraphRingView> displayAsync() {
         if (display != null) return CompletableFuture.completedFuture(display);
-        if (displayWork == null) displayWork = CraftingEngineRouter.describe(new GraphRingView.Builder(id, graph, ExactAmounts.longView(selectedCounts)))
+        if (displayWork == null) displayWork = CraftingEngineRouter.describe(new GraphRingView.Builder(id, graph, ExactAmounts.longView(selectedCounts), registries))
                 .thenApply(view -> {
                     display = view;
                     return view;

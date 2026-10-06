@@ -1,0 +1,26 @@
+{
+  "source": "bundled GT 1.4.4 (LGPL-3.0), GTMachines.EVAPORATION_PLANT and GTRecipeTypes.EVAPORATION_RECIPES",
+  "baseline": "native GT 8 c72dc16b52795cbb0456b6e15e13cc4a85c0ed1b",
+  "status": "native registration and API implementation; world and client tests pending",
+  "preservedIds": [
+    "gtceu:evaporation_plant",
+    "gtceu:stainless_evaporation_casing",
+    "gtceu:evaporation"
+  ],
+  "resources": {
+    "assets/gtceu/blockstates/stainless_evaporation_casing.json": "f4f4bb7619fd9a6dd037a1ee42e3beb6d74e4d686825a71f25bc3cbef7341902",
+    "assets/gtceu/models/block/stainless_evaporation_casing.json": "a6e241f5b44045ae6f897b0e75582ca3320f0d919eca73cfaaa8b7574af897a3",
+    "assets/gtceu/models/item/stainless_evaporation_casing.json": "640fcf3df76e4fcac1d211c1f722b700d0fc42f228e2fc688bf5b5dc546ea405",
+    "assets/gtceu/textures/block/casings/solid/machine_casing_stainless_evaporation.png": "89f337fb39bd22fc78a8eb6373d960809ed83846151d3c3f60fb90fcfe20bfd8",
+    "assets/gtceu/textures/block/casings/solid/machine_casing_stainless_evaporation.png.mcmeta": "a43f83c6f83772b021a0b2678806536eb1a8c3cb921790b22a0ed35d5214a980",
+    "assets/gtceu/textures/block/casings/solid/machine_casing_stainless_evaporation_ctm.png": "128ef36c93518264cdeb9241e6b8ea5013b31fd7931c1279034ede22319ab5d9",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front.png": "d822fd6bdb33a5af84c3849827c629ff9c049aa34593a6a3788bb4f4d09c16c3",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front_active.png": "efeffcb35ecc91250dbca3dd7803bf376f04f2bbfc69c0067eabd9105abb96b5",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front_active.png.mcmeta": "9290d0968f9777942810ebeaf23fa7326090038da5e1bf8f606e7e9a0b6aea4b",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front_active_emissive.png": "94a31fa1073d2f179b3497660c1847a1e1c81003e7fc343f8aef3531113ae1b6",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front_active_emissive.png.mcmeta": "9290d0968f9777942810ebeaf23fa7326090038da5e1bf8f606e7e9a0b6aea4b",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front_emissive.png": "d38166ba86583b65b5a34895daa9e00e16f258a3fe5cea7da31022a487c5a900",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front_paused.png": "c1dcd5cf645e75781ec0769dfe52d685bb3dd168b48dec8a4b7dfeeea5dff574",
+    "assets/gtceu/textures/block/multiblock/evaporation_plant/overlay_front_paused_emissive.png": "c6ec1af5bf0bf12a8f3e37d37f1a217573f5207ae182b25c2b9b9f69f520db59"
+  }
+}

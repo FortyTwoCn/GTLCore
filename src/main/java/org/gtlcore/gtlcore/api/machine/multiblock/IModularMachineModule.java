@@ -1,6 +1,5 @@
 package org.gtlcore.gtlcore.api.machine.multiblock;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import net.minecraft.core.BlockPos;
@@ -51,7 +50,7 @@ public interface IModularMachineModule<H extends IModularMachineHost<H>, M exten
             removeFromHost(previousHost);
         }
         setHost(host);
-        setHostPosition(host.getPos());
+        setHostPosition(host.getBlockPos());
         @SuppressWarnings("unchecked")
         M self = (M) this;
         host.addModule(self);
@@ -75,9 +74,8 @@ public interface IModularMachineModule<H extends IModularMachineHost<H>, M exten
 
         // Persisted Position First
         final BlockPos savedPos = getHostPosition();
-        if (savedPos != null) {
-            if (serverLevel.getBlockEntity(savedPos) instanceof IMachineBlockEntity imbe) {
-                MetaMachine machine = imbe.getMetaMachine();
+        if (savedPos != null && serverLevel.hasChunkAt(savedPos)) {
+            if (serverLevel.getBlockEntity(savedPos) instanceof MetaMachine machine) {
                 if (isValidHost(machine)) {
                     @SuppressWarnings("unchecked")
                     H host = (H) machine;
@@ -90,8 +88,8 @@ public interface IModularMachineModule<H extends IModularMachineHost<H>, M exten
         // Scan Others
         final BlockPos[] positions = getHostScanPositions();
         for (BlockPos pos : positions) {
-            if (serverLevel.getBlockEntity(pos) instanceof IMachineBlockEntity imbe) {
-                MetaMachine machine = imbe.getMetaMachine();
+            if (!serverLevel.hasChunkAt(pos)) continue;
+            if (serverLevel.getBlockEntity(pos) instanceof MetaMachine machine) {
                 if (isValidHost(machine)) {
                     @SuppressWarnings("unchecked")
                     H host = (H) machine;

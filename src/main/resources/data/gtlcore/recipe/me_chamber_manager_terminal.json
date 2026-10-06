@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "ae2:terminal"
+    },
+    {
+      "item": "gtlcore:throughput_monitor"
+    }
+  ],
+  "result": {
+    "id": "gtlcore:me_chamber_manager_terminal"
+  },
+  "show_notification": true
+}

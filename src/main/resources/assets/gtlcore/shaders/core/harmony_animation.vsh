@@ -21,11 +21,11 @@ out vec2 texCoord0;
 out vec4 normal;
 
 void main() {
-    // Match ModelBlockRenderer's CPU position transform before vanilla fog_distance splits
-    // horizontal and vertical coordinates. Combining the matrices changes cylindrical fog.
+    // Match 1.21 ModelBlockRenderer's CPU position transform before vanilla fog_distance
+    // splits horizontal and vertical coordinates in camera-relative space.
     vec3 pos = (AnimationTransform * vec4(Position, 1.0)).xyz;
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
-    vertexDistance = fog_distance(ModelViewMat, pos, FogShape);
+    vertexDistance = fog_distance(pos, FogShape);
     vertexColor = Color * minecraft_sample_lightmap(Sampler2, UV2);
     texCoord0 = UV0;
     normal = ProjMat * ModelViewMat * vec4(mat3(AnimationTransform) * Normal, 0.0);

@@ -2,30 +2,31 @@ package org.gtlcore.gtlcore.mixin.gtm.gui;
 
 import org.gtlcore.gtlcore.client.gui.MEStorageConfiguratorTabLayout;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferPartMachineBase;
-
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanel;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEHatchPartMachine;
-
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = FancyMachineUIWidget.class, remap = false)
+/** Core's four-controls-per-column layout over the actual native panel builder. */
+@Mixin(value = MachineUIPanelBuilder.class, remap = false)
 public abstract class FancyMachineUIWidgetMixin {
+    @Shadow @Final private MetaMachine machine;
 
-    @Shadow
-    @Final
-    protected ConfiguratorPanel configuratorPanel;
-
-    @Inject(method = "setupFancyUI(Lcom/gregtechceu/gtceu/api/gui/fancy/IFancyUIProvider;Z)V", at = @At("HEAD"))
-    private void gtlcore$configureMEStorageTabColumns(IFancyUIProvider page, boolean hasPlayerInventory,
-                                                      CallbackInfo ci) {
-        MEStorageConfiguratorTabLayout.setEnabled(configuratorPanel,
-                page instanceof MEHatchPartMachine || page instanceof MEPatternBufferPartMachineBase);
+    @Inject(method = "build", at = @At("RETURN"), require = 1)
+    private void gtlcore$configureMEStorageColumns(PanelSyncManager sync, UISettings settings,
+                                                  CallbackInfoReturnable<MachineUIPanel> cir) {
+        var nativePanel = cir.getReturnValue();
+        nativePanel.getLeftConfiguratorPanel().child(org.gtlcore.gtlcore.api.gui.NativeCoverUI.button(machine, nativePanel, sync));
+        if (machine instanceof MEHatchPartMachine || machine instanceof MEPatternBufferPartMachineBase) {
+            var panel = cir.getReturnValue();
+            MEStorageConfiguratorTabLayout.arrange(panel.getLeftConfiguratorPanel(), true);
+            MEStorageConfiguratorTabLayout.arrange(panel.getRightConfiguratorPanel(), false);
+        }
     }
 }

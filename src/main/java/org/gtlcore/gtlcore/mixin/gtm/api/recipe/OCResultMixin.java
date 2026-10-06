@@ -1,99 +1,35 @@
 package org.gtlcore.gtlcore.mixin.gtm.api.recipe;
 
 import org.gtlcore.gtlcore.api.recipe.IAdvancedOCResult;
-
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
-
+import org.gtlcore.gtlcore.api.recipe.IGTRecipe;
+import com.gregtechceu.gtceu.api.recipe.OverclockingLogic.OCResult;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Implements({
-        @Interface(
-                   iface = IAdvancedOCResult.class,
-                   prefix = "gTLCore$")
-})
 @Mixin(OCResult.class)
-public abstract class OCResultMixin {
-
-    @Shadow(remap = false)
-    private long eut;
-    @Shadow(remap = false)
-    private long parallelEUt;
-    @Shadow(remap = false)
-    private int duration;
-    @Shadow(remap = false)
-    private int parallel;
-    @Shadow(remap = false)
-    private int ocLevel;
-
-    @Unique
-    private int gTLCore$baseOCLevel;
-    @Unique
-    private double gTLCore$durationFactor = 0;
-    @Unique
-    private double gTLCore$voltageFactor = 0;
-    @Unique
-    private boolean gTLCore$subTickOverclockAvailable = false;
-
-    /**
-     * @author Dragons
-     * @reason 兼容
-     */
-    @Overwrite(remap = false)
-    public void init(long eut, int duration, int parallel, long parallelEUt, int ocLevel) {
-        this.eut = eut;
-        this.duration = duration;
-        this.parallel = parallel;
-        this.parallelEUt = parallelEUt;
-        this.ocLevel = ocLevel;
-        gTLCore$baseOCLevel = ocLevel;
-        gTLCore$durationFactor = 0;
-        gTLCore$voltageFactor = 0;
-        gTLCore$subTickOverclockAvailable = false;
+public abstract class OCResultMixin implements IAdvancedOCResult {
+    @Shadow(remap = false) @Final private int ocLevel;
+    @Unique private int gtlcore$baseOCLevel;
+    @Unique private double gtlcore$durationFactor, gtlcore$voltageFactor;
+    @Unique private boolean gtlcore$hasInfo, gtlcore$subTickAvailable;
+    @Override public void gtlcore$setOverclockInfo(int base, double duration, double voltage, boolean available) {
+        gtlcore$baseOCLevel = base; gtlcore$durationFactor = duration; gtlcore$voltageFactor = voltage;
+        gtlcore$subTickAvailable = available; gtlcore$hasInfo = true;
     }
-
-    @Unique
-    public void gTLCore$init(long eut, int duration, int parallel, long parallelEUt, int baseOCLevel, int totalOCLevel, double durationFactor, double voltageFactor) {
-        this.eut = eut;
-        this.duration = duration;
-        this.parallel = parallel;
-        this.parallelEUt = parallelEUt;
-        this.ocLevel = totalOCLevel;
-        gTLCore$baseOCLevel = baseOCLevel;
-        gTLCore$durationFactor = durationFactor;
-        gTLCore$voltageFactor = voltageFactor;
-        gTLCore$subTickOverclockAvailable = false;
-    }
-
-    @Unique
-    public int gTLCore$getBaseOCLevel() {
-        return gTLCore$baseOCLevel;
-    }
-
-    @Unique
-    public double gTLCore$getDurationFactor() {
-        return gTLCore$durationFactor;
-    }
-
-    @Unique
-    public double gTLCore$getVoltageFactor() {
-        return gTLCore$voltageFactor;
-    }
-
-    @Unique
-    public boolean gTLCore$isSubTickOverclockAvailable() {
-        return gTLCore$subTickOverclockAvailable;
-    }
-
-    @Unique
-    public void gTLCore$setSubTickOverclockAvailable(boolean available) {
-        gTLCore$subTickOverclockAvailable = available;
-    }
-
-    @Inject(method = "reset", at = @At("HEAD"), remap = false)
-    private void gtlcore$resetSubTickOverclockAvailable(CallbackInfo ci) {
-        gTLCore$subTickOverclockAvailable = false;
+    @Override public int getBaseOCLevel() { return gtlcore$hasInfo ? gtlcore$baseOCLevel : ocLevel; }
+    @Override public double getDurationFactor() { return gtlcore$durationFactor; }
+    @Override public double getVoltageFactor() { return gtlcore$voltageFactor; }
+    @Override public boolean isSubTickOverclockAvailable() { return gtlcore$subTickAvailable; }
+    @Inject(method = "toModifier", at = @At("RETURN"), remap = false, require = 1, cancellable = true)
+    private void gtlcore$markHeadroom(CallbackInfoReturnable<ModifierFunction> cir) {
+        if (!gtlcore$subTickAvailable) return;
+        var nativeModifier = cir.getReturnValue();
+        cir.setReturnValue(recipe -> {
+            var result = nativeModifier.apply(recipe);
+            if (result != null) IGTRecipe.of(result).setSubTickParallelized(true);
+            return result;
+        });
     }
 }

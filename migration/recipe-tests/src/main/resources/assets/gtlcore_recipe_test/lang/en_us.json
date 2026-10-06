@@ -1,0 +1,18 @@
+{
+  "block.gtlcore_recipe_test.native_batch": "Native Batch Controller",
+  "block.gtlcore_recipe_test.native_core_steam": "Native Steam Controller",
+  "block.gtlcore_recipe_test.native_ae_pattern_buffer": "ME Pattern Buffer",
+  "block.gtlcore_recipe_test.native_ae_large_pattern_buffer": "Extended ME Pattern Buffer",
+  "block.gtlcore_recipe_test.native_performance_monitor": "Performance Monitor",
+  "block.gtlcore_recipe_test.native_tick_probe": "Native Tick Timing Probe",
+  "block.gtlcore_recipe_test.native_critical_tick_probe": "Critical Tick Probe",
+  "block.gtlcore_recipe_test.native_wildcard_pattern_buffer": "Wildcard ME Pattern Buffer",
+  "block.gtlcore_recipe_test.native_stocking_wildcard_pattern_buffer": "Stocking Wildcard ME Pattern Buffer",
+  "block.gtlcore_recipe_test.native_super_pattern_buffer": "ME Super Pattern Buffer",
+  "block.gtlcore_recipe_test.native_wide_super_pattern_buffer": "Wide Super Pattern Buffer",
+  "block.gtlcore_recipe_test.native_tiny_super_pattern_buffer": "Small Super Pattern Buffer",
+  "block.gtlcore_recipe_test.native_infinite_fluid_rig": "Infinite Fluid Drilling Rig",
+  "block.gtlcore_recipe_test.native_infinite_fluid_overclock": "Infinite Fluid Drilling Rig",
+  "block.gtlcore_recipe_test.native_infinite_fluid_long": "Infinite Fluid Drilling Rig",
+  "block.gtlcore_recipe_test.native_advanced_fluid_rig": "Advanced Infinite Driller"
+}

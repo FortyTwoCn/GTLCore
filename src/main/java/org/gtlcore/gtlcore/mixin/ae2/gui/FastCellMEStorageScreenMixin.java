@@ -71,8 +71,7 @@ public abstract class FastCellMEStorageScreenMixin<C extends MEStorageMenu> exte
         return gtlcore$amounts.get(key);
     }
 
-    @WrapOperation(method = "m_280092_(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/inventory/Slot;)V",
-                   remap = false,
+    @WrapOperation(method = "renderSlot",
                    at = @At(value = "INVOKE",
                             target = "Lappeng/api/stacks/AEKey;formatAmount(JLappeng/api/stacks/AmountFormat;)Ljava/lang/String;",
                             remap = false))

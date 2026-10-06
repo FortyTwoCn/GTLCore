@@ -5,12 +5,14 @@ import net.minecraft.ReportedException;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 import appeng.crafting.CraftingCalculation;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.Grid;
 import com.google.common.collect.Multimap;
 import org.spongepowered.asm.mixin.*;
+import java.util.Set;
 
 @Mixin(TickHandler.class)
 public abstract class TickHandlerMixin {
@@ -20,7 +22,7 @@ public abstract class TickHandlerMixin {
     private Multimap<LevelAccessor, CraftingCalculation> craftingJobs;
 
     @Shadow(remap = false)
-    public Iterable<Grid> getGridList() {
+    public Set<Grid> getGridList() {
         throw new AssertionError();
     }
 
@@ -34,7 +36,8 @@ public abstract class TickHandlerMixin {
      * @reason 使用GTLCore旧后台切片预算推进下单计算
      */
     @Overwrite(remap = false)
-    private void onServerLevelTickEnd(ServerLevel level) {
+    private void onServerLevelTickEnd(LevelTickEvent.Post event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
         this.simulateCraftingJobs(level);
         this.readyBlockEntities(level);
 

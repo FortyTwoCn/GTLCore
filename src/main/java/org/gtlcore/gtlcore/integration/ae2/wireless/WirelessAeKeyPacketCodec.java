@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.integration.ae2.wireless;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -17,7 +17,7 @@ final class WirelessAeKeyPacketCodec {
         return key instanceof AEItemKey || key instanceof AEFluidKey;
     }
 
-    static void write(FriendlyByteBuf buffer, AEKey key) {
+    static void write(RegistryFriendlyByteBuf buffer, AEKey key) {
         if (key instanceof AEItemKey itemKey) {
             buffer.writeByte(ITEM_KEY_TYPE);
             itemKey.writeToPacket(buffer);
@@ -29,7 +29,7 @@ final class WirelessAeKeyPacketCodec {
         }
     }
 
-    static AEKey read(FriendlyByteBuf buffer) {
+    static AEKey read(RegistryFriendlyByteBuf buffer) {
         return switch (buffer.readUnsignedByte()) {
             case ITEM_KEY_TYPE -> AEItemKey.fromPacket(buffer);
             case FLUID_KEY_TYPE -> AEFluidKey.fromPacket(buffer);

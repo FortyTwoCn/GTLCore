@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.client.renderer.machine;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.gtlcore.gtlcore.api.GTLConstants;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -15,10 +15,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.RandomSource;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -39,9 +41,6 @@ final class HarmonyModelCache implements AutoCloseable {
     static final String[] NAMES = { "the_nether", "overworld", "the_end", "space", "star" };
     private static final int STRIDE = DefaultVertexFormat.BLOCK.getVertexSize();
     private static final int MAX_INSTANCES = 4096;
-    // BufferBuilder owns native memory without a close method. Keep bounded scratch buffers
-    // across models and resource reloads instead of abandoning native allocations on every bake.
-    private static BufferBuilder quadBuilder, triangleBuilder;
     final BakedModel model;
     final RenderType type;
     final List<Matrix4f> transforms = new ArrayList<>();
@@ -67,7 +66,7 @@ final class HarmonyModelCache implements AutoCloseable {
                 if (supportsResources()) compile(renderer);
             } catch (RuntimeException exception) {
                 close();
-                GTLCore.LOGGER.warn("Could not cache harmony model {}; using the regular model renderer", name, exception);
+                GTLConstants.LOGGER.warn("Could not cache harmony model {}; using the regular model renderer", name, exception);
             }
         }
         return vertices != null;
@@ -76,7 +75,8 @@ final class HarmonyModelCache implements AutoCloseable {
     private static boolean original(ResourceManager resources, ResourceLocation location) {
         return resources.getResource(location)
                 .map(resource -> resource.sourcePackId().equals("mod_resources") ||
-                        resource.sourcePackId().equals("mod:" + location.getNamespace()))
+                        resource.sourcePackId().equals("mod:" + location.getNamespace()) ||
+                        resource.sourcePackId().equals("mod/" + location.getNamespace()))
                 .orElse(false);
     }
 
@@ -86,9 +86,9 @@ final class HarmonyModelCache implements AutoCloseable {
         if (model.getClass() != SimpleBakedModel.class) return false;
         var resources = Minecraft.getInstance().getResourceManager();
         String mesh = name.equals("space") ? "space" : "star";
-        if (!original(resources, GTLCore.id("models/obj/" + name + ".json")) ||
-                !original(resources, GTLCore.id("models/obj/" + mesh + ".obj")) ||
-                !original(resources, GTLCore.id("models/obj/" + mesh + ".mtl")))
+        if (!original(resources, GTLConstants.id("models/obj/" + name + ".json")) ||
+                !original(resources, GTLConstants.id("models/obj/" + mesh + ".obj")) ||
+                !original(resources, GTLConstants.id("models/obj/" + mesh + ".mtl")))
             return false;
         Set<TextureAtlasSprite> sprites = Collections.newSetFromMap(new IdentityHashMap<>());
         RandomSource random = RandomSource.create(42);
@@ -105,71 +105,76 @@ final class HarmonyModelCache implements AutoCloseable {
         if (sprites.isEmpty()) return false;
         for (var sprite : sprites) {
             var id = sprite.contents().name();
-            if (!original(resources, new ResourceLocation(id.getNamespace(), "textures/" + id.getPath() + ".png")) ||
+            if (!original(resources, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "textures/" + id.getPath() + ".png")) ||
                     sprite.contents().getUniqueFrames().count() != 1)
                 return false;
             // The bundled star is an opaque JPEG, although it uses the translucent render type.
-            if (name.equals("star") && !id.equals(GTLCore.id("block/obj/star_layer"))) return false;
+            if (name.equals("star") && !id.equals(GTLConstants.id("block/obj/star_layer"))) return false;
         }
         return true;
     }
 
     private void compile(ModelBlockRenderer renderer) {
-        if (quadBuilder == null) quadBuilder = new BufferBuilder(1 << 20);
-        if (triangleBuilder == null) triangleBuilder = new BufferBuilder(1 << 20);
-        var builder = quadBuilder;
-        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
-        renderer.renderModel(new PoseStack().last(), builder, null, model, 1, 1, 1,
-                LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, type);
-        var data = builder.end();
-        try {
-            int count = data.drawState().vertexCount();
-            if (count == 0 || count % 4 != 0 || data.drawState().format() != DefaultVertexFormat.BLOCK) return;
-            ByteBuffer source = data.vertexBuffer().duplicate().order(ByteOrder.nativeOrder());
-            // Real quads keep both triangles. Only byte-identical padded OBJ vertices can be removed.
-            ByteBuffer triangles = MemoryUtil.memAlloc(Math.multiplyExact(count / 4, 6 * STRIDE));
-            try {
-                for (int quad = 0; quad < count; quad += 4) {
-                    int offset = quad * STRIDE;
-                    for (int vertex = 0; vertex < 4; vertex++) {
-                        int base = offset + vertex * STRIDE;
-                        float x = source.getFloat(base), y = source.getFloat(base + 4), z = source.getFloat(base + 8);
-                        if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z) ||
-                                (source.get(base + 15) & 255) != 255)
-                            return;
-                        minX = Math.min(minX, x);
-                        minY = Math.min(minY, y);
-                        minZ = Math.min(minZ, z);
-                        maxX = Math.max(maxX, x);
-                        maxY = Math.max(maxY, y);
-                        maxZ = Math.max(maxZ, z);
-                    }
-                    copyVertex(triangles, source, offset);
-                    copyVertex(triangles, source, offset + STRIDE);
-                    copyVertex(triangles, source, offset + 2 * STRIDE);
-                    if (!sameVertex(source, offset + 2 * STRIDE, offset + 3 * STRIDE)) {
-                        copyVertex(triangles, source, offset + 2 * STRIDE);
-                        copyVertex(triangles, source, offset + 3 * STRIDE);
-                        copyVertex(triangles, source, offset);
-                    }
-                }
-                triangles.flip();
-                var compact = triangleBuilder;
-                compact.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.BLOCK);
-                compact.putBulkData(triangles);
-                var compiled = compact.end();
-                vertices = new VertexBuffer(VertexBuffer.Usage.STATIC);
-                vertices.bind();
+        // In 1.21 the byte storage owns native memory and MeshData owns each completed slice.
+        // Both are closed on rejected geometry, upload failures and normal compilation.
+        try (var scratch = new ByteBufferBuilder(1 << 20)) {
+            var builder = new BufferBuilder(scratch, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
+            renderer.renderModel(new PoseStack().last(), builder, null, model, 1, 1, 1,
+                    LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, type);
+            var data = builder.build();
+            if (data == null) return;
+            try (data) {
+                int count = data.drawState().vertexCount();
+                if (count == 0 || count % 4 != 0 || data.drawState().format() != DefaultVertexFormat.BLOCK) return;
+                ByteBuffer source = data.vertexBuffer().duplicate().order(ByteOrder.nativeOrder());
+                // Real quads keep both triangles. Only byte-identical padded OBJ vertices can be removed.
+                ByteBuffer triangles = MemoryUtil.memAlloc(Math.multiplyExact(count / 4, 6 * STRIDE));
                 try {
-                    vertices.upload(compiled);
+                    for (int quad = 0; quad < count; quad += 4) {
+                        int offset = quad * STRIDE;
+                        for (int vertex = 0; vertex < 4; vertex++) {
+                            int base = offset + vertex * STRIDE;
+                            float x = source.getFloat(base), y = source.getFloat(base + 4), z = source.getFloat(base + 8);
+                            if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z) ||
+                                    (source.get(base + 15) & 255) != 255)
+                                return;
+                            minX = Math.min(minX, x);
+                            minY = Math.min(minY, y);
+                            minZ = Math.min(minZ, z);
+                            maxX = Math.max(maxX, x);
+                            maxY = Math.max(maxY, y);
+                            maxZ = Math.max(maxZ, z);
+                        }
+                        copyVertex(triangles, source, offset);
+                        copyVertex(triangles, source, offset + STRIDE);
+                        copyVertex(triangles, source, offset + 2 * STRIDE);
+                        if (!sameVertex(source, offset + 2 * STRIDE, offset + 3 * STRIDE)) {
+                            copyVertex(triangles, source, offset + 2 * STRIDE);
+                            copyVertex(triangles, source, offset + 3 * STRIDE);
+                            copyVertex(triangles, source, offset);
+                        }
+                    }
+                    triangles.flip();
+                    int vertexCount = triangles.remaining() / STRIDE;
+                    try (var compact = new ByteBufferBuilder(triangles.remaining())) {
+                        long address = compact.reserve(triangles.remaining());
+                        MemoryUtil.memCopy(MemoryUtil.memAddress(triangles), address, triangles.remaining());
+                        var compiled = new MeshData(compact.build(), new MeshData.DrawState(DefaultVertexFormat.BLOCK,
+                                vertexCount, VertexFormat.Mode.TRIANGLES.indexCount(vertexCount),
+                                VertexFormat.Mode.TRIANGLES, VertexFormat.IndexType.least(vertexCount)));
+                        vertices = new VertexBuffer(VertexBuffer.Usage.STATIC);
+                        vertices.bind();
+                        try {
+                            // upload consumes and closes the MeshData result.
+                            vertices.upload(compiled);
+                        } finally {
+                            VertexBuffer.unbind();
+                        }
+                    }
                 } finally {
-                    VertexBuffer.unbind();
+                    MemoryUtil.memFree(triangles);
                 }
-            } finally {
-                MemoryUtil.memFree(triangles);
             }
-        } finally {
-            data.release();
         }
     }
 

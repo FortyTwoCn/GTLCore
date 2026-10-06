@@ -3,6 +3,7 @@ package org.gtlcore.gtlcore.integration.ae2.throughput;
 import org.gtlcore.gtlcore.GTLCore;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -77,15 +78,15 @@ public class ThroughputMonitorTerminalPart extends AbstractDisplayPart
     }
 
     @Override
-    public void readFromNBT(CompoundTag data) {
-        super.readFromNBT(data);
-        viewCells.readFromNBT(data, VIEW_CELL_NBT_KEY);
+    public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
+        super.readFromNBT(data, registries);
+        viewCells.readFromNBT(data, VIEW_CELL_NBT_KEY, registries);
     }
 
     @Override
-    public void writeToNBT(CompoundTag data) {
-        super.writeToNBT(data);
-        viewCells.writeToNBT(data, VIEW_CELL_NBT_KEY);
+    public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
+        super.writeToNBT(data, registries);
+        viewCells.writeToNBT(data, VIEW_CELL_NBT_KEY, registries);
     }
 
     @Override
@@ -94,13 +95,13 @@ public class ThroughputMonitorTerminalPart extends AbstractDisplayPart
     }
 
     @Override
-    public void saveChanges() {
+    public void saveChangedInventory(AppEngInternalInventory inventory) {
         getHost().markForSave();
     }
 
     @Override
-    public void onChangeInventory(InternalInventory inventory, int slot) {
-        saveChanges();
+    public void onChangeInventory(AppEngInternalInventory inventory, int slot) {
+        saveChangedInventory(inventory);
     }
 
     @Override
@@ -110,13 +111,23 @@ public class ThroughputMonitorTerminalPart extends AbstractDisplayPart
     }
 
     @Override
-    public boolean onPartActivate(Player player, InteractionHand hand, Vec3 pos) {
-        if (!super.onPartActivate(player, hand, pos) && !isClientSide() &&
+    public boolean onUseWithoutItem(Player player, Vec3 pos) {
+        if (!super.onUseWithoutItem(player, pos)) openMenu(player);
+        return true;
+    }
+
+    @Override
+    public boolean onUseItemOn(ItemStack heldItem, Player player, InteractionHand hand, Vec3 pos) {
+        if (!super.onUseItemOn(heldItem, player, hand, pos)) openMenu(player);
+        return true;
+    }
+
+    private void openMenu(Player player) {
+        if (!isClientSide() &&
                 player instanceof ServerPlayer serverPlayer && getMainNode().isActive() &&
                 Platform.hasPermissions(getHost().getLocation(), player)) {
             ThroughputMonitorTerminalMenu.open(serverPlayer, this);
         }
-        return true;
     }
 
     @Override

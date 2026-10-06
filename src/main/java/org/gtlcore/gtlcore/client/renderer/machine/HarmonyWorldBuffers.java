@@ -47,7 +47,7 @@ final class HarmonyWorldBuffers {
             discoverSegments();
         }
         var access = (AnimationBufferSourceAccessor) current;
-        if (buffer == access.gtlcore$getAnimationFixedBuffers().getOrDefault(type, access.gtlcore$getAnimationBuilder())) return true;
+        if (buffer == access.gtlcore$getAnimationStartedBuilders().get(type)) return true;
         Object segment = segments.get(buffer);
         if (segment != null && segmentType != null) {
             try {

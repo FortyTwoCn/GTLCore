@@ -11,11 +11,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkHooks;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.menu.AEBaseMenu;
-import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.MenuHostLocator;
 import appeng.menu.locator.MenuLocators;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,7 @@ public final class TagViewCellMenu extends AEBaseMenu {
     private final String initialBlacklist;
 
     public static TagViewCellMenu createClientMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
-        MenuLocator locator = MenuLocators.readFromPacket(data);
+        MenuHostLocator locator = MenuLocators.readFromPacket(data);
         ItemMenuHost host = locator.locate(inventory.player, ItemMenuHost.class);
         return new TagViewCellMenu(
                 GTLWirelessAeContent.TAG_VIEW_CELL_MENU.get(),
@@ -40,7 +39,7 @@ public final class TagViewCellMenu extends AEBaseMenu {
     }
 
     private TagViewCellMenu(MenuType<?> menuType, int containerId, Inventory inventory,
-                            @Nullable ItemMenuHost host, @Nullable MenuLocator locator) {
+                            @Nullable ItemMenuHost host, @Nullable MenuHostLocator locator) {
         super(menuType, containerId, inventory, host);
         this.host = host;
         ItemStack stack = host == null ? ItemStack.EMPTY : host.getItemStack();
@@ -52,7 +51,7 @@ public final class TagViewCellMenu extends AEBaseMenu {
         }
     }
 
-    public static boolean open(Player player, MenuLocator locator, boolean returningFromSubmenu) {
+    public static boolean open(Player player, MenuHostLocator locator, boolean returningFromSubmenu) {
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return false;
         }
@@ -61,9 +60,7 @@ public final class TagViewCellMenu extends AEBaseMenu {
             return false;
         }
 
-        NetworkHooks.openScreen(
-                serverPlayer,
-                new MenuProvider() {
+        serverPlayer.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {

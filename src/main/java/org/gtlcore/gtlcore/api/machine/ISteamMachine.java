@@ -2,5 +2,6 @@ package org.gtlcore.gtlcore.api.machine;
 
 public interface ISteamMachine {
 
-    double getConversionRate();
+    /** Millibuckets consumed per EU. Native GT's getConversionRate uses this unit. */
+    double getSteamPerEU();
 }

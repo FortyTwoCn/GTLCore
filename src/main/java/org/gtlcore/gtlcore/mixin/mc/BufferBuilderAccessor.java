@@ -7,6 +7,10 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(BufferBuilder.class)
 public interface BufferBuilderAccessor {
 
-    @Accessor("nextElementByte")
-    int getNextElementByte();
+    @Accessor("vertices")
+    int gtlcore$getVertexCount();
+
+    @Accessor("vertexSize")
+    int gtlcore$getVertexSize();
+
 }

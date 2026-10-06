@@ -4,8 +4,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Quaternionf;
@@ -22,12 +22,15 @@ public class StereoscopicItemRenderer extends WrappedItemRenderer {
                            int combinedOverlay, BakedModel model) {
         model = getVanillaModel(stack, null, null);
         poseStack.pushPose();
-        if (transformType == ItemDisplayContext.GUI) {
-            poseStack.mulPose(new Quaternionf()
-                    .fromAxisAngleDeg(0.3f, 0.5f, 0.2f, (System.currentTimeMillis() / 25) % 360));
+        try {
+            if (transformType == ItemDisplayContext.GUI) {
+                poseStack.mulPose(new Quaternionf()
+                        .fromAxisAngleDeg(0.3f, 0.5f, 0.2f, (System.currentTimeMillis() / 25) % 360));
+            }
+            vanillaRender(stack, transformType, leftHand, poseStack,
+                    buffer, combinedLight, combinedOverlay, model);
+        } finally {
+            poseStack.popPose();
         }
-        vanillaRender(stack, transformType, leftHand, poseStack,
-                buffer, combinedLight, combinedOverlay, model);
-        poseStack.popPose();
     }
 }

@@ -20,13 +20,19 @@ import java.util.WeakHashMap;
 /** JEI widget slots have local (0,0) bounds; AE asks for recipe-relative highlights. */
 public final class PreviewMaterialHighlights {
 
-    private static final Map<IRecipeSlotView, WeakReference<Widget>> SLOTS = new WeakHashMap<>();
+    private static final Map<IRecipeSlotView, Binding> SLOTS = new WeakHashMap<>();
+    private record Binding(WeakReference<Widget> slot, WeakReference<brachy.modularui.api.widget.IWidget> origin) {}
 
     private PreviewMaterialHighlights() {}
 
     public static void bind(IRecipeIngredientSlot ingredient, IRecipeSlotView jeiSlot) {
+        bind(ingredient, jeiSlot, null);
+    }
+
+    public static void bind(IRecipeIngredientSlot ingredient, IRecipeSlotView jeiSlot,
+                            brachy.modularui.api.widget.IWidget origin) {
         if (ingredient instanceof SlotWidget slot && previewParent(slot) != null) {
-            SLOTS.put(jeiSlot, new WeakReference<>(slot));
+            SLOTS.put(jeiSlot, new Binding(new WeakReference<>(slot), new WeakReference<>(origin)));
         }
     }
 
@@ -66,10 +72,13 @@ public final class PreviewMaterialHighlights {
             jeiSlot.drawHighlight(graphics, color);
             return;
         }
-        var bounds = bounds(reference.get());
+        var bounds = bounds(reference.slot().get());
         if (bounds != null) {
-            graphics.fillGradient(RenderType.guiOverlay(), bounds.getX(), bounds.getY(),
-                    bounds.getX() + bounds.getWidth(), bounds.getY() + bounds.getHeight(), color, color, 0);
+            var origin = reference.origin().get();
+            int x = bounds.getX() + (origin == null ? 0 : origin.getArea().x);
+            int y = bounds.getY() + (origin == null ? 0 : origin.getArea().y);
+            graphics.fillGradient(RenderType.guiOverlay(), x, y,
+                    x + bounds.getWidth(), y + bounds.getHeight(), color, color, 0);
         }
     }
 }

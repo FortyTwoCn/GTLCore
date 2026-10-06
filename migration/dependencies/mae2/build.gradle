@@ -1,0 +1,41 @@
+plugins { id 'java-library'; alias libs.plugins.modDevGradle }
+group = 'org.gtlcore.dependencies'
+version = '2.1.0-gtl.1'
+base { archivesName = 'mae2-neoforge' }
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty('mae2_source'))
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.withSourcesJar()
+sourceSets.main {
+    java.setSrcDirs([new File(nativeSource, 'src/main/java')])
+    resources.setSrcDirs([new File(nativeSource, 'src/main/resources'), new File(nativeSource, 'src/generated/resources')])
+    resources.exclude('.cache/**')
+}
+apply from: '../../../gradle/repositories.gradle'
+configurations.configureEach { exclude group: 'org.appliedenergistics', module: 'guideme' }
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+    mods { mae2 { sourceSet(sourceSets.main) } }
+    accessTransformers = files(new File(nativeSource, 'src/main/resources/META-INF/accesstransformer.cfg'))
+}
+dependencies {
+    implementation(forge.ae2)
+    implementation('com.gregtechceu.gtceu:gtceu-1.21.1:8.0.0')
+    implementation('maven.modrinth:ldlib:oe3VmoEH')
+    implementation('maven.modrinth:guideme:hFpGwC6q')
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 21; options.compilerArgs.addAll(['-Xmaxerrs','1000']) }
+tasks.named('processResources') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(mod_id: 'mae2', mod_name: 'Modern AE2 Additions', mod_license: 'LGPLv3.0',
+                mod_url: 'https://github.com/Monifactory/MAE2', mod_author: 'Raine',
+                version: project.version, ae2_version: forge.versions.ae2.get(), gtceu_version: '8.0.0')
+    }
+}
+apply from: '../native-source.gradle'

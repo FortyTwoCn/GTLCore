@@ -32,6 +32,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,6 +69,10 @@ public abstract class CraftingCpuLogicMixin implements ICraftingJobSuspension, I
     @Shadow(remap = false)
     public abstract void cancel();
 
+    @Shadow(remap = false)
+    public abstract int executeCrafting(int maxPatterns, CraftingService craftingService,
+                                       IEnergyService energyService, Level level);
+
     @Invoker(value = "postChange", remap = false)
     protected abstract void gtlcore$invokePostChange(AEKey what);
 
@@ -95,7 +100,7 @@ public abstract class CraftingCpuLogicMixin implements ICraftingJobSuspension, I
     @Unique
     private boolean core$matchOutput(GenericStack g) {
         return g != null && g.what() instanceof AEItemKey i && i.getItem() == Items.WRITTEN_BOOK &&
-                (i.hasTag() && i.getTag().contains("display"));
+                i.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME) != null;
     }
 
     /**
@@ -168,13 +173,24 @@ public abstract class CraftingCpuLogicMixin implements ICraftingJobSuspension, I
         gtlcore$publishDispatchReasons();
     }
 
-    /**
-     * @author Dragons
-     * @reason ME样板总成自动翻倍
-     */
-    @Overwrite(remap = false)
-    public int executeCrafting(int maxPatterns, CraftingService craftingService, IEnergyService energyService,
-                               Level level) {
+    /** Keep the native method intact so optional integrations can inject their task lifecycle hooks. */
+    @Inject(method = "executeCrafting", at = @At("HEAD"), remap = false, cancellable = true)
+    private void gtlcore$dispatchCrafting(int maxPatterns, CraftingService craftingService,
+                                        IEnergyService energyService, Level level,
+                                        CallbackInfoReturnable<Integer> cir) {
+        // AppliedE creates temporary EMC patterns and removes them inside native dispatch.
+        // Let AE2 execute the whole mixed job while it contains those patterns. Ordinary jobs
+        // retain GTL's parallel provider dispatch, power accounting and reason tracking.
+        if (!((GraphCpuAccess) this).gtlcore$graphController().ownsTask()
+                && job != null && ((ExecutingCraftingJobAccessor) job).getTasks().keySet().stream()
+                .anyMatch(details -> details.getClass().getName().equals(
+                        "gripe._90.appliede.me.service.TransmutationPattern"))) return;
+        cir.setReturnValue(gtlcore$executeCrafting(maxPatterns, craftingService, energyService, level));
+    }
+
+    @Unique
+    private int gtlcore$executeCrafting(int maxPatterns, CraftingService craftingService,
+                                      IEnergyService energyService, Level level) {
         if (((GraphCpuAccess) this).gtlcore$graphController().ownsTask()) return 0;
         var job = (ExecutingCraftingJobAccessor) (this.job);
         if (job == null) return 0;

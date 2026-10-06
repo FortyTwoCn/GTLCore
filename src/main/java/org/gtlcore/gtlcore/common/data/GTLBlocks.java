@@ -13,7 +13,7 @@ import com.gregtechceu.gtceu.api.block.IFilterType;
 import com.gregtechceu.gtceu.api.block.IFusionCasingType;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.common.block.FusionCasingBlock;
-import com.gregtechceu.gtceu.common.data.GTModels;
+import com.gregtechceu.gtceu.common.data.models.GTModels;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 
 import net.minecraft.client.renderer.RenderType;
@@ -26,11 +26,11 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.GlassBlock;
+import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraftforge.client.model.generators.ConfiguredModel;
-import net.minecraftforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
 
 import appeng.block.crafting.AbstractCraftingUnitBlock;
 import appeng.block.crafting.CraftingBlockItem;
@@ -87,7 +87,7 @@ public class GTLBlocks {
                 .defaultLoot()
                 .item((block, properties) -> tier == -1 ?
                         new BlockItem(block, properties) :
-                        new CraftingBlockItem(block, properties, Type::getDisassemblyExtra))
+                        new CraftingBlockItem(block, properties))
                 .model((ctx, provider) -> provider.withExistingParent(ctx.getName(),
                         provider.modLoc("block/crafting/" + ctx.getName())))
                 .build()
@@ -142,7 +142,7 @@ public class GTLBlocks {
         BlockEntry<Block> Block = REGISTRATE.block(name, p -> (Block) new Block(p) {
 
             @Override
-            public void appendHoverText(@NotNull ItemStack stack, @Nullable BlockGetter level,
+            public void appendHoverText(@NotNull ItemStack stack, net.minecraft.world.item.Item.TooltipContext context,
                                         @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
                 tooltip.add(Component.translatable("gtceu.casings.tier", tier));
             }
@@ -150,7 +150,7 @@ public class GTLBlocks {
                 .initialProperties(() -> Blocks.IRON_BLOCK)
                 .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
                 .addLayer(() -> RenderType::cutoutMipped)
-                .blockstate(GTModels.cubeAllModel(name, texture))
+                .blockstate((ctx, prov) -> prov.simpleBlock(ctx.get(), prov.models().cubeAll(ctx.getName(), texture)))
                 .tag(GTToolType.WRENCH.harvestTags.get(0), BlockTags.MINEABLE_WITH_PICKAXE)
                 .item(BlockItem::new)
                 .build()
@@ -166,7 +166,7 @@ public class GTLBlocks {
         BlockEntry<ActiveBlock> Block = REGISTRATE.block("%s".formatted(name), p -> (ActiveBlock) new ActiveBlock(p) {
 
             @Override
-            public void appendHoverText(@NotNull ItemStack stack, @Nullable BlockGetter level,
+            public void appendHoverText(@NotNull ItemStack stack, net.minecraft.world.item.Item.TooltipContext context,
                                         @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
                 tooltip.add(Component.translatable("gtceu.casings.tier", tier));
             }
@@ -202,7 +202,7 @@ public class GTLBlocks {
 
     private static BlockEntry<Block> createGlassCasingBlock(String name, ResourceLocation texture,
                                                             Supplier<Supplier<RenderType>> type) {
-        return createCasingBlock(name, GlassBlock::new, texture, () -> Blocks.GLASS, type);
+        return createCasingBlock(name, TransparentBlock::new, texture, () -> Blocks.GLASS, type);
     }
 
     public static BlockEntry<Block> createCasingBlock(String name, ResourceLocation texture) {
@@ -220,7 +220,7 @@ public class GTLBlocks {
                 .initialProperties(properties)
                 .properties(p -> p.isValidSpawn((state, level, pos, ent) -> false))
                 .addLayer(type)
-                .blockstate(GTModels.cubeAllModel(name, texture))
+                .blockstate((ctx, prov) -> prov.simpleBlock(ctx.get(), prov.models().cubeAll(ctx.getName(), texture)))
                 .tag(GTToolType.WRENCH.harvestTags.get(0), BlockTags.MINEABLE_WITH_PICKAXE)
                 .item(BlockItem::new)
                 .build()
@@ -238,7 +238,7 @@ public class GTLBlocks {
                     ActiveBlock block = ctx.getEntry();
                     ModelFile inactive = prov.models().getExistingFile(GTLCore.id(casingType.getSerializedName()));
                     ModelFile active = prov.models().getExistingFile(GTLCore.id(casingType.getSerializedName()).withSuffix("_active"));
-                    prov.getVariantBuilder(block).partialState().with(ActiveBlock.ACTIVE, false).modelForState().modelFile(inactive).addModel().partialState().with(ActiveBlock.ACTIVE, true).modelForState().modelFile(active).addModel();
+                    prov.getVariantBuilder(block).partialState().with(com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties.ACTIVE, false).modelForState().modelFile(inactive).addModel().partialState().with(com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties.ACTIVE, true).modelForState().modelFile(active).addModel();
                 })
                 .tag(GTToolType.WRENCH.harvestTags.get(0), CustomTags.TOOL_TIERS[casingType.getHarvestLevel()])
                 .item(BlockItem::new)

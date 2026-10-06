@@ -51,7 +51,7 @@ public class WirelessNetworkCoreScreen extends AbstractContainerScreen<WirelessN
                 this.imageWidth - 84,
                 Component.translatable("button.gtlcore.wireless_core.save"),
                 button -> {
-                    WirelessAePackets.CHANNEL.sendToServer(
+                    net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                             new WirelessAePackets.RenameNetworkPacket(this.menu.getPos(), this.nameField.getValue()));
                     this.onClose();
                 }));
@@ -69,14 +69,8 @@ public class WirelessNetworkCoreScreen extends AbstractContainerScreen<WirelessN
     }
 
     @Override
-    public void containerTick() {
-        super.containerTick();
-        this.nameField.tick();
-    }
-
-    @Override
     public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
     }

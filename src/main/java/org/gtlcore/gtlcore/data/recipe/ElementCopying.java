@@ -1,5 +1,6 @@
 package org.gtlcore.gtlcore.data.recipe;
 
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeContents;
 import org.gtlcore.gtlcore.common.data.GTLMaterials;
 
 import com.gregtechceu.gtceu.api.GTValues;
@@ -9,7 +10,7 @@ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.common.data.GTElements;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import java.util.List;
 import java.util.Objects;
@@ -147,13 +148,13 @@ public class ElementCopying {
             GTMaterials.Zinc,
             GTMaterials.Zirconium);
 
-    public static void init(Consumer<FinishedRecipe> provider) {
+    public static void init(RecipeOutput provider) {
         for (Material e : fes) {
             Element element = Objects.requireNonNullElse(e.getElement(), GTElements.Nt);
             long atomic = element.protons() + element.neutrons();
             ELEMENT_COPYING_RECIPES.recipeBuilder(e.getName())
                     .notConsumableFluid(e.getFluid(1000))
-                    .inputFluids(GTMaterials.UUMatter.getFluid(atomic))
+                    .inputFluids(GTLRecipeContents.fluid(GTMaterials.UUMatter, atomic))
                     .outputFluids(e.getFluid(1000))
                     .duration((int) atomic)
                     .EUt(GTValues.V[GTValues.UXV])
@@ -165,7 +166,7 @@ public class ElementCopying {
             long atomic = element.protons() + element.neutrons();
             ELEMENT_COPYING_RECIPES.recipeBuilder(e.getName())
                     .notConsumable(TagPrefix.dust, e)
-                    .inputFluids(GTMaterials.UUMatter.getFluid(atomic))
+                    .inputFluids(GTLRecipeContents.fluid(GTMaterials.UUMatter, atomic))
                     .outputItems(TagPrefix.dust, e)
                     .duration((int) atomic)
                     .EUt(GTValues.V[GTValues.UXV])

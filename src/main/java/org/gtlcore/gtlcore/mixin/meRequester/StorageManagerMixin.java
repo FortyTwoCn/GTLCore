@@ -5,6 +5,7 @@ import org.gtlcore.gtlcore.integration.ae2.requester.RequesterStorageAccounting;
 import org.gtlcore.gtlcore.integration.ae2.requester.RequesterStorageSync;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 
 import appeng.api.networking.IStackWatcher;
 import appeng.api.networking.storage.IStorageService;
@@ -49,7 +50,7 @@ public abstract class StorageManagerMixin implements RequesterStorageSync {
         var inventory = service.getCachedInventory();
         long version = ((InventorySnapshotVersion) service).gtlcore$inventorySnapshotVersion();
         if (!gtlcore$needsBaseline && service == gtlcore$sampledService && version == gtlcore$sampledVersion) return;
-        var requests = host.getRequests();
+        var requests = host.getRequestManager();
         for (int i = 0; i < storages.length; i++) {
             var key = requests.getKey(i);
             if (key == null && storages[i] == null) continue;
@@ -73,8 +74,8 @@ public abstract class StorageManagerMixin implements RequesterStorageSync {
         gtlcore$needsBaseline = true;
     }
 
-    @Inject(method = "deserialize(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("RETURN"))
-    private void gtlcore$loaded(CompoundTag tag, CallbackInfo ci) {
+    @Inject(method = "deserializeNBT(Lnet/minecraft/core/HolderLookup$Provider;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("RETURN"))
+    private void gtlcore$loaded(HolderLookup.Provider registries, CompoundTag tag, CallbackInfo ci) {
         gtlcore$needsBaseline = true;
     }
 
@@ -86,7 +87,7 @@ public abstract class StorageManagerMixin implements RequesterStorageSync {
 
     @Inject(method = "computeAmountToCraft", at = @At("HEAD"), cancellable = true)
     private void gtlcore$avoidStockOverflow(int slot, CallbackInfoReturnable<Long> cir) {
-        var request = host.getRequests().get(slot);
+        var request = host.getRequestManager().get(slot);
         cir.setReturnValue(request.getKey() != null &&
                 !((RequesterStorageAccounting) get(slot)).gtlcore$hasStock(request.getAmount()) ? request.getBatch() : 0L);
     }

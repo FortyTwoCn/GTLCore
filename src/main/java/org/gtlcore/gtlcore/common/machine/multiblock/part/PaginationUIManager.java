@@ -1,198 +1,51 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part;
 
-import org.gtlcore.gtlcore.integration.ae2.widget.AEPatternViewExtendSlotWidget;
-
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.side.item.IItemTransfer;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-
-import appeng.crafting.pattern.EncodedPatternItem;
-import lombok.Getter;
+import org.gtlcore.gtlcore.integration.ae2.gui.MolecularPatternPagination;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.IntSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.function.Function;
 import java.util.function.IntConsumer;
 
-/**
- * 管理翻页UI的创建和状态
- */
-public class PaginationUIManager {
-
-    // Getters for configuration
-    // UI配置
-    @Getter
-    private final int uiWidth;
-    @Getter
-    private final int uiHeight;
-    @Getter
-    private final int patternsPerRow;
-    @Getter
-    private final int rowsPerPage;
-    @Getter
-    private final int maxPages;
-    @Getter
-    private final int maxPatternCount;
-
-    private final IItemTransfer patternInventory;
-
-    @DescSynced
-    private int currentPageIndex;
-
-    private WidgetGroup paginationUI;
-
-    // 回调函数
+/** Configurable native pattern pages with authoritative slot numbering and page synchronization. */
+public final class PaginationUIManager {
+    private final int uiWidth, uiHeight, patternsPerRow, rowsPerPage, maxPages, maxPatternCount;
+    private final IItemHandlerModifiable patternInventory;
     private final @Nullable Function<Integer, Boolean> isCached;
     private final IntConsumer onPatternChange;
-    private @Nullable IntConsumer onMiddleClicked;
 
-    public PaginationUIManager(int patternsPerRow, int rowsPerPage, int maxPages,
-                               int uiWidth, int uiHeight,
-                               IntConsumer onPatternChange,
-                               @Nullable Function<Integer, Boolean> isCached,
-                               IItemTransfer patternInventory) {
-        this.patternsPerRow = patternsPerRow;
-        this.rowsPerPage = rowsPerPage;
-        this.maxPages = maxPages;
-        this.maxPatternCount = patternsPerRow * rowsPerPage * maxPages;
-        this.uiWidth = uiWidth;
-        this.uiHeight = uiHeight;
-
-        this.onPatternChange = onPatternChange;
-        this.isCached = isCached;
-        this.patternInventory = patternInventory;
+    public PaginationUIManager(int columns, int rows, int pages, int uiWidth, int uiHeight, IntConsumer changed,
+                               @Nullable Function<Integer, Boolean> cached, IItemHandlerModifiable inventory) {
+        this(columns, rows, Math.multiplyExact(Math.multiplyExact(columns, rows), pages), uiWidth, uiHeight, changed, inventory, cached);
+        if (pages < 1 || pages > 10) throw new IllegalArgumentException("Invalid pattern page count");
     }
-
-    public PaginationUIManager(int patternsPerRow, int rowsPerPage, int totalCount,
-                               int uiWidth, int uiHeight,
-                               IntConsumer onPatternChange,
-                               IItemTransfer patternInventory) {
-        this.patternsPerRow = patternsPerRow;
-        this.rowsPerPage = rowsPerPage;
-        this.maxPatternCount = totalCount;
-        this.maxPages = (int) Math.ceil((double) totalCount / (rowsPerPage * patternsPerRow));
-        this.uiWidth = uiWidth;
-        this.uiHeight = uiHeight;
-
-        this.onPatternChange = onPatternChange;
-        isCached = null;
-        this.patternInventory = patternInventory;
+    public PaginationUIManager(int columns, int rows, int size, int uiWidth, int uiHeight, IntConsumer changed,
+                               IItemHandlerModifiable inventory) {
+        this(columns, rows, size, uiWidth, uiHeight, changed, inventory, null);
     }
-
-    /**
-     * 重建完整的翻页UI
-     */
-    public WidgetGroup createPaginationUI(@Nullable IntConsumer onMiddleClicked) {
-        this.onMiddleClicked = onMiddleClicked;
-
-        var basePage = new WidgetGroup(0, 0, uiWidth, uiHeight);
-        // 默认重建当前页面的slot组
-        this.paginationUI = rebuildPatternSlots(currentPageIndex);
-        basePage.addWidget(this.paginationUI);
-        // 重建翻页控制按钮
-        createPageControls(basePage);
-
-        return basePage;
+    private PaginationUIManager(int columns, int rows, int size, int uiWidth, int uiHeight, IntConsumer changed,
+                                IItemHandlerModifiable inventory, @Nullable Function<Integer, Boolean> cached) {
+        if (columns < 1 || columns > 18 || rows < 1 || rows > 10 || size < 0)
+            throw new IllegalArgumentException("Invalid pattern page dimensions");
+        this.patternsPerRow = columns; this.rowsPerPage = rows; this.maxPatternCount = size;
+        this.maxPages = Math.max(1, Math.ceilDiv(size, Math.multiplyExact(columns, rows)));
+        this.uiWidth = uiWidth; this.uiHeight = uiHeight;
+        this.patternInventory = inventory; this.onPatternChange = changed; this.isCached = cached;
     }
-
-    /**
-     * 重建所有页面的pattern slots
-     */
-    protected WidgetGroup rebuildPatternSlots(int pageIndex) {
-        final int startY = 16;
-        final int patternAreaHeight = rowsPerPage * 18;
-        final int startSlot = pageIndex * (rowsPerPage * patternsPerRow);
-        final int endSlot = Math.min(startSlot + (rowsPerPage * patternsPerRow), maxPatternCount);
-
-        var pageGroup = new WidgetGroup(0, startY, uiWidth, patternAreaHeight);
-        recreatePatternSlots(pageGroup, startSlot, endSlot);
-        return pageGroup;
+    public IWidget createPaginationUI(PanelSyncManager sync, @Nullable IntConsumer middleClick) {
+        return MolecularPatternPagination.build(patternInventory, maxPatternCount, sync, onPatternChange, middleClick,
+                slot -> isCached != null && Boolean.TRUE.equals(isCached.apply(slot)), patternsPerRow, rowsPerPage,
+                Math.min(MolecularPatternPagination.VISIBLE_ROWS, rowsPerPage));
     }
-
-    private void recreatePatternSlots(WidgetGroup pageGroup, int startSlot, int endSlot) {
-        for (int i = startSlot; i < endSlot; i++) {
-            int finalI = i;
-            int slotInPage = i - startSlot;
-            int row = slotInPage / patternsPerRow;
-            int col = slotInPage % patternsPerRow;
-
-            int x = uiWidth == 106 ? (106 - patternsPerRow * 18) / 2 + col * 18 : 8 + col * 18;
-            int y = row * 18;
-
-            AEPatternViewExtendSlotWidget slot = (AEPatternViewExtendSlotWidget) new AEPatternViewExtendSlotWidget(patternInventory, i, x, y)
-                    .setOnPatternSlotChanged(() -> onPatternChange.accept(finalI))
-                    .setOccupiedTexture(GuiTextures.SLOT)
-                    .setItemHook(stack -> {
-                        if (!stack.isEmpty() && stack.getItem() instanceof EncodedPatternItem iep) {
-                            final ItemStack out = iep.getOutput(stack);
-                            if (!out.isEmpty()) return out;
-                        }
-                        return stack;
-                    })
-                    .setBackground(GuiTextures.SLOT, GuiTextures.PATTERN_OVERLAY);
-
-            if (onMiddleClicked != null) {
-                slot.setOnMiddleClick(() -> onMiddleClicked.accept(finalI));
-            }
-            if (isCached != null) {
-                slot.setOnAddedTooltips((s, l) -> {
-                    if (isCached.apply(finalI)) l.add(Component.translatable("gtceu.machine.pattern.recipe.cache"));
-                });
-            }
-
-            pageGroup.addWidget(slot);
-        }
+    public void refreshPage(PanelSyncManager sync, int page) {
+        sync.findSyncHandler("molecularPageIndex", IntSyncValue.class).setIntValue(Math.clamp(page, 0, maxPages - 1));
     }
-
-    /**
-     * 重建翻页控制按钮
-     */
-    protected void createPageControls(WidgetGroup parentGroup) {
-        int startY = 16;
-        int patternAreaHeight = rowsPerPage * 18;
-        int pageControlY = startY + patternAreaHeight + 4;
-
-        // 上一页按钮
-        parentGroup.addWidget(new ButtonWidget(8, pageControlY, 30, 12,
-                new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture("<<")),
-                clickData -> {
-                    if (currentPageIndex > 0) {
-                        currentPageIndex--;
-                        refreshPage(currentPageIndex);
-                    }
-                }));
-
-        // 页面指示器（居中）
-        int pageIndicatorWidth = 12; // 估计页面文本宽度
-        int pageIndicatorX = (uiWidth - pageIndicatorWidth) / 2; // 居中文本块
-        parentGroup.addWidget(new LabelWidget(pageIndicatorX, pageControlY + 2,
-                () -> (currentPageIndex + 1) + " / " + maxPages));
-
-        // 下一页按钮
-        parentGroup.addWidget(new ButtonWidget(uiWidth - 38, pageControlY, 30, 12,
-                new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture(">>")),
-                clickData -> {
-                    if (currentPageIndex < maxPages - 1) {
-                        currentPageIndex++;
-                        refreshPage(currentPageIndex);
-                    }
-                }));
-    }
-
-    public void refreshPage(int pageIndex) {
-        this.paginationUI.clearAllWidgets();
-
-        final int startSlot = pageIndex * (rowsPerPage * patternsPerRow);
-        final int endSlot = Math.min(startSlot + (rowsPerPage * patternsPerRow), maxPatternCount);
-
-        recreatePatternSlots(this.paginationUI, startSlot, endSlot);
-    }
+    public int getUiWidth() { return uiWidth; }
+    public int getUiHeight() { return uiHeight; }
+    public int getPatternsPerRow() { return patternsPerRow; }
+    public int getRowsPerPage() { return rowsPerPage; }
+    public int getMaxPages() { return maxPages; }
+    public int getMaxPatternCount() { return maxPatternCount; }
 }

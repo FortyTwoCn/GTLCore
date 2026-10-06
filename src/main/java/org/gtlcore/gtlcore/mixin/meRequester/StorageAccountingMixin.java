@@ -3,6 +3,7 @@ package org.gtlcore.gtlcore.mixin.meRequester;
 import org.gtlcore.gtlcore.integration.ae2.requester.RequesterStorageAccounting;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEKey;
@@ -67,8 +68,8 @@ public abstract class StorageAccountingMixin implements RequesterStorageAccounti
                 Objects.equals(key, gtlcore$pendingKey);
     }
 
-    @Inject(method = "deserialize(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("RETURN"))
-    private void gtlcore$discardSavedAccounting(CompoundTag tag, CallbackInfo ci) {
+    @Inject(method = "deserializeNBT(Lnet/minecraft/core/HolderLookup$Provider;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("RETURN"))
+    private void gtlcore$discardSavedAccounting(HolderLookup.Provider registries, CompoundTag tag, CallbackInfo ci) {
         // Pending describes stock already exported into ME, not physical contents of this block.
         // The saved buffer and crafting links remain owned by the original requester.
         knownAmount = -1;

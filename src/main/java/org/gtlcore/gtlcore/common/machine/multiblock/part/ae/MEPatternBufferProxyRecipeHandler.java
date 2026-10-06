@@ -4,7 +4,6 @@ import org.gtlcore.gtlcore.api.machine.trait.IMERecipeHandlerTrait;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -12,20 +11,33 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
-import lombok.Setter;
 
 import java.util.List;
-import java.util.function.Predicate;
 
-public class MEPatternBufferProxyRecipeHandler<T extends Predicate<S>, S> extends NotifiableMERecipeHandlerTrait<T, S> {
+public class MEPatternBufferProxyRecipeHandler<T, S> extends NotifiableMERecipeHandlerTrait<T, S> {
 
-    @Setter
     private IMERecipeHandlerTrait<T, S> handler;
     private final RecipeCapability<T> capability;
 
-    public MEPatternBufferProxyRecipeHandler(MetaMachine machine, RecipeCapability<T> capability) {
-        super(machine);
+    public MEPatternBufferProxyRecipeHandler(RecipeCapability<T> capability) {
         this.capability = capability;
+    }
+
+    public void setHandler(IMERecipeHandlerTrait<T, S> handler) {
+        if (handler == this) throw new IllegalArgumentException("A pattern proxy cannot delegate to itself");
+        if (this.handler == handler) return;
+        this.handler = handler;
+        notifyListeners();
+    }
+
+    @Override
+    public int getPriority() {
+        return handler == null ? 0 : handler.getPriority();
+    }
+
+    @Override
+    public boolean outputHasFilter() {
+        return handler != null && handler.outputHasFilter();
     }
 
     @Override

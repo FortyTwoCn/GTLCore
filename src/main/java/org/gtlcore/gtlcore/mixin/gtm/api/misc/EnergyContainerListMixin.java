@@ -6,6 +6,7 @@ import org.gtlcore.gtlcore.utils.datastructure.Int128;
 
 import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
+import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -64,9 +65,9 @@ public abstract class EnergyContainerListMixin {
     @Redirect(method = "<init>",
               remap = false,
               at = @At(value = "INVOKE",
-                       target = "Lcom/gregtechceu/gtceu/api/misc/EnergyContainerList;calculateVoltageAmperage(JJ)[J"))
-    private long[] redirectCalculateVoltageAmperage(long voltage, long amperage) {
-        return new long[] { voltage, amperage };
+                       target = "Lcom/gregtechceu/gtceu/api/misc/EnergyContainerList;calculateVoltageAmperage(JJ)Lcom/gregtechceu/gtceu/api/recipe/ingredient/EnergyStack;"))
+    private EnergyStack redirectCalculateVoltageAmperage(long voltage, long amperage) {
+        return new EnergyStack(voltage, Math.max(1, amperage));
     }
 
     /**

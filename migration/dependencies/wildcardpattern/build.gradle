@@ -1,0 +1,40 @@
+plugins { id 'java-library'; alias libs.plugins.modDevGradle }
+group = 'org.gtlcore.dependencies'
+version = '0.1.2-gtl.1'
+base { archivesName = 'wildcard-pattern-neoforge' }
+def coreProperties = new Properties()
+file('../../../gradle.properties').withInputStream { coreProperties.load(it) }
+def nativeSource = file('../../../' + coreProperties.getProperty('wildcardpattern_source'))
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.withSourcesJar()
+sourceSets.main {
+    java.setSrcDirs([new File(nativeSource, 'src/main/java')])
+    resources.setSrcDirs([new File(nativeSource, 'src/main/resources'), new File(nativeSource, 'src/generated/resources')])
+    resources.exclude('.cache/**')
+}
+apply from: '../../../gradle/repositories.gradle'
+configurations.configureEach { exclude group: 'org.appliedenergistics', module: 'guideme' }
+neoForge {
+    version = libs.versions.neoForge.get()
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+    mods { wildcard_pattern { sourceSet(sourceSets.main) } }
+}
+dependencies {
+    implementation(forge.ae2)
+    implementation(forge.mui)
+    implementation('com.gregtechceu.gtceu:gtceu-1.21.1:8.0.0')
+    implementation('maven.modrinth:ldlib:oe3VmoEH')
+    compileOnly('org.projectlombok:lombok:1.18.38')
+    annotationProcessor('org.projectlombok:lombok:1.18.38')
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 21; options.compilerArgs.addAll(['-Xmaxerrs','1000']) }
+tasks.named('processResources') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(version: project.version)
+    }
+}
+apply from: '../native-source.gradle'

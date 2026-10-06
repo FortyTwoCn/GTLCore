@@ -1,6 +1,7 @@
 package org.gtlcore.gtlcore.client.preview;
 
-import org.gtlcore.gtlcore.GTLCore;
+import com.gregtechceu.gtceu.GTCEu;
+import com.mojang.blaze3d.vertex.MeshData;
 import org.gtlcore.gtlcore.utils.datastructure.LatestTask;
 
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
@@ -99,7 +100,7 @@ public final class PreviewMesh implements AutoCloseable {
                 Part part = ready.poll();
                 if (part == null) break;
                 if (task.cancelled()) {
-                    part.data.release();
+                    part.data.close();
                     PreviewBuffers.release(part.builder);
                     continue;
                 }
@@ -108,7 +109,8 @@ public final class PreviewMesh implements AutoCloseable {
                 boolean consumed = false;
                 try {
                     buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-                    int size = part.data.vertexBuffer().remaining() + part.data.indexBuffer().remaining();
+                    var indices = part.data.indexBuffer();
+                    int size = part.data.vertexBuffer().remaining() + (indices == null ? 0 : indices.remaining());
                     buffer.bind();
                     if (buffer.isInvalid()) throw new IllegalStateException("Preview VBO creation failed");
                     consumed = true;
@@ -120,11 +122,11 @@ public final class PreviewMesh implements AutoCloseable {
                     failure = error;
                     task.cancel();
                     drain();
-                    GTLCore.LOGGER.error("Multiblock preview upload failed", error);
+                    GTCEu.LOGGER.error("Multiblock preview upload failed", error);
                     return;
                 } finally {
                     VertexBuffer.unbind();
-                    if (!consumed) part.data.release();
+                    if (!consumed) part.data.close();
                     if (!uploaded && buffer != null) buffer.close();
                     PreviewBuffers.release(part.builder);
                 }
@@ -148,14 +150,13 @@ public final class PreviewMesh implements AutoCloseable {
                         var pos = snapshot.positions.get(index);
                         var state = snapshot.getBlockState(pos);
                         var fluid = state.getFluidState();
-                        boolean blockLayer = state.getRenderShape() != RenderShape.INVISIBLE && WorldSceneRenderer.canRenderInLayer(state, layer);
+                        boolean blockLayer = state.getRenderShape() != RenderShape.INVISIBLE && dispatcher.getBlockModel(state).getRenderTypes(state, random, snapshot.modelData(pos)).contains(layer);
                         boolean fluidLayer = !fluid.isEmpty() && ItemBlockRenderTypes.getRenderLayer(fluid) == layer;
                         progress.incrementAndGet();
                         if (!blockLayer && !fluidLayer) continue;
                         if (builder == null) {
                             builder = PreviewBuffers.acquire(task);
                             if (builder == null) return;
-                            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
                         }
                         var wrapper = new WorldSceneRenderer.VertexConsumerWrapper(builder);
                         if (blockLayer) {
@@ -202,7 +203,7 @@ public final class PreviewMesh implements AutoCloseable {
             if (!task.cancelled()) {
                 failure = error;
                 task.cancel();
-                GTLCore.LOGGER.error("Multiblock preview compilation failed", error);
+                GTCEu.LOGGER.error("Multiblock preview compilation failed", error);
             }
         } finally {
             ModelBlockRenderer.clearCache();
@@ -212,7 +213,7 @@ public final class PreviewMesh implements AutoCloseable {
     }
 
     private boolean publish(int group, BufferBuilder builder) throws InterruptedException {
-        var data = builder.endOrDiscardIfEmpty();
+        var data = builder.build();
         if (data == null) {
             PreviewBuffers.release(builder);
             return true;
@@ -233,7 +234,7 @@ public final class PreviewMesh implements AutoCloseable {
             return false;
         } finally {
             if (!delivered) {
-                data.release();
+                data.close();
                 PreviewBuffers.release(builder);
             }
         }
@@ -303,7 +304,7 @@ public final class PreviewMesh implements AutoCloseable {
     private void drain() {
         Part part;
         while ((part = ready.poll()) != null) {
-            part.data.release();
+            part.data.close();
             PreviewBuffers.release(part.builder);
         }
     }
@@ -326,5 +327,5 @@ public final class PreviewMesh implements AutoCloseable {
         for (var mesh : List.copyOf(LIVE)) mesh.close();
     }
 
-    private record Part(int group, BufferBuilder.RenderedBuffer data, BufferBuilder builder) {}
+    private record Part(int group, MeshData data, BufferBuilder builder) {}
 }

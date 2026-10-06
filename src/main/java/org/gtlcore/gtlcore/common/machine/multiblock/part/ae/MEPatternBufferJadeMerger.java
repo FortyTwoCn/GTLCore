@@ -42,7 +42,7 @@ final class MEPatternBufferJadeMerger {
 
     static void mergeFluidStacks(Object2LongOpenHashMap<Fluid> target, Iterable<?> source) {
         for (Object value : source) {
-            if (value instanceof com.lowdragmc.lowdraglib.side.fluid.FluidStack stack && !stack.isEmpty()) {
+            if (value instanceof net.neoforged.neoforge.fluids.FluidStack stack && !stack.isEmpty()) {
                 target.addTo(stack.getFluid(), stack.getAmount());
             }
         }

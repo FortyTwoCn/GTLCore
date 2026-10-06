@@ -5,12 +5,15 @@ import org.gtlcore.gtlcore.integration.ae2.wireless.CuriosCompat;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.networking.IGrid;
 import appeng.helpers.WirelessTerminalMenuHost;
+import appeng.menu.locator.ItemMenuHostLocator;
+import appeng.menu.locator.MenuLocators;
+import org.gtlcore.gtlcore.integration.ae2.wireless.CuriosTerminalLocator;
 import appeng.items.tools.powered.WirelessTerminalItem;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +35,7 @@ public final class WirelessTerminalGridResolver {
     }
 
     public static boolean hasWirelessTerminal(Player player) {
-        IItemHandler handler = player.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+        IItemHandler handler = player.getCapability(Capabilities.ItemHandler.ENTITY);
         if (handler != null && containsWirelessTerminal(
                 handler,
                 Collections.newSetFromMap(new IdentityHashMap<>()),
@@ -44,7 +47,7 @@ public final class WirelessTerminalGridResolver {
     }
 
     public static @Nullable Connection findConnection(Player player, Level level) {
-        IItemHandler handler = player.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+        IItemHandler handler = player.getCapability(Capabilities.ItemHandler.ENTITY);
         if (handler != null) {
             Connection connection = findConnection(
                     player,
@@ -86,7 +89,7 @@ public final class WirelessTerminalGridResolver {
                 }
             }
 
-            IItemHandler nested = stack.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+            IItemHandler nested = stack.getCapability(Capabilities.ItemHandler.ITEM);
             Connection nestedConnection = findConnection(player, nested, level, visited, budget, depth + 1);
             if (nestedConnection != null) {
                 return nestedConnection;
@@ -111,7 +114,7 @@ public final class WirelessTerminalGridResolver {
             if (stack.getItem() instanceof WirelessTerminalItem) {
                 return true;
             }
-            IItemHandler nested = stack.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+            IItemHandler nested = stack.getCapability(Capabilities.ItemHandler.ITEM);
             if (containsWirelessTerminal(nested, visited, budget, depth + 1)) {
                 return true;
             }
@@ -126,14 +129,17 @@ public final class WirelessTerminalGridResolver {
         if (grid == null || !terminal.hasPower(player, MIN_TERMINAL_POWER, stack)) {
             return null;
         }
-        ItemMenuHost menuHost = terminal.getMenuHost(player, -1, stack, null);
-        if (!(menuHost instanceof WirelessTerminalMenuHost wirelessHost) || !wirelessHost.rangeCheck()) {
+        ItemMenuHostLocator locator = curiosSlot == null ? MenuLocators.forStack(stack) :
+                new CuriosTerminalLocator(curiosSlot.identifier(), curiosSlot.index());
+        ItemMenuHost<?> menuHost = terminal.getMenuHost(player, locator, null);
+        if (!(menuHost instanceof WirelessTerminalMenuHost<?> wirelessHost) ||
+                !wirelessHost.isValid() || !wirelessHost.getLinkStatus().connected()) {
             return null;
         }
         return new Connection(grid, wirelessHost, stack, curiosSlot);
     }
 
-    public record Connection(IGrid grid, WirelessTerminalMenuHost host, ItemStack terminalStack,
+    public record Connection(IGrid grid, WirelessTerminalMenuHost<?> host, ItemStack terminalStack,
                              @Nullable CuriosCompat.TerminalSlot curiosSlot) {
 
         public void syncTerminalStack(Player player) {

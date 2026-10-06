@@ -12,28 +12,33 @@ import org.gtlcore.gtlcore.client.preview.SparsePreviewShape;
 import org.gtlcore.gtlcore.utils.datastructure.ModuleRenderInfo;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.block.IMachineBlock;
 import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.data.RotationState;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
+
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.pattern.BlockPattern;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
-import com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate;
-import com.gregtechceu.gtceu.api.pattern.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.multiblock.pattern.BlockPattern;
+import org.gtlcore.gtlcore.api.gui.preview.NativePreviewGeometry;
+import org.gtlcore.gtlcore.api.gui.preview.NativePreviewShapes;
+import com.gregtechceu.gtceu.api.multiblock.MultiPredicate;
+import com.gregtechceu.gtceu.api.multiblock.predicates.BasePredicate;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib.client.utils.RenderUtils;
-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
+import com.lowdragmc.lowdraglib.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.texture.*;
 import com.lowdragmc.lowdraglib.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.*;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
+import com.lowdragmc.lowdraglib.integration.jei.IngredientIO;
 import com.lowdragmc.lowdraglib.utils.*;
+import com.lowdragmc.lowdraglib.utils.data.BlockInfo;
+import com.lowdragmc.lowdraglib.utils.data.BlockPosFace;
+import com.lowdragmc.lowdraglib.utils.data.ItemStackKey;
+import com.lowdragmc.lowdraglib.misc.CycleItemStackHandler;
+import com.gregtechceu.gtceu.api.multiblock.PredicateContext;
+import com.lowdragmc.lowdraglib.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -53,8 +58,8 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -81,11 +86,12 @@ public class PatternPreviewWidget extends WidgetGroup {
     private static TrackedDummyWorld LEVEL;
     private static final int REGION_SIZE = 512;
     private static int LAST_OFFSET_INDEX = 0;
-    private static final Map<MultiblockMachineDefinition, MBPattern[]> CACHE = new Object2ObjectOpenHashMap<>();
+    private static final Map<MultiblockMachineDefinition, Map<Integer, MBPattern>> CACHE = new Object2ObjectOpenHashMap<>();
     private final SceneWidget sceneWidget;
     private DraggableScrollableWidgetGroup scrollableWidgetGroup;
     private final MultiblockMachineDefinition controllerDefinition;
-    private final MBPattern[] patterns;
+    private final List<NativePreviewGeometry> shapes;
+    private final Map<Integer, MBPattern> patterns;
     private int index;
     private int layer;
     private final List<SlotWidget> slotWidgets;
@@ -142,8 +148,8 @@ public class PatternPreviewWidget extends WidgetGroup {
                         }
                     }
                     if (hoverPosFace != null) {
-                        var state = getDummyWorld().getBlockState(hoverPosFace.pos);
-                        hoverItem = state.getBlock().getCloneItemStack(getDummyWorld(), hoverPosFace.pos, state);
+                        var state = getDummyWorld().getBlockState(hoverPosFace.pos());
+                        hoverItem = state.getCloneItemStack(new BlockHitResult(Vec3.atCenterOf(hoverPosFace.pos()), hoverPosFace.facing(), hoverPosFace.pos(), true), getDummyWorld(), hoverPosFace.pos(), Minecraft.getInstance().player);
                     }
                     BlockPosFace tmp = dragging ? clickPosFace : hoverPosFace;
                     if (selectedPosFace != null || tmp != null) {
@@ -155,7 +161,7 @@ public class PatternPreviewWidget extends WidgetGroup {
                         }
                     }
                     if (selectedPosFace != null && renderSelect) {
-                        RenderUtils.renderBlockOverLay(poseStack, selectedPosFace.pos, 0.6f, 0, 0, 1.03f);
+                        RenderUtils.renderBlockOverLay(poseStack, selectedPosFace.pos(), 0.6f, 0, 0, 1.03f);
                     }
 
                     if (this.afterWorldRender != null) {
@@ -183,28 +189,25 @@ public class PatternPreviewWidget extends WidgetGroup {
                             .setWidth(170)
                             .setDropShadow(true)));
 
-            this.patterns = CACHE.computeIfAbsent(controllerDefinition,
-                    definition -> definition.getMatchingShapes().stream()
-                            .map(this::initializePattern)
-                            .filter(Objects::nonNull)
-                            .toArray(MBPattern[]::new));
+            this.shapes = NativePreviewShapes.get(controllerDefinition);
+            this.patterns = CACHE.computeIfAbsent(controllerDefinition, ignored -> new Object2ObjectOpenHashMap<>());
 
             addWidget(new ButtonWidget(138, 30, 18, 18, new GuiTextureGroup(
                     ColorPattern.T_GRAY.rectTexture(),
-                    new TextTexture("1").setSupplier(() -> "P:" + index)),
-                    (x) -> setPage((index + 1 >= patterns.length) ? 0 : index + 1, x))
+                    liveText(() -> "P:" + index)),
+                    (x) -> setPage((index + 1 >= shapes.size()) ? 0 : index + 1, x))
                     .setHoverBorderTexture(1, -1));
 
             addWidget(new ButtonWidget(138, 50, 18, 18, new GuiTextureGroup(
                     ColorPattern.T_GRAY.rectTexture(),
-                    new TextTexture("1").setSupplier(() -> layer >= 0 ? "L:" + layer : "ALL")),
+                    liveText(() -> layer >= 0 ? "L:" + layer : "ALL")),
                     this::updateLayer)
                     .setHoverBorderTexture(1, -1));
 
-            if (this.patterns.length != 0 && this.patterns[0].hasModule) {
+            if (!this.shapes.isEmpty() && getPattern(0).hasModule) {
                 addWidget(new ButtonWidget(138, 70, 18, 18, new GuiTextureGroup(
                         ColorPattern.T_GRAY.rectTexture(),
-                        new TextTexture("1").setSupplier(() -> showModules ? "M:ON" : "M:OFF")),
+                        liveText(() -> showModules ? "M:ON" : "M:OFF")),
                         (x) -> toggleModules())
                         .setHoverBorderTexture(1, -1)
                         .setHoverTooltips(Component.translatable("gui.gtlcore.module.show")));
@@ -221,15 +224,15 @@ public class PatternPreviewWidget extends WidgetGroup {
     }
 
     private int controllerHeight() {
-        if (index < 0 || index >= patterns.length) return -1;
-        var pattern = patterns[index];
+        if (index < 0 || index >= shapes.size()) return -1;
+        var pattern = getPattern(index);
         return pattern.controllerBase == null ? -1 :
-                pattern.bounds.aboveBottom(pattern.controllerBase.self().getPos().getY(), showModules);
+                pattern.bounds.aboveBottom(pattern.controllerBase.getBlockPos().getY(), showModules);
     }
 
     private PreviewHeight.Dimensions dimensions() {
-        return index < 0 || index >= patterns.length ? PreviewHeight.Dimensions.UNKNOWN :
-                patterns[index].bounds.dimensions(showModules);
+        return index < 0 || index >= shapes.size() ? PreviewHeight.Dimensions.UNKNOWN :
+                getPattern(index).bounds.dimensions(showModules);
     }
 
     public static void clearSharedPreviewState() {
@@ -239,8 +242,8 @@ public class PatternPreviewWidget extends WidgetGroup {
     }
 
     private void updateLayer(ClickData cd) {
-        if (index < 0 || index >= patterns.length) return;
-        var pattern = patterns[index];
+        if (index < 0 || index >= shapes.size()) return;
+        var pattern = getPattern(index);
         if (layer + 1 >= -1 && layer + 1 <= pattern.maxY - pattern.minY && !cd.isShiftClick) {
             layer += 1;
             if (pattern.controllerBase.isFormed()) {
@@ -259,14 +262,7 @@ public class PatternPreviewWidget extends WidgetGroup {
         PreviewScenes.configure(sceneWidget, controllerDefinition, index, layer, showModules);
         var stream = pattern.blockMap.keySet().stream()
                 .filter(pos -> (layer == -1 || layer + pattern.minY == pos.getY()) && (showModules || !pattern.moduleOnlyBlocks.contains(pos)));
-        if (pattern.controllerBase.isFormed()) {
-            LongSet modelDisabled = pattern.controllerBase.getMultiblockState().getMatchContext().getOrDefault(
-                    "renderMask",
-                    LongSets.EMPTY_SET);
-            if (!modelDisabled.isEmpty()) {
-                stream = stream.filter(pos -> !modelDisabled.contains(pos.asLong()));
-            }
-        }
+        if (pattern.controllerBase.isFormed()) stream = stream.filter(pos -> !hiddenWhenFormed(pos, pattern.predicateMap.get(pos)));
         sceneWidget.setRenderedCore(stream.toList(), null);
     }
 
@@ -284,12 +280,12 @@ public class PatternPreviewWidget extends WidgetGroup {
     public void setPage(int index, ClickData x) {
         if (x != null) {
             if (x.isShiftClick) index = 0;
-            else if (x.isCtrlClick) index = patterns.length - 1;
+            else if (x.isCtrlClick) index = shapes.size() - 1;
         }
-        if (index >= patterns.length || index < 0) return;
+        if (index >= shapes.size() || index < 0) return;
         this.index = index;
         this.layer = -1;
-        MBPattern pattern = patterns[index];
+        MBPattern pattern = getPattern(index);
         setupScene(pattern);
 
         refreshScrollableWidget();
@@ -309,11 +305,33 @@ public class PatternPreviewWidget extends WidgetGroup {
         if (previewControls != null) previewControls.layout();
     }
 
+    /** Live slots include replacement material strips and block-predicate candidates after every page change. */
+    public List<SlotWidget> getIngredientSlots() {
+        var slots = new ArrayList<SlotWidget>(slotWidgets.size() + candidates.size());
+        slots.addAll(slotWidgets);
+        slots.addAll(candidates);
+        return List.copyOf(slots);
+    }
+
+    public int getPageIndex() { return index; }
+    public int getLayerIndex() { return layer; }
+
+    private static TextTexture liveText(java.util.function.Supplier<String> textSupplier) {
+        // LDLib's default supplier is gated on level game time, which freezes in a paused recipe viewer.
+        return new TextTexture(textSupplier.get()) {
+            private String previous;
+            @Override public void updateTick() {
+                String value = textSupplier.get();
+                if (!value.equals(previous)) { updateText(value); previous = value; }
+            }
+        };
+    }
+
     private void refreshScrollableWidget() {
         if (scrollableWidgetGroup != null) removeWidget(scrollableWidgetGroup);
         var result = new DraggableScrollableWidgetGroup(3, 132, 154, 22)
                 .setXScrollBarHeight(4)
-                .setXBarStyle(GuiTextures.SLIDER_BACKGROUND, GuiTextures.BUTTON)
+                .setXBarStyle(new ResourceTexture("gtceu:textures/gui/widget/slider_background.png"), new ResourceTexture("gtceu:textures/gui/widget/button.png"))
                 .setScrollable(true)
                 .setDraggable(true);
         result.setScrollWheelDirection(DraggableScrollableWidgetGroup.ScrollWheelDirection.HORIZONTAL);
@@ -328,47 +346,40 @@ public class PatternPreviewWidget extends WidgetGroup {
     }
 
     private void onFormedSwitch(boolean isFormed) {
-        var pattern = patterns[index];
+        var pattern = getPattern(index);
         var controllerBase = pattern.controllerBase;
         if (isFormed) {
             this.layer = -1;
             loadControllerFormed(pattern.blockMap.keySet(), controllerBase);
         } else {
             sceneWidget.setRenderedCore(pattern.blockMap.keySet(), null);
-            controllerBase.onStructureInvalid();
+            controllerBase.invalidateStructure("main");
         }
     }
 
     private void onPosSelected(BlockPos pos, Direction facing) {
-        if (index >= patterns.length || index < 0) return;
+        if (index >= shapes.size() || index < 0) return;
 
-        var pattern = patterns[index];
+        var pattern = getPattern(index);
         var predicate = pattern.predicateMap.get(pos);
 
         if (predicate != null) {
-            var predicates = new ObjectOpenHashSet<SimplePredicate>();
-            predicates.addAll(predicate.common);
-            predicates.addAll(predicate.limited);
-            predicates.remove(null);
-            predicates.removeIf(p -> p.candidates == null);
-
-            for (SlotWidget candidate : candidates) {
-                removeWidget(candidate);
-            }
+            var predicates = new ObjectOpenHashSet<BasePredicate>(predicate.expand());
+            for (SlotWidget candidate : candidates) removeWidget(candidate);
             candidates.clear();
-
             List<List<ItemStack>> candidateStacks = new ObjectArrayList<>();
             List<List<Component>> predicateTips = new ObjectArrayList<>();
-            for (var simplePredicate : predicates) {
-                var itemStacks = simplePredicate.getCandidates();
+            for (var basePredicate : predicates) {
+                var itemStacks = basePredicate.getCandidates().stream().map(com.gregtechceu.gtceu.api.multiblock.util.BlockInfo::getItemStackForm)
+                        .filter(stack -> !stack.isEmpty()).toList();
                 if (!itemStacks.isEmpty()) {
                     candidateStacks.add(itemStacks);
-                    predicateTips.add(simplePredicate.getToolTips(predicate));
+                    predicateTips.add(basePredicate.getRecipeViewerTooltips(predicate));
                 }
             }
 
             CycleItemStackHandler itemHandler = new CycleItemStackHandler(candidateStacks);
-            int maxCol = (160 - (((slotWidgets.size() - 1) / 9 + 1) * 18) - 35) % 18;
+            int maxCol = Math.max(1, (120 - 35) / 18);
             for (int i = 0; i < candidateStacks.size(); i++) {
                 int finalI = i;
                 final var widget = new SlotWidget(itemHandler, i, 3 + (i / maxCol) * 18, 3 + (i % maxCol) * 18, false,
@@ -424,311 +435,109 @@ public class PatternPreviewWidget extends WidgetGroup {
         return plainBlocks.computeIfAbsent(state, BlockInfo::fromBlockState);
     }
 
-    private static BlockEntity previewController(BlockInfo info, BlockPos pos) {
-        if (!PreviewSettings.enabled()) return info.getBlockEntity(pos);
-        // Discovery retains controllers only; the dummy world creates parts when needed.
-        if (info.getBlockState().getBlock() instanceof IMachineBlock machine &&
-                !(machine.getDefinition() instanceof MultiblockMachineDefinition))
-            return null;
-        return info.hasBlockEntity() ? SparsePreviewShape.copy(info).getBlockEntity(pos) : info.getBlockEntity(pos);
+    private MBPattern getPattern(int page) {
+        return patterns.computeIfAbsent(page, requested -> initializePattern(shapes.get(requested)));
     }
 
-    private MBPattern initializePattern(MultiblockShapeInfo shapeInfo) {
-        if (shapeInfo == null) return null;
-
+    private MBPattern initializePattern(NativePreviewGeometry geometry) {
+        var offset = locateNextRegion();
         Map<BlockPos, BlockInfo> blockMap = new Object2ObjectOpenHashMap<>();
-        Set<BlockPos> moduleOnlyBlocks = new ObjectOpenHashSet<>();
-        IMultiController controllerBase = null;
-        BlockPos controllerPosInShape = null;
-        var multiPos = locateNextRegion();
-
-        var blocks = shapeInfo.getBlocks();
-        for (int x = 0; x < blocks.length; x++) {
-            var aisle = blocks[x];
-            for (int y = 0; y < aisle.length; y++) {
-                var column = aisle[y];
-                for (int z = 0; z < column.length; z++) {
-                    var block = column[z];
-                    if (block == null) continue;
-
-                    var blockState = block.getBlockState();
-                    var pos = multiPos.offset(x, y, z);
-                    if (previewController(block, pos) instanceof IMachineBlockEntity holder &&
-                            holder.getMetaMachine() instanceof IMultiController controller &&
-                            this.controllerDefinition == controller.self().getDefinition()) {
-                        holder.getSelf().setLevel(LEVEL);
-                        controllerBase = controller;
-                        controllerPosInShape = new BlockPos(x, y, z);
-                    }
-                    blockMap.put(pos, reusableBlockInfo(blockState));
-                }
-            }
-        }
-
+        geometry.states().forEach((pos, state) -> blockMap.put(offset.offset(pos), reusableBlockInfo(state)));
         LEVEL.addBlocks(blockMap);
-
-        Map<BlockPos, BlockInfo> hostBlockMap = new Object2ObjectOpenHashMap<>(blockMap);
-        BlockPos controllerWorldPos = multiPos;
-        Map<BlockPos, TraceabilityPredicate> predicateMap = new Object2ObjectOpenHashMap<>();
-        Map<ItemStackKey, PartInfo> partsMap = new Object2ObjectOpenHashMap<>();
-
-        if (controllerBase != null) {
-            LEVEL.setInnerBlockEntity(controllerBase.self().holder.getSelf());
-            if (controllerPosInShape != null) {
-                controllerWorldPos = multiPos.offset(controllerPosInShape);
-            }
-
-            // Form the host pattern FIRST
-            loadControllerFormed(blockMap.keySet(), controllerBase);
-            Map<BlockPos, TraceabilityPredicate> hostPredicates = controllerBase
-                    .getMultiblockState()
-                    .getMatchContext()
-                    .get("predicates");
-            if (hostPredicates != null) {
-                predicateMap = new Object2ObjectOpenHashMap<>(hostPredicates);
-            }
-
-            partsMap = gatherBlockDrops(blockMap);
-
-            // Form each module pattern and merge their predicateMaps
-            if (controllerBase instanceof IModularMachineHost<?> host) {
-                List<IMultiController> moduleControllers = initializeModules(host, controllerWorldPos,
-                        blockMap, hostBlockMap, moduleOnlyBlocks);
-
-                Set<BlockPos> modulePos = new ObjectOpenHashSet<>();
-
-                for (IMultiController moduleController : moduleControllers) {
-                    try {
-                        modulePos.add(moduleController.self().getPos());
-                        mergeModulePredicates(moduleController, predicateMap);
-                    } catch (Exception e) {
-                        GTCEu.LOGGER.warn("Failed to merge module predicates in pattern preview", e);
-                    }
-                }
-
-                hostBlockMap.forEach((pos, block) -> {
-                    if (!modulePos.contains(pos)) LEVEL.addBlock(pos, block);
-                });
-            }
+        BlockPos controllerPos = offset.offset(geometry.controllerPos());
+        var entity = LEVEL.getBlockEntity(controllerPos);
+        if (!(entity instanceof MultiblockControllerMachine controller)) {
+            throw new IllegalStateException("Native preview did not create its controller: " + controllerDefinition.getId());
         }
-
-        var parts = partsMap.values().stream()
+        LEVEL.setInnerBlockEntity(controller);
+        loadControllerFormed(blockMap.keySet(), controller);
+        Map<BlockPos, MultiPredicate> predicateMap = new Object2ObjectOpenHashMap<>();
+        geometry.predicates().forEach((pos, predicate) -> predicateMap.put(offset.offset(pos), predicate));
+        var hostBlockMap = new Object2ObjectOpenHashMap<>(blockMap);
+        var moduleOnlyBlocks = new ObjectOpenHashSet<BlockPos>();
+        if (controller instanceof IModularMachineHost<?> host) {
+            initializeModules(host, controllerPos, blockMap, hostBlockMap, moduleOnlyBlocks, predicateMap);
+        }
+        var parts = gatherBlockDrops(hostBlockMap).values().stream()
                 .sorted((one, two) -> {
-                    if (one.isController) return -1;
-                    if (two.isController) return +1;
-                    if (one.isTile && !two.isTile) return -1;
-                    if (two.isTile && !one.isTile) return +1;
-                    if (one.blockId != two.blockId) return two.blockId - one.blockId;
-                    return two.amount - one.amount;
-                })
-                .map(PartInfo::getItemStack)
-                .filter(list -> !list.isEmpty())
-                .collect(Collectors.toList());
-
-        return controllerBase == null ? null : new MBPattern(blockMap, moduleOnlyBlocks, parts, predicateMap, controllerBase);
+                    if (one.isController != two.isController) return one.isController ? -1 : 1;
+                    if (one.isTile != two.isTile) return one.isTile ? -1 : 1;
+                    int blockOrder = Integer.compare(two.blockId, one.blockId);
+                    return blockOrder != 0 ? blockOrder : Integer.compare(two.amount, one.amount);
+                }).map(PartInfo::getItemStack).filter(list -> !list.isEmpty()).toList();
+        return new MBPattern(blockMap, moduleOnlyBlocks, parts, predicateMap, controller);
     }
 
-    private void loadControllerFormed(Collection<BlockPos> positions, IMultiController controllerBase) {
+    private void loadControllerFormed(Collection<BlockPos> positions, MultiblockControllerMachine controller) {
         try (var operation = PreviewBuildTiming.begin(false)) {
-            BlockPattern pattern = controllerBase.getPattern();
-            if (pattern != null) {
-                boolean matched;
-                var state = controllerBase.getMultiblockState();
-                var timing = PreviewMatcherTiming.begin(PreviewBuildTiming.identity(controllerBase, false), state);
-                try (timing) {
-                    matched = pattern.checkPatternAt(state, true);
-                    timing.result(matched);
-                } finally {
-                    PreviewBuildTiming.recordMatcher(timing.elapsedNanos());
-                }
-                if (matched) PreviewBuildTiming.formController(controllerBase);
-            }
-
-            if (controllerBase.isFormed()) {
-                LongSet modelDisabled = controllerBase.getMultiblockState().getMatchContext().getOrDefault("renderMask",
-                        LongSets.EMPTY_SET);
-                if (!modelDisabled.isEmpty()) {
-                    positions = new HashSet<>(positions);
-                    positions.removeIf(pos -> modelDisabled.contains(pos.asLong()));
-                }
-                sceneWidget.setRenderedCore(positions, null);
-            }
+            var state = controller.getDefaultPatternState();
+            var pattern = controller.getDefinition().getStructurePatterns().get("main").get();
+            var timing = PreviewMatcherTiming.begin(PreviewBuildTiming.identity(controller, false), state);
+            boolean matched;
+            try (timing) {
+                matched = pattern.checkPatternAt(LEVEL, state, controller.getBlockPos(), controller.getFrontFacing(), controller.getUpwardsFacing(), false);
+                timing.result(matched);
+            } finally { PreviewBuildTiming.recordMatcher(timing.elapsedNanos()); }
+            if (matched) PreviewBuildTiming.formController(controller);
+            if (controller.isFormed()) sceneWidget.setRenderedCore(positions, null);
         }
     }
 
-    private static void loadModuleFormed(IMultiController moduleController) {
-        try (var operation = PreviewBuildTiming.begin(true)) {
-            BlockPattern modulePattern = moduleController.getPattern();
-            BlockState controllerState = LEVEL.getBlockState(moduleController.self().getPos());
-            Direction controllerFacing = Direction.NORTH;
-            Direction controllerUp = Direction.UP;
-            if (controllerState.getBlock() instanceof MetaMachineBlock machineBlock) {
-                controllerFacing = machineBlock.getFrontFacing(controllerState);
-                if (controllerState.hasProperty(IMachineBlock.UPWARDS_FACING_PROPERTY)) {
-                    controllerUp = controllerState.getValue(IMachineBlock.UPWARDS_FACING_PROPERTY);
-                }
-            }
-
-            if (modulePattern != null) {
-                boolean matched;
-                var state = moduleController.getMultiblockState();
-                var timing = PreviewMatcherTiming.begin(PreviewBuildTiming.identity(moduleController, true), state);
-                try (timing) {
-                    matched = modulePattern.checkPatternAt(state,
-                            moduleController.self().getPos(), controllerFacing, controllerUp, false, true);
-                    timing.result(matched);
-                } finally {
-                    PreviewBuildTiming.recordMatcher(timing.elapsedNanos());
-                }
-                if (matched) PreviewBuildTiming.formController(moduleController);
-            }
-        }
+    private boolean hiddenWhenFormed(BlockPos pos, @Nullable MultiPredicate predicate) {
+        if (predicate == null) return false;
+        var context = new PredicateContext(null); context.updateLevel(LEVEL); context.updatePos(pos);
+        predicate.resetLogic(); var actual = predicate.getPredicateAtPos(context);
+        return actual != null && actual.isDisableRenderFormed();
     }
 
-    private static List<IMultiController> initializeModules(IModularMachineHost<?> host,
-                                                            BlockPos hostControllerPos,
-                                                            Map<BlockPos, BlockInfo> blockMap,
-                                                            Map<BlockPos, BlockInfo> hostBlockMap,
-                                                            Set<BlockPos> moduleBlocks) {
-        List<ModuleRenderInfo> modules = host.getModulesForRendering();
-        if (modules.isEmpty()) return List.of();
-
-        List<IMultiController> moduleControllers = new ObjectArrayList<>();
-
-        // Get host's current facing from world
-        Direction hostFront = Direction.NORTH;
-        Direction hostUp = Direction.UP;
-
-        if (LEVEL.getBlockEntity(hostControllerPos) instanceof IMachineBlockEntity IMBE && IMBE.getMetaMachine() instanceof MultiblockControllerMachine controllerMachine) {
-            hostFront = controllerMachine.getFrontFacing();
-            hostUp = controllerMachine.getUpwardsFacing();
-        }
-
-        for (ModuleRenderInfo moduleInfo : modules) {
-            try {
-                MultiblockMachineDefinition moduleDef = moduleInfo.moduleDefinition();
-                List<MultiblockShapeInfo> moduleShapes = moduleDef.getMatchingShapes();
-                if (moduleShapes.isEmpty()) continue;
-
-                MultiblockShapeInfo moduleShapeInfo = moduleShapes.get(0);
-
-                BlockPos moduleOffset = moduleInfo.calculateModuleOffset(hostFront, hostUp);
-                BlockPos moduleWorldPos = hostControllerPos.offset(moduleOffset);
-
-                Direction moduleFront = moduleInfo.calculateModuleFront(hostFront, hostUp);
-                Direction moduleUp = moduleInfo.calculateModuleUp(hostFront, hostUp);
-
-                var result = initializeModule(moduleDef, moduleShapeInfo, moduleWorldPos,
-                        moduleFront, moduleUp, blockMap, hostBlockMap, moduleBlocks);
-
-                if (result != null) {
-                    moduleControllers.add(result);
-                }
-
-            } catch (Exception e) {
-                GTCEu.LOGGER.warn("Failed to render module in pattern preview", e);
-            }
-        }
-
-        return moduleControllers;
-    }
-
-    private static @Nullable IMultiController initializeModule(MultiblockMachineDefinition moduleDefinition,
-                                                               MultiblockShapeInfo moduleShapeInfo,
-                                                               BlockPos moduleControllerWorldPos,
-                                                               Direction moduleFront,
-                                                               Direction moduleUp,
-                                                               Map<BlockPos, BlockInfo> blockMap,
-                                                               Map<BlockPos, BlockInfo> hostBlockMap,
-                                                               Set<BlockPos> moduleOnlyBlocks) {
-        var blocks = moduleShapeInfo.getBlocks();
-        BlockPos moduleControllerPosInShape = null;
-        List<Pair<BlockPos, BlockInfo>> pairs = new ObjectArrayList<>();
-
-        for (int x = 0; x < blocks.length; x++) {
-            BlockInfo[][] aisle = blocks[x];
-            for (int y = 0; y < aisle.length; y++) {
-                BlockInfo[] column = aisle[y];
-                for (int z = 0; z < column.length; z++) {
-                    var info = column[z];
-                    if (info == null) continue;
-
-                    BlockPos localPos = new BlockPos(x, y, z);
-                    pairs.add(Pair.of(localPos, info));
-
-                    if (info.getBlockState().getBlock() instanceof MetaMachineBlock machineBlock &&
-                            machineBlock.definition == moduleDefinition) {
-                        moduleControllerPosInShape = new BlockPos(x, y, z);
+    private void initializeModules(IModularMachineHost<?> host, BlockPos hostPos,
+                                   Map<BlockPos, BlockInfo> blocks, Map<BlockPos, BlockInfo> hostBlocks,
+                                   Set<BlockPos> moduleOnlyBlocks, Map<BlockPos, MultiPredicate> predicates) {
+        var hostController = (MultiblockControllerMachine) host;
+        for (var module : host.getModulesForRendering()) {
+            var pages = NativePreviewShapes.get(module.moduleDefinition());
+            if (pages.isEmpty()) continue;
+            var geometry = pages.getFirst();
+            var moduleFront = module.calculateModuleFront(hostController.getFrontFacing(), hostController.getUpwardsFacing());
+            var moduleUp = module.calculateModuleUp(hostController.getFrontFacing(), hostController.getUpwardsFacing());
+            var origin = hostPos.offset(module.calculateModuleOffset(hostController.getFrontFacing(), hostController.getUpwardsFacing()));
+            var moduleBlocks = new Object2ObjectOpenHashMap<BlockPos, BlockInfo>();
+            for (var entry : geometry.states().entrySet()) {
+                var local = entry.getKey().subtract(geometry.controllerPos());
+                var pos = origin.offset(ModuleRenderInfo.applyGTTransform(local, moduleFront, moduleUp));
+                var state = entry.getValue();
+                if (state.getBlock() instanceof MetaMachineBlock machine) {
+                    var rotation = machine.getRotationState();
+                    if (rotation.property != null && state.hasProperty(rotation.property)) {
+                        var face = local.equals(BlockPos.ZERO) ? moduleFront : ModuleRenderInfo.calculateBlockFacing(state.getValue(rotation.property), moduleFront);
+                        if (rotation.test(face)) state = state.setValue(rotation.property, face);
+                    }
+                    if (state.hasProperty(com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties.UPWARDS_FACING)) {
+                        state = state.setValue(com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties.UPWARDS_FACING, moduleUp);
                     }
                 }
+                var info = BlockInfo.fromBlockState(state); moduleBlocks.put(pos, info);
+                if (!hostBlocks.containsKey(pos)) { moduleOnlyBlocks.add(pos); blocks.put(pos, info); }
+                var predicate = geometry.predicates().get(entry.getKey());
+                if (predicate != null) predicates.putIfAbsent(pos, predicate);
             }
-        }
-
-        if (moduleControllerPosInShape == null) return null;
-
-        IMultiController moduleController = null;
-        Map<BlockPos, BlockInfo> moduleBlockMap = new Object2ObjectOpenHashMap<>();
-
-        for (Pair<BlockPos, BlockInfo> pair : pairs) {
-            BlockPos localPos = pair.left();
-            BlockInfo info = pair.right();
-            BlockState blockState = info.getBlockState();
-
-            BlockPos offsetLocal = localPos.subtract(moduleControllerPosInShape);
-            BlockPos offsetRotated = ModuleRenderInfo.applyGTTransform(offsetLocal, moduleFront, moduleUp);
-            BlockPos worldPos = moduleControllerWorldPos.offset(offsetRotated);
-
-            if (blockState.getBlock() instanceof MetaMachineBlock machineBlock) {
-                var rotationState = machineBlock.getRotationState();
-                if (rotationState != RotationState.NONE) {
-                    var originalFace = blockState.getValue(rotationState.property);
-                    Direction newFace;
-
-                    if (localPos.equals(moduleControllerPosInShape)) {
-                        newFace = moduleFront;
-                    } else {
-                        newFace = ModuleRenderInfo.calculateBlockFacing(originalFace, moduleFront);
-                    }
-
-                    if (rotationState.test(newFace)) {
-                        blockState = blockState.setValue(rotationState.property, newFace);
-                    }
+            LEVEL.addBlocks(moduleBlocks);
+            if (LEVEL.getBlockEntity(origin) instanceof MultiblockControllerMachine controller) {
+                LEVEL.setInnerBlockEntity(controller);
+                try (var operation = PreviewBuildTiming.begin(true)) {
+                    var state = controller.getDefaultPatternState();
+                    var pattern = controller.getDefinition().getStructurePatterns().get("main").get();
+                    var timing = PreviewMatcherTiming.begin(PreviewBuildTiming.identity(controller, true), state);
+                    boolean matched;
+                    try (timing) {
+                        matched = pattern.checkPatternAt(LEVEL, state, origin, moduleFront, moduleUp, false);
+                        timing.result(matched);
+                    } finally { PreviewBuildTiming.recordMatcher(timing.elapsedNanos()); }
+                    if (matched) PreviewBuildTiming.formController(controller);
                 }
             }
-
-            if (previewController(info, worldPos) instanceof IMachineBlockEntity holder) {
-                holder.getSelf().setLevel(LEVEL);
-                if (localPos.equals(moduleControllerPosInShape) &&
-                        holder.getMetaMachine() instanceof IMultiController controller)
-                    moduleController = controller;
-            }
-
-            final var blockInfo = BlockInfo.fromBlockState(blockState);
-            moduleBlockMap.put(worldPos, blockInfo);
-
-            if (!hostBlockMap.containsKey(worldPos)) {
-                moduleOnlyBlocks.add(worldPos);
-                blockMap.put(worldPos, blockInfo);
-            }
-        }
-
-        LEVEL.addBlocks(moduleBlockMap);
-
-        if (moduleController != null) {
-            LEVEL.setInnerBlockEntity(moduleController.self().holder.getSelf());
-            loadModuleFormed(moduleController);
-        }
-
-        return moduleController;
-    }
-
-    private void mergeModulePredicates(IMultiController moduleController,
-                                       Map<BlockPos, TraceabilityPredicate> hostPredicateMap) {
-        Map<BlockPos, TraceabilityPredicate> modulePredicateMap = moduleController.getMultiblockState().getMatchContext().get("predicates");
-        if (modulePredicateMap == null || modulePredicateMap.isEmpty()) return;
-
-        for (Map.Entry<BlockPos, TraceabilityPredicate> entry : modulePredicateMap.entrySet()) {
-            hostPredicateMap.putIfAbsent(entry.getKey(), entry.getValue());
+            // Restore shared host positions after the module matcher has inspected its complete view.
+            hostBlocks.forEach(LEVEL::addBlock);
         }
     }
 
@@ -737,14 +546,14 @@ public class PatternPreviewWidget extends WidgetGroup {
         for (Map.Entry<BlockPos, BlockInfo> entry : blocks.entrySet()) {
             BlockPos pos = entry.getKey();
             BlockState blockState = LEVEL.getBlockState(pos);
-            ItemStack itemStack = blockState.getBlock().getCloneItemStack(LEVEL, pos, blockState);
+            ItemStack itemStack = blockState.getCloneItemStack(new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, true), LEVEL, pos, Minecraft.getInstance().player);
 
             if (itemStack.isEmpty() && !blockState.getFluidState().isEmpty()) {
                 Fluid fluid = blockState.getFluidState().getType();
                 itemStack = fluid.getBucket().getDefaultInstance();
             }
 
-            ItemStackKey itemStackKey = new ItemStackKey(itemStack);
+            ItemStackKey itemStackKey = ItemStackKey.of(itemStack);
             partsMap.computeIfAbsent(itemStackKey, key -> new PartInfo(key, entry.getValue())).amount++;
         }
         return partsMap;
@@ -784,20 +593,20 @@ public class PatternPreviewWidget extends WidgetGroup {
         @NotNull
         final List<List<ItemStack>> parts;
         @NotNull
-        final Map<BlockPos, TraceabilityPredicate> predicateMap;
+        final Map<BlockPos, MultiPredicate> predicateMap;
         @NotNull
         final Map<BlockPos, BlockInfo> blockMap;
         @NotNull
         final Set<BlockPos> moduleOnlyBlocks;
         @NotNull
-        final IMultiController controllerBase;
+        final MultiblockControllerMachine controllerBase;
         final int maxY, minY;
         final boolean hasModule;
         final PreviewHeight bounds = new PreviewHeight();
 
         public MBPattern(@NotNull Map<BlockPos, BlockInfo> blockMap, @NotNull Set<BlockPos> moduleOnlyBlocks, @NotNull List<List<ItemStack>> parts,
-                         @NotNull Map<BlockPos, TraceabilityPredicate> predicateMap,
-                         @NotNull IMultiController controllerBase) {
+                         @NotNull Map<BlockPos, MultiPredicate> predicateMap,
+                         @NotNull MultiblockControllerMachine controllerBase) {
             this.parts = parts;
             this.blockMap = blockMap;
             this.predicateMap = predicateMap;

@@ -18,6 +18,12 @@ import java.util.TreeSet;
 
 public final class MaxFastMetrics {
 
+    private final net.minecraft.core.HolderLookup.Provider registries;
+
+    public MaxFastMetrics(net.minecraft.core.HolderLookup.Provider registries) {
+        this.registries = java.util.Objects.requireNonNull(registries);
+    }
+
     public enum BarrierReason {
         MULTI_PATH,
         LIMIT_QUANTITY,
@@ -271,7 +277,7 @@ public final class MaxFastMetrics {
                     key,
                     emitter,
                     candidates,
-                    this.patternFingerprints);
+                    this.patternFingerprints, this.registries);
             this.patternStructureEntries.add(structure.value());
             if (structure.unavailable()) {
                 this.unavailablePatternStructureEntries++;
@@ -945,7 +951,7 @@ public final class MaxFastMetrics {
         String failureType = failure == null ? NO_FAILURE : failure.getClass().getName();
         MaxFastFingerprint.Result patternStructureFingerprint = MaxFastFingerprint.ofStructureEntries(this.patternStructureEntries);
         MaxFastFingerprint.PlanResult planFingerprint = planAvailable ?
-                MaxFastFingerprint.ofPlan(plan, this.patternFingerprints) :
+                MaxFastFingerprint.ofPlan(plan, this.patternFingerprints, this.registries) :
                 new MaxFastFingerprint.PlanResult(
                         new MaxFastFingerprint.Result(MaxFastFingerprint.UNAVAILABLE, 0, 0L),
                         0,

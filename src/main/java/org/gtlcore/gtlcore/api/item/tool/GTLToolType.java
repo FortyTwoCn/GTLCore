@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.api.item.tool;
 
-import com.gregtechceu.gtceu.api.data.tag.TagUtil;
+import com.gregtechceu.gtceu.utils.TagUtil;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.common.item.tool.behavior.*;
 
@@ -22,7 +22,7 @@ public class GTLToolType {
             .harvestTag(TagUtil.createBlockTag("mineable/sword"))
             .harvestTag(TagUtil.createBlockTag("mineable/pickaxe", true))
             .harvestTag(TagUtil.createBlockTag("mineable/shovel", true))
-            .toolStats(b -> b.blockBreaking().crafting().sneakBypassUse()
+            .definition(b -> b.blockBreaking().crafting().sneakBypassUse()
                     .attackDamage(10.0F).attackSpeed(2.0F)
                     .behaviors(GrassPathBehavior.INSTANCE, DisableShieldBehavior.INSTANCE,
                             TreeFellingBehavior.INSTANCE, LogStripBehavior.INSTANCE,

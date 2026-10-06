@@ -1,8 +1,6 @@
 package org.gtlcore.gtlcore.integration.ae2.throughput;
 
-import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.integration.ae2.MEFluidUnits;
-import org.gtlcore.gtlcore.integration.ae2.wireless.GTLWirelessAeContent;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -11,7 +9,9 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -20,8 +20,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
@@ -78,8 +78,8 @@ public class METhroughputMonitorPart extends StorageMonitorPart implements IGrid
     private static final int TEXT_BACKGROUND_COLOR = 0;
     private static final int TEXTURE_COLOR = 255;
 
-    private static final ResourceLocation POSITIVE_TEXTURE = GTLCore.id("textures/part/throughput_monitor_up.png");
-    private static final ResourceLocation NEGATIVE_TEXTURE = GTLCore.id("textures/part/throughput_monitor_down.png");
+    private static final ResourceLocation POSITIVE_TEXTURE = ResourceLocation.fromNamespaceAndPath("gtlcore", "textures/part/throughput_monitor_up.png");
+    private static final ResourceLocation NEGATIVE_TEXTURE = ResourceLocation.fromNamespaceAndPath("gtlcore", "textures/part/throughput_monitor_down.png");
 
     private static final WorkRoutine DEFAULT_ROUTINE = WorkRoutine.SECOND;
 
@@ -132,29 +132,29 @@ public class METhroughputMonitorPart extends StorageMonitorPart implements IGrid
     }
 
     @Override
-    public void writeToNBT(CompoundTag data) {
-        super.writeToNBT(data);
+    public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
+        super.writeToNBT(data, registries);
         data.putDouble(TAG_THROUGHPUT, lastReportedValue);
         data.putInt(TAG_ROUTINE, workRoutine.ordinal());
     }
 
     @Override
-    public void readFromNBT(CompoundTag data) {
-        super.readFromNBT(data);
+    public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
+        super.readFromNBT(data, registries);
         lastReportedValue = data.getDouble(TAG_THROUGHPUT);
         workRoutine = readRoutine(data);
         lastWorkRoutine = workRoutine;
     }
 
     @Override
-    public void writeToStream(FriendlyByteBuf data) {
+    public void writeToStream(RegistryFriendlyByteBuf data) {
         super.writeToStream(data);
         data.writeDouble(lastReportedValue);
         data.writeEnum(workRoutine);
     }
 
     @Override
-    public boolean readFromStream(FriendlyByteBuf data) {
+    public boolean readFromStream(RegistryFriendlyByteBuf data) {
         boolean needRedraw = super.readFromStream(data);
         double previousValue = lastReportedValue;
         WorkRoutine previousRoutine = workRoutine;
@@ -180,9 +180,8 @@ public class METhroughputMonitorPart extends StorageMonitorPart implements IGrid
     }
 
     @Override
-    public boolean onPartActivate(Player player, InteractionHand hand, Vec3 pos) {
-        ItemStack heldItem = player.getItemInHand(hand);
-        if (heldItem.is(GTLWirelessAeContent.THROUGHPUT_MONITOR_CONFIGURATOR.get())) {
+    public boolean onUseItemOn(ItemStack heldItem, Player player, InteractionHand hand, Vec3 pos) {
+        if (BuiltInRegistries.ITEM.getKey(heldItem.getItem()).equals(ResourceLocation.fromNamespaceAndPath("gtlcore", "throughput_monitor_configurator"))) {
             if (isClientSide()) {
                 return true;
             }
@@ -195,7 +194,7 @@ public class METhroughputMonitorPart extends StorageMonitorPart implements IGrid
             return true;
         }
 
-        return super.onPartActivate(player, hand, pos);
+        return super.onUseItemOn(heldItem, player, hand, pos);
     }
 
     @Override
@@ -222,7 +221,7 @@ public class METhroughputMonitorPart extends StorageMonitorPart implements IGrid
 
     @Override
     public TickingRequest getTickingRequest(IGridNode node) {
-        return new TickingRequest(MIN_TICK_RATE, MAX_TICK_RATE, !isActive() || getDisplayed() == null, true);
+        return new TickingRequest(MIN_TICK_RATE, MAX_TICK_RATE, !isActive() || getDisplayed() == null);
     }
 
     @Override
@@ -421,34 +420,30 @@ public class METhroughputMonitorPart extends StorageMonitorPart implements IGrid
 
         Matrix4f matrix = poseStack.last().pose();
         VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutout(texture));
-        consumer.vertex(matrix, 0.0F, TREND_QUAD_SIZE, 0.0F)
-                .color(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
-                .uv(0.0F, 1.0F)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .normal(poseStack.last().normal(), 0.0F, 1.0F, 0.0F)
-                .endVertex();
-        consumer.vertex(matrix, TREND_QUAD_SIZE, TREND_QUAD_SIZE, 0.0F)
-                .color(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
-                .uv(1.0F, 1.0F)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .normal(poseStack.last().normal(), 0.0F, 1.0F, 0.0F)
-                .endVertex();
-        consumer.vertex(matrix, TREND_QUAD_SIZE, 0.0F, 0.0F)
-                .color(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
-                .uv(1.0F, 0.0F)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .normal(poseStack.last().normal(), 0.0F, 1.0F, 0.0F)
-                .endVertex();
-        consumer.vertex(matrix, 0.0F, 0.0F, 0.0F)
-                .color(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
-                .uv(0.0F, 0.0F)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(LightTexture.FULL_BRIGHT)
-                .normal(poseStack.last().normal(), 0.0F, 1.0F, 0.0F)
-                .endVertex();
+        consumer.addVertex(matrix, 0.0F, TREND_QUAD_SIZE, 0.0F)
+                .setColor(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
+                .setUv(0.0F, 1.0F)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(poseStack.last(), 0.0F, 1.0F, 0.0F);
+        consumer.addVertex(matrix, TREND_QUAD_SIZE, TREND_QUAD_SIZE, 0.0F)
+                .setColor(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
+                .setUv(1.0F, 1.0F)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(poseStack.last(), 0.0F, 1.0F, 0.0F);
+        consumer.addVertex(matrix, TREND_QUAD_SIZE, 0.0F, 0.0F)
+                .setColor(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
+                .setUv(1.0F, 0.0F)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(poseStack.last(), 0.0F, 1.0F, 0.0F);
+        consumer.addVertex(matrix, 0.0F, 0.0F, 0.0F)
+                .setColor(TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR, TEXTURE_COLOR)
+                .setUv(0.0F, 0.0F)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(poseStack.last(), 0.0F, 1.0F, 0.0F);
         poseStack.popPose();
     }
 

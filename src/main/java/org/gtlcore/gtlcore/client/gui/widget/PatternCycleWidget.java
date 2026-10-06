@@ -1,201 +1,141 @@
 package org.gtlcore.gtlcore.client.gui.widget;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TankWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.misc.FluidStorage;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.item.ItemStack;
-
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.integration.ae2.gui.AEGuiHelper;
+import brachy.modularui.integration.recipeviewer.entry.EntryList;
+import brachy.modularui.integration.recipeviewer.entry.item.ItemStackList;
+import brachy.modularui.integration.recipeviewer.entry.fluid.FluidStackList;
+import brachy.modularui.integration.recipeviewer.handlers.IngredientProvider;
+import brachy.modularui.screen.viewport.ModularGuiContext;
+import brachy.modularui.theme.WidgetThemeEntry;
+import brachy.modularui.value.sync.GenericSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widget.Widget;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.*;
-import com.google.common.primitives.Ints;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.*;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-public class PatternCycleWidget extends WidgetGroup {
-
-    private static final int CYCLE_TICKS = 20;
-
+/** Read-only, server-owned rotating native AE ingredient previews. Amounts stay long throughout synchronization. */
+public final class PatternCycleWidget extends ParentWidget<PatternCycleWidget> {
+    public static final int CYCLE_TICKS = 20;
+    private static final int VISIBLE_STACKS = 6;
     private final Supplier<List<IPatternDetails>> patternSupplier;
-    private final WidgetGroup inputGroup;
-    private final WidgetGroup outputGroup;
-    private int tick;
-    private int displayedIndex = -1;
-    private int displayedSize = -1;
+    private @Nullable GenericSyncValue<RegistryFriendlyByteBuf, Preview> preview;
 
-    public PatternCycleWidget(int xPosition, int yPosition, int width, int height,
-                              Supplier<List<IPatternDetails>> patternSupplier) {
-        super(xPosition, yPosition, width, height);
-        this.patternSupplier = patternSupplier;
-
-        int startX = Math.max(0, (width - 131) / 2);
-        this.inputGroup = new WidgetGroup(startX, 0, 54, 36).setClientSideWidget();
-        this.outputGroup = new WidgetGroup(startX + 77, 0, 54, 36).setClientSideWidget();
-        Widget arrow = new Widget(startX + 58, 13, 15, 10)
-                .setBackground(GuiTextures.PROGRESS_BAR_ARROW.getSubTexture(0, 0, 1, 0.5));
-
-        addWidget(inputGroup);
-        addWidget(arrow);
-        addWidget(outputGroup);
-        displayPreview(Preview.EMPTY);
-    }
-
-    @Override
-    public void writeInitialData(FriendlyByteBuf buffer) {
-        super.writeInitialData(buffer);
-        writePreview(buffer, getPreview(getInitialPattern()));
-    }
-
-    @Override
-    public void readInitialData(FriendlyByteBuf buffer) {
-        super.readInitialData(buffer);
-        displayPreview(readPreview(buffer));
-    }
-
-    @Override
-    public void detectAndSendChanges() {
-        super.detectAndSendChanges();
-        tick++;
-
-        List<IPatternDetails> patterns = patternSupplier.get();
-        if (patterns.isEmpty()) {
-            if (displayedIndex != -1 || displayedSize != 0) {
-                displayPreview(Preview.EMPTY);
-                displayedIndex = -1;
-                displayedSize = 0;
-                writeUpdateInfo(0, buffer -> writePreview(buffer, Preview.EMPTY));
-            }
-            return;
+    public PatternCycleWidget(int x, int y, int width, int height, Supplier<List<IPatternDetails>> supplier) {
+        this.patternSupplier = supplier; pos(x, y).size(width, height);
+        int start = Math.max(0, (width - 131) / 2);
+        for (int index = 0; index < VISIBLE_STACKS; index++) {
+            final int slot = index;
+            child(new StackCell(() -> displayed().inputs(), slot).pos(start + (index % 3) * 18, (index / 3) * 18));
+            child(new StackCell(() -> displayed().outputs(), slot).pos(start + 77 + (index % 3) * 18, (index / 3) * 18));
         }
+        child(new Widget<>().pos(start + 58, 13).size(15, 10).background(GTGuiTextures.PROGRESS_ARROW.main().getSubArea(0, 0, 1, 0.5f)));
+    }
 
-        int index = (tick / CYCLE_TICKS) % patterns.size();
-        if (index != displayedIndex || patterns.size() != displayedSize) {
-            displayedIndex = index;
-            displayedSize = patterns.size();
-            writeUpdateInfo(0, buffer -> writePreview(buffer, getPreview(patterns.get(index))));
+    public PatternCycleWidget sync(PanelSyncManager manager, String name, LongSupplier tick) {
+        if (preview != null) throw new IllegalStateException("Pattern cycle preview already bound");
+        name(name);
+        preview = GenericSyncValue.<RegistryFriendlyByteBuf, Preview>builder(Preview.class)
+                .getter(() -> Preview.select(patternSupplier.get(), tick.getAsLong()))
+                .serializer(Preview::write).deserializer(Preview::read).copy(value -> value).build();
+        manager.syncValue(name, preview);
+        return this;
+    }
+
+    private Preview displayed() { return preview == null || preview.getValue() == null ? Preview.EMPTY : preview.getValue(); }
+
+    public record Preview(List<GenericStack> inputs, List<GenericStack> outputs) {
+        public static final Preview EMPTY = new Preview(List.of(), List.of());
+        public Preview { inputs = checked(inputs); outputs = checked(outputs); }
+        private static List<GenericStack> checked(List<GenericStack> stacks) {
+            if (stacks.size() > VISIBLE_STACKS) throw new IllegalArgumentException("Too many native preview stacks");
+            for (var stack : stacks) if (stack == null || stack.what() == null || stack.amount() <= 0)
+                throw new IllegalArgumentException("Invalid native preview stack");
+            return List.copyOf(stacks);
         }
-    }
-
-    @Override
-    public void readUpdateInfo(int id, FriendlyByteBuf buffer) {
-        if (id == 0) {
-            displayPreview(readPreview(buffer));
-        } else {
-            super.readUpdateInfo(id, buffer);
-        }
-    }
-
-    private @Nullable IPatternDetails getInitialPattern() {
-        List<IPatternDetails> patterns = patternSupplier.get();
-        return patterns.isEmpty() ? null : patterns.get(0);
-    }
-
-    private Preview getPreview(@Nullable IPatternDetails pattern) {
-        if (pattern == null) {
-            return Preview.EMPTY;
-        }
-
-        return new Preview(
-                Arrays.stream(pattern.getInputs())
-                        .map(PatternCycleWidget::getInputPreviewStack)
-                        .filter(Objects::nonNull)
-                        .toList(),
-                Arrays.stream(pattern.getOutputs()).toList());
-    }
-
-    private void displayPreview(Preview preview) {
-        displayPatternSlots(inputGroup, preview.inputs().stream());
-        displayPatternSlots(outputGroup, preview.outputs().stream());
-    }
-
-    private static @Nullable GenericStack getInputPreviewStack(IPatternDetails.IInput input) {
-        GenericStack[] possibleInputs = input.getPossibleInputs();
-        if (possibleInputs.length == 0) return null;
-        return new GenericStack(possibleInputs[0].what(), input.getMultiplier());
-    }
-
-    private void displayPatternSlots(WidgetGroup group, Stream<GenericStack> stacks) {
-        group.clearAllWidgets();
-        Iterator<GenericStack> iterator = stacks.iterator();
-        for (int row = 0; row < 2; row++) {
-            for (int col = 0; col < 3; col++) {
-                int x = col * 18;
-                int y = row * 18;
-                if (!iterator.hasNext()) {
-                    group.addWidget(createItemSlot(ItemStack.EMPTY, x, y));
-                    continue;
-                }
-
-                GenericStack stack = iterator.next();
-                AEKey key = stack.what();
-                if (key instanceof AEItemKey itemKey) {
-                    group.addWidget(createItemSlot(itemKey.toStack(Ints.saturatedCast(stack.amount())), x, y));
-                } else if (key instanceof AEFluidKey fluidKey) {
-                    group.addWidget(createTankSlot(fluidKey, stack.amount(), x, y));
-                } else {
-                    group.addWidget(createItemSlot(ItemStack.EMPTY, x, y));
+        public static Preview select(List<IPatternDetails> patterns, long tick) {
+            if (patterns.isEmpty()) return EMPTY;
+            var pattern = patterns.get((int) Math.floorMod(Math.floorDiv(tick, CYCLE_TICKS), patterns.size()));
+            var inputs = new ArrayList<GenericStack>();
+            for (var input : pattern.getInputs()) {
+                var possible = input.getPossibleInputs();
+                if (possible.length > 0) {
+                    inputs.add(new GenericStack(possible[0].what(), Math.multiplyExact(possible[0].amount(), input.getMultiplier())));
+                    if (inputs.size() == VISIBLE_STACKS) break;
                 }
             }
+            return new Preview(inputs, pattern.getOutputs().stream().limit(VISIBLE_STACKS).toList());
+        }
+        public static void write(RegistryFriendlyByteBuf buffer, Preview value) {
+            writeStacks(buffer, value.inputs); writeStacks(buffer, value.outputs);
+        }
+        private static void writeStacks(RegistryFriendlyByteBuf buffer, List<GenericStack> stacks) {
+            buffer.writeVarInt(stacks.size());
+            for (var stack : stacks) GenericStack.STREAM_CODEC.encode(buffer, stack);
+        }
+        public static Preview read(RegistryFriendlyByteBuf buffer) { return new Preview(readStacks(buffer), readStacks(buffer)); }
+        private static List<GenericStack> readStacks(RegistryFriendlyByteBuf buffer) {
+            int count = buffer.readVarInt();
+            if (count < 0 || count > VISIBLE_STACKS) throw new IllegalArgumentException("Invalid native preview stack count");
+            var stacks = new ArrayList<GenericStack>(count);
+            for (int index = 0; index < count; index++) stacks.add(GenericStack.STREAM_CODEC.decode(buffer));
+            return stacks;
         }
     }
 
-    private Widget createItemSlot(ItemStack stack, int x, int y) {
-        ItemStackTransfer transfer = new ItemStackTransfer(1);
-        transfer.setStackInSlot(0, stack);
-        SlotWidget widget = new SlotWidget(transfer, 0, x, y, false, false)
-                .setBackgroundTexture(GuiTextures.SLOT);
-        var handler = widget.getHandler();
-        if (handler != null) {
-            handler.set(stack);
+    private static final class StackCell extends Widget<StackCell> implements IngredientProvider<Object> {
+        private final Supplier<List<GenericStack>> stacks;
+        private final int index;
+        private StackCell(Supplier<List<GenericStack>> stacks, int index) {
+            this.stacks = stacks; this.index = index; size(18);
+            tooltipDynamic(tooltip -> {
+                var value = stack();
+                if (value != null) {
+                    tooltip.addFromItem(GenericStack.wrapInItemStack(value));
+                    tooltip.newLine().add(net.minecraft.network.chat.Component.literal(
+                            AEGuiHelper.formatAmountFull(value.amount()) + (value.what() instanceof AEFluidKey ? " mB" : "")));
+                }
+            });
+            tooltip().autoUpdate(true);
         }
-        return widget;
-    }
-
-    private Widget createTankSlot(AEFluidKey fluidKey, long amount, int x, int y) {
-        FluidStorage storage = new FluidStorage(Integer.MAX_VALUE);
-        storage.setFluid(FluidStack.create(fluidKey.getFluid(), amount));
-        return new TankWidget(storage, x, y, false, false)
-                .setBackground(GuiTextures.SLOT)
-                .setClientSideWidget();
-    }
-
-    private static void writePreview(FriendlyByteBuf buffer, Preview preview) {
-        writeStacks(buffer, preview.inputs());
-        writeStacks(buffer, preview.outputs());
-    }
-
-    private static Preview readPreview(FriendlyByteBuf buffer) {
-        return new Preview(readStacks(buffer), readStacks(buffer));
-    }
-
-    private static void writeStacks(FriendlyByteBuf buffer, List<GenericStack> stacks) {
-        buffer.writeVarInt(stacks.size());
-        for (GenericStack stack : stacks) {
-            GenericStack.writeBuffer(stack, buffer);
+        private @Nullable GenericStack stack() { var entries = stacks.get(); return index < entries.size() ? entries.get(index) : null; }
+        @OnlyIn(Dist.CLIENT) @Override public void draw(ModularGuiContext context, WidgetThemeEntry<?> theme) {
+            GTGuiTextures.SLOT.draw(context, 0, 0, 18, 18);
+            var value = stack(); if (value == null) return;
+            var graphics = context.getGraphics();
+            if (value.what() instanceof AEItemKey item) graphics.renderItem(item.toStack(), 1, 1);
+            else AEGuiHelper.drawFluid(graphics, value, 1, 1);
+            var font = Minecraft.getInstance().font;
+            String amount = org.gtlcore.gtlcore.utils.NumberUtils.formatLong(value.amount());
+            graphics.pose().pushPose();
+            graphics.pose().translate(0, 0, 200); graphics.pose().scale(0.5f, 0.5f, 1);
+            graphics.drawString(font, amount, 34 - font.width(amount), 34 - font.lineHeight, 0xFFFFFFFF, true);
+            graphics.pose().popPose();
         }
-    }
-
-    private static List<GenericStack> readStacks(FriendlyByteBuf buffer) {
-        int size = buffer.readVarInt();
-        List<GenericStack> stacks = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            stacks.add(GenericStack.readBuffer(buffer));
+        @OnlyIn(Dist.CLIENT) @Override public void drawForeground(ModularGuiContext context) {
+            var value = stack();
+            if (value != null && isHovering() && !context.getUISettings().drawTooltipExternally())
+                tooltip().draw(context, GenericStack.wrapInItemStack(value));
         }
-        return stacks;
-    }
-
-    private record Preview(List<GenericStack> inputs, List<GenericStack> outputs) {
-
-        private static final Preview EMPTY = new Preview(List.of(), List.of());
+        @SuppressWarnings({"rawtypes", "unchecked"}) private static EntryList<Object> cast(EntryList<?> values) { return (EntryList) values; }
+        @OnlyIn(Dist.CLIENT) @Override public EntryList<Object> getIngredients() {
+            var value = stack();
+            if (value != null && value.what() instanceof AEFluidKey fluid) return cast(FluidStackList.of(fluid.toStack(1000)));
+            return cast(value != null && value.what() instanceof AEItemKey item ? ItemStackList.of(item.toStack()) : new ItemStackList());
+        }
+        @OnlyIn(Dist.CLIENT) @SuppressWarnings({"rawtypes", "unchecked"}) @Override public Class<Object> ingredientClass() {
+            var value = stack(); return (Class) (value != null && value.what() instanceof AEFluidKey ? FluidStack.class : ItemStack.class);
+        }
     }
 }

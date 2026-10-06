@@ -1,0 +1,73 @@
+{
+  "reason": "Native GT MetaMachine.getOffset() returns its long tick staggering offset; ME refresh interval needs a distinct API.",
+  "renames": {
+    "getOffset": "getMEUpdateInterval",
+    "setOffset": "setMEUpdateInterval"
+  },
+  "changes": [
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/api/machine/trait/MEPart/IModifiableSyncOffset.java",
+      "method_references": 2
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/MEDualHatchStockPartMachine.java",
+      "method_references": 6
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/MEDualInputHatchPartMachine.java",
+      "method_references": 2
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/TagFilterMEStockBusPartMachine.java",
+      "method_references": 2
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/TagFilterMEStockHatchPartMachine.java",
+      "method_references": 2
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/ae/MEStockingPatternBufferPartMachine.java",
+      "method_references": 5
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/integration/ae2/chamber/MEChamberConfigurator.java",
+      "method_references": 2
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/integration/ae2/chamber/MEChamberManagerTerminalMenu.java",
+      "method_references": 1
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/integration/wildcard/MEStockingWildcardPatternBufferPartMachine.java",
+      "method_references": 5
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEBusPartMachineMixin.java",
+      "method_references": 2
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEHatchPartMachineMixin.java",
+      "method_references": 2
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEInputBusPartMachineMixin.java",
+      "method_references": 4
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEInputHatchPartMachineMixin.java",
+      "method_references": 4
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEStockingBusPartMachineMixin.java",
+      "method_references": 4
+    },
+    {
+      "path": "src/main/java/org/gtlcore/gtlcore/mixin/gtm/ae/machine/MEStockingHatchPartMachineMixin.java",
+      "method_references": 4
+    },
+    {
+      "path": "migration/recipe-tests/src/test/java/org/gtlcore/gtlcore/migration/NativeAeGridIntegrationTest.java",
+      "method_references": 7
+    }
+  ]
+}

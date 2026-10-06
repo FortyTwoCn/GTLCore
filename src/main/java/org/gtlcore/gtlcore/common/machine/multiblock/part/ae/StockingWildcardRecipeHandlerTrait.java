@@ -4,12 +4,8 @@ import org.gtlcore.gtlcore.integration.wildcard.MEStockingWildcardPatternBufferP
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 public class StockingWildcardRecipeHandlerTrait extends MEPatternBufferRecipeHandlerTraitBase {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEStockingWildcardPatternBufferPartMachine.class);
 
     public StockingWildcardRecipeHandlerTrait(MEPatternBufferPartMachineBase ioBuffer, IO io) {
         super(ioBuffer, io);
@@ -31,11 +27,6 @@ public class StockingWildcardRecipeHandlerTrait extends MEPatternBufferRecipeHan
     }
 
     @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
-    @Override
     public WildcardItemInputHandler getMeItemHandler() {
         return (WildcardItemInputHandler) this.meItemHandler;
     }
@@ -53,7 +44,7 @@ public class StockingWildcardRecipeHandlerTrait extends MEPatternBufferRecipeHan
 
         @Override
         public MEStockingWildcardPatternBufferPartMachine getMachine() {
-            return (MEStockingWildcardPatternBufferPartMachine) this.machine;
+            return (MEStockingWildcardPatternBufferPartMachine) super.getMachine();
         }
     }
 
@@ -65,7 +56,7 @@ public class StockingWildcardRecipeHandlerTrait extends MEPatternBufferRecipeHan
 
         @Override
         public MEStockingWildcardPatternBufferPartMachine getMachine() {
-            return (MEStockingWildcardPatternBufferPartMachine) this.machine;
+            return (MEStockingWildcardPatternBufferPartMachine) super.getMachine();
         }
     }
 }

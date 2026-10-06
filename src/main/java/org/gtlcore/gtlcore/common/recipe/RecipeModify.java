@@ -1,65 +1,65 @@
 package org.gtlcore.gtlcore.common.recipe;
 
-import org.gtlcore.gtlcore.common.data.GTLMaterials;
+import org.gtlcore.gtlcore.common.data.GTLCallbackMaterials;
 import org.gtlcore.gtlcore.common.data.GTLRecipeTypes;
 import org.gtlcore.gtlcore.data.recipe.GenerateDisassembly;
 
-import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
-import com.gregtechceu.gtceu.common.data.GTMaterials;
-import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 
-import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
+import net.minecraft.network.chat.Component;
 
+import brachy.modularui.api.drawable.Text;
 import java.text.NumberFormat;
 
-public class RecipeModify {
+/** Constructor-time installation covers world recipe reloads and native data generation alike. */
+public final class RecipeModify {
+    private RecipeModify() {}
+    public static void init() {}
 
-    public static void init() {
-        GTRecipeTypes.SIFTER_RECIPES.setMaxIOSize(1, 6, 1, 1);
-        GTRecipeTypes.ASSEMBLER_RECIPES.onRecipeBuild(GenerateDisassembly::generateDisassembly);
-        GTRecipeTypes.ASSEMBLER_RECIPES.onRecipeBuild(GenerateDisassembly::generateDisassembly);
-        GTRecipeTypes.PLASMA_GENERATOR_FUELS.onRecipeBuild((recipeBuilder, provider) -> {
-            long eu = recipeBuilder.duration * GTValues.V[GTValues.EV];
-            GTLRecipeTypes.HEAT_EXCHANGER_RECIPES.recipeBuilder(recipeBuilder.id)
-                    .inputFluids(FluidRecipeCapability.CAP.of(recipeBuilder.input
-                            .get(FluidRecipeCapability.CAP).get(0).getContent()))
-                    .inputFluids(GTMaterials.DistilledWater.getFluid(eu / 160))
-                    .outputFluids(FluidRecipeCapability.CAP.of(recipeBuilder.output
-                            .get(FluidRecipeCapability.CAP).get(0).getContent()))
-                    .outputFluids(GTLMaterials.SupercriticalSteam.getFluid(eu))
-                    .addData("eu", eu)
-                    .duration(200)
-                    .save(provider);
-        });
-
-        GTRecipeTypes.LASER_ENGRAVER_RECIPES.setMaxIOSize(2, 1, 2, 1).onRecipeBuild((recipeBuilder, provider) -> {
-            if (recipeBuilder.output.containsKey(FluidRecipeCapability.CAP)) return;
-            GTRecipeBuilder recipe = GTLRecipeTypes.DIMENSIONAL_FOCUS_ENGRAVING_ARRAY_RECIPES.copyFrom(recipeBuilder)
-                    .duration((int) (recipeBuilder.duration * 0.2))
-                    .EUt(recipeBuilder.EUt() * 4);
-            double value = Math.log10(recipeBuilder.EUt()) / Math.log10(4);
-            if (value > 10) {
-                recipe.inputFluids(GTLMaterials.EuvPhotoresist.getFluid((long) (value / 2)));
-            } else {
-                recipe.inputFluids(GTLMaterials.Photoresist.getFluid((long) value));
+    public static void modifyOnRegistration(GTRecipeType type) {
+        switch (type.id.toString()) {
+            case "gtceu:sifter" -> maxIO(type, 1, 6, 1, 1);
+            // Core's raw-ore decompression route retains its non-consumable configuration circuit.
+            case "gtceu:forge_hammer" -> type.maxInputs.put(ItemRecipeCapability.CAP, 2);
+            case "gtceu:assembler" -> type.getRecipeBuilder().onSave(GenerateDisassembly::generateDisassembly);
+            case "gtceu:cutter" -> type.getRecipeBuilder().onSave(GTLRecipeCallbacks.cutting(
+                    () -> GTLCallbackMaterials.GradePurifiedWater8.getFluid(),
+                    () -> GTLCallbackMaterials.GradePurifiedWater16.getFluid()));
+            case "gtceu:circuit_assembler" -> type.getRecipeBuilder().onSave(GTLRecipeCallbacks.circuitAssembly(
+                    () -> GTLCallbackMaterials.MutatedLivingSolder.getFluid(),
+                    () -> GTLCallbackMaterials.SuperMutatedLivingSolder.getFluid()));
+            case "gtceu:plasma_generator" -> type.getRecipeBuilder().onSave(GTLRecipeCallbacks.heatExchange(
+                    () -> GTLRecipeTypes.HEAT_EXCHANGER_RECIPES.value(),
+                    () -> GTLCallbackMaterials.SupercriticalSteam.getFluid()));
+            case "gtceu:laser_engraver" -> {
+                maxIO(type, 2, 1, 2, 1);
+                var focus = GTLRecipeCallbacks.focusedEngraving(
+                        () -> GTLRecipeTypes.DIMENSIONAL_FOCUS_ENGRAVING_ARRAY_RECIPES.value(),
+                        () -> GTLCallbackMaterials.Photoresist.getFluid(),
+                        () -> GTLCallbackMaterials.EuvPhotoresist.getFluid());
+                var previous = type.getRecipeBuilder().onSave;
+                type.getRecipeBuilder().onSave(previous == null ? focus : previous.andThen(focus));
             }
-            recipe.save(provider);
-        });
-
-        GTRecipeTypes.FUSION_RECIPES.getDataInfos().clear();
-        GTRecipeTypes.FUSION_RECIPES.addDataInfo((data) -> LocalizationUtils.format("gtceu.recipe.eu_to_starts",
-                NumberFormat.getCompactNumberInstance().format(data.getLong("eu_to_start") / 1000000),
-                getFusionTier(data.getLong("eu_to_start") / 1000000)));
+            case "gtceu:fusion_reactor" -> {
+                var modifiers = type.getUiLayout().getRecipeUIModifiers();
+                // The pinned GT baseline installs its EU-to-start label as the sole default modifier.
+                modifiers.clear();
+                modifiers.add((recipe, widget) -> {
+                    long millions = recipe.data.getLong("eu_to_start") / 1000000;
+                    widget.textComponents.child(Text.of(Component.translatable("gtceu.recipe.eu_to_starts",
+                            NumberFormat.getCompactNumberInstance().format(millions),
+                            GTLRecipeCallbacks.fusionTier(millions))).asWidget());
+                });
+            }
+        }
     }
 
-    private static String getFusionTier(long startEu) {
-        String tier = "I";
-        if (startEu > 1280L) tier = "V";
-        else if (startEu > 640L) tier = "IV";
-        else if (startEu > 320L) tier = "III";
-        else if (startEu > 160L) tier = "II";
-        return tier;
+    private static void maxIO(GTRecipeType type, int itemInputs, int itemOutputs, int fluidInputs, int fluidOutputs) {
+        type.maxInputs.put(ItemRecipeCapability.CAP, itemInputs);
+        type.maxOutputs.put(ItemRecipeCapability.CAP, itemOutputs);
+        type.maxInputs.put(FluidRecipeCapability.CAP, fluidInputs);
+        type.maxOutputs.put(FluidRecipeCapability.CAP, fluidOutputs);
     }
 }

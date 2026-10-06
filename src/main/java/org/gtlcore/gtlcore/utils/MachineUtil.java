@@ -5,15 +5,15 @@ import org.gtlcore.gtlcore.api.recipe.RecipeResult;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntCircuitIngredient;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
+import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,25 +24,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.util.Lazy;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.gtlcore.gtlcore.api.recipe.RecipeRunnerHelper.*;
-import static org.gtlcore.gtlcore.utils.Registries.getItem;
 
 public class MachineUtil {
 
     public static final BlockPos[] EMPTY_POS_ARRAY = new BlockPos[0];
-
-    private static final Lazy<Map<Item, EquipmentSlot>> armorMap = Lazy.of(() -> Map.of(
-            getItem("kubejs:magnetohydrodynamicallyconstrainedstarmatter_boots"), EquipmentSlot.FEET,
-            getItem("kubejs:magnetohydrodynamicallyconstrainedstarmatter_leggings"), EquipmentSlot.LEGS,
-            getItem("kubejs:magnetohydrodynamicallyconstrainedstarmatter_chestplate"), EquipmentSlot.CHEST,
-            getItem("kubejs:magnetohydrodynamicallyconstrainedstarmatter_helmet"), EquipmentSlot.HEAD));
 
     private static final String LEGGINGS_SUFFIX = "leggings";
     private static final String PANTS_SUFFIX = "pants";
@@ -69,7 +60,7 @@ public class MachineUtil {
     }
 
     public static boolean inputItem(WorkableMultiblockMachine machine, ItemStack item) {
-        GTRecipe recipe = new GTRecipeBuilder(Registries.getResourceKey(item), GTRecipeTypes.DUMMY_RECIPES).inputItems(item).buildRawRecipe();
+        GTRecipe recipe = GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(Registries.getResourceKey(item)).inputItems(item).build();
         if (matchRecipeInputNocache(machine, recipe)) {
             return handleRecipeInputNocache(machine, recipe);
         } else RecipeResult.of(machine, RecipeResult.fail(Component.translatable("gtceu.recipe.fail.no.input.item", item.getDisplayName())));
@@ -78,7 +69,7 @@ public class MachineUtil {
 
     public static boolean outputItem(WorkableMultiblockMachine machine, ItemStack item) {
         if (!item.isEmpty()) {
-            GTRecipe recipe = new GTRecipeBuilder(Registries.getResourceKey(item), GTRecipeTypes.DUMMY_RECIPES).outputItems(item).buildRawRecipe();
+            GTRecipe recipe = GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(Registries.getResourceKey(item)).outputItems(item).build();
             if (matchRecipeOutput(machine, recipe)) {
                 return handleRecipeOutput(machine, recipe);
             }
@@ -87,25 +78,36 @@ public class MachineUtil {
     }
 
     public static boolean notConsumableItem(WorkableMultiblockMachine machine, ItemStack item) {
-        return new GTRecipeBuilder(Registries.getResourceKey(item), GTRecipeTypes.DUMMY_RECIPES).inputItems(item).buildRawRecipe().matchRecipe(machine).isSuccess();
+        return matchRecipeInputNocache(machine, GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(Registries.getResourceKey(item)).inputItems(item).build());
     }
 
     public static boolean notConsumableCircuit(WorkableMultiblockMachine machine, int configuration) {
-        return new GTRecipeBuilder(GTCEu.id(String.valueOf(configuration)), GTRecipeTypes.DUMMY_RECIPES).inputItems(IntCircuitIngredient.circuitInput(configuration)).buildRawRecipe()
-                .matchRecipe(machine).isSuccess();
+        return matchRecipeInputNocache(machine, GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(GTCEu.id(String.valueOf(configuration)))
+                .inputItems(IntCircuitIngredient.circuit(configuration)).build());
     }
 
     public static boolean inputFluid(WorkableMultiblockMachine machine, FluidStack fluid) {
-        GTRecipe recipe = new GTRecipeBuilder(Registries.getResourceKey(fluid), GTRecipeTypes.DUMMY_RECIPES).inputFluids(fluid).buildRawRecipe();
+        GTRecipe recipe = GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(Registries.getResourceKey(fluid)).inputFluids(fluid).build();
         if (matchRecipeInputNocache(machine, recipe)) {
             return handleRecipeInputNocache(machine, recipe);
-        } else RecipeResult.of(machine, RecipeResult.fail(Component.translatable("gtceu.recipe.fail.no.input.fluid", fluid.getDisplayName())));
+        } else RecipeResult.of(machine, RecipeResult.fail(Component.translatable("gtceu.recipe.fail.no.input.fluid", fluid.getHoverName())));
+        return false;
+    }
+
+    /** Keep auxiliary-fluid costs in long without truncating the native FluidStack's display quantity. */
+    public static boolean inputFluid(WorkableMultiblockMachine machine, FluidStack fluid, long amount) {
+        if (amount <= 0 || fluid.isEmpty()) return false;
+        var ingredient = org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient.create(fluid, amount);
+        var recipe = com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder.ofRaw()
+                .input(com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability.CAP, ingredient).build();
+        if (matchRecipeInputNocache(machine, recipe)) return handleRecipeInputNocache(machine, recipe);
+        RecipeResult.of(machine, RecipeResult.fail(Component.translatable("gtceu.recipe.fail.no.input.fluid", fluid.getHoverName())));
         return false;
     }
 
     public static boolean outputFluid(WorkableMultiblockMachine machine, FluidStack fluid) {
         if (!fluid.isEmpty()) {
-            GTRecipe recipe = new GTRecipeBuilder(Registries.getResourceKey(fluid), GTRecipeTypes.DUMMY_RECIPES).outputFluids(fluid).buildRawRecipe();
+            GTRecipe recipe = GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(Registries.getResourceKey(fluid)).outputFluids(fluid).build();
             if (matchRecipeOutput(machine, recipe)) {
                 return handleRecipeOutput(machine, recipe);
             }
@@ -114,9 +116,11 @@ public class MachineUtil {
     }
 
     public static boolean inputEU(WorkableMultiblockMachine machine, long eu) {
-        GTRecipe recipe = new GTRecipeBuilder(GTCEu.id(String.valueOf(eu)), GTRecipeTypes.DUMMY_RECIPES).EUt(eu).buildRawRecipe();
-        if (recipe.matchTickRecipe(machine).isSuccess()) {
-            return recipe.handleTickRecipeIO(IO.IN, machine, machine.recipeLogic.getChanceCaches());
+        if (eu < 0) return false;
+        if (eu == 0) return true;
+        GTRecipe recipe = GTRecipeTypes.DUMMY_RECIPES.recipeBuilder(GTCEu.id(String.valueOf(eu))).EUt(eu).build();
+        if (RecipeHelper.matchTickRecipe(machine, recipe).isSuccess()) {
+            return RecipeHelper.handleTickRecipeIO(machine, recipe, IO.IN, machine.getRecipeLogic().getChanceCaches()).isSuccess();
         }
         return false;
     }
@@ -127,7 +131,7 @@ public class MachineUtil {
      * 暂停/恢复不会产生本地库存变化通知，需主动唤醒可能已退订休眠的控制器。
      */
     public static void notifyControllersRecipeLogic(MultiblockPartMachine part) {
-        for (IMultiController controller : part.getControllers()) {
+        for (MultiblockControllerMachine controller : part.getControllers()) {
             if (controller instanceof IRecipeLogicMachine machine) {
                 machine.getRecipeLogic().updateTickSubscription();
             }
@@ -142,21 +146,23 @@ public class MachineUtil {
     }
 
     public static boolean hasFullArmorSet(ServerPlayer player) {
-        return armorMap.get().entrySet().stream()
-                .allMatch(entry -> player.getItemBySlot(entry.getValue()).is(entry.getKey()));
+        return hasArmorSet(player, NO_CLIP_ARMOR_SETS.get(3));
     }
 
     public static boolean hasNoClipArmorSet(Player player) {
-        return NO_CLIP_ARMOR_SETS.stream().anyMatch(armorSet -> armorSet.entrySet().stream()
-                .allMatch(entry -> entry.getValue().equals(
-                        Registries.getResourceKey(player.getItemBySlot(entry.getKey())))));
+        return NO_CLIP_ARMOR_SETS.stream().anyMatch(armorSet -> hasArmorSet(player, armorSet));
+    }
+
+    private static boolean hasArmorSet(Player player, Map<EquipmentSlot, ResourceLocation> armorSet) {
+        return armorSet.entrySet().stream().allMatch(entry -> entry.getValue().equals(
+                Registries.getResourceKey(player.getItemBySlot(entry.getKey()))));
     }
 
     private static Map<EquipmentSlot, ResourceLocation> createArmorSet(String prefix, String legsSuffix) {
         return Map.of(
-                EquipmentSlot.FEET, new ResourceLocation(prefix + "boots"),
-                EquipmentSlot.LEGS, new ResourceLocation(prefix + legsSuffix),
-                EquipmentSlot.CHEST, new ResourceLocation(prefix + "chestplate"),
-                EquipmentSlot.HEAD, new ResourceLocation(prefix + "helmet"));
+                EquipmentSlot.FEET, ResourceLocation.parse(prefix + "boots"),
+                EquipmentSlot.LEGS, ResourceLocation.parse(prefix + legsSuffix),
+                EquipmentSlot.CHEST, ResourceLocation.parse(prefix + "chestplate"),
+                EquipmentSlot.HEAD, ResourceLocation.parse(prefix + "helmet"));
     }
 }

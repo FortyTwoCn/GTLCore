@@ -2,7 +2,8 @@ package org.gtlcore.gtlcore.integration.ae2.graph;
 
 import org.gtlcore.gtlcore.integration.ae2.graph.core.*;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.core.RegistryAccess;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -55,8 +56,8 @@ public final class GraphRingView {
     private final int[] weights;
     private final int headerWeight;
 
-    public GraphRingView(UUID id, GraphPlan<AEKey> plan, Map<String, Long> selected) {
-        this(new Builder(id, plan, selected).finish());
+    public GraphRingView(UUID id, GraphPlan<AEKey> plan, Map<String, Long> selected, RegistryAccess registries) {
+        this(new Builder(id, plan, selected, registries).finish());
     }
 
     private GraphRingView(Builder builder) {
@@ -73,6 +74,7 @@ public final class GraphRingView {
     static final class Builder implements PlanningScheduler.Work<GraphRingView> {
 
         private final UUID id;
+        private final RegistryAccess registries;
         private final GraphPlan<AEKey> plan;
         private final Deque<Iterator<AEKey>> resources = new ArrayDeque<>();
         private final Set<AEKey> seenResources = new HashSet<>();
@@ -88,7 +90,8 @@ public final class GraphRingView {
 
         private final Deque<Pending> pending = new ArrayDeque<>();
 
-        Builder(UUID id, GraphPlan<AEKey> plan, Map<String, Long> selected) {
+        Builder(UUID id, GraphPlan<AEKey> plan, Map<String, Long> selected, RegistryAccess registries) {
+            this.registries = java.util.Objects.requireNonNull(registries);
             this.id = id;
             this.plan = plan;
             headerWeight = 128 + stackSize(new GenericStack(plan.target(), plan.amount()));
@@ -153,7 +156,7 @@ public final class GraphRingView {
 
         private int stackSize(GenericStack stack) {
             return 16 + keySizes.computeIfAbsent(stack.what(), key -> {
-                var buffer = new FriendlyByteBuf(Unpooled.buffer());
+                var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries);
                 try {
                     GenericStack.writeBuffer(new GenericStack(key, 1), buffer);
                     return buffer.readableBytes();
@@ -204,7 +207,7 @@ public final class GraphRingView {
         return values.entrySet().stream().map(entry -> new GenericStack(entry.getKey(), entry.getValue())).toList();
     }
 
-    public static void write(Page page, FriendlyByteBuf buffer) {
+    public static void write(Page page, RegistryFriendlyByteBuf buffer) {
         int start = buffer.writerIndex();
         buffer.writeUUID(page.id());
         GenericStack.writeBuffer(page.target(), buffer);
@@ -236,7 +239,7 @@ public final class GraphRingView {
         if (buffer.writerIndex() - start > MAX_PAGE_BYTES) throw new IllegalArgumentException("Graph display packet too large");
     }
 
-    public static Page read(FriendlyByteBuf buffer) {
+    public static Page read(RegistryFriendlyByteBuf buffer) {
         if (buffer.readableBytes() > MAX_PAGE_BYTES) throw new IllegalArgumentException("Graph display packet too large");
         UUID id = buffer.readUUID();
         GenericStack target = Objects.requireNonNull(GenericStack.readBuffer(buffer));
@@ -266,12 +269,12 @@ public final class GraphRingView {
         return new Page(id, target, preserve, offset, total, graphRows, rows);
     }
 
-    private static void writeStack(FriendlyByteBuf buffer, GenericStack stack, Map<AEKey, Integer> keys) {
+    private static void writeStack(RegistryFriendlyByteBuf buffer, GenericStack stack, Map<AEKey, Integer> keys) {
         buffer.writeVarInt(keys.get(stack.what()));
         buffer.writeVarLong(stack.amount());
     }
 
-    private static BigInteger readAmount(FriendlyByteBuf buffer) {
+    private static BigInteger readAmount(RegistryFriendlyByteBuf buffer) {
         byte[] bytes = buffer.readByteArray(MAX_PAGE_BYTES);
         if (bytes.length == 0) throw new IllegalArgumentException("Empty graph display amount");
         BigInteger value = new BigInteger(bytes);
@@ -279,18 +282,18 @@ public final class GraphRingView {
         return value;
     }
 
-    private static GenericStack readStack(FriendlyByteBuf buffer, List<AEKey> keys) {
+    private static GenericStack readStack(RegistryFriendlyByteBuf buffer, List<AEKey> keys) {
         int key = buffer.readVarInt();
         if (key < 0 || key >= keys.size()) throw new IllegalArgumentException("Invalid graph key reference");
         return new GenericStack(keys.get(key), CheckedAmounts.nonNegative(buffer.readVarLong()));
     }
 
-    private static void writeStacks(FriendlyByteBuf buffer, List<GenericStack> values, Map<AEKey, Integer> keys) {
+    private static void writeStacks(RegistryFriendlyByteBuf buffer, List<GenericStack> values, Map<AEKey, Integer> keys) {
         buffer.writeVarInt(values.size());
         for (var stack : values) writeStack(buffer, stack, keys);
     }
 
-    private static List<GenericStack> readStacks(FriendlyByteBuf buffer, List<AEKey> keys) {
+    private static List<GenericStack> readStacks(RegistryFriendlyByteBuf buffer, List<AEKey> keys) {
         int count = buffer.readVarInt();
         if (count < 0 || count > 512) throw new IllegalArgumentException("Too many graph display slots");
         List<GenericStack> values = new ArrayList<>(count);

@@ -2,8 +2,6 @@ package org.gtlcore.gtlcore.client.gui;
 
 import org.gtlcore.gtlcore.client.renderer.BlockHighlightHandler;
 
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -22,17 +20,12 @@ public final class PatternBufferProxyPositionConfiguratorClient {
     private static final String TELEPORT_BUTTON_KEY = "message.gtlcore.pattern_buffer_proxy_teleport_button";
     private static final String TELEPORT_BUTTON_TOOLTIP_KEY = "tooltip.gtlcore.pattern_buffer_proxy_teleport_button";
 
-    public static void handlePositionClick(String componentData, ClickData clickData) {
-        if (!clickData.isRemote) {
-            return;
-        }
-
+    public static void handlePositionClick(BlockPos target) {
         Level level = Minecraft.getInstance().level;
         if (level == null) {
             return;
         }
 
-        BlockPos target = BlockPos.of(Long.parseLong(componentData));
         BlockHighlightHandler.highlight(target, level.dimension(), System.currentTimeMillis() + HIGHLIGHT_DURATION_MILLIS);
 
         var player = Minecraft.getInstance().player;

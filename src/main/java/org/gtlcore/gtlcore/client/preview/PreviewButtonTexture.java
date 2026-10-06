@@ -12,9 +12,9 @@ final class PreviewButtonTexture implements IGuiTexture {
     static final IGuiTexture EXPAND = new PreviewButtonTexture("expand");
     static final IGuiTexture RESTORE = new PreviewButtonTexture("restore");
     private static final IGuiTexture NORMAL = new ResourceBorderTexture(
-            "jei:textures/jei/atlas/gui/button_enabled.png", 20, 20, 2, 2);
+            "jei:textures/gui/sprites/button_enabled_v2.png", 20, 20, 6, 6);
     private static final IGuiTexture HOVER = new ResourceBorderTexture(
-            "jei:textures/jei/atlas/gui/button_highlight.png", 20, 20, 2, 2);
+            "jei:textures/gui/sprites/button_highlight_v2.png", 20, 20, 6, 6);
     private static final int ICON_SIZE = 16;
     private final ResourceTexture icon;
 

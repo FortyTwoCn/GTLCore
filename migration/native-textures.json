@@ -1,0 +1,30 @@
+{
+  "reason": "Minecraft 1.21.1 NativeImage validates PNG headers; these original .png files contained JPEG data. Preserve the resource paths and exact decoded RGBA pixels.",
+  "baseline": "5b6cd0ec6a9d2be99d9031404176e84b9cd342ea",
+  "textures": {
+    "src/main/resources/assets/gtlcore/textures/block/obj/climber_overlay.png": {
+      "original_format": "JPEG",
+      "original_sha256": "ac892de78392db7b33b02b99836df61ebd9399071e101a11098dc2235b63c279",
+      "png_sha256": "63884f4e4fea65bdd3edf16f020a67c3a2053fd878470935322d4b5e124b087a",
+      "decoded_rgba_sha256": "b338d9f80accfbb824a864674e85e3eddd35224a0ca23815f73ad4bfa0e71a3a",
+      "width": 65,
+      "height": 65
+    },
+    "src/main/resources/assets/gtlcore/textures/block/obj/space_layer.png": {
+      "original_format": "JPEG",
+      "original_sha256": "ca2a5379da66420a41bbac76b16ffcb83e8829390da799e79eb7bfcc214b4b11",
+      "png_sha256": "1e2f494077082fe934415ab68d6a5f539d326d23550a9312eea52a9aae2495f3",
+      "decoded_rgba_sha256": "28445025c3a9f9017c11dbeef9fd8a1f561df726c9be35988b252ea4c76e3cf1",
+      "width": 8192,
+      "height": 4096
+    },
+    "src/main/resources/assets/gtlcore/textures/block/obj/star_layer.png": {
+      "original_format": "JPEG",
+      "original_sha256": "ebbe8d1732b440ef0d23a84fe724ca8de8d3ea69ec836ea2ec5feaab19f66f44",
+      "png_sha256": "0fbde7096f1d98c5c3ded46a300a8f3cc7d16321ed87fdf405752df066cb63f4",
+      "decoded_rgba_sha256": "42b982fec625433f04cbe4def7e3ebf04d7640d7527c51b5bf8cb6a282776fbb",
+      "width": 4096,
+      "height": 2048
+    }
+  }
+}

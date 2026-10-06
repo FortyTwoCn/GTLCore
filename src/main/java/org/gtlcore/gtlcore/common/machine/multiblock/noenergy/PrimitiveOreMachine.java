@@ -5,7 +5,7 @@ import org.gtlcore.gtlcore.utils.MachineIO;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 
@@ -17,8 +17,8 @@ import java.util.Random;
 
 public class PrimitiveOreMachine extends WorkableMultiblockMachine {
 
-    public PrimitiveOreMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    public PrimitiveOreMachine(BlockEntityCreationInfo info) {
+        super(info);
     }
 
     private final List<Material> OVERWORLD_ORE = List.of(GTMaterials.Bentonite,

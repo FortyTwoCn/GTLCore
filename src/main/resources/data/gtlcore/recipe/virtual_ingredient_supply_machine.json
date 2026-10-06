@@ -1,0 +1,73 @@
+{
+  "type": "gtceu:assembler",
+  "inputs": {
+    "gtceu:item": [
+      {
+        "content": {
+          "count": 1,
+          "ingredient": {
+            "item": "gtceu:luv_machine_hull"
+          }
+        }
+      },
+      {
+        "content": {
+          "count": 16,
+          "ingredient": {
+            "item": "gtceu:iv_field_generator"
+          }
+        }
+      },
+      {
+        "content": {
+          "count": 8,
+          "ingredient": {
+            "item": "gtceu:double_uranium_rhodium_dinaquadide_plate"
+          }
+        }
+      },
+      {
+        "content": {
+          "count": 4,
+          "ingredient": {
+            "tag": "gtceu:circuits/zpm"
+          }
+        }
+      },
+      {
+        "content": {
+          "ingredient": {
+            "item": "gtlcore:infinite_circuit_cell"
+          },
+          "count": 1
+        }
+      }
+    ]
+  },
+  "outputs": {
+    "gtceu:item": [
+      {
+        "content": {
+          "ingredient": {
+            "item": "gtceu:virtual_ingredient_supply_machine"
+          },
+          "count": 1
+        }
+      }
+    ]
+  },
+  "tickInputs": {
+    "gtceu:eu": [
+      {
+        "content": 122880
+      }
+    ]
+  },
+  "duration": 400,
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "extendedae"
+    }
+  ]
+}

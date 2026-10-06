@@ -1,128 +1,75 @@
 package org.gtlcore.gtlcore.mixin.gtm.ae.slot;
 
 import org.gtlcore.gtlcore.api.machine.trait.MEStock.IOptimizedMEList;
+import org.gtlcore.gtlcore.api.recipe.ingredient.AEFluidRecipeHandler;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidParallelLogic;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidList;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidSlot;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-import appeng.api.stacks.GenericStack;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.jetbrains.annotations.NotNull;
+import appeng.api.stacks.AEFluidKey;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 
 import java.util.*;
 
-@Implements(@Interface(
-                       iface = IOptimizedMEList.class,
-                       prefix = "gTLCore$"))
+/** Direct AE quantities bypass the native delegate's int-sized display stack. */
 @Mixin(ExportOnlyAEFluidList.class)
 public abstract class ExportOnlyAEFluidListMixin extends NotifiableFluidTank implements IOptimizedMEList {
+    @Shadow(remap = false) protected ExportOnlyAEFluidSlot[] inventory;
+    @Unique private final Object2LongMap<FluidStack> gtlcore$amounts = LongFluidParallelLogic.newFluidAmountMap();
+    @Unique private final List<FluidStack> gtlcore$displayFluids = new ArrayList<>();
+    @Unique private boolean gtlcore$changed = true;
 
-    @Unique
-    protected final ObjectArrayList<FluidStack> gTLCore$fluidList = new ObjectArrayList<>();
-
-    @Unique
-    private boolean gTLCore$changed = true;
-
-    @Shadow(remap = false)
-    protected ExportOnlyAEFluidSlot[] inventory;
-
-    public ExportOnlyAEFluidListMixin(MetaMachine machine, int slots, long capacity, IO io, IO capabilityIO) {
-        super(machine, slots, capacity, io, capabilityIO);
+    protected ExportOnlyAEFluidListMixin(int slots, int capacity, IO io, IO capabilityIO) {
+        super(slots, capacity, io, capabilityIO);
     }
 
-    @Unique
-    public boolean gTLCore$getChanged() {
-        return gTLCore$changed;
-    }
-
-    @Unique
-    public void gTLCore$setChanged(boolean value) {
-        gTLCore$changed = value;
-    }
-
-    @Unique
-    public @NotNull List<FluidStack> gTLCore$getFluidList() {
-        return gTLCore$fluidList;
-    }
-
-    @Unique
-    public @NotNull List<FluidStack> gTLCore$getMEFluidList() {
-        if (gTLCore$changed) {
-            gTLCore$changed = false;
-            gTLCore$fluidList.clear();
-            for (var slot : inventory) {
-                GenericStack stock = slot.getStock();
-                if (stock != null && stock.amount() != 0L) {
-                    FluidStack stack = slot.getFluid();
-                    if (!stack.isEmpty()) gTLCore$fluidList.add(stack);
-                }
-            }
-        }
-        return gTLCore$fluidList;
-    }
+    @Override public boolean getChanged() { return gtlcore$changed; }
+    @Override public void setChanged(boolean changed) { gtlcore$changed = changed; }
+    @Override public List<FluidStack> getFluidList() { return gtlcore$displayFluids; }
 
     @Override
-    public List<FluidIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<FluidIngredient> left, @Nullable String slotName, boolean simulate) {
-        if (io == IO.IN) {
-            boolean changed = false;
-            var listIterator = left.listIterator();
-            while (listIterator.hasNext()) {
-                FluidIngredient ingredient = listIterator.next();
-                if (ingredient.isEmpty()) {
-                    listIterator.remove();
-                } else {
-                    long count = ingredient.getAmount();
-                    if (count < 1) listIterator.remove();
-                    else {
-                        for (ExportOnlyAEFluidSlot i : this.inventory) {
-                            GenericStack stored = i.getStock();
-                            if (stored != null) {
-                                long amount = stored.amount();
-                                if (amount != 0L) {
-                                    if (ingredient.test(i.getFluid())) {
-                                        FluidStack drained = i.drain(count, simulate, !simulate);
-                                        if (drained.getAmount() > 0L) {
-                                            changed = true;
-                                            count -= drained.getAmount();
-                                            ingredient.setAmount(count);
-                                        }
-                                    }
-                                    if (count <= 0L) {
-                                        listIterator.remove();
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+    public Object2LongMap<FluidStack> getMEFluidMap() {
+        if (gtlcore$changed) {
+            gtlcore$changed = false;
+            gtlcore$amounts.clear();
+            gtlcore$displayFluids.clear();
+            for (var slot : inventory) {
+                var stock = slot.getStock();
+                if (stock == null || stock.amount() <= 0 || !(stock.what() instanceof AEFluidKey key)) continue;
+                var identity = key.toStack(1);
+                long amount = gtlcore$amounts.getLong(identity);
+                gtlcore$amounts.put(identity, amount > Long.MAX_VALUE - stock.amount() ?
+                        Long.MAX_VALUE : amount + stock.amount());
             }
-            if (!simulate && changed) {
-                this.gTLCore$changed = true;
-                this.onContentsChanged();
+            for (var entry : gtlcore$amounts.object2LongEntrySet()) {
+                gtlcore$displayFluids.add(entry.getKey().copyWithAmount((int) Math.min(Integer.MAX_VALUE, entry.getLongValue())));
             }
         }
-        return left.isEmpty() ? null : left;
+        return gtlcore$amounts;
+    }
+
+    @Override public List<FluidStack> getMEFluidList() { getMEFluidMap(); return gtlcore$displayFluids; }
+
+    @Override
+    public List<SizedFluidIngredient> handleRecipeInner(IO io, @Nullable GTRecipe recipe,
+                                                        List<SizedFluidIngredient> left, boolean simulate) {
+        return AEFluidRecipeHandler.handleBuffered(io, recipe, left, simulate, inventory, getMachine());
     }
 
     @Override
     public void onContentsChanged() {
+        gtlcore$changed = true;
         super.onContentsChanged();
-        this.gTLCore$changed = true;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public List<Object> getContents() {
-        return (List<Object>) (List<?>) gTLCore$getMEFluidList();
-    }
+    @Override public List<Object> getContents() { return new ArrayList<>(getMEFluidList()); }
 }

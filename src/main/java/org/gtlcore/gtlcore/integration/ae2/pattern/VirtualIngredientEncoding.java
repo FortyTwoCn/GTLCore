@@ -5,13 +5,14 @@ import org.gtlcore.gtlcore.common.item.VirtualIngredientBehavior;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeWrapper;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
+import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -40,7 +41,7 @@ public final class VirtualIngredientEncoding {
 
     /** Research sticks carry the recipe's identity rather than being an ingredient, so a stand-in is meaningless. */
     public static boolean isAlwaysDropped(ItemStack stack) {
-        return !stack.isEmpty() && stack.getTag() != null && stack.getTag().contains("assembly_line_research");
+        return !stack.isEmpty() && stack.has(GTDataComponents.RESEARCH_ITEM);
     }
 
     /** Dropped by a plain transfer, but eligible to be encoded virtually instead. */
@@ -59,15 +60,15 @@ public final class VirtualIngredientEncoding {
 
         Set<AEKey> keys = new HashSet<>();
         for (var content : recipe.getInputContents(ItemRecipeCapability.CAP)) {
-            if (content.chance > 0) continue;
-            for (ItemStack item : ((Ingredient) content.getContent()).getItems()) {
+            if (content.chance() > 0) continue;
+            for (ItemStack item : LongIngredient.matchingIngredient(ItemRecipeCapability.CAP.of(content.content())).getItems()) {
                 if (!item.isEmpty()) keys.add(AEItemKey.of(item));
             }
         }
         for (var content : recipe.getInputContents(FluidRecipeCapability.CAP)) {
-            if (content.chance > 0) continue;
-            for (FluidStack fluid : ((FluidIngredient) content.getContent()).getStacks()) {
-                if (!fluid.isEmpty()) keys.add(AEFluidKey.of(fluid.getFluid()));
+            if (content.chance() > 0) continue;
+            for (FluidStack fluid : LongFluidIngredient.matchingIngredient(FluidRecipeCapability.CAP.of(content.content())).getStacks()) {
+                if (!fluid.isEmpty()) keys.add(AEFluidKey.of(fluid));
             }
         }
         return keys;
@@ -82,7 +83,7 @@ public final class VirtualIngredientEncoding {
         }
         if (stack.what() instanceof AEFluidKey fluidKey) {
             return GenericStack.fromItemStack(
-                    VirtualIngredientBehavior.wrap(FluidStack.create(fluidKey.getFluid(), 1)));
+                    VirtualIngredientBehavior.wrap(fluidKey.toStack(1)));
         }
         return null;
     }
@@ -90,7 +91,7 @@ public final class VirtualIngredientEncoding {
     @Nullable
     private static GTRecipe asGTRecipe(@Nullable Object recipeBase) {
         if (recipeBase instanceof GTRecipe recipe) return recipe;
-        if (recipeBase instanceof GTRecipeWrapper wrapper) return wrapper.recipe;
+        if (recipeBase instanceof RecipeHolder<?> holder && holder.value() instanceof GTRecipe recipe) return recipe;
         return null;
     }
 }

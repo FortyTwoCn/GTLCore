@@ -1,124 +1,51 @@
 package org.gtlcore.gtlcore.mixin.ae2.crafting;
 
+import org.gtlcore.gtlcore.config.ConfigHolder;
 import org.gtlcore.gtlcore.integration.ae2.crafting.IMaxFastNetworkInventoryFingerprint;
 import org.gtlcore.gtlcore.integration.ae2.crafting.ManualCraftingInventoryLock;
 import org.gtlcore.gtlcore.integration.ae2.crafting.compiled.MaxFastFingerprint;
 
+import net.minecraft.core.HolderLookup;
+
 import appeng.api.config.Actionable;
-import appeng.api.config.FuzzyMode;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IStorageService;
-import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
-import appeng.core.AEConfig;
 import appeng.crafting.inv.NetworkCraftingSimulationState;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 @Mixin(NetworkCraftingSimulationState.class)
 public abstract class NetworkCraftingSimulationStateMixin implements IMaxFastNetworkInventoryFingerprint {
 
-    @Unique
-    private IStorageService gTLCore$storageService;
-    @Unique
-    private IActionSource gTLCore$actionSource;
-    @Unique
-    private KeyCounter gTLCore$sourceCache;
+    @Shadow(remap = false)
+    @Final
+    private KeyCounter list;
 
     @Override
-    @Unique
-    public MaxFastFingerprint.Result gtlcore$getMaxFastInventoryFingerprint() {
-        KeyCounter sourceCache = this.gTLCore$sourceCache;
-        if (sourceCache == null) {
-            return new MaxFastFingerprint.Result(MaxFastFingerprint.UNAVAILABLE, 0, 0L);
-        }
-        return MaxFastFingerprint.ofKeyCounter(sourceCache);
+    public MaxFastFingerprint.Result gtlcore$getMaxFastInventoryFingerprint(HolderLookup.Provider registries) {
+        return MaxFastFingerprint.ofKeyCounter(list, registries);
     }
 
-    @Inject(method = "<init>", at = @At("RETURN"), remap = false)
-    private void gTLCore$captureSource(IStorageService storageService, IActionSource actionSource, CallbackInfo ci) {
-        this.gTLCore$storageService = storageService;
-        this.gTLCore$actionSource = actionSource;
-        this.gTLCore$sourceCache = actionSource == null ? null : storageService.getCachedInventory();
-    }
-
-    @Redirect(
-              method = "<init>",
-              at = @At(
-                       value = "INVOKE",
-                       target = "Lappeng/api/networking/storage/IStorageService;getCachedInventory()Lappeng/api/stacks/KeyCounter;"),
-              remap = false)
-    private KeyCounter gTLCore$skipFullInventoryCopy(IStorageService storageService) {
-        return new KeyCounter();
-    }
-
-    /**
-     * @author .
-     * @reason 避免每次下单计算复制整个ME缓存库存
-     */
-    @Overwrite(remap = false)
-    protected long simulateExtractParent(AEKey what, long amount) {
-        KeyCounter sourceCache = this.gTLCore$sourceCache;
-        if (sourceCache == null) {
-            return 0;
+    @Inject(method = "<init>", at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$captureExtractableInventory(IStorageService storage, IActionSource source, CallbackInfo ci) {
+        if (source == null) return;
+        var inventory = storage.getInventory();
+        if (!(ConfigHolder.INSTANCE != null && ConfigHolder.INSTANCE.ae2CraftingSimulatedExtraction) &&
+                !ManualCraftingInventoryLock.hasReservations(inventory)) return;
+        // AE2 constructs this snapshot before scheduling the calculation worker.
+        // Its detached counter is the only inventory consulted by that worker.
+        var amounts = new KeyCounter();
+        for (var entry : list) {
+            long offered = Math.max(0, entry.getLongValue());
+            long extractable = inventory.extract(entry.getKey(), offered, Actionable.SIMULATE, source);
+            amounts.set(entry.getKey(), Math.max(0, Math.min(offered, extractable)));
         }
-
-        long cachedAmount = sourceCache.get(what);
-        if (cachedAmount <= 0) {
-            return 0;
-        }
-
-        long available = Math.min(cachedAmount, amount);
-        if (this.gTLCore$storageService != null && this.gTLCore$actionSource != null &&
-                (AEConfig.instance().isCraftingSimulatedExtraction() || ManualCraftingInventoryLock.hasReservations(
-                        this.gTLCore$storageService.getInventory()))) {
-            available = this.gTLCore$storageService.getInventory()
-                    .extract(what, available, Actionable.SIMULATE, this.gTLCore$actionSource);
-        }
-        return Math.min(available, amount);
-    }
-
-    /**
-     * @author .
-     * @reason 避免每次下单计算复制整个ME缓存库存
-     */
-    @Overwrite(remap = false)
-    protected Iterable<AEKey> findFuzzyParent(AEKey what) {
-        KeyCounter sourceCache = this.gTLCore$sourceCache;
-        if (what == null || sourceCache == null) {
-            return Collections.emptyList();
-        }
-
-        var fuzzyEntries = sourceCache.findFuzzy(what, FuzzyMode.IGNORE_ALL);
-        if (fuzzyEntries.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        var keys = new ArrayList<AEKey>(fuzzyEntries.size());
-        boolean simulatedExtraction = AEConfig.instance().isCraftingSimulatedExtraction() ||
-                (this.gTLCore$storageService != null &&
-                        ManualCraftingInventoryLock.hasReservations(this.gTLCore$storageService.getInventory()));
-        for (var entry : fuzzyEntries) {
-            AEKey fuzzyKey = entry.getKey();
-            long cachedAmount = entry.getLongValue();
-            if (cachedAmount <= 0) {
-                continue;
-            }
-            if (simulatedExtraction && this.gTLCore$storageService != null && this.gTLCore$actionSource != null &&
-                    this.gTLCore$storageService.getInventory()
-                            .extract(fuzzyKey, cachedAmount, Actionable.SIMULATE, this.gTLCore$actionSource) <= 0) {
-                continue;
-            }
-            keys.add(fuzzyKey);
-        }
-        return keys;
+        list.reset();
+        list.addAll(amounts);
     }
 }

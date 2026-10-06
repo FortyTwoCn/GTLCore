@@ -1,0 +1,7 @@
+// Loader-backed persistence tests in a separate project; no production sources are excluded.
+tasks.register('migrationRegression', GradleBuild) {
+    group = 'verification'
+    description = 'Checks disk persistence and item components with the native NeoForge JUnit loader.'
+    dir = file('migration/tests')
+    tasks = ['test']
+}

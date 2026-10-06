@@ -132,7 +132,7 @@ public final class CraftingRingScreen extends AESubScreen<CraftConfirmMenu, Craf
             refreshTree();
         }));
         screenshotButton = addToLeftToolbar(new ToolButton(Icon.STORAGE_FILTER_EXTRACTABLE_ONLY, text("export"), this::exportDiagram));
-        addToLeftToolbar(new ToolButton(Icon.WRENCH, text("settings"), () -> switchToScreen(new GraphViewSettingsScreen(this))));
+        addToLeftToolbar(new ToolButton(Icon.COG, text("settings"), () -> switchToScreen(new GraphViewSettingsScreen(this))));
         if (cached != null && cached.id().equals(planId)) {
             target = cached.target();
             graphRows = cached.graphRows();
@@ -234,7 +234,7 @@ public final class CraftingRingScreen extends AESubScreen<CraftConfirmMenu, Craf
                 (requested != rows.size() || now - lastRequest > 2_000_000_000L)) {
             requested = rows.size();
             lastRequest = now;
-            WirelessAePackets.CHANNEL.sendToServer(new GraphRingPackets.Request(menu.containerId, planId, requested));
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new GraphRingPackets.Request(menu.containerId, planId, requested));
         }
         // Recipe topology is a prefix. The execution program can continue arriving in the background.
         if (model == null && graphRows >= 0 && rows.size() >= graphRows) {
@@ -837,10 +837,10 @@ public final class CraftingRingScreen extends AESubScreen<CraftConfirmMenu, Craf
         by += ey;
         var matrix = graphics.pose().last().pose();
         var buffer = graphics.bufferSource().getBuffer(RenderType.gui());
-        buffer.vertex(matrix, (float) (ax - ey), (float) (ay + ex), 0).color(color).endVertex();
-        buffer.vertex(matrix, (float) (bx - ey), (float) (by + ex), 0).color(color).endVertex();
-        buffer.vertex(matrix, (float) (bx + ey), (float) (by - ex), 0).color(color).endVertex();
-        buffer.vertex(matrix, (float) (ax + ey), (float) (ay - ex), 0).color(color).endVertex();
+        buffer.addVertex(matrix, (float) (ax - ey), (float) (ay + ex), 0).setColor(color);
+        buffer.addVertex(matrix, (float) (bx - ey), (float) (by + ex), 0).setColor(color);
+        buffer.addVertex(matrix, (float) (bx + ey), (float) (by - ex), 0).setColor(color);
+        buffer.addVertex(matrix, (float) (ax + ey), (float) (ay - ex), 0).setColor(color);
     }
 
     private void drawRecipe(GuiGraphics graphics) {
@@ -920,7 +920,7 @@ public final class CraftingRingScreen extends AESubScreen<CraftConfirmMenu, Craf
     }
 
     @Override
-    public boolean mouseScrolled(double x, double y, double delta) {
+    public boolean mouseScrolled(double x, double y, double horizontalDelta, double delta) {
         if (inGraph(x, y)) {
             double nextZoom = Math.max(0.01, Math.min(4, zoom * Math.pow(1.2, delta)));
             double mx = x - getGuiLeft() - VIEW_X, my = y - getGuiTop() - VIEW_Y;
@@ -935,7 +935,7 @@ public final class CraftingRingScreen extends AESubScreen<CraftConfirmMenu, Craf
             else turn(delta < 0 ? 1 : -1);
             return true;
         }
-        return super.mouseScrolled(x, y, delta);
+        return super.mouseScrolled(x, y, horizontalDelta, delta);
     }
 
     @Override

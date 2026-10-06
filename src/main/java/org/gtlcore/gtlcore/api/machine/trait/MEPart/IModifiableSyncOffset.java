@@ -2,9 +2,9 @@ package org.gtlcore.gtlcore.api.machine.trait.MEPart;
 
 public interface IModifiableSyncOffset {
 
-    default int getOffset() {
+    default int getMEUpdateInterval() {
         return 0;
     }
 
-    default void setOffset(int offset) {}
+    default void setMEUpdateInterval(int offset) {}
 }

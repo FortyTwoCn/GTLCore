@@ -1,9 +1,12 @@
 package org.gtlcore.gtlcore.mixin.gtmt;
 
+import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
-import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
+import com.gregtechceu.gtceu.api.registry.registrate.builder.MachineBuilder;
+import com.gregtechceu.gtceu.api.registry.registrate.entry.MachineEntry;
+import org.gtlcore.gtlcore.common.data.GTLCompassLinks;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
@@ -30,43 +33,43 @@ public class CustomMachinesMixin {
     private static <R, T, U> R registerTieredMachines(BiFunction instance, T t, U u, @Local(name = "name") String name) {
         switch (name) {
             case "huge_item_import_bus" -> {
-                BiFunction<Integer, MachineBuilder<MachineDefinition>, MachineDefinition> b = (tier, builder) -> builder.langValue(VNF[tier] + " Input Bus")
+                BiFunction<Integer, MachineBuilder<MachineDefinition, ?, ?>, MachineEntry<MachineDefinition>> b = (tier, builder) -> builder.langValue(VNF[tier] + " Input Bus")
                         .rotationState(RotationState.ALL)
                         .abilities(
                                 tier == 0 ? new PartAbility[] { PartAbility.IMPORT_ITEMS, PartAbility.STEAM_IMPORT_ITEMS } :
                                         new PartAbility[] { PartAbility.IMPORT_ITEMS })
-                        .overlayTieredHullRenderer("item_bus.import")
+                        .colorOverlayTieredHullModel("overlay_pipe_in_emissive", null, "overlay_item_hatch")
                         .tooltips(Component.translatable("gtmthings.machine.huge_item_bus.import.tooltip"),
                                 Component.translatable("gtceu.universal.tooltip.item_storage_capacity",
                                         (1 + tier) * INV_MULTIPLE - 1))
-                        .compassNode("item_bus")
+                        .onRegister(GTLCompassLinks.node("parts", "item_bus"))
                         .register();
                 return (R) b.apply((Integer) t, (MachineBuilder) u);
             }
             case "huge_item_export_bus" -> {
-                BiFunction<Integer, MachineBuilder<MachineDefinition>, MachineDefinition> b = (tier, builder) -> builder.langValue(VNF[tier] + " Output Bus")
+                BiFunction<Integer, MachineBuilder<MachineDefinition, ?, ?>, MachineEntry<MachineDefinition>> b = (tier, builder) -> builder.langValue(VNF[tier] + " Output Bus")
                         .rotationState(RotationState.ALL)
                         .abilities(
                                 tier == 0 ? new PartAbility[] { PartAbility.EXPORT_ITEMS, PartAbility.STEAM_EXPORT_ITEMS } :
                                         new PartAbility[] { PartAbility.EXPORT_ITEMS })
-                        .overlayTieredHullRenderer("item_bus.export")
+                        .colorOverlayTieredHullModel("overlay_pipe_out_emissive", null, "overlay_item_hatch")
                         .tooltips(Component.translatable("gtmthings.machine.huge_item_bus.export.tooltip"),
                                 Component.translatable("gtceu.universal.tooltip.item_storage_capacity",
                                         (1 + tier) * INV_MULTIPLE - 1))
-                        .compassNode("item_bus")
+                        .onRegister(GTLCompassLinks.node("parts", "item_bus"))
                         .register();
                 return (R) b.apply((Integer) t, (MachineBuilder) u);
             }
             case "huge_dual_hatch" -> {
-                BiFunction<Integer, MachineBuilder<MachineDefinition>, MachineDefinition> b = (tier, builder) -> builder.langValue(VNF[tier] + " Huge Input Dual Hatch")
+                BiFunction<Integer, MachineBuilder<MachineDefinition, ?, ?>, MachineEntry<MachineDefinition>> b = (tier, builder) -> builder.langValue(VNF[tier] + " Huge Input Dual Hatch")
                         .rotationState(RotationState.ALL)
-                        .abilities(GTMachines.DUAL_INPUT_HATCH_ABILITIES)
-                        .overlayTieredHullRenderer("huge_dual_hatch.import")
+                        .abilities(GTMachineUtils.DUAL_INPUT_HATCH_ABILITIES)
+                        .colorOverlayTieredHullModel("overlay_pipe_in_emissive", null, "overlay_huge_dual_hatch")
                         .tooltips(Component.translatable("gtceu.machine.dual_hatch.import.tooltip"),
                                 Component.translatable("gtceu.universal.tooltip.item_storage_capacity",
                                         (1 + tier) * INV_MULTIPLE - 1),
                                 Component.translatable("gtceu.universal.tooltip.fluid_storage_capacity_mult", new Object[] { tier, FormattingUtil.formatNumbers(Integer.MAX_VALUE) }))
-                        .compassNode("huge_dual_hatch")
+                        .onRegister(GTLCompassLinks.node("parts", "huge_dual_hatch"))
                         .register();
                 return (R) b.apply((Integer) t, (MachineBuilder) u);
             }

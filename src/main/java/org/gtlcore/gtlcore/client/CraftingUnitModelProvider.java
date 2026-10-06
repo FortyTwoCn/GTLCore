@@ -10,11 +10,10 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 import appeng.client.render.crafting.AbstractCraftingUnitModelProvider;
 import appeng.client.render.crafting.CraftingCubeModel;
@@ -89,14 +88,13 @@ public class CraftingUnitModelProvider extends AbstractCraftingUnitModelProvider
         return material;
     }
 
-    public static void initCraftingUnitModels() {
+    public static void initCraftingUnitModels(IEventBus modEventBus) {
         for (CraftingUnitType type : CraftingUnitType.values()) {
             BuiltInModelHooks.addBuiltInModel(
                     GTLCore.id("block/crafting/" + type.getAffix() + "_formed"),
                     new CraftingCubeModel(new CraftingUnitModelProvider(type)));
         }
 
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(CraftingUnitModelProvider::setRenderLayer);
     }
 

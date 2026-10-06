@@ -1,0 +1,14 @@
+{
+  "weight": 20,
+  "yield": {
+    "min": 100,
+    "max": 350
+  },
+  "depletion_amount": 1,
+  "depletion_chance": 100,
+  "depleted_yield": 40,
+  "fluid": "gtceu:hydrochloric_acid",
+  "dimension_filter": [
+    "kubejs:ganymede"
+  ]
+}

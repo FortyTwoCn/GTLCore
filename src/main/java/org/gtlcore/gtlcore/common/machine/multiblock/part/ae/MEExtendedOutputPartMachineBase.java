@@ -4,7 +4,7 @@ import org.gtlcore.gtlcore.api.machine.trait.IMERecipeHandlerTrait;
 import org.gtlcore.gtlcore.api.machine.trait.IRecipeCapabilityMachine;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEFilterIOPartMachine;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEFilterIOTrait;
-import org.gtlcore.gtlcore.client.gui.widget.MEOutListGridWidget;
+import org.gtlcore.gtlcore.integration.ae2.AEOutputBuffer;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 import org.gtlcore.gtlcore.integration.ae2.AEUtils;
 
@@ -12,18 +12,32 @@ import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-import com.lowdragmc.lowdraglib.utils.Position;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.integration.ae2.gui.AEKeyStorageSyncHandler;
+import com.gregtechceu.gtceu.integration.ae2.gui.AEStackDisplayWidget;
+import com.gregtechceu.gtceu.integration.ae2.gui.ScrollPreservingGrid;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.DynamicLinkedSyncHandler;
+import brachy.modularui.widgets.DynamicSyncedWidget;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widget.scroll.VerticalScrollData;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.item.component.CustomData;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -32,7 +46,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 
 import appeng.api.stacks.AEKey;
 import it.unimi.dsi.fastutil.Pair;
@@ -43,57 +56,64 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static org.gtlcore.gtlcore.integration.ae2.AEUtils.loadInventory;
 
-public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine implements IDataStickInteractable, IMEFilterIOPartMachine {
-
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            MEExtendedOutputPartMachineBase.class, MEIOPartMachine.MANAGED_FIELD_HOLDER);
+public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine implements IDataStickInteractable, IMEFilterIOPartMachine, IMuiMachine {
 
     protected final static int MIN_FREQUENCY = ConfigHolder.INSTANCE.MEPatternOutputMin;
     protected final static int MAX_FREQUENCY = ConfigHolder.INSTANCE.MEPatternOutputMax;
 
-    @Getter
-    protected final Object2LongOpenHashMap<AEKey> buffer = new Object2LongOpenHashMap<>();
+    @SaveField
+    protected final AEOutputBuffer outputStorage = new AEOutputBuffer(this::flushAsyncQueue);
 
     @Getter
-    protected final NotifiableMERecipeHandlerTrait<Ingredient, ItemStack> itemOutputHandler;
+    protected final Object2LongMap<AEKey> buffer = outputStorage.storage;
 
     @Getter
-    protected final NotifiableMERecipeHandlerTrait<FluidIngredient, FluidStack> fluidOutputHandler;
+    protected final NotifiableMERecipeHandlerTrait<SizedIngredient, ItemStack> itemOutputHandler;
 
-    @Persisted
     @Getter
-    @Setter
+    protected final NotifiableMERecipeHandlerTrait<SizedFluidIngredient, FluidStack> fluidOutputHandler;
+
+    @SaveField
+    @SyncToClient
+    @Getter
     protected int priority = 10;
 
-    public MEExtendedOutputPartMachineBase(IMachineBlockEntity holder) {
+    public MEExtendedOutputPartMachineBase(BlockEntityCreationInfo holder) {
         super(holder, IO.OUT);
-        itemOutputHandler = createItemOutputHandler();
-        fluidOutputHandler = createFluidOutputHandler();
+        itemOutputHandler = attachTrait(createItemOutputHandler());
+        fluidOutputHandler = attachTrait(createFluidOutputHandler());
         registerDefaultServices();
     }
 
     @Override
-    public @NotNull Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(new Position(0, 0));
-        // ME Network status
-        group.addWidget(new LabelWidget(0, 0, () -> this.isOnline ?
-                "gtceu.gui.me_network.online" :
-                "gtceu.gui.me_network.offline"));
+    public void buildMainUI(ParentWidget<?> mainWidget, PosGuiData data, PanelSyncManager syncManager, UISettings settings) {
+        mainWidget.child(buildOutputDisplay(syncManager));
+    }
 
-        group.addWidget(new MEOutListGridWidget(5, 20, 7, this.buffer));
-        return group;
+    protected Flow buildOutputDisplay(PanelSyncManager syncManager) {
+        var online = new BooleanSyncValue(this::isOnline);
+        syncManager.syncValue("extendedOutputOnline", online);
+        var storage = new AEKeyStorageSyncHandler(outputStorage);
+        syncManager.syncValue("extendedOutputContents", storage);
+        int[] scroll = {0};
+        var display = new DynamicLinkedSyncHandler<>(storage).widgetProvider((manager, value) -> {
+            var list = value.getValue();
+            if (list.isEmpty()) return Text.lang("gtceu.gui.waiting_list_empty").asWidget();
+            return new ScrollPreservingGrid(scroll).size(167, 112).scrollable(new VerticalScrollData())
+                    .gridOfSizeWidth(list.size(), 1, (x, y, index) -> Flow.row().coverChildren()
+                            .child(new AEStackDisplayWidget(list, index))
+                            .child(Text.dynamic(() -> Component.literal(Long.toString(list.get(index).amount()))
+                                    .append(" ").append(list.get(index).what().getDisplayName())).asWidget().width(145).height(18)));
+        });
+        return Flow.col().coverChildren().margin(4)
+                .child(Text.dynamic(() -> Component.translatable(online.getBoolValue() ?
+                        "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline")).asWidget().height(16))
+                .child(new DynamicSyncedWidget<>().syncHandler(display).size(167, 112));
     }
 
     // ========================================
@@ -101,16 +121,16 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
     // ========================================
 
     @Override
-    public Pair<IMERecipeHandlerTrait<Ingredient, ItemStack>, IMERecipeHandlerTrait<FluidIngredient, FluidStack>> getMERecipeHandlerTraits() {
+    public Pair<IMERecipeHandlerTrait<SizedIngredient, ItemStack>, IMERecipeHandlerTrait<SizedFluidIngredient, FluidStack>> getMERecipeHandlerTraits() {
         return Pair.of(itemOutputHandler, fluidOutputHandler);
     }
 
     @Override
     public abstract @NotNull IMEFilterIOTrait getMETrait();
 
-    protected abstract NotifiableMERecipeHandlerTrait<Ingredient, ItemStack> createItemOutputHandler();
+    protected abstract NotifiableMERecipeHandlerTrait<SizedIngredient, ItemStack> createItemOutputHandler();
 
-    protected abstract NotifiableMERecipeHandlerTrait<FluidIngredient, FluidStack> createFluidOutputHandler();
+    protected abstract NotifiableMERecipeHandlerTrait<SizedFluidIngredient, FluidStack> createFluidOutputHandler();
 
     protected void registerDefaultServices() {}
 
@@ -131,19 +151,24 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
         }
     }
 
-    public void setTerminalPriority(int priority) {
-        setPriority(Math.max(10, Math.min(100_000, priority)));
-        markDirty();
+    public void setPriority(int priority) {
+        int bounded = Math.max(10, Math.min(100_000, priority));
+        if (this.priority == bounded) return;
+        this.priority = bounded;
+        markAsChanged();
+        syncDataHolder.markClientSyncFieldDirty("priority");
         updatePriority();
     }
+
+    public void setTerminalPriority(int priority) { setPriority(priority); }
 
     // ========================================
     // DataStick Copy
     // ========================================
 
     @Override
-    public InteractionResult onDataStickRightClick(Player player, ItemStack dataStick) {
-        CompoundTag tag = dataStick.getTag();
+    public InteractionResult onDataStickUse(Player player, ItemStack dataStick) {
+        CompoundTag tag = dataStick.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (tag == null || !tag.contains("MEExtendedExportBuffer")) {
             return InteractionResult.PASS;
         }
@@ -156,15 +181,15 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
     }
 
     @Override
-    public boolean onDataStickLeftClick(Player player, ItemStack dataStick) {
+    public InteractionResult onDataStickShiftUse(Player player, ItemStack dataStick) {
         if (!isRemote()) {
-            CompoundTag tag = new CompoundTag();
+            CompoundTag tag = dataStick.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
             tag.put("MEExtendedExportBuffer", writeConfigToTag());
-            dataStick.setTag(tag);
-            dataStick.setHoverName(Component.translatable("gtceu.machine.me.me_extended_export_buffer.data_stick.name"));
+            dataStick.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+            dataStick.set(DataComponents.CUSTOM_NAME, Component.translatable("gtceu.machine.me.me_extended_export_buffer.data_stick.name"));
             player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_copy_settings"));
         }
-        return true;
+        return InteractionResult.sidedSuccess(isRemote());
     }
 
     protected CompoundTag writeConfigToTag() {
@@ -175,7 +200,7 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
 
     protected void readConfigFromTag(CompoundTag tag) {
         if (tag.contains("priority")) {
-            this.priority = tag.getInt("priority");
+            setPriority(tag.getInt("priority"));
         }
         updatePriority();
     }
@@ -187,34 +212,46 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
     protected void flushAsyncQueue() {}
 
     @Override
-    public void saveCustomPersistedData(@NotNull CompoundTag tag, boolean forDrop) {
-        flushAsyncQueue();
-        super.saveCustomPersistedData(tag, forDrop);
-        if (buffer.isEmpty()) return;
-        ListTag listTag = AEUtils.createListTag(AEKey::toTagGeneric, buffer);
-        if (!listTag.isEmpty()) tag.put("buffer", listTag);
+    public void saveToItem(ItemStack stack, HolderLookup.Provider registries) {
+        super.saveToItem(stack, registries);
+        var payload = new CompoundTag();
+        payload.put("buffer", outputStorage.serializeNBT(registries));
+        payload.put("config", writeConfigToTag());
+        var custom = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        custom.put("gtlcoreMEOutput", payload);
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(custom));
     }
 
     @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        buffer.clear();
-        ListTag listTag = tag.getList("buffer", Tag.TAG_COMPOUND);
-        loadInventory(listTag, AEKey::fromTagGeneric, buffer);
+    protected void applyImplicitComponents(DataComponentInput components) {
+        super.applyImplicitComponents(components);
+        var custom = components.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (custom.contains("gtlcoreMEOutput", 10)) {
+            var payload = custom.getCompound("gtlcoreMEOutput");
+            outputStorage.deserializeNBT(getLevel().registryAccess(), payload.getList("buffer", 10));
+            readConfigFromTag(payload.getCompound("config"));
+        }
     }
 
-    protected abstract class MEItemOutputHandler extends NotifiableMERecipeHandlerTrait<Ingredient, ItemStack> {
+    protected abstract class MEItemOutputHandler extends NotifiableMERecipeHandlerTrait<SizedIngredient, ItemStack> {
 
-        public MEItemOutputHandler(MEExtendedOutputPartMachineBase machine) {
-            super(machine);
+        @Override
+        public List<SizedIngredient> meHandleRecipeOutput(List<?> contents, boolean simulate) {
+            var copy = new java.util.ArrayList<SizedIngredient>(contents.size());
+            for (var content : contents) copy.add(copyContent(content));
+            return meHandleRecipeOutputInner(copy, simulate);
+        }
+
+        public MEItemOutputHandler() {
+            super();
         }
 
         public MEExtendedOutputPartMachineBase getMachine() {
-            return (MEExtendedOutputPartMachineBase) this.machine;
+            return (MEExtendedOutputPartMachineBase) super.getMachine();
         }
 
         @Override
-        public RecipeCapability<Ingredient> getCapability() {
+        public RecipeCapability<SizedIngredient> getCapability() {
             return ItemRecipeCapability.CAP;
         }
 
@@ -240,15 +277,15 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
         }
 
         @Override
-        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<Ingredient> left, boolean simulate, int trySlot) {
+        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<SizedIngredient> left, boolean simulate, int trySlot) {
             return false;
         }
 
         @Override
-        public void prepareMEHandleContents(GTRecipe recipe, List<Ingredient> left, boolean simulate) {}
+        public void prepareMEHandleContents(GTRecipe recipe, List<SizedIngredient> left, boolean simulate) {}
 
         @Override
-        public Object2LongMap<Ingredient> getPreparedMEHandleContents() {
+        public Object2LongMap<SizedIngredient> getPreparedMEHandleContents() {
             return Object2LongMaps.emptyMap();
         }
         // endregion
@@ -259,18 +296,25 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
         }
     }
 
-    public abstract class MEFluidOutputHandler extends NotifiableMERecipeHandlerTrait<FluidIngredient, FluidStack> {
+    public abstract class MEFluidOutputHandler extends NotifiableMERecipeHandlerTrait<SizedFluidIngredient, FluidStack> {
 
-        public MEFluidOutputHandler(MEExtendedOutputPartMachineBase machine) {
-            super(machine);
+        @Override
+        public List<SizedFluidIngredient> meHandleRecipeOutput(List<?> contents, boolean simulate) {
+            var copy = new java.util.ArrayList<SizedFluidIngredient>(contents.size());
+            for (var content : contents) copy.add(copyContent(content));
+            return meHandleRecipeOutputInner(copy, simulate);
+        }
+
+        public MEFluidOutputHandler() {
+            super();
         }
 
         public MEExtendedOutputPartMachineBase getMachine() {
-            return (MEExtendedOutputPartMachineBase) this.machine;
+            return (MEExtendedOutputPartMachineBase) super.getMachine();
         }
 
         @Override
-        public RecipeCapability<FluidIngredient> getCapability() {
+        public RecipeCapability<SizedFluidIngredient> getCapability() {
             return FluidRecipeCapability.CAP;
         }
 
@@ -296,15 +340,15 @@ public abstract class MEExtendedOutputPartMachineBase extends MEIOPartMachine im
         }
 
         @Override
-        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<FluidIngredient> left, boolean simulate, int trySlot) {
+        public boolean meHandleRecipeInner(GTRecipe recipe, Object2LongMap<SizedFluidIngredient> left, boolean simulate, int trySlot) {
             return false;
         }
 
         @Override
-        public void prepareMEHandleContents(GTRecipe recipe, List<FluidIngredient> left, boolean simulate) {}
+        public void prepareMEHandleContents(GTRecipe recipe, List<SizedFluidIngredient> left, boolean simulate) {}
 
         @Override
-        public Object2LongMap<FluidIngredient> getPreparedMEHandleContents() {
+        public Object2LongMap<SizedFluidIngredient> getPreparedMEHandleContents() {
             return Object2LongMaps.emptyMap();
         }
         // endregion

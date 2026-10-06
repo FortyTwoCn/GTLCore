@@ -18,7 +18,7 @@ public abstract class RestrictedInputSlotMixin {
                            remap = true,
                            at = @At(
                                     value = "INVOKE",
-                                    target = "Lappeng/core/definitions/ItemDefinition;isSameAs(Lnet/minecraft/world/item/ItemStack;)Z",
+                                    target = "Lappeng/core/definitions/ItemDefinition;is(Lnet/minecraft/world/item/ItemStack;)Z",
                                     remap = false),
                            slice = @Slice(
                                           from = @At(

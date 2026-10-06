@@ -1,784 +1,349 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part;
 
-import org.gtlcore.gtlcore.api.gui.AdvancedMEConfigurator;
-import org.gtlcore.gtlcore.api.gui.TurnsConfiguratorButton;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IModifiableSyncOffset;
-import org.gtlcore.gtlcore.api.machine.trait.MEStock.ExportOnlyAEConfigureFluidSlot;
-import org.gtlcore.gtlcore.api.machine.trait.MEStock.ExportOnlyAEConfigureItemSlot;
-import org.gtlcore.gtlcore.api.machine.trait.MEStock.IMESlot;
-import org.gtlcore.gtlcore.api.machine.trait.MEStock.IOptimizedMEList;
-import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.api.machine.trait.MEStock.*;
+import org.gtlcore.gtlcore.api.recipe.ingredient.*;
 import org.gtlcore.gtlcore.client.gui.widget.AEDualConfigWidget;
 import org.gtlcore.gtlcore.config.ConfigHolder;
-import org.gtlcore.gtlcore.integration.ae2.AEUtils;
-import org.gtlcore.gtlcore.utils.MachineUtil;
-
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
-import com.gregtechceu.gtceu.api.machine.trait.*;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.*;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEBusPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.slot.*;
-import com.gregtechceu.gtceu.integration.ae2.utils.AEUtil;
-
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.*;
-import com.lowdragmc.lowdraglib.gui.widget.*;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-import com.lowdragmc.lowdraglib.utils.Position;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.Ingredient;
-
+import net.minecraft.world.item.component.CustomData;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import appeng.api.config.Actionable;
-import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNodeListener;
-import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.*;
 import appeng.api.storage.MEStorage;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.*;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.*;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
 import it.unimi.dsi.fastutil.objects.*;
-import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.*;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-/**
- * @author EasterFG on 2025/3/2
- */
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
+/** 64 paired configurations reference the live ME network; visual stock never owns items or fluids. */
 public class MEDualHatchStockPartMachine extends MEBusPartMachine implements IDataStickInteractable, IModifiableSyncOffset {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(MEDualHatchStockPartMachine.class,
-            MEBusPartMachine.MANAGED_FIELD_HOLDER);
-
     protected static final int CONFIG_SIZE = 64;
-    protected static final int AUTO_PULL_OFF = 0;
-    protected static final int AUTO_PULL_ALL = 1;
-    protected static final int AUTO_PULL_ITEM = 2;
-    protected static final int AUTO_PULL_FLUID = 3;
+    protected static final int AUTO_PULL_OFF = 0, AUTO_PULL_ALL = 1, AUTO_PULL_ITEM = 2, AUTO_PULL_FLUID = 3;
+    public final ExportOnlyAEItemList aeItemHandler;
+    public final ExportOnlyAEFluidList aeFluidHandler;
+    @SaveField protected final NotifiableFluidTank fluidTank;
+    @SaveField @SyncToClient protected int page = 1;
+    @SaveField @SyncToClient private int autoPullMode;
+    @SaveField private int syncOffset;
 
-    private static final IGuiTexture AUTO_PULL_ALL_ICON = new TextTexture("ALL", 0xFFAA00);
-    private static final IGuiTexture AUTO_PULL_ITEM_ICON = new ItemStackTexture(Items.IRON_INGOT);
-    private static final IGuiTexture AUTO_PULL_FLUID_ICON = new ItemStackTexture(Items.WATER_BUCKET);
-
-    private static final boolean ENABLE_ULTIMATE_ME_STOCKING = ConfigHolder.INSTANCE.enableUltimateMEStocking;
-
-    public ExportOnlyAEItemList aeItemHandler;
-
-    public ExportOnlyAEFluidList aeFluidHandler;
-
-    @Persisted
-    protected NotifiableFluidTank fluidTank;
-
-    @DescSynced
-    @Persisted
-    @Setter
-    protected int page = 1;
-
-    @DescSynced
-    @Persisted
-    @Getter
-    private int autoPullMode;
-
-    public MEDualHatchStockPartMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, IO.IN, args);
-        fluidTank = createTank();
+    public MEDualHatchStockPartMachine(BlockEntityCreationInfo info, Object... args) {
+        super(info, IO.IN, new StockingItemList(CONFIG_SIZE));
+        aeItemHandler = (ExportOnlyAEItemList) getInventory();
+        ((StockingItemList) aeItemHandler).setOwner(this);
+        aeFluidHandler = attachTrait(new StockingFluidList(this, CONFIG_SIZE)); fluidTank = aeFluidHandler;
     }
-
-    @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        super.setWorkingEnabled(workingEnabled);
-        MachineUtil.notifyControllersRecipeLogic(this);
+    public int getAutoPullMode() { return autoPullMode; }
+    public int getPage() { return Math.clamp(page, 1, 4); }
+    public void setPage(int page) {
+        this.page = Math.clamp(page, 1, 4); markAsChanged(); syncDataHolder.markClientSyncFieldDirty("page");
     }
-
-    @Override
-    protected NotifiableItemStackHandler createInventory(Object... args) {
-        this.aeItemHandler = new ExportOnlyAEStockingItemList(this, CONFIG_SIZE);
-        return this.aeItemHandler;
+    @Override public int getMEUpdateInterval() { return syncOffset; }
+    @Override public void setMEUpdateInterval(int interval) { syncOffset = Math.max(0, interval); markAsChanged(); }
+    @Override public boolean shouldSyncME() {
+        int interval = syncOffset == 0 ? com.gregtechceu.gtceu.config.ConfigHolder.INSTANCE.compat.ae2.updateIntervals : syncOffset;
+        return getOffsetTimer() % Math.max(1, interval) == 0;
     }
-
-    protected NotifiableFluidTank createTank() {
-        this.aeFluidHandler = new ExportOnlyAEStockingFluidList(this, CONFIG_SIZE);
-        return this.aeFluidHandler;
+    @Override public void setWorkingEnabled(boolean enabled) {
+        super.setWorkingEnabled(enabled);
+        if (aeItemHandler != null && aeFluidHandler != null) markMEStockChanged();
     }
-
-    @Override
-    public void onMainNodeStateChanged(IGridNodeListener.State reason) {
+    @Override public void onMainNodeStateChanged(IGridNodeListener.State reason) {
         super.onMainNodeStateChanged(reason);
-        if (getMainNode().isOnline()) markMEStockChanged();
+        if (aeItemHandler == null || aeFluidHandler == null) return;
+        if (!isOnline()) clearVisualStock();
+        markMEStockChanged();
     }
-
-    @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    @Override public void onLoad() {
+        super.onLoad(); scheduleForNextServerTick(() -> {
+            ((IOptimizedMEList) aeItemHandler).onConfigChanged(); ((IOptimizedMEList) aeFluidHandler).onConfigChanged();
+        });
     }
-
-    @Override
-    public void autoIO() {
-        if (!this.isWorkingEnabled()) return;
-        if (!shouldSyncME()) return;
-
-        if (updateMEStatus()) {
-            syncME();
-            updateInventorySubscription();
-        }
-
-        if (autoPullMode != AUTO_PULL_OFF && getOffsetTimer() % (getOffset() == 0 ? 50 : getOffset()) == 0) {
-            refreshList();
-        }
+    @Override public void autoIO() {
+        if (!isWorkingEnabled() || !shouldSyncME()) return;
+        if (!updateMEStatus()) { clearVisualStock(); return; }
+        if (autoPullMode != AUTO_PULL_OFF) refreshList(); else syncME();
+        updateInventorySubscription();
     }
-
+    private @Nullable MEStorage network() {
+        var grid = getMainNode().getGrid();
+        return isWorkingEnabled() && isOnline() && grid != null ? grid.getStorageService().getInventory() : null;
+    }
+    private void clearVisualStock() {
+        for (var slot : aeItemHandler.getInventory()) slot.setStock(null);
+        for (var slot : aeFluidHandler.getInventory()) slot.setStock(null);
+    }
     private void refreshList() {
-        AEKey[] previousConfig = createConfigSnapshot();
-        IGrid grid = this.getMainNode().getGrid();
-        if (grid == null) {
-            aeItemHandler.clearInventory(0);
-            aeFluidHandler.clearInventory(0);
-            finishRefreshList(previousConfig);
-            return;
-        }
-        IStorageService storageService = grid.getStorageService();
-        MEStorage networkStorage = storageService.getInventory();
-        final var inventory = this.aeItemHandler.getInventory();
-        final var fluidInventory = this.aeFluidHandler.getInventory();
-
-        var counter = storageService.getCachedInventory();
+        var network = network(); var before = configuration();
+        if (network == null) { aeItemHandler.clearInventory(0); aeFluidHandler.clearInventory(0); finishRefresh(before); return; }
         int index = 0;
-        for (Object2LongMap.Entry<AEKey> entry : counter) {
+        for (var entry : network.getAvailableStacks()) {
             if (index >= CONFIG_SIZE) break;
-            AEKey what = entry.getKey();
-            long amount = entry.getLongValue();
-            if (amount <= 0) continue;
-            boolean isItem = what instanceof AEItemKey;
-            if (autoPullMode != AUTO_PULL_ALL) {
-                if (autoPullMode == AUTO_PULL_ITEM && !isItem) {
-                    continue;
-                } else if (autoPullMode == AUTO_PULL_FLUID && isItem) {
-                    continue;
-                }
-            }
-            long request = networkStorage.extract(what, amount, Actionable.SIMULATE, actionSource);
-            if (request == 0) continue;
-            if (isItem) {
-                ((IMESlot) fluidInventory[index]).setConfigWithoutNotify(null);
-            } else {
-                ((IMESlot) inventory[index]).setConfigWithoutNotify(null);
-            }
-            var itemSlot = inventory[index];
-            var fluidSlot = fluidInventory[index];
-            var slot = isItem ? itemSlot : fluidSlot;
-            if (isItem) {
-                ((IMESlot) fluidSlot).setConfigWithoutNotify(null);
-                fluidSlot.setStock(null);
-            } else {
-                ((IMESlot) itemSlot).setConfigWithoutNotify(null);
-                itemSlot.setStock(null);
-            }
-            ((IMESlot) slot).setConfigWithoutNotify(new GenericStack(what, 1));
-            slot.setStock(new GenericStack(what, request));
-            index++;
+            var key = entry.getKey(); boolean item = key instanceof AEItemKey;
+            if (!(item || key instanceof AEFluidKey) || entry.getLongValue() <= 0 ||
+                    autoPullMode == AUTO_PULL_ITEM && !item || autoPullMode == AUTO_PULL_FLUID && item) continue;
+            long available = network.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, actionSource);
+            if (available <= 0) continue;
+            var selected = item ? aeItemHandler.getInventory()[index] : aeFluidHandler.getInventory()[index];
+            var opposite = item ? aeFluidHandler.getInventory()[index] : aeItemHandler.getInventory()[index];
+            ((IMESlot) opposite).setConfigWithoutNotify(null); opposite.setStock(null);
+            ((IMESlot) selected).setConfigWithoutNotify(new GenericStack(key, 1)); selected.setStock(new GenericStack(key, available)); index++;
         }
-        aeItemHandler.clearInventory(index);
-        aeFluidHandler.clearInventory(index);
-
-        finishRefreshList(previousConfig);
+        aeItemHandler.clearInventory(index); aeFluidHandler.clearInventory(index); finishRefresh(before);
     }
-
-    private AEKey[] createConfigSnapshot() {
-        final var inventory = this.aeItemHandler.getInventory();
-        final var fluidInventory = this.aeFluidHandler.getInventory();
-        AEKey[] configuredKeys = new AEKey[inventory.length];
-        for (int i = 0; i < inventory.length; i++) {
-            GenericStack config = inventory[i].getConfig();
-            if (config == null) {
-                config = fluidInventory[i].getConfig();
-            }
-            configuredKeys[i] = config == null ? null : config.what();
+    private List<AEKey> configuration() {
+        List<AEKey> result = new ArrayList<>(CONFIG_SIZE);
+        for (int i = 0; i < CONFIG_SIZE; i++) {
+            var config = aeItemHandler.getInventory()[i].getConfig();
+            if (config == null) config = aeFluidHandler.getInventory()[i].getConfig();
+            result.add(config == null ? null : config.what());
         }
-        return configuredKeys;
+        return result;
     }
-
-    private void finishRefreshList(AEKey[] previousConfig) {
-        if (!Arrays.equals(previousConfig, createConfigSnapshot())) {
-            ((IOptimizedMEList) aeItemHandler).onConfigChanged();
-            ((IOptimizedMEList) aeFluidHandler).onConfigChanged();
+    private void finishRefresh(List<AEKey> before) {
+        if (!before.equals(configuration())) {
+            ((IOptimizedMEList) aeItemHandler).onConfigChanged(); ((IOptimizedMEList) aeFluidHandler).onConfigChanged();
         }
-        ((IOptimizedMEList) aeItemHandler).setChanged(true);
-        ((IOptimizedMEList) aeFluidHandler).setChanged(true);
+        markMEStockChanged();
     }
-
     protected void syncME() {
-        IGrid grid = this.getMainNode().getGrid();
-        if (grid == null) {
-            return;
-        }
-        var cachedInventory = grid.getStorageService().getCachedInventory();
-        ExportOnlyAEItemSlot[] aeItem = aeItemHandler.getInventory();
-        ExportOnlyAEFluidSlot[] aeFluid = aeFluidHandler.getInventory();
-        ExportOnlyAESlot slot;
-        boolean changed = false;
-        for (int i = 0; i < aeItem.length; i++) {
-            slot = aeItem[i];
-            var config = slot.getConfig();
-            if (config == null) {
-                slot = aeFluid[i];
-                config = slot.getConfig();
-            }
-            if (config != null) {
-                var key = config.what();
-                long extracted = cachedInventory.get(key);
-                GenericStack nextStock = extracted > 0 ? new GenericStack(key, extracted) : null;
-                if (!Objects.equals(slot.getStock(), nextStock)) {
-                    slot.setStock(nextStock);
-                    changed = true;
-                }
-                continue;
-            }
-            if (slot.getStock() != null) {
-                slot.setStock(null);
-                changed = true;
-            }
-        }
-        if (changed) {
-            markMEStockChanged();
+        var network = network();
+        if (network == null) { clearVisualStock(); return; }
+        for (int i = 0; i < CONFIG_SIZE; i++) {
+            updateVisual(aeItemHandler.getInventory()[i], network); updateVisual(aeFluidHandler.getInventory()[i], network);
         }
     }
-
+    private void updateVisual(ExportOnlyAESlot slot, MEStorage network) {
+        var config = slot.getConfig(); long available = config == null ? 0 :
+                network.extract(config.what(), Long.MAX_VALUE, Actionable.SIMULATE, actionSource);
+        slot.setStock(available <= 0 ? null : new GenericStack(config.what(), available));
+    }
     private void markMEStockChanged() {
-        ((IOptimizedMEList) aeItemHandler).setChanged(true);
-        ((IOptimizedMEList) aeFluidHandler).setChanged(true);
-        aeItemHandler.notifyListeners();
-        aeFluidHandler.notifyListeners();
+        ((IOptimizedMEList) aeItemHandler).setChanged(true); ((IOptimizedMEList) aeFluidHandler).setChanged(true);
+        aeItemHandler.notifyListeners(); aeFluidHandler.notifyListeners();
     }
+    protected void setAutoPullMode(int mode) {
+        autoPullMode = Math.clamp(mode, AUTO_PULL_OFF, AUTO_PULL_FLUID);
+        if (!isRemote()) {
+            if (autoPullMode == AUTO_PULL_OFF) { aeItemHandler.clearInventory(0); aeFluidHandler.clearInventory(0); }
+            else if (updateMEStatus()) refreshList();
+            ((IOptimizedMEList) aeItemHandler).onConfigChanged(); ((IOptimizedMEList) aeFluidHandler).onConfigChanged();
+            markAsChanged(); syncDataHolder.markClientSyncFieldDirty("autoPullMode"); updateInventorySubscription();
+        }
+    }
+    public void setTerminalAutoPullMode(int mode) { setAutoPullMode(mode); }
 
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(1, () -> {
-                ((IOptimizedMEList) this.aeItemHandler).onConfigChanged();
-                ((IOptimizedMEList) this.aeFluidHandler).onConfigChanged();
+    @Override public void buildMainUI(ParentWidget<?> contents, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var online = new BooleanSyncValue(this::isOnline); sync.syncValue("dualStockOnline", online);
+        contents.child(Flow.col().coverChildren().center()
+                .child(Text.dynamic(() -> Component.translatable(online.getBoolValue() ? "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline")).asWidget().marginBottom(4))
+                .child(new AEDualConfigWidget(0, 0, aeItemHandler, aeFluidHandler, this::setPage, getPage()).syncManager(sync)));
+    }
+    @Override public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var builder = super.getPanelBuilder(data, sync, settings); var inherited = builder.leftConfigurators();
+        var mode = SyncHandlers.intNumber(this::getAutoPullMode, this::setAutoPullMode).allowC2S(); sync.syncValue("dualStockAutoPullMode", mode);
+        var interval = sync.syncedPanel("dualStockInterval", true, (sm, handler) -> {
+            var value = SyncHandlers.string(() -> Integer.toString(getMEUpdateInterval()), text -> {
+                try { setMEUpdateInterval(Integer.parseInt(text)); } catch (NumberFormatException ignored) {}
+            }).allowC2S(); sm.syncValue("dualStockUpdateInterval", value);
+            return PopupPanel.createPopupPanel("dualStockIntervalPanel", 160, 54)
+                    .child(Text.lang("gtceu.gui.title.adv_me_config.ticks_per_cycle").asWidget().pos(4, 4))
+                    .child(new TextFieldWidget().value(value).setNumbersLong(number -> Math.clamp(number, 0, Integer.MAX_VALUE)).pos(4, 28).size(152, 18));
+        });
+        return builder.leftConfigurators(flow -> {
+            inherited.accept(flow);
+            flow.child(new CycleButtonWidget().value(mode).stateOverlay(0, Text.str("OFF")).stateOverlay(1, Text.str("ALL"))
+                    .stateOverlay(2, Text.str("I")).stateOverlay(3, Text.str("F")).size(18)
+                    .tooltipDynamic(tooltip -> tooltip.addLine(Component.translatable("gtlcore.machine.me_dual_hatch_stock.turns." + mode.getIntValue()))));
+            flow.child(new ButtonWidget<>().size(18).overlay(Text.str("T")).onMousePressed((context, button) -> {
+                if (button != 0) return false; interval.openPanel(); return true;
             }));
+        });
+    }
+    protected CompoundTag writeConfigToTag(HolderLookup.Provider provider) {
+        var tag = new CompoundTag(); tag.putInt("AutoPullMode", autoPullMode);
+        var configs = new CompoundTag();
+        if (autoPullMode == AUTO_PULL_OFF) for (int i = 0; i < CONFIG_SIZE; i++) {
+            var config = aeItemHandler.getInventory()[i].getConfig();
+            if (config == null) config = aeFluidHandler.getInventory()[i].getConfig();
+            if (config != null) configs.put(Integer.toString(i), GenericStack.writeTag(provider, config));
         }
+        tag.put("ConfigStacks", configs); tag.putByte("GhostCircuit", (byte) circuitSlot.getCurrentCircuit());
+        tag.putInt("SyncOffset", syncOffset); return tag;
     }
-
-    @Override
-    public ModularUI createUI(Player entityPlayer) {
-        return new ModularUI(176, 180, this, entityPlayer)
-                .widget(new FancyMachineUIWidget(this, 176, 185));
-    }
-
-    @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(new Position(0, 0));
-        // ME Network status
-        group.addWidget(new LabelWidget(3, 0, () -> this.isOnline ?
-                "gtceu.gui.me_network.online" :
-                "gtceu.gui.me_network.offline"));
-
-        // Config slots
-        group.addWidget(new AEDualConfigWidget(3, 10, this.aeItemHandler, this.aeFluidHandler, this::setPage, page));
-
-        return group;
-    }
-
-    @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        super.attachConfigurators(configuratorPanel);
-        configuratorPanel.attachConfigurators(new TurnsConfiguratorButton(
-                this::getAutoPullMode,
-                (clickData, mode) -> setAutoPullMode(mode),
-                GuiTextures.BUTTON_AUTO_PULL.getSubTexture(0, 0, 1, 0.5),
-                AUTO_PULL_ALL_ICON,
-                AUTO_PULL_ITEM_ICON,
-                AUTO_PULL_FLUID_ICON).setTooltipsSupplier(mode -> List.of(Component.translatable("gtlcore.machine.me_dual_hatch_stock.turns." + mode))));
-        configuratorPanel.attachConfigurators(new AdvancedMEConfigurator(this::setOffset, this::getOffset));
-    }
-
-    protected void setAutoPullMode(int autoPullMode) {
-        this.autoPullMode = autoPullMode;
-        if (!isRemote()) {
-            if (this.autoPullMode == 0) {
-                this.aeItemHandler.clearInventory(0);
-                this.aeFluidHandler.clearInventory(0);
-            } else if (updateMEStatus()) {
-                this.refreshList();
-                updateInventorySubscription();
-            }
-        }
-    }
-
-    public void setTerminalAutoPullMode(int autoPullMode) {
-        setAutoPullMode(Math.max(AUTO_PULL_OFF, Math.min(AUTO_PULL_FLUID, autoPullMode)));
-    }
-
-    protected CompoundTag writeConfigToTag() {
-        CompoundTag tag = new CompoundTag();
-        tag.putInt("AutoPullMode", autoPullMode);
-        CompoundTag configStacks = new CompoundTag();
-        if (autoPullMode == 0) {
-            tag.put("ConfigStacks", configStacks);
+    protected void readConfigFromTag(HolderLookup.Provider provider, CompoundTag tag) {
+        setAutoPullMode(tag.getInt("AutoPullMode"));
+        if (autoPullMode == AUTO_PULL_OFF && tag.contains("ConfigStacks")) {
+            var configs = tag.getCompound("ConfigStacks"); Set<AEKey> configured = new HashSet<>();
             for (int i = 0; i < CONFIG_SIZE; i++) {
-                var slot = this.aeItemHandler.getInventory()[i];
-                GenericStack config = slot.getConfig();
-                if (config == null) {
-                    config = this.aeFluidHandler.getInventory()[i].getConfig();
-                    if (config == null) {
-                        continue;
-                    }
-                }
-                CompoundTag stackTag = GenericStack.writeTag(config);
-                configStacks.put(Integer.toString(i), stackTag);
+                GenericStack config = GenericStack.readTag(provider, configs.getCompound(Integer.toString(i)));
+                ((IMESlot) aeItemHandler.getInventory()[i]).setConfigWithoutNotify(null);
+                ((IMESlot) aeFluidHandler.getInventory()[i]).setConfigWithoutNotify(null);
+                if (config == null || config.amount() <= 0 || !configured.add(config.what())) continue;
+                if (config.what() instanceof AEItemKey) ((IMESlot) aeItemHandler.getInventory()[i]).setConfigWithoutNotify(new GenericStack(config.what(), 1));
+                else if (config.what() instanceof AEFluidKey) ((IMESlot) aeFluidHandler.getInventory()[i]).setConfigWithoutNotify(new GenericStack(config.what(), 1));
             }
+            ((IOptimizedMEList) aeItemHandler).onConfigChanged(); ((IOptimizedMEList) aeFluidHandler).onConfigChanged();
         }
-        tag.putByte("GhostCircuit",
-                (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0)));
-        tag.putInt("SyncOffset", getOffset());
-        return tag;
+        if (tag.contains("GhostCircuit")) circuitSlot.setCurrentCircuit(Math.clamp(tag.getByte("GhostCircuit"), 0, 32));
+        if (tag.contains("SyncOffset")) setMEUpdateInterval(tag.getInt("SyncOffset")); syncME(); markAsChanged();
     }
-
-    protected void readConfigFromTag(CompoundTag tag) {
-        if (tag.contains("AutoPullMode")) {
-            var autoPullMode = tag.getInt("AutoPullMode");
-            this.setAutoPullMode(autoPullMode);
-        }
-
-        if (tag.contains("ConfigStacks")) {
-            final var inventory = this.aeItemHandler.getInventory();
-            final var fluidInventory = this.aeFluidHandler.getInventory();
-
-            CompoundTag configStacks = tag.getCompound("ConfigStacks");
-            for (int i = 0; i < CONFIG_SIZE; i++) {
-                String key = Integer.toString(i);
-                if (configStacks.contains(key)) {
-                    CompoundTag configTag = configStacks.getCompound(key);
-                    var stack = GenericStack.readTag(configTag);
-                    if (stack != null) {
-                        if (stack.what() instanceof AEItemKey) {
-                            ((IMESlot) inventory[i]).setConfigWithoutNotify(stack);
-                        } else {
-                            ((IMESlot) fluidInventory[i]).setConfigWithoutNotify(stack);
-                        }
-                        continue;
-                    }
-                }
-                ((IMESlot) inventory[i]).setConfigWithoutNotify(null);
-                ((IMESlot) fluidInventory[i]).setConfigWithoutNotify(null);
-            }
-
-            ((IOptimizedMEList) aeItemHandler).onConfigChanged();
-            ((IOptimizedMEList) aeFluidHandler).onConfigChanged();
-        }
-
-        if (tag.contains("GhostCircuit")) {
-            circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(tag.getByte("GhostCircuit")));
-        }
-
-        if (tag.contains("SyncOffset")) {
-            this.setOffset(tag.getInt("SyncOffset"));
-        }
+    @Override public InteractionResult onDataStickUse(Player player, ItemStack item) {
+        var data = item.get(GTDataComponents.DATA_COPY_TAG);
+        if (data == null || !data.contains("MEDualHatchStock")) return InteractionResult.PASS;
+        if (!isRemote()) { readConfigFromTag(player.registryAccess(), data.copyTag().getCompound("MEDualHatchStock"));
+            player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_paste_settings")); }
+        return InteractionResult.sidedSuccess(isRemote());
     }
-
-    @Override
-    public InteractionResult onDataStickRightClick(Player player, ItemStack dataStick) {
-        CompoundTag tag = dataStick.getTag();
-        if (tag == null || !tag.contains("MEDualHatchStock")) {
-            return InteractionResult.PASS;
-        }
-
+    @Override public InteractionResult onDataStickShiftUse(Player player, ItemStack item) {
         if (!isRemote()) {
-            readConfigFromTag(tag.getCompound("MEDualHatchStock"));
-            this.updateInventorySubscription();
-            player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_paste_settings"));
+            var tag = item.getOrDefault(GTDataComponents.DATA_COPY_TAG, CustomData.EMPTY).copyTag();
+            tag.put("MEDualHatchStock", writeConfigToTag(player.registryAccess())); item.set(GTDataComponents.DATA_COPY_TAG, CustomData.of(tag));
+            item.set(DataComponents.CUSTOM_NAME, Component.translatable("gtceu.machine.me.me_dual_hatch_stock.data_stick.name"));
+            player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_copy_settings"));
         }
         return InteractionResult.sidedSuccess(isRemote());
     }
 
-    @Override
-    public boolean onDataStickLeftClick(Player player, ItemStack dataStick) {
-        if (!isRemote()) {
-            CompoundTag tag = new CompoundTag();
-            tag.put("MEDualHatchStock", writeConfigToTag());
-            dataStick.setTag(tag);
-            dataStick.setHoverName(Component.translatable("gtceu.machine.me.me_dual_hatch_stock.data_stick.name"));
-            player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_copy_settings"));
+    private static class StockingItemList extends ExportOnlyAEItemList implements IOptimizedMEList {
+        private MEDualHatchStockPartMachine owner;
+        private final Object2LongMap<ItemStack> amounts = new Object2LongOpenCustomHashMap<>(ItemStackHashStrategy.comparingAllButCount());
+        private boolean changed = true; private long snapshotTick = Long.MIN_VALUE;
+        private StockingItemList(int size) { super(size, StockingItemSlot::new); }
+        private void setOwner(MEDualHatchStockPartMachine owner) {
+            this.owner = owner;
+            for (var slot : inventory) { ((StockingItemSlot) slot).owner = owner; ((IMESlot) slot).setOnConfigChanged(this::onConfigChanged); }
         }
-        return true;
+        @Override public boolean isAutoPull() { return owner != null && owner.getAutoPullMode() > 0; }
+        @Override public boolean isStocking() { return true; }
+        @Override public boolean getChanged() { return changed; }
+        @Override public void setChanged(boolean changed) { this.changed = changed; }
+        @Override public void onConfigChanged() { changed = true; snapshotTick = Long.MIN_VALUE; onContentsChanged(); }
+        @Override public void clearInventory(int first) {
+            for (int i = Math.max(0, first); i < inventory.length; i++) { ((IMESlot) inventory[i]).setConfigWithoutNotify(null); inventory[i].setStock(null); }
+            onConfigChanged();
+        }
+        @Override public List<SizedIngredient> handleRecipeInner(IO io, @Nullable GTRecipe recipe, List<SizedIngredient> left, boolean simulate) {
+            var network = owner == null ? null : owner.network();
+            return network == null ? left : AEItemRecipeHandler.handleNetwork(io, recipe, left, simulate, inventory, owner, network, owner.actionSource);
+        }
+        @Override public @Nullable Object2LongMap<ItemStack> getMEItemMap() {
+            var network = owner == null ? null : owner.network();
+            if (network == null) { amounts.clear(); return null; }
+            long tick = owner.getOffsetTimer();
+            if (changed || ConfigHolder.INSTANCE.enableUltimateMEStocking && snapshotTick != tick) {
+                changed = false; snapshotTick = tick; amounts.clear(); Set<AEItemKey> queried = new HashSet<>();
+                for (var slot : inventory) {
+                    var config = slot.getConfig();
+                    if (config == null || !(config.what() instanceof AEItemKey key) || !queried.add(key)) continue;
+                    long available = network.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, owner.actionSource);
+                    if (available > 0) amounts.put(key.toStack(), available);
+                }
+            }
+            return amounts.isEmpty() ? null : amounts;
+        }
+        @Override public void onContentsChanged() { changed = true; super.onContentsChanged(); }
     }
-
-    private class ExportOnlyAEStockingItemList extends ExportOnlyAEItemList implements IOptimizedMEList {
-
-        protected ObjectArrayList<AEItemKey> configList = new ObjectArrayList<>();
-
-        protected IntArrayList configIndexList = new IntArrayList();
-
-        private long lastSnapshotTick = Long.MIN_VALUE;
-
-        public ExportOnlyAEStockingItemList(MetaMachine holder, int slots) {
-            super(holder, slots, ExportOnlyAEStockingItemSlot::new);
-            for (ExportOnlyAEItemSlot exportOnlyAEItemSlot : inventory) {
-                ((IMESlot) exportOnlyAEItemSlot).setOnConfigChanged(this::onConfigChanged);
-            }
+    private static class StockingItemSlot extends ExportOnlyAEConfigureItemSlot {
+        private MEDualHatchStockPartMachine owner;
+        private StockingItemSlot() {}
+        private StockingItemSlot(MEDualHatchStockPartMachine owner, GenericStack config, GenericStack stock) { super(config, stock); this.owner = owner; }
+        @Override public ItemStack extractItem(int slot, int amount, boolean simulate) { return extractItem(slot, amount, simulate, true); }
+        public ItemStack extractItem(int slot, int amount, boolean simulate, boolean notify) {
+            if (slot != 0 || amount <= 0 || owner == null || config == null || !(config.what() instanceof AEItemKey key)) return ItemStack.EMPTY;
+            var network = owner.network(); if (network == null) return ItemStack.EMPTY;
+            long extracted = network.extract(key, amount, simulate ? Actionable.SIMULATE : Actionable.MODULATE, owner.actionSource);
+            if (extracted <= 0) return ItemStack.EMPTY;
+            if (!simulate) { stock = stock == null || stock.amount() <= extracted ? null : new GenericStack(key, stock.amount() - extracted); if (notify) onContentsChanged(); }
+            return key.toStack((int) extracted);
         }
-
-        @Override
-        public void clearInventory(int startIndex) {
-            for (int i = startIndex; i < this.getConfigurableSlots(); ++i) {
-                IConfigurableSlot slot = this.getConfigurableSlot(i);
-                ((IMESlot) slot).setConfigWithoutNotify(null);
-                slot.setStock(null);
-            }
-        }
-
-        @Override
-        public void onConfigChanged() {
-            lastSnapshotTick = Long.MIN_VALUE;
-            configList.clear();
-            configIndexList.clear();
-            for (int i = 0, inventoryLength = inventory.length; i < inventoryLength; i++) {
-                final var config = inventory[i].getConfig();
-                if (config != null && config.what() instanceof AEItemKey key) {
-                    configList.add(key);
-                    configIndexList.add(i);
-                }
-            }
-        }
-
-        @Override
-        public boolean isAutoPull() {
-            return autoPullMode > 0;
-        }
-
-        @Override
-        public boolean isStocking() {
-            return true;
-        }
-
-        @Override
-        public List<Ingredient> handleRecipeInner(IO io, GTRecipe recipe, List<Ingredient> left, @Nullable String slotName, boolean simulate) {
-            if (io != IO.IN || left.isEmpty()) {
-                return left;
-            }
-            if (!MEDualHatchStockPartMachine.this.isWorkingEnabled()) {
-                return left;
-            }
-            IGrid grid = getMainNode().getGrid();
-            if (grid == null) {
-                return left;
-            }
-
-            MEStorage aeNetwork = grid.getStorageService().getInventory();
-            boolean changed = false;
-            var listIterator = left.listIterator();
-
-            while (listIterator.hasNext()) {
-                Ingredient ingredient = listIterator.next();
-                if (ingredient.isEmpty()) {
-                    listIterator.remove();
-                } else {
-                    long amount;
-                    if (ingredient instanceof LongIngredient li) amount = li.getActualAmount();
-                    else if (ingredient instanceof SizedIngredient si) amount = si.getAmount();
-                    else amount = 1;
-                    if (amount < 1) listIterator.remove();
-                    else {
-                        for (int i = 0, configListSize = configList.size(); i < configListSize; i++) {
-                            AEItemKey aeItemKey = configList.get(i);
-                            if (aeItemKey.matches(ingredient)) {
-                                long extracted = aeNetwork.extract(aeItemKey, amount, simulate ? Actionable.SIMULATE : Actionable.MODULATE, getActionSource());
-                                if (extracted > 0) {
-                                    changed = true;
-                                    amount -= extracted;
-                                    if (!simulate) {
-                                        var slot = this.inventory[configIndexList.getInt(i)];
-                                        if (slot.getStock() != null) {
-                                            long amt = slot.getStock().amount() - extracted;
-                                            if (amt == 0) slot.setStock(null);
-                                            else slot.setStock(new GenericStack(aeItemKey, amt));
-                                        }
-                                    }
-                                }
-                            }
-                            if (amount <= 0L) {
-                                listIterator.remove();
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (!simulate && changed) {
-                setChanged(true);
-                this.onContentsChanged();
-            }
-            return left.isEmpty() ? null : left;
-        }
-
-        @Override
-        public @Nullable Object2LongMap<ItemStack> getMEItemMap() {
-            long currentTick = getOffsetTimer();
-            if (getChanged() || ENABLE_ULTIMATE_ME_STOCKING && lastSnapshotTick != currentTick) {
-                setChanged(false);
-                lastSnapshotTick = currentTick;
-                final var itemMap = getItemMap();
-                itemMap.clear();
-                IGrid grid = getMainNode().getGrid();
-                if (grid != null) {
-                    final MEStorage aeNetwork = grid.getStorageService().getInventory();
-                    for (var key : configList) {
-                        long extracted = aeNetwork.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, getActionSource());
-                        if (extracted > 0) {
-                            itemMap.addTo(key.toStack(), extracted);
-                        }
-                    }
-                }
-            }
-            return getItemMap().isEmpty() ? null : getItemMap();
-        }
+        @Override public StockingItemSlot copy() { return new StockingItemSlot(owner, config, stock); }
     }
-
-    private class ExportOnlyAEStockingItemSlot extends ExportOnlyAEConfigureItemSlot {
-
-        public ExportOnlyAEStockingItemSlot() {
-            super();
+    private static class StockingFluidList extends ExportOnlyAEFluidList implements IOptimizedMEList {
+        private final MEDualHatchStockPartMachine owner;
+        private final Object2LongMap<FluidStack> amounts = LongFluidParallelLogic.newFluidAmountMap();
+        private final List<FluidStack> display = new ArrayList<>();
+        private boolean changed = true; private long snapshotTick = Long.MIN_VALUE;
+        private StockingFluidList(MEDualHatchStockPartMachine owner, int size) {
+            super(owner, size, () -> new StockingFluidSlot(owner)); this.owner = owner;
+            for (var slot : inventory) ((IMESlot) slot).setOnConfigChanged(this::onConfigChanged);
         }
-
-        public ExportOnlyAEStockingItemSlot(@Nullable GenericStack config, @Nullable GenericStack stock) {
-            super(config, stock);
+        @Override public boolean isAutoPull() { return owner.getAutoPullMode() > 0; }
+        @Override public boolean isStocking() { return true; }
+        @Override public boolean getChanged() { return changed; }
+        @Override public void setChanged(boolean changed) { this.changed = changed; }
+        @Override public void onConfigChanged() { changed = true; snapshotTick = Long.MIN_VALUE; onContentsChanged(); }
+        @Override public void clearInventory(int first) {
+            for (int i = Math.max(0, first); i < inventory.length; i++) { ((IMESlot) inventory[i]).setConfigWithoutNotify(null); inventory[i].setStock(null); }
+            onConfigChanged();
         }
-
-        @Override
-        public ItemStack extractItem(int slot, int amount, boolean simulate, boolean notifyChanges) {
-            if (slot == 0 && this.stock != null) {
-                if (this.config != null) {
-                    // Extract the items from the real net to either validate (simulate)
-                    // or extract (modulate) when this is called
-                    if (!isOnline() || !MEDualHatchStockPartMachine.this.isWorkingEnabled()) return ItemStack.EMPTY;
-                    IGrid grid = getMainNode().getGrid();
-                    if (grid == null) return ItemStack.EMPTY;
-                    MEStorage aeNetwork = grid.getStorageService().getInventory();
-                    Actionable action = simulate ? Actionable.SIMULATE : Actionable.MODULATE;
-                    var key = config.what();
-                    long extracted = aeNetwork.extract(key, amount, action, actionSource);
-                    if (extracted > 0) {
-                        ItemStack resultStack = key instanceof AEItemKey itemKey ? itemKey.toStack((int) extracted) : ItemStack.EMPTY;
-                        if (!simulate) {
-                            // may as well update the display here
-                            this.stock = ExportOnlyAESlot.copy(stock, stock.amount() - extracted);
-                            if (this.stock.amount() == 0) {
-                                this.stock = null;
-                            }
-                            if (notifyChanges && this.onContentsChanged != null) {
-                                this.onContentsChanged.run();
-                            }
-                        }
-                        return resultStack;
-                    }
+        @Override public List<SizedFluidIngredient> handleRecipeInner(IO io, @Nullable GTRecipe recipe, List<SizedFluidIngredient> left, boolean simulate) {
+            var network = owner.network(); return network == null ? left :
+                    AEFluidRecipeHandler.handleNetwork(io, recipe, left, simulate, inventory, owner, network, owner.actionSource);
+        }
+        @Override public Object2LongMap<FluidStack> getMEFluidMap() {
+            var network = owner.network();
+            if (network == null) { amounts.clear(); display.clear(); return amounts; }
+            long tick = owner.getOffsetTimer();
+            if (changed || ConfigHolder.INSTANCE.enableUltimateMEStocking && snapshotTick != tick) {
+                changed = false; snapshotTick = tick; amounts.clear(); display.clear(); Set<AEFluidKey> queried = new HashSet<>();
+                for (var slot : inventory) {
+                    var config = slot.getConfig();
+                    if (config == null || !(config.what() instanceof AEFluidKey key) || !queried.add(key)) continue;
+                    long available = network.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, owner.actionSource);
+                    if (available > 0) { amounts.put(key.toStack(1), available); display.add(key.toStack((int) Math.min(Integer.MAX_VALUE, available))); }
                 }
             }
-            return ItemStack.EMPTY;
+            return amounts;
         }
-
-        @Override
-        public ExportOnlyAEStockingItemSlot copy() {
-            return new ExportOnlyAEStockingItemSlot(this.config == null ? null : copy(this.config), this.stock == null ? null : copy(this.stock));
-        }
+        @Override public List<FluidStack> getMEFluidList() { getMEFluidMap(); return display; }
+        @Override public List<FluidStack> getFluidList() { return display; }
+        @Override public void onContentsChanged() { changed = true; super.onContentsChanged(); }
     }
-
-    private class ExportOnlyAEStockingFluidList extends ExportOnlyAEFluidList implements IOptimizedMEList {
-
-        protected ObjectArrayList<AEFluidKey> configList = new ObjectArrayList<>();
-
-        protected IntArrayList configIndexList = new IntArrayList();
-
-        private long lastSnapshotTick = Long.MIN_VALUE;
-
-        public ExportOnlyAEStockingFluidList(MetaMachine holder, int slots) {
-            super(holder, slots, ExportOnlyAEStockingFluidSlot::new);
-            for (ExportOnlyAEFluidSlot exportOnlyAEFluidSlot : inventory) {
-                ((IMESlot) exportOnlyAEFluidSlot).setOnConfigChanged(this::onConfigChanged);
-            }
+    private static class StockingFluidSlot extends ExportOnlyAEConfigureFluidSlot {
+        private final MEDualHatchStockPartMachine owner;
+        private StockingFluidSlot(MEDualHatchStockPartMachine owner) { this.owner = owner; }
+        @Override public FluidStack drain(FluidStack resource, FluidAction action) {
+            return !resource.isEmpty() && config != null && config.what().equals(AEFluidKey.of(resource)) ? drain(resource.getAmount(), action) : FluidStack.EMPTY;
         }
-
-        @Override
-        public void clearInventory(int startIndex) {
-            for (int i = startIndex; i < this.getConfigurableSlots(); ++i) {
-                IConfigurableSlot slot = this.getConfigurableSlot(i);
-                ((IMESlot) slot).setConfigWithoutNotify(null);
-                slot.setStock(null);
-            }
+        @Override public FluidStack drain(int amount, FluidAction action) {
+            if (amount <= 0 || config == null || !(config.what() instanceof AEFluidKey key)) return FluidStack.EMPTY;
+            var network = owner.network(); if (network == null) return FluidStack.EMPTY;
+            long extracted = network.extract(key, amount, action.simulate() ? Actionable.SIMULATE : Actionable.MODULATE, owner.actionSource);
+            if (extracted <= 0) return FluidStack.EMPTY;
+            if (action.execute()) { stock = stock == null || stock.amount() <= extracted ? null : new GenericStack(key, stock.amount() - extracted); onContentsChanged(); }
+            return key.toStack((int) extracted);
         }
-
-        @Override
-        public void onConfigChanged() {
-            lastSnapshotTick = Long.MIN_VALUE;
-            configList.clear();
-            configIndexList.clear();
-            for (int i = 0, inventoryLength = inventory.length; i < inventoryLength; i++) {
-                final var config = inventory[i].getConfig();
-                if (config != null && config.what() instanceof AEFluidKey key) {
-                    configList.add(key);
-                    configIndexList.add(i);
-                }
-            }
-        }
-
-        @Override
-        public boolean isAutoPull() {
-            return autoPullMode > 0;
-        }
-
-        @Override
-        public boolean isStocking() {
-            return true;
-        }
-
-        @Override
-        public List<FluidIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<FluidIngredient> left, @Nullable String slotName, boolean simulate) {
-            if (io != IO.IN || left.isEmpty()) {
-                return left;
-            }
-            if (!MEDualHatchStockPartMachine.this.isWorkingEnabled()) {
-                return left;
-            }
-            IGrid grid = getMainNode().getGrid();
-            if (grid == null) {
-                return left;
-            }
-
-            MEStorage aeNetwork = grid.getStorageService().getInventory();
-            boolean changed = false;
-            var listIterator = left.listIterator();
-
-            while (listIterator.hasNext()) {
-                FluidIngredient ingredient = listIterator.next();
-                if (ingredient.isEmpty()) {
-                    listIterator.remove();
-                } else {
-                    long amount = ingredient.getAmount();
-                    if (amount < 1) listIterator.remove();
-                    else {
-                        for (int i = 0, configListSize = configList.size(); i < configListSize; i++) {
-                            AEFluidKey aeFluidKey = configList.get(i);
-                            if (AEUtils.testFluidIngredient(ingredient, aeFluidKey)) {
-                                long extracted = aeNetwork.extract(aeFluidKey, amount, simulate ? Actionable.SIMULATE : Actionable.MODULATE, getActionSource());
-                                if (extracted > 0) {
-                                    changed = true;
-                                    amount -= extracted;
-                                    if (!simulate) {
-                                        var slot = this.inventory[configIndexList.getInt(i)];
-                                        if (slot.getStock() != null) {
-                                            long amt = slot.getStock().amount() - extracted;
-                                            if (amt == 0) slot.setStock(null);
-                                            else slot.setStock(new GenericStack(aeFluidKey, amt));
-                                        }
-                                    }
-                                }
-                            }
-                            if (amount <= 0L) {
-                                listIterator.remove();
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (!simulate && changed) {
-                setChanged(true);
-                this.onContentsChanged();
-            }
-            return left.isEmpty() ? null : left;
-        }
-
-        @Override
-        public List<FluidStack> getMEFluidList() {
-            long currentTick = getOffsetTimer();
-            if (getChanged() || ENABLE_ULTIMATE_ME_STOCKING && lastSnapshotTick != currentTick) {
-                setChanged(false);
-                lastSnapshotTick = currentTick;
-                final var fluidList = getFluidList();
-                fluidList.clear();
-                IGrid grid = getMainNode().getGrid();
-                if (grid != null) {
-                    final MEStorage aeNetwork = grid.getStorageService().getInventory();
-                    for (var key : configList) {
-                        long extracted = aeNetwork.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, getActionSource());
-                        if (extracted > 0) {
-                            fluidList.add(FluidStack.create(key.getFluid(), extracted));
-                        }
-                    }
-                }
-            }
-            return getFluidList();
-        }
-    }
-
-    private class ExportOnlyAEStockingFluidSlot extends ExportOnlyAEConfigureFluidSlot {
-
-        public ExportOnlyAEStockingFluidSlot() {
-            super();
-        }
-
-        public ExportOnlyAEStockingFluidSlot(@Nullable GenericStack config, @Nullable GenericStack stock) {
-            super(config, stock);
-        }
-
-        @Override
-        public ExportOnlyAEFluidSlot copy() {
-            return new ExportOnlyAEStockingFluidSlot(this.config == null ? null : copy(this.config), this.stock == null ? null : copy(this.stock));
-        }
-
-        @Override
-        public FluidStack drain(long maxDrain, boolean simulate, boolean notifyChanges) {
-            if (this.stock != null && this.config != null) {
-                // Extract the items from the real net to either validate (simulate)
-                // or extract (modulate) when this is called
-                if (!isOnline() || !MEDualHatchStockPartMachine.this.isWorkingEnabled()) return FluidStack.empty();
-                IGrid grid = getMainNode().getGrid();
-                if (grid == null) return FluidStack.empty();
-                MEStorage aeNetwork = grid.getStorageService().getInventory();
-                Actionable action = simulate ? Actionable.SIMULATE : Actionable.MODULATE;
-                var key = config.what();
-                long extracted = aeNetwork.extract(key, maxDrain, action, actionSource);
-                if (extracted > 0) {
-                    FluidStack resultStack = key instanceof AEFluidKey fluidKey ? AEUtil.toFluidStack(fluidKey, extracted) : FluidStack.empty();
-                    if (!simulate) {
-                        // may as well update the display here
-                        this.stock = ExportOnlyAESlot.copy(stock, stock.amount() - extracted);
-                        if (this.stock.amount() == 0) {
-                            this.stock = null;
-                        }
-                        if (notifyChanges && this.onContentsChanged != null) {
-                            this.onContentsChanged.run();
-                        }
-                    }
-                    return resultStack;
-                }
-            }
-            return FluidStack.empty();
-        }
+        @Override public StockingFluidSlot copy() { var copy = new StockingFluidSlot(owner); copy.setConfigWithoutNotify(config); copy.stock = stock; return copy; }
     }
 }

@@ -1,42 +1,25 @@
 package org.gtlcore.gtlcore.api.machine;
 
-import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
-import com.gregtechceu.gtceu.common.data.GTItems;
-
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-
+import com.gregtechceu.gtceu.common.mui.widgets.PopupPanel;
 import net.minecraft.network.chat.Component;
-
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.widgets.layout.Flow;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
-public class MEExtendedOutputFancyConfigurator implements IFancyUIProvider {
-
-    protected final Supplier<Widget> widgetSupplier;
-
-    public MEExtendedOutputFancyConfigurator(Supplier<Widget> widgetSupplier) {
+/** Native ModularUI replacement for the former LDLib output-filter tab. */
+public final class MEExtendedOutputFancyConfigurator {
+    private final Function<PanelSyncManager, Flow> widgetSupplier;
+    public MEExtendedOutputFancyConfigurator(Function<PanelSyncManager, Flow> widgetSupplier) {
         this.widgetSupplier = widgetSupplier;
     }
-
-    @Override
-    public Widget createMainPage(FancyMachineUIWidget fancyMachineUIWidget) {
-        return widgetSupplier.get();
+    public PopupPanel createPanel(PanelSyncManager manager) {
+        return PopupPanel.createPopupPanel("extendedOutputFilterPanel", 220, 176)
+                .child(Text.dynamic(this::getTitle).asWidget().margin(4).width(184).height(16))
+                .child(widgetSupplier.apply(manager).top(22));
     }
-
-    @Override
-    public IGuiTexture getTabIcon() {
-        return new ItemStackTexture(GTItems.ITEM_FILTER.asStack());
-    }
-
-    @Override
-    public Component getTitle() {
-        return Component.translatable("gtlcore.gui.filter_config.title");
-    }
-
-    @Override
+    public Component getTitle() { return Component.translatable("gtlcore.gui.filter_config.title"); }
     public List<Component> getTabTooltips() {
         return List.of(Component.translatable("tooltip.gtlcore.change_item_fluid_filter_priority"));
     }

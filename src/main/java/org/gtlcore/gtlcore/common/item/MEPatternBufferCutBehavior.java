@@ -2,10 +2,12 @@ package org.gtlcore.gtlcore.common.item;
 
 import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferPartMachine;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.Item;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
-import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
-import com.gregtechceu.gtceu.common.item.TooltipBehavior;
+import com.gregtechceu.gtceu.common.item.behavior.TooltipBehavior;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -25,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.gregtechceu.gtceu.api.item.tool.ToolHelper.getBehaviorsTag;
 
 public class MEPatternBufferCutBehavior extends TooltipBehavior implements IInteractionItem {
 
@@ -42,9 +43,9 @@ public class MEPatternBufferCutBehavior extends TooltipBehavior implements IInte
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-        var cut = getBehaviorsTag(stack).getCompound(CUT_TAG);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        var cut = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getCompound(CUT_TAG);
         if (cut.isEmpty()) {
             return;
         }
@@ -72,8 +73,7 @@ public class MEPatternBufferCutBehavior extends TooltipBehavior implements IInte
 
     @Override
     public InteractionResult onItemUseFirst(ItemStack itemStack, UseOnContext context) {
-        if (!(context.getLevel().getBlockEntity(context.getClickedPos()) instanceof MetaMachineBlockEntity machineBlock) ||
-                !(machineBlock.getMetaMachine() instanceof MEPatternBufferPartMachine partMachine)) {
+        if (!(MetaMachine.getMachine(context.getLevel(), context.getClickedPos()) instanceof MEPatternBufferPartMachine partMachine)) {
             return InteractionResult.PASS;
         }
 
@@ -81,7 +81,7 @@ public class MEPatternBufferCutBehavior extends TooltipBehavior implements IInte
             return InteractionResult.SUCCESS;
         }
 
-        var tags = getBehaviorsTag(itemStack);
+        var tags = itemStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (!serverPlayer.isShiftKeyDown()) {
             if (!tags.contains(CUT_TAG) || tags.getCompound(CUT_TAG).isEmpty()) {
                 serverPlayer.displayClientMessage(
@@ -91,6 +91,7 @@ public class MEPatternBufferCutBehavior extends TooltipBehavior implements IInte
                         Component.translatable("message.gtlcore.pattern_buffer_paste_failed"), true);
             } else {
                 tags.remove(CUT_TAG);
+                itemStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tags));
                 serverPlayer.getInventory().setChanged();
             }
             return InteractionResult.CONSUME;
@@ -104,6 +105,7 @@ public class MEPatternBufferCutBehavior extends TooltipBehavior implements IInte
         }
 
         partMachine.cutToTag(tags);
+        itemStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tags));
         if (!tags.contains(CUT_TAG) || tags.getCompound(CUT_TAG).isEmpty()) {
             serverPlayer.displayClientMessage(
                     Component.translatable("message.gtlcore.pattern_buffer_cut_failed"), true);
@@ -121,7 +123,7 @@ public class MEPatternBufferCutBehavior extends TooltipBehavior implements IInte
     }
 
     public static boolean hasCutData(ItemStack stack) {
-        var behaviors = stack.getTagElement(ToolHelper.BEHAVIOURS_TAG_KEY);
+        var behaviors = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         return behaviors != null && !behaviors.getCompound(CUT_TAG).isEmpty();
     }
 }

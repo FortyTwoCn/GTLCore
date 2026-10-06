@@ -1,53 +1,19 @@
 package org.gtlcore.gtlcore.mixin.gtm.machine;
 
-import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.DualHatchPartMachine;
-import com.gregtechceu.gtceu.common.machine.multiblock.part.ItemBusPartMachine;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(DualHatchPartMachine.class)
-public abstract class DualHatchPartMachineMixin extends ItemBusPartMachine {
-
-    public DualHatchPartMachineMixin(IMachineBlockEntity holder, int tier, IO io, Object... args) {
-        super(holder, tier, io, args);
-    }
-
-    /**
-     * @author mod_author
-     * @reason 原版太小了
-     */
+public abstract class DualHatchPartMachineMixin {
+    /** @author GTLCore @reason Preserve original dual-hatch capacity in native fluid units. */
     @Overwrite(remap = false)
-    public static long getTankCapacity(long initialCapacity, int tier) {
-        return initialCapacity * (1L << tier);
+    public static int getTankCapacity(int initialCapacity, int tier) {
+        return Math.toIntExact(Math.multiplyExact((long) initialCapacity, 1L << tier));
     }
-
-    /**
-     * @author mod_author
-     * @reason 如上
-     */
+    /** @author GTLCore @reason Preserve the original item and fluid slot counts. */
     @Overwrite(remap = false)
-    public int getInventorySize() {
-        return super.getInventorySize();
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public void setDistinct(boolean isDistinct) {
-        super.setDistinct(isDistinct);
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public boolean isDistinct() {
-        return super.isDistinct();
+    public static int getDualHatchInventorySize(int tier) {
+        return Math.multiplyExact(tier + 1, tier + 1);
     }
 }

@@ -135,7 +135,7 @@ public final class GtlPatternCatalog {
                 recipeManager = level.getRecipeManager();
                 cachedDataGeneration = dataRevision;
             }
-            simulate = source != null && (refreshInventory || AEConfig.instance().isCraftingSimulatedExtraction() ||
+            simulate = source != null && (refreshInventory || ConfigHolder.INSTANCE.ae2CraftingSimulatedExtraction ||
                     ManualCraftingInventoryLock.hasReservations(storage.getInventory()));
             structure = cache.get(roots);
             if (structure != null) {
@@ -244,7 +244,7 @@ public final class GtlPatternCatalog {
                             // these collections after graph discovery; later phases
                             // only validate their contents. Avoid rebuilding a large
                             // hash table in one unsliceable server-thread operation.
-                            structure = new Structure(new CapturedPatternCatalog(entries, recipeCount), Collections.unmodifiableSet(seen),
+                            structure = new Structure(new CapturedPatternCatalog(entries, recipeCount, level.registryAccess()), Collections.unmodifiableSet(seen),
                                     Set.copyOf(templates.values()), Collections.unmodifiableSet(fuzzy), bounded,
                                     Collections.unmodifiableMap(dependencies), revision);
                         } else if (structure.providerRevision() != revision) structure = new Structure(structure.catalog(),
@@ -360,7 +360,7 @@ public final class GtlPatternCatalog {
         }
 
         private Signature signature(IPatternDetails pattern) {
-            if (pattern.getInputs().length > 256 || pattern.getOutputs().length > 256)
+            if (pattern.getInputs().length > 256 || pattern.getOutputs().size() > 256)
                 throw new PlanningBudget.Exhausted(PlanningBudget.Limit.GRAPH_LIMIT);
             int priority = Integer.MIN_VALUE;
             for (var provider : service.getProviders(pattern)) priority = Math.max(priority, provider.getPatternPriority());
@@ -401,7 +401,7 @@ public final class GtlPatternCatalog {
     private static List<GraphRecipe<AEKey>> normalize(IPatternDetails pattern, String binding, KeyCounter available, Level level, PlanningBudget budget) {
         var work = new CandidateCapture(pattern, PatternFingerprint.capture(pattern), available, level, budget);
         while (!work.step()) {}
-        var fingerprints = new PatternFingerprint.Context();
+        var fingerprints = new PatternFingerprint.Context(level.registryAccess());
         var expansion = work.result().expand(budget);
         List<GraphRecipe<AEKey>> result = new ArrayList<>();
         while (expansion.hasNext()) result.add(expansion.next().encode(binding, fingerprints));

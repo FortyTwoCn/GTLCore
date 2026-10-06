@@ -3,8 +3,8 @@ package org.gtlcore.gtlcore.integration.ae2.crafting.compiled;
 import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLPaths;
 
 import appeng.core.AppEng;
 import org.apache.logging.log4j.Level;

@@ -1,103 +1,54 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part.maintenance;
 
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.ICleanroomProvider;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.common.machine.trait.CleanroomProviderTrait;
 import net.minecraft.util.Mth;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.utils.Alignment;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
+import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
-
-/**
- * @author EasterFG on 2024/10/17
- */
-@MethodsReturnNonnullByDefault
 public class GravityCleaningConfigurationMaintenancePartMachine extends AutoConfigurationMaintenanceHatchPartMachine
-                                                                implements IAutoConfiguratioGravityPart {
-
-    @Persisted
-    private int gravity = 0;
-    private boolean isConfig = true;
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            GravityCleaningConfigurationMaintenancePartMachine.class, AutoConfigurationMaintenanceHatchPartMachine.MANAGED_FIELD_HOLDER);
-
-    @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+        implements IAutoConfiguratioGravityPart {
+    @SaveField @SyncToClient private int gravity;
+    private final boolean isConfig;
+    private final CleanroomProviderTrait cleanroomProvider;
+    public GravityCleaningConfigurationMaintenancePartMachine(BlockEntityCreationInfo info) { this(info, true, Set.of()); }
+    public GravityCleaningConfigurationMaintenancePartMachine(BlockEntityCreationInfo info, boolean configurable) { this(info, configurable, Set.of()); }
+    public GravityCleaningConfigurationMaintenancePartMachine(BlockEntityCreationInfo info, Set<CleanroomType> types) { this(info, true, types); }
+    private GravityCleaningConfigurationMaintenancePartMachine(BlockEntityCreationInfo info, boolean configurable, Set<CleanroomType> types) {
+        super(info); isConfig = configurable;
+        cleanroomProvider = types.isEmpty() ? null : attachTrait(new CleanroomProviderTrait(types));
+        if (cleanroomProvider != null) cleanroomProvider.setActive(true);
     }
-
-    ICleanroomProvider cleanroomTypes;
-
-    public GravityCleaningConfigurationMaintenancePartMachine(IMachineBlockEntity blockEntity) {
-        super(blockEntity);
+    @Override public void addedToController(MultiblockControllerMachine controller, String name) {
+        super.addedToController(controller, name); ICleaningRoom.addedToController(controller, cleanroomProvider);
     }
-
-    public GravityCleaningConfigurationMaintenancePartMachine(IMachineBlockEntity blockEntity, boolean isConfig) {
-        super(blockEntity);
-        this.isConfig = isConfig;
+    @Override public void removedFromController(MultiblockControllerMachine controller) {
+        ICleaningRoom.removedFromController(controller, cleanroomProvider); super.removedFromController(controller);
     }
-
-    public GravityCleaningConfigurationMaintenancePartMachine(IMachineBlockEntity blockEntity, ICleanroomProvider cleanroom) {
-        super(blockEntity);
-        this.cleanroomTypes = cleanroom;
-    }
-
-    @Override
-    public void addedToController(@NotNull IMultiController controller) {
-        super.addedToController(controller);
-        ICleaningRoom.addedToController(controller, cleanroomTypes);
-    }
-
-    @Override
-    public void removedFromController(@NotNull IMultiController controller) {
-        super.removedFromController(controller);
-        ICleaningRoom.removedFromController(controller, cleanroomTypes);
-    }
-
-    @Override
-    public @NotNull Widget createUIWidget() {
-        if (isConfig) {
-            var group = (WidgetGroup) super.createUIWidget();
-            group.addWidget(new IntInputWidget(10, 35, 80, 10, this::getCurrentGravity, this::setCurrentGravity).setMin(0).setMax(100));
-            return group;
-        } else {
-            var gravityGroup = new WidgetGroup(0, 0, 100, 20);
-            gravityGroup.addWidget(new IntInputWidget(this::getCurrentGravity, this::setCurrentGravity).setMin(0).setMax(100));
-            return gravityGroup;
-        }
-    }
-
-    @Override
-    public int getTier() {
-        return GTValues.UXV;
-    }
-
-    @Override
-    public int getCurrentGravity() {
-        return gravity;
-    }
-
-    @Override
-    public void setCurrentGravity(int gravity) {
-        this.gravity = Mth.clamp(gravity, 0, 100);
-    }
-
-    @Override
-    public void setDurationMultiplier(float count) {
-        if (isConfig) super.setDurationMultiplier(count);
-    }
-
-    @Override
-    public float getDurationMultiplier() {
-        return isConfig ? super.getDurationMultiplier() : 1f;
+    @Override public int getTier() { return GTValues.UXV; }
+    @Override public int getCurrentGravity() { return gravity; }
+    @Override public void setCurrentGravity(int value) { gravity = Mth.clamp(value, 0, 100); markAsChanged(); syncDataHolder.markClientSyncFieldDirty("gravity"); }
+    @Override public void setDurationMultiplier(float value) { if (isConfig) super.setDurationMultiplier(value); }
+    @Override public float getDurationMultiplier() { return isConfig ? super.getDurationMultiplier() : 1f; }
+    @Override public void buildMainUI(ParentWidget<?> contents, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var fields = Flow.col().coverChildren().childPadding(6).crossAxisAlignment(Alignment.CrossAxis.CENTER).center();
+        if (isConfig) fields.child(durationControls(sync));
+        var value = SyncHandlers.intNumber(this::getCurrentGravity, this::setCurrentGravity).allowC2S(); sync.syncValue("maintenanceGravity", value);
+        fields.child(new TextFieldWidget().name("maintenanceGravityField").value(value).setNumbersLong(number -> Math.clamp(number, 0, 100))
+                .setDefaultNumber(0).size(80, 18).tooltip(t -> t.addLine(Text.lang("gtlcore.condition.gravity"))));
+        contents.child(fields);
     }
 }

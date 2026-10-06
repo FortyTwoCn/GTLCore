@@ -1,36 +1,39 @@
 package org.gtlcore.gtlcore.api.machine.trait.MEPart;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
 import com.gregtechceu.gtceu.config.ConfigHolder;
-
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.widgets.ButtonWidget;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
-import java.util.List;
-
+/** A native output cycle advances only while automatic output is enabled; zero requests the next return. */
 public interface IMEOutputPart {
-
-    int ME_UPDATE_INTERVAL = ConfigHolder.INSTANCE.compat.ae2.updateIntervals;
-
-    default boolean isReturn() {
-        return this.getTime() % IMEOutputPart.ME_UPDATE_INTERVAL == 0;
+    default int returnInterval() {
+        int configured = this instanceof IModifiableSyncOffset part ? part.getMEUpdateInterval() : 0;
+        return Math.max(1, configured == 0 ? ConfigHolder.INSTANCE.compat.ae2.updateIntervals : configured);
     }
-
-    byte getTime();
-
-    void setTime(byte time);
-
+    default boolean isReturn() { return getTime() == 0; }
+    int getTime();
+    void setTime(int time);
+    default void advanceReturnCycle() { setTime((int) Math.floorMod((long) getTime() + 1, returnInterval())); }
     void returnStorage();
 
-    static void attachRecipeLockable(ConfiguratorPanel configuratorPanel, MetaMachine machine) {
-        if (machine instanceof IMEOutputPart part) {
-            configuratorPanel.attachConfigurators(new IFancyConfiguratorButton.Toggle(
-                    GuiTextures.BUTTON_ALLOW_IMPORT_EXPORT.getSubTexture(0, 0, 1, 0.5),
-                    GuiTextures.BUTTON_ALLOW_IMPORT_EXPORT.getSubTexture(0, 0.5, 1, 0.5),
-                    part::isReturn, (clickData, pressed) -> part.returnStorage())
-                    .setTooltipsSupplier(pressed -> List.of(Component.translatable("config.gtceu.option.hand.output"))));
-        }
+    static MachineUIPanelBuilder attachRecipeLockable(MachineUIPanelBuilder builder, PanelSyncManager sync, MetaMachine machine) {
+        if (!(machine instanceof IMEOutputPart part)) return builder;
+        var ready = new BooleanSyncValue(part::isReturn);
+        sync.syncValue("gtlcoreMEOutputReady", ready);
+        sync.registerServerSyncedAction("gtlcoreMEOutputReturn", packet -> { part.returnStorage(); machine.markAsChanged(); });
+        var inherited = builder.leftConfigurators();
+        return builder.leftConfigurators(flow -> {
+            inherited.accept(flow);
+            flow.child(new ButtonWidget<>().name("gtlcoreMEOutputReturnButton").size(18)
+                    .overlay(Text.dynamic(() -> Component.literal("R").withStyle(ready.getBoolValue() ? ChatFormatting.GREEN : ChatFormatting.GRAY)))
+                    .tooltip(tooltip -> tooltip.addLine(Component.translatable("config.gtceu.option.hand.output")))
+                    .onMousePressed((context, button) -> { if (button != 0) return false; sync.callSyncedAction("gtlcoreMEOutputReturn"); return true; }));
+        });
     }
 }

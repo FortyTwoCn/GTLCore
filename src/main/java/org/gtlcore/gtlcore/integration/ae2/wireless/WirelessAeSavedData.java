@@ -3,6 +3,7 @@ package org.gtlcore.gtlcore.integration.ae2.wireless;
 import org.gtlcore.gtlcore.GTLCore;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
@@ -59,8 +60,7 @@ public class WirelessAeSavedData extends SavedData {
 
     public static WirelessAeSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
-                WirelessAeSavedData::load,
-                WirelessAeSavedData::new,
+                new SavedData.Factory<>(WirelessAeSavedData::new, (tag, registries) -> load(tag)),
                 DATA_NAME);
     }
 
@@ -131,7 +131,7 @@ public class WirelessAeSavedData extends SavedData {
     }
 
     @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag tag) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider registries) {
         if (this.legacyFavoriteNetwork != null && this.networks.containsKey(this.legacyFavoriteNetwork)) {
             tag.putUUID(TAG_FAVORITE_NETWORK, this.legacyFavoriteNetwork);
         } else {
@@ -581,7 +581,7 @@ public class WirelessAeSavedData extends SavedData {
         try {
             ResourceKey<Level> dimension = ResourceKey.create(
                     Registries.DIMENSION,
-                    new ResourceLocation(tag.getString(TAG_DIMENSION)));
+                    ResourceLocation.parse(tag.getString(TAG_DIMENSION)));
             BlockPos pos = new BlockPos(tag.getInt(TAG_X), tag.getInt(TAG_Y), tag.getInt(TAG_Z));
             return GlobalPos.of(dimension, pos);
         } catch (RuntimeException ignored) {

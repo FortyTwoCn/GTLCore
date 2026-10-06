@@ -23,7 +23,8 @@ import net.minecraft.world.inventory.MenuType;
 
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
-import appeng.api.config.TypeFilter;
+import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.config.ViewItems;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.CalculationStrategy;
@@ -39,8 +40,8 @@ import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.ISubMenuHost;
 import appeng.client.gui.me.common.Repo;
 import appeng.client.gui.widgets.ISortSource;
-import appeng.core.sync.packets.MEInventoryUpdatePacket;
-import appeng.helpers.IMenuCraftingPacket;
+import appeng.core.network.clientbound.MEInventoryUpdatePacket;
+import appeng.helpers.ICraftingGridMenu;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
@@ -158,7 +159,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements IConfi
     private ISubMenuHost host;
 
     @Shadow(remap = false)
-    private List<IMenuCraftingPacket.AutoCraftEntry> autoCraftingQueue;
+    private List<ICraftingGridMenu.AutoCraftEntry> autoCraftingQueue;
 
     @Shadow(remap = false)
     public abstract void clearError();
@@ -254,8 +255,8 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements IConfi
             }
 
             @Override
-            public TypeFilter getTypeFilter() {
-                return TypeFilter.ALL;
+            public Set<AEKeyType> getSortKeyTypes() {
+                return AEKeyTypes.getAll();
             }
         });
         // repo 每次收到更新回调此监听器，客户端缓存按版本号惰性失效
@@ -399,7 +400,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements IConfi
         KeyCounter current = gtlcore$getRelevantStoredAmounts();
 
         if (gtlcore$lastSentStored == null) {
-            var builder = MEInventoryUpdatePacket.builder(containerId, true);
+            var builder = MEInventoryUpdatePacket.builder(containerId, true, getPlayer().registryAccess());
             builder.addFull(gtlcore$updateHelper, current, Set.of(), new KeyCounter());
             builder.buildAndSend(this::sendPacketToClient);
             gtlcore$updateHelper.commitChanges();
@@ -420,7 +421,7 @@ public abstract class CraftConfirmMenuMixin extends AEBaseMenu implements IConfi
         }
         if (!gtlcore$updateHelper.hasChanges()) return;
 
-        var builder = MEInventoryUpdatePacket.builder(containerId, false);
+        var builder = MEInventoryUpdatePacket.builder(containerId, false, getPlayer().registryAccess());
         builder.addChanges(gtlcore$updateHelper, current, Set.of(), new KeyCounter());
         builder.buildAndSend(this::sendPacketToClient);
         gtlcore$updateHelper.commitChanges();

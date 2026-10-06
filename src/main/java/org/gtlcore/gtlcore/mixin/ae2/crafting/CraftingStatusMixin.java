@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.mixin.ae2.crafting;
 import org.gtlcore.gtlcore.integration.ae2.crafting.ICraftingDispatchReasonProvider;
 import org.gtlcore.gtlcore.integration.ae2.crafting.ICraftingStatusReasons;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 
 import appeng.api.stacks.AEKey;
 import appeng.crafting.execution.CraftingCpuLogic;
@@ -54,7 +54,7 @@ public abstract class CraftingStatusMixin implements ICraftingStatusReasons {
     }
 
     @Inject(method = "write", at = @At("RETURN"), remap = false)
-    private void gtlcore$writeDispatchReasons(FriendlyByteBuf data, CallbackInfo ci) {
+    private void gtlcore$writeDispatchReasons(RegistryFriendlyByteBuf data, CallbackInfo ci) {
         data.writeVarInt(this.gtlcore$reasonMasks.size());
         for (var entry : this.gtlcore$reasonMasks.entrySet()) {
             data.writeVarLong(entry.getKey());
@@ -64,7 +64,7 @@ public abstract class CraftingStatusMixin implements ICraftingStatusReasons {
 
     @Inject(method = "read", at = @At("RETURN"), remap = false)
     private static void gtlcore$readDispatchReasons(
-                                                    FriendlyByteBuf data,
+                                                    RegistryFriendlyByteBuf data,
                                                     CallbackInfoReturnable<CraftingStatus> cir) {
         CraftingStatus status = cir.getReturnValue();
         int count = data.readVarInt();

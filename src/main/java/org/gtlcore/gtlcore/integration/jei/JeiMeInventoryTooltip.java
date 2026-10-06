@@ -8,17 +8,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.RenderTooltipEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import com.mojang.datafixers.util.Either;
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.forge.ForgeTypes;
+import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.runtime.IClickableIngredient;
 import mezz.jei.api.runtime.IJeiRuntime;
@@ -41,7 +41,7 @@ public final class JeiMeInventoryTooltip {
     public static void onRuntimeAvailable(IJeiRuntime runtime) {
         JeiMeInventoryTooltip.runtime = runtime;
         if (!registered) {
-            MinecraftForge.EVENT_BUS.register(LISTENER);
+            NeoForge.EVENT_BUS.register(LISTENER);
             registered = true;
         }
     }
@@ -49,7 +49,7 @@ public final class JeiMeInventoryTooltip {
     public static void onRuntimeUnavailable() {
         runtime = null;
         if (registered) {
-            MinecraftForge.EVENT_BUS.unregister(LISTENER);
+            NeoForge.EVENT_BUS.unregister(LISTENER);
             registered = false;
         }
     }
@@ -71,7 +71,7 @@ public final class JeiMeInventoryTooltip {
         if (item.isPresent()) {
             return toSearchText(item.get());
         }
-        Optional<FluidStack> fluid = runtime.getRecipesGui().getIngredientUnderMouse(ForgeTypes.FLUID_STACK);
+        Optional<FluidStack> fluid = runtime.getRecipesGui().getIngredientUnderMouse(NeoForgeTypes.FLUID_STACK);
         if (fluid.isPresent()) {
             return toSearchText(fluid.get());
         }
@@ -127,7 +127,7 @@ public final class JeiMeInventoryTooltip {
         if (item.isPresent() && !item.get().isEmpty()) {
             return AEItemKey.of(item.get());
         }
-        Optional<FluidStack> fluid = runtime.getRecipesGui().getIngredientUnderMouse(ForgeTypes.FLUID_STACK);
+        Optional<FluidStack> fluid = runtime.getRecipesGui().getIngredientUnderMouse(NeoForgeTypes.FLUID_STACK);
         if (fluid.isPresent() && !fluid.get().isEmpty()) {
             return AEFluidKey.of(fluid.get());
         }
@@ -169,7 +169,7 @@ public final class JeiMeInventoryTooltip {
         if (item.isPresent()) {
             return toSearchText(item.get());
         }
-        Optional<FluidStack> fluid = ingredient.getIngredient(ForgeTypes.FLUID_STACK);
+        Optional<FluidStack> fluid = ingredient.getIngredient(NeoForgeTypes.FLUID_STACK);
         if (fluid.isPresent()) {
             return toSearchText(fluid.get());
         }
@@ -195,7 +195,7 @@ public final class JeiMeInventoryTooltip {
         if (item.isPresent() && !item.get().isEmpty()) {
             return AEItemKey.of(item.get());
         }
-        Optional<FluidStack> fluid = ingredient.getIngredient(ForgeTypes.FLUID_STACK);
+        Optional<FluidStack> fluid = ingredient.getIngredient(NeoForgeTypes.FLUID_STACK);
         if (fluid.isPresent() && !fluid.get().isEmpty()) {
             return AEFluidKey.of(fluid.get());
         }

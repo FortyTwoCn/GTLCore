@@ -1,0 +1,5 @@
+{
+  "type": "ae2:crafting_unit_transform",
+  "upgraded_block": "gtlcore:1m_storage",
+  "upgrade_item": "gtlcore:cell_component_1m"
+}

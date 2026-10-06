@@ -1,0 +1,3013 @@
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/cloud_chamber.json b/src/generated/resources/data/mae2/advancement/recipes/misc/cloud_chamber.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/cloud_chamber.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/cloud_chamber.json
+index 50ad73b..8c036b9 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/cloud_chamber.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/cloud_chamber.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/16x_crafting_accelerator.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/16x_crafting_accelerator.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/16x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/16x_crafting_accelerator.json
+index 9f1b4b1..477b6ac 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/16x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/16x_crafting_accelerator.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/256x_crafting_accelerator.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/256x_crafting_accelerator.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/256x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/256x_crafting_accelerator.json
+index 5012282..97d108f 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/256x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/256x_crafting_accelerator.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/4x_crafting_accelerator.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/4x_crafting_accelerator.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/4x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/4x_crafting_accelerator.json
+index 17a6d4a..92c6c9f 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/4x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/4x_crafting_accelerator.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/64x_crafting_accelerator.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/64x_crafting_accelerator.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/64x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/64x_crafting_accelerator.json
+index a1502f0..5b43b42 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/crafting/64x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/crafting/64x_crafting_accelerator.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_fe.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_fe.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_fe.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_fe.json
+index ade8674..2a26b94 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_fe.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_fe.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_fluid.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_fluid.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_fluid.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_fluid.json
+index 2ae1c8e..0136fb3 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_fluid.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_fluid.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_item.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_item.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_item.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_item.json
+index a0af882..8151da9 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_item.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_item.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_pattern.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_pattern.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_pattern.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_pattern.json
+index 36d1958..377fd47 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_pattern.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_pattern.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_redstone.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_redstone.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_redstone.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_redstone.json
+index cb61df8..fa792a3 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_redstone.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_redstone.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_workaround.json b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_workaround.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_workaround.json
+rename to src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_workaround.json
+index 04669c2..8f00256 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/misc/network/parts/multi_p2p_tunnel_workaround.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/misc/network/parts/multi_p2p_tunnel_workaround.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/advancements/recipes/tools/faulty_card.json b/src/generated/resources/data/mae2/advancement/recipes/tools/faulty_card.json
+similarity index 99%
+rename from src/generated/resources/data/mae2/advancements/recipes/tools/faulty_card.json
+rename to src/generated/resources/data/mae2/advancement/recipes/tools/faulty_card.json
+index 1328bd4..88b7f95 100644
+--- a/src/generated/resources/data/mae2/advancements/recipes/tools/faulty_card.json
++++ b/src/generated/resources/data/mae2/advancement/recipes/tools/faulty_card.json
+@@ -32,4 +32,4 @@
+     ]
+   },
+   "sends_telemetry_event": false
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/cloud_chamber.json b/src/generated/resources/data/mae2/recipe/cloud_chamber.json
+similarity index 90%
+rename from src/generated/resources/data/mae2/recipes/cloud_chamber.json
+rename to src/generated/resources/data/mae2/recipe/cloud_chamber.json
+index 95211a1..232a8e2 100644
+--- a/src/generated/resources/data/mae2/recipes/cloud_chamber.json
++++ b/src/generated/resources/data/mae2/recipe/cloud_chamber.json
+@@ -16,7 +16,7 @@
+   ],
+   "result": {
+     "count": 8,
+-    "item": "mae2:cloud_chamber"
++    "id": "mae2:cloud_chamber"
+   },
+   "show_notification": true
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/faulty_card.json b/src/generated/resources/data/mae2/recipe/faulty_card.json
+similarity index 92%
+rename from src/generated/resources/data/mae2/recipes/faulty_card.json
+rename to src/generated/resources/data/mae2/recipe/faulty_card.json
+index 226d117..335e90d 100644
+--- a/src/generated/resources/data/mae2/recipes/faulty_card.json
++++ b/src/generated/resources/data/mae2/recipe/faulty_card.json
+@@ -20,7 +20,7 @@
+     "grg"
+   ],
+   "result": {
+-    "item": "mae2:faulty_card"
++    "id": "mae2:faulty_card"
+   },
+   "show_notification": true
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/crafting/16x_crafting_accelerator.json b/src/generated/resources/data/mae2/recipe/network/crafting/16x_crafting_accelerator.json
+similarity index 82%
+rename from src/generated/resources/data/mae2/recipes/network/crafting/16x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/recipe/network/crafting/16x_crafting_accelerator.json
+index 83836ac..2751d2e 100644
+--- a/src/generated/resources/data/mae2/recipes/network/crafting/16x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/recipe/network/crafting/16x_crafting_accelerator.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:16x_crafting_accelerator"
++    "id": "mae2:16x_crafting_accelerator"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/crafting/256x_crafting_accelerator.json b/src/generated/resources/data/mae2/recipe/network/crafting/256x_crafting_accelerator.json
+similarity index 82%
+rename from src/generated/resources/data/mae2/recipes/network/crafting/256x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/recipe/network/crafting/256x_crafting_accelerator.json
+index 08be1e2..3959cbc 100644
+--- a/src/generated/resources/data/mae2/recipes/network/crafting/256x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/recipe/network/crafting/256x_crafting_accelerator.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:256x_crafting_accelerator"
++    "id": "mae2:256x_crafting_accelerator"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/crafting/4x_crafting_accelerator.json b/src/generated/resources/data/mae2/recipe/network/crafting/4x_crafting_accelerator.json
+similarity index 82%
+rename from src/generated/resources/data/mae2/recipes/network/crafting/4x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/recipe/network/crafting/4x_crafting_accelerator.json
+index 2f4e6d8..b05ba77 100644
+--- a/src/generated/resources/data/mae2/recipes/network/crafting/4x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/recipe/network/crafting/4x_crafting_accelerator.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:4x_crafting_accelerator"
++    "id": "mae2:4x_crafting_accelerator"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/crafting/64x_crafting_accelerator.json b/src/generated/resources/data/mae2/recipe/network/crafting/64x_crafting_accelerator.json
+similarity index 82%
+rename from src/generated/resources/data/mae2/recipes/network/crafting/64x_crafting_accelerator.json
+rename to src/generated/resources/data/mae2/recipe/network/crafting/64x_crafting_accelerator.json
+index a353410..c9fb8c7 100644
+--- a/src/generated/resources/data/mae2/recipes/network/crafting/64x_crafting_accelerator.json
++++ b/src/generated/resources/data/mae2/recipe/network/crafting/64x_crafting_accelerator.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:64x_crafting_accelerator"
++    "id": "mae2:64x_crafting_accelerator"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_fe.json b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_fe.json
+similarity index 83%
+rename from src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_fe.json
+rename to src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_fe.json
+index 9a68c3b..d830bfd 100644
+--- a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_fe.json
++++ b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_fe.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:fe_multi_p2p_tunnel"
++    "id": "mae2:fe_multi_p2p_tunnel"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_fluid.json b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_fluid.json
+similarity index 83%
+rename from src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_fluid.json
+rename to src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_fluid.json
+index 7cac5de..83b1313 100644
+--- a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_fluid.json
++++ b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_fluid.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:fluid_multi_p2p_tunnel"
++    "id": "mae2:fluid_multi_p2p_tunnel"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_item.json b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_item.json
+similarity index 83%
+rename from src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_item.json
+rename to src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_item.json
+index acc3419..a014379 100644
+--- a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_item.json
++++ b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_item.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:item_multi_p2p_tunnel"
++    "id": "mae2:item_multi_p2p_tunnel"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_pattern.json b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_pattern.json
+similarity index 82%
+rename from src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_pattern.json
+rename to src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_pattern.json
+index 6981b9c..1f1d175 100644
+--- a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_pattern.json
++++ b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_pattern.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:pattern_multi_p2p_tunnel"
++    "id": "mae2:pattern_multi_p2p_tunnel"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_redstone.json b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_redstone.json
+similarity index 82%
+rename from src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_redstone.json
+rename to src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_redstone.json
+index 0e11522..0912c61 100644
+--- a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_redstone.json
++++ b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_redstone.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:redstone_multi_p2p_tunnel"
++    "id": "mae2:redstone_multi_p2p_tunnel"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_workaround.json b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_workaround.json
+similarity index 83%
+rename from src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_workaround.json
+rename to src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_workaround.json
+index e7ad0d7..6748821 100644
+--- a/src/generated/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_workaround.json
++++ b/src/generated/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_workaround.json
+@@ -10,6 +10,6 @@
+     }
+   ],
+   "result": {
+-    "item": "mae2:item_multi_p2p_tunnel"
++    "id": "mae2:item_multi_p2p_tunnel"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/mae2/tags/blocks/cloud_chambers.json b/src/generated/resources/data/mae2/tags/block/cloud_chambers.json
+similarity index 95%
+rename from src/generated/resources/data/mae2/tags/blocks/cloud_chambers.json
+rename to src/generated/resources/data/mae2/tags/block/cloud_chambers.json
+index b0409ee..124b9f1 100644
+--- a/src/generated/resources/data/mae2/tags/blocks/cloud_chambers.json
++++ b/src/generated/resources/data/mae2/tags/block/cloud_chambers.json
+@@ -2,4 +2,4 @@
+   "values": [
+     "mae2:cloud_chamber"
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/src/generated/resources/data/minecraft/tags/blocks/mineable/pickaxe.json b/src/generated/resources/data/minecraft/tags/block/mineable/pickaxe.json
+similarity index 98%
+rename from src/generated/resources/data/minecraft/tags/blocks/mineable/pickaxe.json
+rename to src/generated/resources/data/minecraft/tags/block/mineable/pickaxe.json
+index 802cc90..f7307d0 100644
+--- a/src/generated/resources/data/minecraft/tags/blocks/mineable/pickaxe.json
++++ b/src/generated/resources/data/minecraft/tags/block/mineable/pickaxe.json
+@@ -6,4 +6,4 @@
+     "mae2:64x_crafting_accelerator",
+     "mae2:256x_crafting_accelerator"
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/stone/mae2/MAE2.java b/src/main/java/stone/mae2/MAE2.java
+index 56bad79..f5a606a 100644
+--- a/src/main/java/stone/mae2/MAE2.java
++++ b/src/main/java/stone/mae2/MAE2.java
+@@ -23,13 +23,15 @@ import com.electronwill.nightconfig.core.file.FileNotFoundAction;
+ import com.electronwill.nightconfig.toml.TomlFormat;
+ import com.mojang.logging.LogUtils;
+ import net.minecraft.resources.ResourceLocation;
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.fml.DistExecutor;
+-import net.minecraftforge.fml.ModLoadingContext;
+-import net.minecraftforge.fml.common.Mod;
+-import net.minecraftforge.fml.config.ModConfig.Type;
+-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+-import net.minecraftforge.fml.loading.FMLPaths;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.fml.loading.FMLEnvironment;
++import net.neoforged.api.distmarker.Dist;
++import net.neoforged.fml.ModContainer;
++import net.neoforged.fml.ModLoadingContext;
++import net.neoforged.fml.common.Mod;
++import net.neoforged.fml.config.ModConfig.Type;
++
++import net.neoforged.fml.loading.FMLPaths;
+ import org.slf4j.Logger;
+ 
+ import stone.mae2.bootstrap.MAE2Config;
+@@ -46,27 +48,23 @@ public class MAE2 {
+ 
+     public static MAE2Config CONFIG;
+ 
+-    public MAE2() {
+-        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+-        ModLoadingContext.get().registerConfig(Type.CLIENT,
++    public MAE2(IEventBus bus, ModContainer container) {
++        container.registerConfig(Type.CLIENT,
+                                                MAE2Config.CLIENT);
+-        ModLoadingContext.get().registerConfig(Type.COMMON,
++        container.registerConfig(Type.COMMON,
+             MAE2Config.COMMON);
+ 
+-        // terrible, but forge doesn't want dynamic item registration for *some*
+-        // reason
+-        Path configPath = FMLPaths.CONFIGDIR.get().resolve("mae2-common.toml");
+-        CommentedConfig config = TomlFormat.instance().createParser()
+-            .parse(configPath, FileNotFoundAction.READ_NOTHING);
+-        MAE2Config.COMMON.acceptConfig(config);
+-        configPath = FMLPaths.CONFIGDIR.get().resolve("mae2-client.toml");
+-        config = TomlFormat.instance().createParser()
+-          .parse(configPath, FileNotFoundAction.READ_NOTHING);
+-        MAE2Config.CLIENT.acceptConfig(config);
++        // Registration depends on restart-scoped settings, so read them before blocks and parts are queued.
++        loadEarlyConfig(MAE2Config.COMMON, FMLPaths.CONFIGDIR.get().resolve("mae2-common.toml"));
++        loadEarlyConfig(MAE2Config.CLIENT, FMLPaths.CONFIGDIR.get().resolve("mae2-client.toml"));
+         MAE2Config.onLoad();
++        (FMLEnvironment.dist == Dist.CLIENT ? Proxy.client() : Proxy.server()).init(bus);
++    }
+ 
+-        DistExecutor.safeRunForDist(() -> Proxy::client,
+-                                    () -> Proxy::server).init(bus);
++    private static void loadEarlyConfig(net.neoforged.neoforge.common.ModConfigSpec spec, Path path) {
++        CommentedConfig config = TomlFormat.instance().createParser().parse(path, FileNotFoundAction.READ_NOTHING);
++        spec.correct(config);
++        MAE2Config.setEarlyConfig(spec, config);
+     }
+ 
+     public static ResourceLocation toKey(String path) {
+diff --git a/src/main/java/stone/mae2/api/Tickable.java b/src/main/java/stone/mae2/api/Tickable.java
+index 38baf2e..8303d53 100644
+--- a/src/main/java/stone/mae2/api/Tickable.java
++++ b/src/main/java/stone/mae2/api/Tickable.java
+@@ -13,8 +13,7 @@ public interface Tickable {
+ 
+   public static TickingRequest toTickingRequest(TickRate rate,
+     boolean isSleeping, boolean canBeAlerted) {
+-    return new TickingRequest(rate.minRate(), rate.maxRate(), isSleeping,
+-      canBeAlerted);
++    return new TickingRequest(rate.minRate(), rate.maxRate(), isSleeping);
+   }
+ 
+   public static class TickingEntry implements Comparable<TickingEntry> {
+diff --git a/src/main/java/stone/mae2/api/client/trails/BackgroundTrail.java b/src/main/java/stone/mae2/api/client/trails/BackgroundTrail.java
+index 4a0ccab..73954dd 100644
+--- a/src/main/java/stone/mae2/api/client/trails/BackgroundTrail.java
++++ b/src/main/java/stone/mae2/api/client/trails/BackgroundTrail.java
+@@ -11,4 +11,4 @@ public interface BackgroundTrail extends Trail {
+    * background.
+    */
+   double getStddevChance();
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/stone/mae2/api/client/trails/Trail.java b/src/main/java/stone/mae2/api/client/trails/Trail.java
+index 16ed959..1fbb7b8 100644
+--- a/src/main/java/stone/mae2/api/client/trails/Trail.java
++++ b/src/main/java/stone/mae2/api/client/trails/Trail.java
+@@ -27,4 +27,4 @@ public interface Trail {
+    * The particle to default to if the cloud chamber doesn't give one
+    */
+   ParticleOptions getParticle();
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/stone/mae2/block/crafting/DynamicCraftingBlockItem.java b/src/main/java/stone/mae2/block/crafting/DynamicCraftingBlockItem.java
+index a5436b4..4185f49 100644
+--- a/src/main/java/stone/mae2/block/crafting/DynamicCraftingBlockItem.java
++++ b/src/main/java/stone/mae2/block/crafting/DynamicCraftingBlockItem.java
+@@ -33,20 +33,21 @@ import java.util.function.Supplier;
+ 
+ public class DynamicCraftingBlockItem extends CraftingBlockItem {
+ 
+-    private Supplier<ItemLike> disassemblyCasing;
++    private final Supplier<ItemLike> disassemblyCasing;
++    private final Supplier<ItemLike> disassemblyExtra;
+ 
+     public DynamicCraftingBlockItem(Block id, Properties props,
+         Supplier<ItemLike> disassemblyCasing,
+         Supplier<ItemLike> disassemblyExtra) {
+-        super(id, props, disassemblyExtra);
++        super(id, props);
++        this.disassemblyExtra = disassemblyExtra;
+         this.disassemblyCasing = disassemblyCasing;
+     }
+ 
+     @Override
+     public InteractionResultHolder<ItemStack> use(Level level, Player player,
+         InteractionHand hand) {
+-        if (AEConfig.instance().isDisassemblyCraftingEnabled()
+-            && InteractionUtil.isInAlternateUseMode(player))
++        if (!level.isClientSide() && InteractionUtil.isInAlternateUseMode(player))
+         {
+             int itemCount = player.getItemInHand(hand).getCount();
+             player.setItemInHand(hand, ItemStack.EMPTY);
+diff --git a/src/main/java/stone/mae2/bootstrap/ClientProxy.java b/src/main/java/stone/mae2/bootstrap/ClientProxy.java
+index 330b068..ddbfec8 100644
+--- a/src/main/java/stone/mae2/bootstrap/ClientProxy.java
++++ b/src/main/java/stone/mae2/bootstrap/ClientProxy.java
+@@ -9,12 +9,12 @@ import net.minecraft.core.registries.Registries;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.world.item.CreativeModeTab;
+ import net.minecraft.world.item.ItemStack;
+-import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+-import net.minecraftforge.common.MinecraftForge;
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+-import net.minecraftforge.registries.DeferredRegister;
+-import net.minecraftforge.registries.RegistryObject;
++import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
++import net.neoforged.neoforge.common.NeoForge;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
++import net.neoforged.neoforge.registries.DeferredRegister;
++import net.neoforged.neoforge.registries.DeferredHolder;
+ import stone.mae2.MAE2;
+ import stone.mae2.block.crafting.DynamicCraftingUnitType;
+ import stone.mae2.client.render.crafting.DynamicCraftingCubeModelProvider;
+@@ -28,7 +28,7 @@ import stone.mae2.parts.p2p.multi.MultiP2PTunnel;
+ public class ClientProxy implements Proxy {
+   private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister
+     .create(Registries.CREATIVE_MODE_TAB, MAE2.MODID);
+-  public static RegistryObject<CreativeModeTab> CREATIVE_TAB;
++  public static DeferredHolder<CreativeModeTab, CreativeModeTab> CREATIVE_TAB;
+ 
+   public void init(IEventBus bus) {
+     new ServerProxy().init(bus);
+@@ -80,7 +80,7 @@ public class ClientProxy implements Proxy {
+                     MAE2Items.FAULTY_MEMORY_CARD.get());
+       });
+ 
+-    MinecraftForge.EVENT_BUS.addListener(UberMode::onRenderLevel);
++    NeoForge.EVENT_BUS.addListener(UberMode::onRenderLevel);
+ 
+     bus.addListener((FMLClientSetupEvent event) -> {
+         event.enqueueWork(() -> {
+diff --git a/src/main/java/stone/mae2/bootstrap/MAE2BlockEntities.java b/src/main/java/stone/mae2/bootstrap/MAE2BlockEntities.java
+index 9e83471..64ebbd6 100644
+--- a/src/main/java/stone/mae2/bootstrap/MAE2BlockEntities.java
++++ b/src/main/java/stone/mae2/bootstrap/MAE2BlockEntities.java
+@@ -25,9 +25,9 @@ import net.minecraft.core.BlockPos;
+ import net.minecraft.world.level.block.entity.BlockEntityTicker;
+ import net.minecraft.world.level.block.entity.BlockEntityType;
+ import net.minecraft.world.level.block.state.BlockState;
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.registries.ForgeRegistries;
+-import net.minecraftforge.registries.RegisterEvent;
++import net.neoforged.bus.api.IEventBus;
++import net.minecraft.core.registries.Registries;
++import net.neoforged.neoforge.registries.RegisterEvent;
+ 
+ public abstract class MAE2BlockEntities {
+ 
+@@ -36,7 +36,7 @@ public abstract class MAE2BlockEntities {
+     public static void init(IEventBus bus) {
+         bus.addListener((RegisterEvent event) ->
+         {
+-            event.register(ForgeRegistries.Keys.BLOCK_ENTITY_TYPES, helper ->
++            event.register(Registries.BLOCK_ENTITY_TYPE, helper ->
+             {
+                 DENSE_ACCELERATOR = BlockEntityType.Builder
+                     .of((BlockPos pos,
+@@ -44,7 +44,7 @@ public abstract class MAE2BlockEntities {
+                         MAE2Blocks.ACCELERATOR_4x.get(), MAE2Blocks.ACCELERATOR_16x.get(),
+                         MAE2Blocks.ACCELERATOR_64x.get(), MAE2Blocks.ACCELERATOR_256x.get())
+                     .build(null);
+-                helper.register("dense_accelerator", DENSE_ACCELERATOR);
++                helper.register(stone.mae2.MAE2.toKey("dense_accelerator"), DENSE_ACCELERATOR);
+ 
+                 BlockEntityTicker<CraftingBlockEntity> serverTicker = null;
+                 if (ServerTickingBlockEntity.class.isAssignableFrom(CraftingBlockEntity.class))
+diff --git a/src/main/java/stone/mae2/bootstrap/MAE2Blocks.java b/src/main/java/stone/mae2/bootstrap/MAE2Blocks.java
+index aebbba6..680d7da 100644
+--- a/src/main/java/stone/mae2/bootstrap/MAE2Blocks.java
++++ b/src/main/java/stone/mae2/bootstrap/MAE2Blocks.java
+@@ -25,10 +25,10 @@ import net.minecraft.world.item.BlockItem;
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.level.block.Block;
+ import net.minecraft.world.level.block.entity.BlockEntityType;
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.registries.DeferredRegister;
+-import net.minecraftforge.registries.ForgeRegistries;
+-import net.minecraftforge.registries.RegistryObject;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.neoforge.registries.DeferredRegister;
++import net.minecraft.core.registries.Registries;
++import net.neoforged.neoforge.registries.DeferredHolder;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.block.CloudChamberBlock;
+@@ -37,16 +37,16 @@ import stone.mae2.block.crafting.DynamicCraftingUnitType;
+ 
+ public abstract class MAE2Blocks {
+   static final DeferredRegister<Block> BLOCKS = DeferredRegister
+-    .create(ForgeRegistries.BLOCKS, MAE2.MODID);
++    .create(Registries.BLOCK, MAE2.MODID);
+   static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister
+-    .create(ForgeRegistries.BLOCK_ENTITY_TYPES, MAE2.MODID);
++    .create(Registries.BLOCK_ENTITY_TYPE, MAE2.MODID);
+ 
+-  public static RegistryObject<CraftingUnitBlock> ACCELERATOR_4x;
+-  public static RegistryObject<CraftingUnitBlock> ACCELERATOR_16x;
+-  public static RegistryObject<CraftingUnitBlock> ACCELERATOR_64x;
+-  public static RegistryObject<CraftingUnitBlock> ACCELERATOR_256x;
++  public static DeferredHolder<Block, CraftingUnitBlock> ACCELERATOR_4x;
++  public static DeferredHolder<Block, CraftingUnitBlock> ACCELERATOR_16x;
++  public static DeferredHolder<Block, CraftingUnitBlock> ACCELERATOR_64x;
++  public static DeferredHolder<Block, CraftingUnitBlock> ACCELERATOR_256x;
+ 
+-  public static RegistryObject<CloudChamberBlock> CLOUD_CHAMBER;
++  public static DeferredHolder<Block, CloudChamberBlock> CLOUD_CHAMBER;
+ 
+   public static void init(IEventBus bus) {
+     BLOCKS.register(bus);
+@@ -97,7 +97,7 @@ public abstract class MAE2Blocks {
+           new Item.Properties(), () -> AEBlocks.CRAFTING_ACCELERATOR.asItem(),
+           () -> AEItems.CELL_COMPONENT_256K.asItem()));
+ 
+-    CLOUD_CHAMBER = BLOCKS.register("cloud_chamber", CloudChamberBlock::new);
++    CLOUD_CHAMBER = BLOCKS.register("cloud_chamber", () -> new CloudChamberBlock());
+     MAE2Items.CLOUD_CHAMBER = MAE2Items.ITEMS
+       .register("cloud_chamber",
+         () -> new BlockItem(CLOUD_CHAMBER.get(), new Item.Properties()));
+diff --git a/src/main/java/stone/mae2/bootstrap/MAE2Config.java b/src/main/java/stone/mae2/bootstrap/MAE2Config.java
+index 245c384..7e6494e 100644
+--- a/src/main/java/stone/mae2/bootstrap/MAE2Config.java
++++ b/src/main/java/stone/mae2/bootstrap/MAE2Config.java
+@@ -18,11 +18,11 @@
+  */
+ package stone.mae2.bootstrap;
+ 
+-import net.minecraftforge.common.ForgeConfigSpec;
+-import net.minecraftforge.eventbus.api.SubscribeEvent;
+-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+-import net.minecraftforge.fml.config.IConfigSpec;
+-import net.minecraftforge.fml.event.config.ModConfigEvent;
++import net.neoforged.neoforge.common.ModConfigSpec;
++import net.neoforged.bus.api.SubscribeEvent;
++import net.neoforged.fml.common.EventBusSubscriber;
++import net.neoforged.fml.config.IConfigSpec;
++import net.neoforged.fml.event.config.ModConfigEvent;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.bootstrap.MAE2Config.TickRates.TickRate;
+@@ -45,16 +45,16 @@ public record MAE2Config(Client client, Parts parts, Faulty faulty) {
+     MAE2.CONFIG =
+       new MAE2Config
+       (new Client
+-       (CLOUD_CHAMBER_FACTOR.get()),
++       (value(CLOUD_CHAMBER_FACTOR)),
+        new Parts
+-       (EU_P2P.get(),
+-        EU_P2P_NERF.get(),
+-        EU_P2P_NERF_FACTOR.get(),
++       (value(EU_P2P),
++        value(EU_P2P_NERF),
++        value(EU_P2P_NERF_FACTOR),
+         new TickRates
+-        (new TickRate(FE_MIN_RATE.get(), FE_MAX_RATE.get()),
+-         new TickRate(EU_MIN_RATE.get(), EU_MAX_RATE.get()),
+-         new TickRate(PATTERN_MIN_RATE.get(), PATTERN_MAX_RATE.get()))),
+-       new Faulty(UBER_MAX_VOLUME.get()));
++        (new TickRate(value(FE_MIN_RATE), value(FE_MAX_RATE)),
++         new TickRate(value(EU_MIN_RATE), value(EU_MAX_RATE)),
++         new TickRate(value(PATTERN_MIN_RATE), value(PATTERN_MAX_RATE)))),
++       new Faulty(value(UBER_MAX_VOLUME)));
+   }
+ 
+   // load in things that require a restart here (ie item registation or p2p
+@@ -81,32 +81,50 @@ public record MAE2Config(Client client, Parts parts, Faulty faulty) {
+   public record Faulty(int maxUberVolume) {}
+ 
+   // client
+-  private static final ForgeConfigSpec.DoubleValue CLOUD_CHAMBER_FACTOR;
++  private static final ModConfigSpec.DoubleValue CLOUD_CHAMBER_FACTOR;
+ 
+   // parts
+-  private static final ForgeConfigSpec.BooleanValue EU_P2P;
+-  private static final ForgeConfigSpec.BooleanValue EU_P2P_NERF;
+-  private static final ForgeConfigSpec.DoubleValue EU_P2P_NERF_FACTOR;
++  private static final ModConfigSpec.BooleanValue EU_P2P;
++  private static final ModConfigSpec.BooleanValue EU_P2P_NERF;
++  private static final ModConfigSpec.DoubleValue EU_P2P_NERF_FACTOR;
+ 
+   // tick rates
+-  private static final ForgeConfigSpec.IntValue FE_MIN_RATE;
+-  private static final ForgeConfigSpec.IntValue FE_MAX_RATE;
++  private static final ModConfigSpec.IntValue FE_MIN_RATE;
++  private static final ModConfigSpec.IntValue FE_MAX_RATE;
+ 
+-  private static final ForgeConfigSpec.IntValue EU_MIN_RATE;
+-  private static final ForgeConfigSpec.IntValue EU_MAX_RATE;
++  private static final ModConfigSpec.IntValue EU_MIN_RATE;
++  private static final ModConfigSpec.IntValue EU_MAX_RATE;
+ 
+-  private static final ForgeConfigSpec.IntValue PATTERN_MIN_RATE;
+-  private static final ForgeConfigSpec.IntValue PATTERN_MAX_RATE;
++  private static final ModConfigSpec.IntValue PATTERN_MIN_RATE;
++  private static final ModConfigSpec.IntValue PATTERN_MAX_RATE;
+ 
+   // faulty card modes
+-  private static final ForgeConfigSpec.IntValue UBER_MAX_VOLUME;
++  private static final ModConfigSpec.IntValue UBER_MAX_VOLUME;
+ 
+-  public static final IConfigSpec<?> CLIENT;
+-  public static final IConfigSpec<?> COMMON;
++  public static final ModConfigSpec CLIENT;
++  public static final ModConfigSpec COMMON;
++
++
++  private static com.electronwill.nightconfig.core.CommentedConfig earlyClient;
++  private static com.electronwill.nightconfig.core.CommentedConfig earlyCommon;
++
++  public static void setEarlyConfig(ModConfigSpec spec, com.electronwill.nightconfig.core.CommentedConfig config) {
++    if (spec == CLIENT) earlyClient = config;
++    else if (spec == COMMON) earlyCommon = config;
++    else throw new IllegalArgumentException("Unknown MAE2 configuration specification");
++  }
++
++  private static <T> T value(ModConfigSpec.ConfigValue<T> value) {
++    boolean client = (Object) CLIENT.getValues().get(value.getPath()) == value;
++    ModConfigSpec spec = client ? CLIENT : COMMON;
++    if (spec.isLoaded()) return value.get();
++    var config = client ? earlyClient : earlyCommon;
++    return config == null ? value.getDefault() : value.getRaw(config, value.getPath(), value::getDefault);
++  }
+ 
+   static {
+-    ForgeConfigSpec.Builder client = new ForgeConfigSpec.Builder();
+-    ForgeConfigSpec.Builder common = new ForgeConfigSpec.Builder();
++    ModConfigSpec.Builder client = new ModConfigSpec.Builder();
++    ModConfigSpec.Builder common = new ModConfigSpec.Builder();
+ 
+     client.push("Visual");
+     CLOUD_CHAMBER_FACTOR = client
+diff --git a/src/main/java/stone/mae2/bootstrap/MAE2Items.java b/src/main/java/stone/mae2/bootstrap/MAE2Items.java
+index 34daecb..66b84ef 100644
+--- a/src/main/java/stone/mae2/bootstrap/MAE2Items.java
++++ b/src/main/java/stone/mae2/bootstrap/MAE2Items.java
+@@ -26,11 +26,11 @@ import appeng.items.parts.PartModelsHelper;
+ import net.minecraft.Util;
+ import net.minecraft.world.item.BlockItem;
+ import net.minecraft.world.item.Item;
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+-import net.minecraftforge.registries.DeferredRegister;
+-import net.minecraftforge.registries.ForgeRegistries;
+-import net.minecraftforge.registries.RegistryObject;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
++import net.neoforged.neoforge.registries.DeferredRegister;
++import net.minecraft.core.registries.Registries;
++import net.neoforged.neoforge.registries.DeferredHolder;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.item.faulty.FaultyMemoryCardItem;
+@@ -44,24 +44,24 @@ import stone.mae2.parts.p2p.multi.RedstoneMultiP2PTunnel;
+ public abstract class MAE2Items {
+ 
+   public static final DeferredRegister<Item> ITEMS = DeferredRegister
+-    .create(ForgeRegistries.ITEMS, MAE2.MODID);
++    .create(Registries.ITEM, MAE2.MODID);
+ 
+-  public static RegistryObject<PartItem<PatternP2PTunnelPart>> PATTERN_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<PatternP2PTunnelPart>> PATTERN_P2P_TUNNEL;
+ 
+-  public static RegistryObject<PartItem<PatternMultiP2PTunnel.Part>> PATTERN_MULTI_P2P_TUNNEL;
+-  public static RegistryObject<PartItem<RedstoneMultiP2PTunnel.Part>> REDSTONE_MULTI_P2P_TUNNEL;
+-  public static RegistryObject<PartItem<FEMultiP2PTunnel.Part>> FE_MULTI_P2P_TUNNEL;
+-  public static RegistryObject<PartItem<FluidMultiP2PTunnel.Part>> FLUID_MULTI_P2P_TUNNEL;
+-  public static RegistryObject<PartItem<ItemMultiP2PTunnel.Part>> ITEM_MULTI_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<PatternMultiP2PTunnel.Part>> PATTERN_MULTI_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<RedstoneMultiP2PTunnel.Part>> REDSTONE_MULTI_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<FEMultiP2PTunnel.Part>> FE_MULTI_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<FluidMultiP2PTunnel.Part>> FLUID_MULTI_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<ItemMultiP2PTunnel.Part>> ITEM_MULTI_P2P_TUNNEL;
+ 
+-  public static RegistryObject<CraftingBlockItem> ACCELERATOR_4x;
+-  public static RegistryObject<CraftingBlockItem> ACCELERATOR_16x;
+-  public static RegistryObject<CraftingBlockItem> ACCELERATOR_64x;
+-  public static RegistryObject<CraftingBlockItem> ACCELERATOR_256x;
++  public static DeferredHolder<Item, CraftingBlockItem> ACCELERATOR_4x;
++  public static DeferredHolder<Item, CraftingBlockItem> ACCELERATOR_16x;
++  public static DeferredHolder<Item, CraftingBlockItem> ACCELERATOR_64x;
++  public static DeferredHolder<Item, CraftingBlockItem> ACCELERATOR_256x;
+ 
+-  public static RegistryObject<BlockItem> CLOUD_CHAMBER;
++  public static DeferredHolder<Item, BlockItem> CLOUD_CHAMBER;
+ 
+-  public static RegistryObject<FaultyMemoryCardItem> FAULTY_MEMORY_CARD;
++  public static DeferredHolder<Item, FaultyMemoryCardItem> FAULTY_MEMORY_CARD;
+ 
+   public static void init(IEventBus bus) {
+     register();
+diff --git a/src/main/java/stone/mae2/bootstrap/MAE2Tags.java b/src/main/java/stone/mae2/bootstrap/MAE2Tags.java
+index 82f4d8b..493d001 100644
+--- a/src/main/java/stone/mae2/bootstrap/MAE2Tags.java
++++ b/src/main/java/stone/mae2/bootstrap/MAE2Tags.java
+@@ -3,7 +3,7 @@ package stone.mae2.bootstrap;
+ import net.minecraft.tags.BlockTags;
+ import net.minecraft.tags.TagKey;
+ import net.minecraft.world.level.block.Block;
+-import net.minecraftforge.eventbus.api.IEventBus;
++import net.neoforged.bus.api.IEventBus;
+ 
+ import stone.mae2.MAE2;
+ 
+diff --git a/src/main/java/stone/mae2/bootstrap/Proxy.java b/src/main/java/stone/mae2/bootstrap/Proxy.java
+index 9cad3b3..ed908d0 100644
+--- a/src/main/java/stone/mae2/bootstrap/Proxy.java
++++ b/src/main/java/stone/mae2/bootstrap/Proxy.java
+@@ -18,8 +18,8 @@
+  */
+ package stone.mae2.bootstrap;
+ 
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.fml.DistExecutor.SafeSupplier;
++import net.neoforged.bus.api.IEventBus;
++
+ 
+ public interface Proxy {
+   public void init(IEventBus bus);
+diff --git a/src/main/java/stone/mae2/bootstrap/ServerProxy.java b/src/main/java/stone/mae2/bootstrap/ServerProxy.java
+index 849b07d..4113c6a 100644
+--- a/src/main/java/stone/mae2/bootstrap/ServerProxy.java
++++ b/src/main/java/stone/mae2/bootstrap/ServerProxy.java
+@@ -5,11 +5,11 @@ import appeng.api.networking.GridServices;
+ import net.minecraft.data.DataGenerator;
+ import net.minecraft.data.DataProvider.Factory;
+ import net.minecraft.data.tags.TagsProvider;
+-import net.minecraftforge.common.data.BlockTagsProvider;
+-import net.minecraftforge.data.event.GatherDataEvent;
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.fml.ModList;
+-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
++import net.neoforged.neoforge.common.data.BlockTagsProvider;
++import net.neoforged.neoforge.data.event.GatherDataEvent;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.fml.ModList;
++import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+ import stone.mae2.api.features.MultiP2PTunnelAttunement;
+ import stone.mae2.core.datagen.MAE2BlockTagsProvider;
+ import stone.mae2.core.datagen.MAE2RecipeProvider;
+@@ -20,6 +20,7 @@ import stone.mae2.parts.p2p.multi.MultiP2PTunnel;
+ 
+ public class ServerProxy implements Proxy {
+   public void init(IEventBus bus) {
++    bus.addListener(stone.mae2.parts.p2p.NativePartCapabilities::register);
+     MAE2Blocks.init(bus);
+     MAE2Items.init(bus);
+     MAE2Tags.init(bus);
+@@ -37,7 +38,7 @@ public class ServerProxy implements Proxy {
+         DataGenerator gen = event.getGenerator();
+         DataGenerator.PackGenerator pack = gen.getVanillaPack(true);
+ 
+-        pack.addProvider(MAE2RecipeProvider::new);
++        pack.addProvider(output -> new MAE2RecipeProvider(output, event.getLookupProvider()));
+ 
+         gen.addProvider(event.includeServer(), (Factory<TagsProvider>) ((output) -> new MAE2BlockTagsProvider(output, event.getLookupProvider(), event.getExistingFileHelper())));
+       });
+diff --git a/src/main/java/stone/mae2/client/render/crafting/DynamicCraftingCubeModelProvider.java b/src/main/java/stone/mae2/client/render/crafting/DynamicCraftingCubeModelProvider.java
+index 203d539..293bb76 100644
+--- a/src/main/java/stone/mae2/client/render/crafting/DynamicCraftingCubeModelProvider.java
++++ b/src/main/java/stone/mae2/client/render/crafting/DynamicCraftingCubeModelProvider.java
+@@ -28,8 +28,8 @@ import net.minecraft.client.resources.model.Material;
+ import net.minecraft.resources.ResourceLocation;
+ import net.minecraft.util.RandomSource;
+ import net.minecraft.world.level.block.state.BlockState;
+-import net.minecraftforge.client.ChunkRenderTypeSet;
+-import net.minecraftforge.client.model.data.ModelData;
++import net.neoforged.neoforge.client.ChunkRenderTypeSet;
++import net.neoforged.neoforge.client.model.data.ModelData;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.block.crafting.DynamicCraftingUnitType;
+@@ -97,7 +97,7 @@ public class DynamicCraftingCubeModelProvider
+ 
+     private static Material texture(String namespace, String name) {
+         var mat = new Material(TextureAtlas.LOCATION_BLOCKS,
+-            new ResourceLocation(namespace, "block/crafting/" + name));
++            ResourceLocation.fromNamespaceAndPath(namespace, "block/crafting/" + name));
+         MATERIALS.add(mat);
+         return mat;
+     }
+diff --git a/src/main/java/stone/mae2/client/render/model/FaultyCardBakedModel.java b/src/main/java/stone/mae2/client/render/model/FaultyCardBakedModel.java
+index 273cdee..c485df7 100644
+--- a/src/main/java/stone/mae2/client/render/model/FaultyCardBakedModel.java
++++ b/src/main/java/stone/mae2/client/render/model/FaultyCardBakedModel.java
+@@ -42,7 +42,7 @@ import net.minecraft.world.entity.LivingEntity;
+ import net.minecraft.world.item.ItemDisplayContext;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.level.block.state.BlockState;
+-import net.minecraftforge.client.model.data.ModelData;
++import net.neoforged.neoforge.client.model.data.ModelData;
+ 
+ import appeng.api.implementations.items.IMemoryCard;
+ import appeng.api.util.AEColor;
+@@ -154,7 +154,12 @@ class FaultyCardBakedModel implements BakedModel {
+                     LivingEntity entity, int seed) {
+                 try {
+                     if (stack.getItem() instanceof IMemoryCard memoryCard) {
+-                        final AEColor[] colors = memoryCard.getColorCode(stack);
++                        var code = stack.get(appeng.api.ids.AEComponents.MEMORY_CARD_COLORS);
++                        final AEColor[] colors = code == null ? new AEColor[] {
++                            AEColor.TRANSPARENT, AEColor.TRANSPARENT, AEColor.TRANSPARENT, AEColor.TRANSPARENT,
++                            AEColor.TRANSPARENT, AEColor.TRANSPARENT, AEColor.TRANSPARENT, AEColor.TRANSPARENT
++                        } : new AEColor[] { code.top1(), code.top2(), code.top3(), code.top4(),
++                            code.bottom1(), code.bottom2(), code.bottom3(), code.bottom4() };
+ 
+                         return FaultyCardBakedModel.this.modelCache.get(new CacheKey(colors),
+                                 () -> new FaultyCardBakedModel(FaultyCardBakedModel.this.baseModel,
+diff --git a/src/main/java/stone/mae2/client/render/model/FaultyCardModel.java b/src/main/java/stone/mae2/client/render/model/FaultyCardModel.java
+index fed489f..29db9df 100644
+--- a/src/main/java/stone/mae2/client/render/model/FaultyCardModel.java
++++ b/src/main/java/stone/mae2/client/render/model/FaultyCardModel.java
+@@ -55,7 +55,7 @@ public class FaultyCardModel implements BasicUnbakedModel {
+     @Nullable
+     @Override
+     public BakedModel bake(ModelBaker loader, Function<Material, TextureAtlasSprite> textureGetter,
+-            ModelState rotationContainer, ResourceLocation modelId) {
++            ModelState rotationContainer) {
+         TextureAtlasSprite texture = textureGetter.apply(TEXTURE);
+ 
+         BakedModel baseModel = loader.bake(MODEL_BASE, rotationContainer);
+diff --git a/src/main/java/stone/mae2/core/datagen/MAE2BlockTagsProvider.java b/src/main/java/stone/mae2/core/datagen/MAE2BlockTagsProvider.java
+index 03eed73..f8c1087 100644
+--- a/src/main/java/stone/mae2/core/datagen/MAE2BlockTagsProvider.java
++++ b/src/main/java/stone/mae2/core/datagen/MAE2BlockTagsProvider.java
+@@ -17,8 +17,8 @@ import net.minecraft.resources.ResourceKey;
+ import net.minecraft.tags.BlockTags;
+ import net.minecraft.tags.TagKey;
+ import net.minecraft.world.level.block.Block;
+-import net.minecraftforge.common.data.BlockTagsProvider;
+-import net.minecraftforge.common.data.ExistingFileHelper;
++import net.neoforged.neoforge.common.data.BlockTagsProvider;
++import net.neoforged.neoforge.common.data.ExistingFileHelper;
+ import stone.mae2.MAE2;
+ import stone.mae2.bootstrap.MAE2Blocks;
+ import stone.mae2.bootstrap.MAE2Tags;
+diff --git a/src/main/java/stone/mae2/core/datagen/MAE2RecipeProvider.java b/src/main/java/stone/mae2/core/datagen/MAE2RecipeProvider.java
+index b9ac224..2cf5040 100644
+--- a/src/main/java/stone/mae2/core/datagen/MAE2RecipeProvider.java
++++ b/src/main/java/stone/mae2/core/datagen/MAE2RecipeProvider.java
+@@ -22,7 +22,7 @@ import appeng.core.definitions.AEBlocks;
+ import appeng.core.definitions.AEItems;
+ import appeng.core.definitions.AEParts;
+ import net.minecraft.data.PackOutput;
+-import net.minecraft.data.recipes.FinishedRecipe;
++import net.minecraft.data.recipes.RecipeOutput;
+ import net.minecraft.data.recipes.RecipeCategory;
+ import net.minecraft.data.recipes.RecipeProvider;
+ import net.minecraft.data.recipes.ShapedRecipeBuilder;
+@@ -39,10 +39,10 @@ import java.util.function.Consumer;
+ 
+ public class MAE2RecipeProvider extends RecipeProvider {
+ 
+-  public MAE2RecipeProvider(PackOutput output) { super(output); }
++  public MAE2RecipeProvider(PackOutput output, java.util.concurrent.CompletableFuture<net.minecraft.core.HolderLookup.Provider> registries) { super(output, registries); }
+ 
+   @Override
+-  protected void buildRecipes(Consumer<FinishedRecipe> consumer) {
++  protected void buildRecipes(RecipeOutput consumer) {
+     buildAcceleratorRecipe(consumer, MAE2Items.ACCELERATOR_4x.get(),
+       AEItems.CELL_COMPONENT_4K, "network/crafting/4x_crafting_accelerator");
+     buildAcceleratorRecipe(consumer, MAE2Items.ACCELERATOR_16x.get(),
+@@ -96,7 +96,7 @@ public class MAE2RecipeProvider extends RecipeProvider {
+       .save(consumer);
+   }
+ 
+-  public static void buildAcceleratorRecipe(Consumer<FinishedRecipe> consumer,
++  public static void buildAcceleratorRecipe(RecipeOutput consumer,
+     ItemLike output, ItemLike component, String id) {
+     ShapelessRecipeBuilder
+       .shapeless(RecipeCategory.MISC, output)
+@@ -106,7 +106,7 @@ public class MAE2RecipeProvider extends RecipeProvider {
+       .save(consumer, MAE2.toKey(id));
+   }
+ 
+-  public static void buildMultiP2PRecipe(Consumer<FinishedRecipe> consumer,
++  public static void buildMultiP2PRecipe(RecipeOutput consumer,
+     ItemLike multi, ItemLike single, ResourceLocation id) {
+     ShapelessRecipeBuilder
+       .shapeless(RecipeCategory.MISC, multi)
+diff --git a/src/main/java/stone/mae2/gametests/PatternP2P.java b/src/main/java/stone/mae2/gametests/PatternP2P.java
+index c976e75..f6eae1c 100644
+--- a/src/main/java/stone/mae2/gametests/PatternP2P.java
++++ b/src/main/java/stone/mae2/gametests/PatternP2P.java
+@@ -6,8 +6,8 @@ import net.minecraft.gametest.framework.GameTest;
+ import net.minecraft.gametest.framework.GameTestHelper;
+ import net.minecraft.world.item.Items;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+-import net.minecraftforge.gametest.GameTestHolder;
++import net.neoforged.neoforge.capabilities.Capabilities;
++import net.neoforged.neoforge.gametest.GameTestHolder;
+ 
+ import stone.mae2.MAE2;
+ 
+@@ -21,13 +21,15 @@ public class PatternP2P {
+     helper.succeedWhen(() -> {
+         // no I don't know why assertContainerContains doesn't work
+         BlockEntity barrel = helper.getBlockEntity(new BlockPos(1, 2, 0));
+-        barrel
+-          .getCapability(ForgeCapabilities.ITEM_HANDLER)
+-          .ifPresent(handler -> {
++        {
++          var handler = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, barrel.getBlockPos(), null);
++          helper.assertTrue(handler != null, "Barrel item capability missing");
++          
+               helper
+                 .assertTrue(handler.getStackInSlot(0).is(Items.LADDER),
+                             "Failed to craft");
+-            });
++            
++        }
+       });
+   }
+   
+@@ -56,11 +58,13 @@ public class PatternP2P {
+     helper.setBlock(1, 1, 0, AEBlocks.CREATIVE_ENERGY_CELL.block());
+     BlockEntity barrel = helper.getBlockEntity(new BlockPos(0, 2, 1));
+     helper.failIfEver(() -> {
+-        barrel
+-          .getCapability(ForgeCapabilities.ITEM_HANDLER)
+-          .ifPresent(handler -> {
++        {
++          var handler = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, barrel.getBlockPos(), null);
++          helper.assertTrue(handler != null, "Barrel item capability missing");
++          
+               helper.assertTrue(handler.getStackInSlot(0).isEmpty(), "\"All Blocking Mode\" was not respected");
+-            });
++            
++        }
+       });
+     helper.runAtTickTime(100, helper::succeed);
+   }
+diff --git a/src/main/java/stone/mae2/gametests/RedstoneP2P.java b/src/main/java/stone/mae2/gametests/RedstoneP2P.java
+index 94881bf..ee1ac9c 100644
+--- a/src/main/java/stone/mae2/gametests/RedstoneP2P.java
++++ b/src/main/java/stone/mae2/gametests/RedstoneP2P.java
+@@ -9,7 +9,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
+ import net.minecraft.world.level.block.Blocks;
+ import net.minecraft.world.level.block.RedstoneLampBlock;
+ import net.minecraft.world.level.block.state.BlockState;
+-import net.minecraftforge.gametest.GameTestHolder;
++import net.neoforged.neoforge.gametest.GameTestHolder;
+ import stone.mae2.MAE2;
+ 
+ @GameTestHolder(MAE2.MODID)
+diff --git a/src/main/java/stone/mae2/gametests/Vanilla.java b/src/main/java/stone/mae2/gametests/Vanilla.java
+index 3ea5ad5..663c2dc 100644
+--- a/src/main/java/stone/mae2/gametests/Vanilla.java
++++ b/src/main/java/stone/mae2/gametests/Vanilla.java
+@@ -6,8 +6,8 @@ import net.minecraft.gametest.framework.GameTest;
+ import net.minecraft.gametest.framework.GameTestHelper;
+ import net.minecraft.world.item.Items;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+-import net.minecraftforge.gametest.GameTestHolder;
++import net.neoforged.neoforge.capabilities.Capabilities;
++import net.neoforged.neoforge.gametest.GameTestHolder;
+ 
+ import stone.mae2.MAE2;
+ 
+@@ -25,13 +25,15 @@ public class Vanilla {
+     helper.succeedWhen(() -> {
+       // no I don't know why assertContainerContains doesn't work
+       BlockEntity barrel = helper.getBlockEntity(new BlockPos(0, 1, 0));
+-      barrel
+-        .getCapability(ForgeCapabilities.ITEM_HANDLER)
+-        .ifPresent(handler -> {
++      {
++          var handler = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, barrel.getBlockPos(), null);
++          helper.assertTrue(handler != null, "Barrel item capability missing");
++          
+           helper
+             .assertTrue(handler.getStackInSlot(0).is(Items.LADDER),
+               "no ladder");
+-        });
++        
++        }
+     });
+   }
+ 
+@@ -41,13 +43,15 @@ public class Vanilla {
+     helper.succeedWhen(() -> {
+ 
+       BlockEntity barrel = helper.getBlockEntity(new BlockPos(0, 1, 0));
+-      barrel
+-        .getCapability(ForgeCapabilities.ITEM_HANDLER)
+-        .ifPresent(handler -> {
++      {
++          var handler = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, barrel.getBlockPos(), null);
++          helper.assertTrue(handler != null, "Barrel item capability missing");
++          
+           helper
+             .assertTrue(handler.getStackInSlot(0).is(Items.LADDER),
+               "no ladder");
+-        });
++        
++        }
+     });
+   }
+ }
+diff --git a/src/main/java/stone/mae2/hooks/BuiltInModelHooks.java b/src/main/java/stone/mae2/hooks/BuiltInModelHooks.java
+index 4539dad..29872c8 100644
+--- a/src/main/java/stone/mae2/hooks/BuiltInModelHooks.java
++++ b/src/main/java/stone/mae2/hooks/BuiltInModelHooks.java
+@@ -43,16 +43,6 @@ public class BuiltInModelHooks {
+ 
+     @Nullable
+     public static UnbakedModel getBuiltInModel(ResourceLocation variantId) {
+-        // Vanilla loads item models as <id>#inventory, which we replicate here
+-        if (variantId instanceof ModelResourceLocation modelId) {
+-            if ("inventory".equals(modelId.getVariant())) {
+-                var itemModelId = new ResourceLocation(modelId.getNamespace(), "item/" + modelId.getPath());
+-                return builtInModels.get(itemModelId);
+-            }
+-
+-            return null;
+-        } else {
+-            return builtInModels.get(variantId);
+-        }
++        return builtInModels.get(variantId);
+     }
+ }
+diff --git a/src/main/java/stone/mae2/integration/GregTechIntegration.java b/src/main/java/stone/mae2/integration/GregTechIntegration.java
+index 5f2f8c0..cf4475d 100644
+--- a/src/main/java/stone/mae2/integration/GregTechIntegration.java
++++ b/src/main/java/stone/mae2/integration/GregTechIntegration.java
+@@ -24,9 +24,9 @@ import appeng.items.parts.PartItem;
+ import appeng.items.parts.PartModelsHelper;
+ import net.minecraft.Util;
+ import net.minecraft.world.item.Item;
+-import net.minecraftforge.eventbus.api.IEventBus;
+-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+-import net.minecraftforge.registries.RegistryObject;
++import net.neoforged.bus.api.IEventBus;
++import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
++import net.neoforged.neoforge.registries.DeferredHolder;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.api.features.MultiP2PTunnelAttunement;
+@@ -35,9 +35,9 @@ import stone.mae2.parts.p2p.EUP2PTunnelPart;
+ import stone.mae2.parts.p2p.multi.EUMultiP2PTunnel;
+ 
+ public abstract class GregTechIntegration {
+-  public static RegistryObject<PartItem<EUP2PTunnelPart>> EU_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<EUP2PTunnelPart>> EU_P2P_TUNNEL;
+ 
+-  public static RegistryObject<PartItem<EUMultiP2PTunnel.Part>> EU_MULTI_P2P_TUNNEL;
++  public static DeferredHolder<Item, PartItem<EUMultiP2PTunnel.Part>> EU_MULTI_P2P_TUNNEL;
+ 
+   public static void init(IEventBus bus) {
+     if (MAE2.CONFIG.parts().isEUP2PEnabled()) {
+diff --git a/src/main/java/stone/mae2/item/faulty/AoEPaste.java b/src/main/java/stone/mae2/item/faulty/AoEPaste.java
+index 6eaf595..a63ee0f 100644
+--- a/src/main/java/stone/mae2/item/faulty/AoEPaste.java
++++ b/src/main/java/stone/mae2/item/faulty/AoEPaste.java
+@@ -65,7 +65,7 @@ public class AoEPaste extends FaultyCardMode {
+     public InteractionResultHolder<ItemStack> onItemUse(Level level, Player player, InteractionHand hand) {
+         ItemStack stack = player.getItemInHand(hand);
+         radius = (byte) (radius >= MAX_RADIUS ? 1 : radius + 1);
+-        this.save(stack.getOrCreateTag());
++        this.save(stack);
+         player.displayClientMessage(Component.translatable(TransHelper.GUI.toKey("faulty", "radius"), 2 * radius + 1), true);
+         return InteractionResultHolder.consume(stack);
+     }
+@@ -77,7 +77,7 @@ public class AoEPaste extends FaultyCardMode {
+         if (be instanceof IPartHost partHost) {
+             SelectedPart selectedPart = partHost.selectPartWorld(context.getClickLocation());
+             if (selectedPart.part != null && selectedPart.side != null && stack.getItem() instanceof IMemoryCard card) {
+-                CompoundTag data = card.getData(stack);
++                var data = stack.getComponents();
+                 // 0 if it's along the normal of the plane of AoE
+                 // (the methods are accessing the normal variable)
+                 int x = selectedPart.side.getStepX() != 0 ? 0 : 1;
+@@ -93,7 +93,7 @@ public class AoEPaste extends FaultyCardMode {
+                                 IPart part = aoePartHost.getPart(selectedPart.side);
+                                 if (part != null) {
+                                     // no idea what the Vec pos argument does here, doesn't seem used in any implementation
+-                                    part.onActivate(context.getPlayer(), context.getHand(), context.getClickLocation());
++                                    part.onUseItemOn(stack, context.getPlayer(), context.getHand(), context.getClickLocation());
+                                 }
+                             }
+                         }
+diff --git a/src/main/java/stone/mae2/item/faulty/FaultyCardMode.java b/src/main/java/stone/mae2/item/faulty/FaultyCardMode.java
+index 3adeea0..12215d9 100644
+--- a/src/main/java/stone/mae2/item/faulty/FaultyCardMode.java
++++ b/src/main/java/stone/mae2/item/faulty/FaultyCardMode.java
+@@ -25,6 +25,8 @@ import java.util.TreeSet;
+ import java.util.function.Supplier;
+ 
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.component.DataComponents;
++import net.minecraft.world.item.component.CustomData;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.resources.ResourceLocation;
+ import net.minecraft.world.InteractionHand;
+@@ -44,7 +46,7 @@ public abstract class FaultyCardMode {
+ 
+     public static FaultyCardMode of(ItemStack stack) {
+         CompoundTag data = getData(stack);
+-        var supplier = REGISTRY.get(ResourceLocation.parse(data.getString(MODE_TYPE)));
++        var supplier = REGISTRY.get(ResourceLocation.tryParse(data.getString(MODE_TYPE)));
+         if (supplier == null) {
+             return new AoEPaste();
+         } else {
+@@ -56,8 +58,7 @@ public abstract class FaultyCardMode {
+      * Extract out the {@link CompoundTag} for this {@link FaultyMemoryCardItem}'s data
+      */ 
+     public static CompoundTag getData(ItemStack stack) {
+-        CompoundTag tag = stack.getTag();
+-        return tag == null ? new CompoundTag() : tag.getCompound(FAULTY_DATA);
++        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getCompound(FAULTY_DATA);
+     }
+ 
+     public static void register(ResourceLocation key, Supplier<FaultyCardMode> supplier) {
+@@ -67,7 +68,7 @@ public abstract class FaultyCardMode {
+ 
+     @Deprecated
+     public static void register(String namespace, String path, Supplier<FaultyCardMode> supplier) {
+-        register(new ResourceLocation(namespace, path), supplier);
++        register(ResourceLocation.fromNamespaceAndPath(namespace, path), supplier);
+     }
+ 
+     // I don't like this, but it works. Really should be static somehow
+@@ -115,6 +116,10 @@ public abstract class FaultyCardMode {
+      * @param tag
+      * @return
+      */
++    public void save(ItemStack stack) {
++        CustomData.update(DataComponents.CUSTOM_DATA, stack, this::save);
++    }
++
+     public CompoundTag save(CompoundTag tag) {
+         CompoundTag data = new CompoundTag();
+         data.putString(MODE_TYPE, getType().toString());
+diff --git a/src/main/java/stone/mae2/item/faulty/FaultyMemoryCardItem.java b/src/main/java/stone/mae2/item/faulty/FaultyMemoryCardItem.java
+index e19c75f..6baf74a 100644
+--- a/src/main/java/stone/mae2/item/faulty/FaultyMemoryCardItem.java
++++ b/src/main/java/stone/mae2/item/faulty/FaultyMemoryCardItem.java
+@@ -69,25 +69,21 @@ public class FaultyMemoryCardItem extends MemoryCardItem implements IMouseWheelI
+ 
+     private void cycleMode(Player player, ItemStack cardStack, boolean cycleForward) {
+         FaultyCardMode nextMode = FaultyCardMode.cycleMode(FaultyCardMode.of(cardStack), cycleForward);
+-        nextMode.save(cardStack.getOrCreateTag());
++        nextMode.save(cardStack);
+         if (player != null) {
+             player.displayClientMessage(nextMode.getName(), true);
+         }
+     }
+ 
+     @Override
+-    public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag advancedTooltips) {
++    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> lines, TooltipFlag advancedTooltips) {
+         lines.add(Tooltips.of(FaultyCardMode.of(stack).getName()));
+-        super.appendHoverText(stack, level, lines, advancedTooltips);
++        super.appendHoverText(stack, context, lines, advancedTooltips);
+     }
+ 
+     @Override
+     public int getColor(ItemStack stack) {
+-        CompoundTag compoundTag = stack.getTagElement(TAG_DISPLAY);
+-        if (compoundTag != null && compoundTag.contains(TAG_COLOR, 99)) {
+-            return compoundTag.getInt(TAG_COLOR);
+-        }
+-        return 0xFF0000;
++        return net.minecraft.world.item.component.DyedItemColor.getOrDefault(stack, 0xFF0000);
+     }
+     
+     public static int getTintColor(ItemStack stack, int index) {
+diff --git a/src/main/java/stone/mae2/item/faulty/GlobalPaste.java b/src/main/java/stone/mae2/item/faulty/GlobalPaste.java
+index ebcdd6e..233e885 100644
+--- a/src/main/java/stone/mae2/item/faulty/GlobalPaste.java
++++ b/src/main/java/stone/mae2/item/faulty/GlobalPaste.java
+@@ -50,7 +50,7 @@ public class GlobalPaste extends FaultyCardMode {
+             SelectedPart selectedPart = partHost.selectPartWorld(context.getClickLocation());
+             if (selectedPart.part != null && selectedPart.side != null && stack.getItem() instanceof IMemoryCard) {
+             	for (IGridNode node : selectedPart.part.getGridNode().getGrid().getMachineNodes(selectedPart.part.getClass())) {
+-                    ((IPart) node.getOwner()).onActivate(context.getPlayer(), context.getHand(), context.getClickLocation());
++                    ((IPart) node.getOwner()).onUseItemOn(stack, context.getPlayer(), context.getHand(), context.getClickLocation());
+             	}
+                 return InteractionResult.SUCCESS;
+             }
+diff --git a/src/main/java/stone/mae2/item/faulty/Incrementing.java b/src/main/java/stone/mae2/item/faulty/Incrementing.java
+index 564f657..915c6d7 100644
+--- a/src/main/java/stone/mae2/item/faulty/Incrementing.java
++++ b/src/main/java/stone/mae2/item/faulty/Incrementing.java
+@@ -50,17 +50,14 @@ public class Incrementing extends FaultyCardMode {
+         if (be instanceof IPartHost partHost) {
+             SelectedPart selectedPart = partHost.selectPartWorld(context.getClickLocation());
+             if (selectedPart.part != null && selectedPart.side != null && stack.getItem() instanceof IMemoryCard card) {
+-                CompoundTag data = card.getData(stack);
+-                if (AbstractLevelEmitterPart.class.isAssignableFrom(selectedPart.part.getClass())) {
+-                    // yes the tag name is hardcoded in AE2 too
+-                    data.putLong("reportingValue", data.getLong("reportingValue") + (isIncrementing ? 1 : -1));
++                if (selectedPart.part instanceof AbstractLevelEmitterPart) {
++                    long value = stack.getOrDefault(appeng.api.ids.AEComponents.EXPORTED_LEVEL_EMITTER_VALUE, 0L);
++                    stack.set(appeng.api.ids.AEComponents.EXPORTED_LEVEL_EMITTER_VALUE, value + (isIncrementing ? 1 : -1));
+                 }
+-                if (StorageBusPart.class.isAssignableFrom(selectedPart.part.getClass())) {
+-                    // yes the tag name is hardcoded in AE2 too
+-                    data.putInt("priority", data.getInt("priority") + (isIncrementing ? 1 : -1));
++                if (selectedPart.part instanceof StorageBusPart) {
++                    int priority = stack.getOrDefault(appeng.api.ids.AEComponents.EXPORTED_PRIORITY, 0);
++                    stack.set(appeng.api.ids.AEComponents.EXPORTED_PRIORITY, priority + (isIncrementing ? 1 : -1));
+                 }
+-
+-                stack.getOrCreateTag().put("Data", data);
+             }
+         }
+ 
+@@ -71,7 +68,7 @@ public class Incrementing extends FaultyCardMode {
+     public InteractionResultHolder<ItemStack> onItemUse(Level level, Player player, InteractionHand hand) {
+         ItemStack stack = player.getItemInHand(hand);
+         this.isIncrementing = !isIncrementing;
+-        this.save(stack.getOrCreateTag());
++        this.save(stack);
+         player.displayClientMessage(getName(), true);
+         return InteractionResultHolder.consume(stack);
+     }
+diff --git a/src/main/java/stone/mae2/item/faulty/UberMode.java b/src/main/java/stone/mae2/item/faulty/UberMode.java
+index cc54348..ef07fd8 100644
+--- a/src/main/java/stone/mae2/item/faulty/UberMode.java
++++ b/src/main/java/stone/mae2/item/faulty/UberMode.java
+@@ -39,10 +39,10 @@ import net.minecraft.world.phys.AABB;
+ import net.minecraft.world.phys.BlockHitResult;
+ import net.minecraft.world.phys.HitResult;
+ import net.minecraft.world.phys.Vec3;
+-import net.minecraftforge.client.event.RenderHighlightEvent;
+-import net.minecraftforge.client.event.RenderLevelStageEvent;
+-import net.minecraftforge.client.event.RenderLevelStageEvent.Stage;
+-import net.minecraftforge.eventbus.api.SubscribeEvent;
++import net.neoforged.neoforge.client.event.RenderHighlightEvent;
++import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
++import net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage;
++import net.neoforged.bus.api.SubscribeEvent;
+ import stone.mae2.MAE2;
+ import stone.mae2.bootstrap.MAE2Config;
+ import stone.mae2.bootstrap.MAE2Items;
+@@ -60,7 +60,7 @@ public class UberMode extends FaultyCardMode {
+   public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
+     if (this.start == null) {
+       this.start = context.getClickedPos();
+-      this.save(stack.getOrCreateTag());
++      this.save(stack);
+       context.getPlayer().displayClientMessage(Component.translatable(TransHelper.GUI.toKey("faulty", "uber", "start")), true);
+       return InteractionResult.CONSUME;
+     } else {
+@@ -85,10 +85,10 @@ public class UberMode extends FaultyCardMode {
+               IPart part = aoePartHost.getPart(side);
+               if (part != null) {
+                 // no idea what the Vec pos argument does here, doesn't seem used in any implementation
+-                failed |= !part.onActivate(player, hand, clickLocation);
++                failed |= !part.onUseItemOn(player.getItemInHand(hand), player, hand, clickLocation);
+               }
+           } else if (state.getBlock() instanceof AEBaseEntityBlock baseBlock) {
+-            baseBlock.use(state, level, pos, player, hand, new BlockHitResult(clickLocation, side, pos, false));
++            state.useItemOn(player.getItemInHand(hand), level, player, hand, new BlockHitResult(clickLocation, side, pos, false));
+           }
+         }
+ 
+@@ -99,7 +99,7 @@ public class UberMode extends FaultyCardMode {
+         }
+       }
+       this.start = null;
+-      this.save(stack.getOrCreateTag());
++      this.save(stack);
+       return InteractionResult.CONSUME;
+     }
+   }
+@@ -107,7 +107,7 @@ public class UberMode extends FaultyCardMode {
+   @Override
+   public InteractionResult onItemSecondaryUseFirst(ItemStack stack, UseOnContext context) {
+     this.start = null;
+-    this.save(stack.getOrCreateTag());
++    this.save(stack);
+     return InteractionResult.PASS;
+   }
+ 
+@@ -179,8 +179,8 @@ public class UberMode extends FaultyCardMode {
+           // what is a tesselator? idk, but this lets me render stuff
+           // feel like this should be bad, but idk. Should only be a problem when
+           // rendering the box anyways
+-          BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+-          MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(bufferBuilder);
++          var bufferBuilder = net.minecraft.client.Minecraft.getInstance().renderBuffers().bufferSource();
++          MultiBufferSource.BufferSource buffer = bufferBuilder;
+           VertexConsumer consumer = buffer.getBuffer(RenderType.lines());
+           // inflate by tiny bit to prevent z-fighting
+           AABB aabb = AABB.of(box).inflate(0.01);
+@@ -194,7 +194,7 @@ public class UberMode extends FaultyCardMode {
+ 
+   // TODO move this to a shared utils class
+   public static BlockHitResult rayTrace(Level level, Player player) {
+-    return rayTrace(level, player, player.getBlockReach());
++    return rayTrace(level, player, player.blockInteractionRange());
+   }
+   // stolen with permission from Spatial Tools Compatiable
+   public static BlockHitResult rayTrace(Level level, Player player, double maxDistance) {
+diff --git a/src/main/java/stone/mae2/me/service/MultiP2PService.java b/src/main/java/stone/mae2/me/service/MultiP2PService.java
+index e6c3239..cf8688d 100644
+--- a/src/main/java/stone/mae2/me/service/MultiP2PService.java
++++ b/src/main/java/stone/mae2/me/service/MultiP2PService.java
+@@ -20,7 +20,7 @@ package stone.mae2.me.service;
+ 
+ import appeng.api.config.Actionable;
+ import appeng.api.config.PowerMultiplier;
+-import appeng.api.config.PowerUnits;
++import appeng.api.config.PowerUnit;
+ import appeng.api.networking.GridHelper;
+ import appeng.api.networking.IGrid;
+ import appeng.api.networking.IGridNode;
+@@ -110,8 +110,8 @@ public class MultiP2PService implements IGridService, IGridServiceProvider {
+           double amps = transferredAmps[i];
+           if (amps > 0) {
+             // taxRate in AE/amp
+-            double taxRate = PowerUnits.FE
+-              .convertTo(PowerUnits.AE,
++            double taxRate = PowerUnit.FE
++              .convertTo(PowerUnit.AE,
+                 GTValues.V[i] * getNerfTax(i, amps) * FeCompat.ratio(false));
+             double tax = amps * taxRate;
+             double extracted = this.myGrid
+diff --git a/src/main/java/stone/mae2/mixins/ModelBakeryMixin.java b/src/main/java/stone/mae2/mixins/ModelBakeryMixin.java
+index 017b8e6..b179f22 100644
+--- a/src/main/java/stone/mae2/mixins/ModelBakeryMixin.java
++++ b/src/main/java/stone/mae2/mixins/ModelBakeryMixin.java
+@@ -19,12 +19,10 @@
+ package stone.mae2.mixins;
+ 
+ import org.spongepowered.asm.mixin.Mixin;
+-import org.spongepowered.asm.mixin.Shadow;
+ import org.spongepowered.asm.mixin.injection.At;
+ import org.spongepowered.asm.mixin.injection.Inject;
+-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
++import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+ 
+-import net.minecraft.client.resources.model.ModelBakery;
+ import net.minecraft.client.resources.model.UnbakedModel;
+ import net.minecraft.resources.ResourceLocation;
+ 
+@@ -35,19 +33,15 @@ import stone.mae2.hooks.BuiltInModelHooks;
+  *
+  * Copied from AE2
+  */
+-@Mixin(ModelBakery.class)
++@Mixin(appeng.hooks.BuiltInModelHooks.class)
+ public class ModelBakeryMixin {
+-    @Inject(at = @At("HEAD"), method = "loadModel", cancellable = true)
+-    private void loadModelHook(ResourceLocation id, CallbackInfo ci) {
++    @Inject(at = @At("HEAD"), method = "getBuiltInModel", cancellable = true, remap = false, require = 1)
++    private static void mae2$builtInModel(ResourceLocation id, CallbackInfoReturnable<UnbakedModel> cir) {
+         var model = BuiltInModelHooks.getBuiltInModel(id);
+ 
+         if (model != null) {
+-            cacheAndQueueDependencies(id, model);
+-            ci.cancel();
++            cir.setReturnValue(model);
+         }
+     }
+ 
+-    @Shadow
+-    protected void cacheAndQueueDependencies(ResourceLocation id, UnbakedModel unbakedModel) {
+-    }
+ }
+diff --git a/src/main/java/stone/mae2/mixins/PatternProviderLogicCLMixin.java b/src/main/java/stone/mae2/mixins/PatternProviderLogicCLMixin.java
+deleted file mode 100644
+index 3477c34..0000000
+--- a/src/main/java/stone/mae2/mixins/PatternProviderLogicCLMixin.java
++++ /dev/null
+@@ -1,25 +0,0 @@
+-package stone.mae2.mixins;
+-
+-import appeng.api.config.BlockingMode;
+-import appeng.helpers.patternprovider.PatternProviderLogic;
+-import org.spongepowered.asm.mixin.Mixin;
+-import org.spongepowered.asm.mixin.Shadow;
+-import org.spongepowered.asm.mixin.injection.At;
+-import org.spongepowered.asm.mixin.injection.Inject;
+-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+-import stone.mae2.parts.p2p.PatternP2PTunnelLogic;
+-
+-@Mixin(value = PatternProviderLogic.class, remap = false, priority = 2000)
+-public abstract class PatternProviderLogicCLMixin {
+-    @Shadow
+-    public abstract BlockingMode getBlockingMode();
+-
+-    @Inject(method = "pushPattern", at = @At("HEAD"))
+-    public void onPushStart(CallbackInfoReturnable<Boolean> cir) {
+-        PatternP2PTunnelLogic.blockingMode = this.getBlockingMode();
+-    }
+-    @Inject(method = "pushPattern", at = @At("TAIL"))
+-    public void onPushEnd(CallbackInfoReturnable<Boolean> cir) {
+-        PatternP2PTunnelLogic.blockingMode = BlockingMode.DEFAULT;
+-    }
+-}
+diff --git a/src/main/java/stone/mae2/mixins/PatternProviderLogicMixin.java b/src/main/java/stone/mae2/mixins/PatternProviderLogicMixin.java
+index b382f97..f20b44f 100644
+--- a/src/main/java/stone/mae2/mixins/PatternProviderLogicMixin.java
++++ b/src/main/java/stone/mae2/mixins/PatternProviderLogicMixin.java
+@@ -19,6 +19,10 @@
+ package stone.mae2.mixins;
+ 
+ import appeng.api.config.Actionable;
++import appeng.api.crafting.IPatternDetails;
++import appeng.api.stacks.KeyCounter;
++import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
++import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+ import appeng.api.implementations.blockentities.ICraftingMachine;
+ import appeng.api.networking.IManagedGridNode;
+ import appeng.api.networking.security.IActionSource;
+@@ -30,6 +34,7 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost;
+ import appeng.helpers.patternprovider.PatternProviderReturnInventory;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.nbt.NumericTag;
+ import net.minecraft.nbt.Tag;
+@@ -76,16 +81,16 @@ public abstract class PatternProviderLogicMixin {
+   @Shadow
+   private Set<Direction> getActiveSides() { return null; }
+ 
+-  @Inject(method = "pushPattern", at = @At("HEAD"))
+-  public void onPushStart(CallbackInfoReturnable<Boolean> cir) {
++  @WrapMethod(method = "pushPattern")
++  private boolean mae2$forwardBlocking(IPatternDetails pattern, KeyCounter[] inputs, Operation<Boolean> original) {
++    boolean previous = PatternP2PTunnelLogic.isBlocking;
+     PatternP2PTunnelLogic.isBlocking = this.isBlocking();
+-  }
+-
+-  // reset blocking mode in-case there's other providers that work with p2ps,
+-  // but weren't mixed into
+-  @Inject(method = "pushPattern", at = @At("TAIL"))
+-  public void onPushEnd(CallbackInfoReturnable<Boolean> cir) {
+-    PatternP2PTunnelLogic.isBlocking = false;
++    try {
++      return original.call(pattern, inputs);
++    } finally {
++      // Rejected patterns and nested providers must restore the caller's mode too.
++      PatternP2PTunnelLogic.isBlocking = previous;
++    }
+   }
+ 
+   @Inject(method = "updatePatterns", at = @At("TAIL"))
+@@ -99,7 +104,7 @@ public abstract class PatternProviderLogicMixin {
+       var adjBeSide = direction.getOpposite();
+ 
+       var craftingMachine = ICraftingMachine
+-        .of(level, adjPos, adjBeSide, adjBe);
++        .of(level, adjPos, adjBeSide);
+       if (craftingMachine instanceof PatternP2PTunnelLogic p2pLogic) {
+         p2pLogic.refreshInputs();
+       }
+@@ -119,7 +124,7 @@ public abstract class PatternProviderLogicMixin {
+    * @param ci
+    */
+   @Inject(method = "readFromNBT", at = @At("TAIL"))
+-  private void onReadFromNBT(CompoundTag tag, CallbackInfo ci) {
++  private void onReadFromNBT(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+     if (tag.contains("sendPos"))
+     // send pos only exists if MAE2 existed before
+     {
+@@ -139,7 +144,7 @@ public abstract class PatternProviderLogicMixin {
+     }
+   }
+ 
+-  @Inject(method = "onMainNodeStateChanged", at = @At(value = "INVOKE", target = "ifPresent"))
++  @Inject(method = "onMainNodeStateChanged", at = @At(value = "INVOKE", target = "Lappeng/api/networking/IManagedGridNode;ifPresent(Ljava/util/function/BiConsumer;)Z"))
+   public void onMainNodeStateChanged(CallbackInfo ci) {
+     if (sendPos != null) {
+       MAE2.LOGGER.debug("Migrating the old Pattern Provider!");
+@@ -180,4 +185,4 @@ public abstract class PatternProviderLogicMixin {
+     }
+ 
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/stone/mae2/parts/p2p/EUP2PTunnelPart.java b/src/main/java/stone/mae2/parts/p2p/EUP2PTunnelPart.java
+index 261098c..0c28f87 100644
+--- a/src/main/java/stone/mae2/parts/p2p/EUP2PTunnelPart.java
++++ b/src/main/java/stone/mae2/parts/p2p/EUP2PTunnelPart.java
+@@ -18,7 +18,7 @@
+  */
+ package stone.mae2.parts.p2p;
+ 
+-import appeng.api.config.PowerUnits;
++import appeng.api.config.PowerUnit;
+ import appeng.api.networking.GridFlags;
+ import appeng.api.networking.IGrid;
+ import appeng.api.networking.IGridNode;
+@@ -30,7 +30,7 @@ import appeng.parts.p2p.CapabilityP2PTunnelPart;
+ import appeng.parts.p2p.P2PModels;
+ import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
+ import com.gregtechceu.gtceu.api.capability.compat.FeCompat;
+-import com.gregtechceu.gtceu.api.capability.forge.GTCapability;
++import com.gregtechceu.gtceu.api.capability.GTCapability;
+ import net.minecraft.core.Direction;
+ 
+ import stone.mae2.MAE2;
+@@ -116,7 +116,7 @@ public class EUP2PTunnelPart
+           service.transferredAmps[tier] += total;
+         } else
+           EUP2PTunnelPart.this
+-            .deductEnergyCost(total * FeCompat.ratio(false), PowerUnits.FE);
++            .deductEnergyCost(total * FeCompat.ratio(false), PowerUnit.FE);
+       }
+       return total;
+     }
+diff --git a/src/main/java/stone/mae2/parts/p2p/NativePartCapabilities.java b/src/main/java/stone/mae2/parts/p2p/NativePartCapabilities.java
+new file mode 100644
+index 0000000..ed16ddb
+--- /dev/null
++++ b/src/main/java/stone/mae2/parts/p2p/NativePartCapabilities.java
+@@ -0,0 +1,47 @@
++/* MAE2 native capability bridge, LGPL-3.0-or-later. */
++package stone.mae2.parts.p2p;
++
++import appeng.api.networking.crafting.ICraftingProvider;
++import appeng.helpers.patternprovider.PatternProviderLogicHost;
++import appeng.api.parts.IPartHost;
++import appeng.api.parts.RegisterPartCapabilitiesEvent;
++import net.minecraft.core.Direction;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++import net.neoforged.neoforge.capabilities.Capabilities;
++import com.gregtechceu.gtceu.api.capability.GTCapability;
++import stone.mae2.parts.p2p.multi.*;
++
++public final class NativePartCapabilities {
++    private NativePartCapabilities() {}
++
++    public static <T> T forwardPatternCapability(PatternP2PTunnelLogic.Target target,
++                                                 BlockCapability<T, Direction> capability) {
++        var entity = target.getTargetBlockEntity();
++        boolean provider = entity instanceof ICraftingProvider || entity instanceof PatternProviderLogicHost;
++        if (entity instanceof IPartHost host) {
++            var part = host.getPart(target.side());
++            provider |= part instanceof ICraftingProvider || part instanceof PatternProviderLogicHost;
++        }
++        return provider ? target.level().getCapability(capability, target.pos(), target.side()) : null;
++    }
++
++    public static void register(RegisterPartCapabilitiesEvent event) {
++        event.register(Capabilities.ItemHandler.BLOCK, (part, context) -> part.getCapability(Capabilities.ItemHandler.BLOCK), ItemMultiP2PTunnel.Part.class);
++        event.register(Capabilities.FluidHandler.BLOCK, (part, context) -> part.getCapability(Capabilities.FluidHandler.BLOCK), FluidMultiP2PTunnel.Part.class);
++        event.register(Capabilities.EnergyStorage.BLOCK, (part, context) -> part.getCapability(Capabilities.EnergyStorage.BLOCK), FEMultiP2PTunnel.Part.class);
++        if (net.neoforged.fml.ModList.get().isLoaded("gtceu")) {
++            event.register(GTCapability.CAPABILITY_ENERGY_CONTAINER, (part, context) -> part.getExposedApi(), EUP2PTunnelPart.class);
++            event.register(GTCapability.CAPABILITY_ENERGY_CONTAINER, (part, context) -> part.getCapability(GTCapability.CAPABILITY_ENERGY_CONTAINER), EUMultiP2PTunnel.Part.class);
++        }
++        for (var capability : BlockCapability.getAll()) {
++            if (capability.contextClass() == Direction.class) registerPattern(event, capability);
++        }
++    }
++
++    @SuppressWarnings("unchecked")
++    private static <T> void registerPattern(RegisterPartCapabilitiesEvent event, BlockCapability<T, ?> capability) {
++        var sided = (BlockCapability<T, Direction>) capability;
++        event.register(sided, (part, context) -> part.getCapability(sided), PatternP2PTunnelPart.class);
++        event.register(sided, (part, context) -> part.getCapability(sided), PatternMultiP2PTunnel.Part.class);
++    }
++}
+diff --git a/src/main/java/stone/mae2/parts/p2p/NativePatternTargetCache.java b/src/main/java/stone/mae2/parts/p2p/NativePatternTargetCache.java
+new file mode 100644
+index 0000000..4cac426
+--- /dev/null
++++ b/src/main/java/stone/mae2/parts/p2p/NativePatternTargetCache.java
+@@ -0,0 +1,81 @@
++/* Adapted from AE2 19.2.8, TeamAppliedEnergistics, LGPL-3.0-or-later. */
++package stone.mae2.parts.p2p;
++
++import appeng.helpers.patternprovider.PatternProviderTarget;
++
++import java.util.IdentityHashMap;
++import java.util.Map;
++import java.util.Set;
++
++import org.jetbrains.annotations.Nullable;
++
++import net.minecraft.core.BlockPos;
++import net.minecraft.core.Direction;
++import net.minecraft.server.level.ServerLevel;
++import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
++
++import appeng.api.AECapabilities;
++import appeng.api.behaviors.ExternalStorageStrategy;
++import appeng.api.config.Actionable;
++import appeng.api.networking.security.IActionSource;
++import appeng.api.stacks.AEKey;
++import appeng.api.stacks.AEKeyType;
++import appeng.api.storage.MEStorage;
++import appeng.me.storage.CompositeStorage;
++import appeng.parts.automation.StackWorldBehaviors;
++
++public final class NativePatternTargetCache {
++    private final BlockCapabilityCache<MEStorage, Direction> cache;
++    private final IActionSource src;
++    private final Map<AEKeyType, ExternalStorageStrategy> strategies;
++
++    public NativePatternTargetCache(ServerLevel l, BlockPos pos, Direction direction, IActionSource src) {
++        this.cache = BlockCapabilityCache.create(AECapabilities.ME_STORAGE, l, pos, direction);
++        this.src = src;
++        this.strategies = StackWorldBehaviors.createExternalStorageStrategies(l, pos, direction);
++    }
++
++    @Nullable
++    public PatternProviderTarget find() {
++        // our capability first: allows any storage channel
++        var meStorage = cache.getCapability();
++        if (meStorage != null) {
++            return wrapMeStorage(meStorage);
++        }
++
++        // otherwise fall back to the platform capability
++        var externalStorages = new IdentityHashMap<AEKeyType, MEStorage>(2);
++        for (var entry : strategies.entrySet()) {
++            var wrapper = entry.getValue().createWrapper(false, () -> {
++            });
++            if (wrapper != null) {
++                externalStorages.put(entry.getKey(), wrapper);
++            }
++        }
++
++        if (!externalStorages.isEmpty()) {
++            return wrapMeStorage(new CompositeStorage(externalStorages));
++        }
++
++        return null;
++    }
++
++    private PatternProviderTarget wrapMeStorage(MEStorage storage) {
++        return new PatternProviderTarget() {
++            @Override
++            public long insert(AEKey what, long amount, Actionable type) {
++                return storage.insert(what, amount, type, src);
++            }
++
++            @Override
++            public boolean containsPatternInput(Set<AEKey> patternInputs) {
++                for (var stack : storage.getAvailableStacks()) {
++                    if (patternInputs.contains(stack.getKey().dropSecondary())) {
++                        return true;
++                    }
++                }
++                return false;
++            }
++        };
++    }
++}
+diff --git a/src/main/java/stone/mae2/parts/p2p/PatternP2PPartLogic.java b/src/main/java/stone/mae2/parts/p2p/PatternP2PPartLogic.java
+index e2ea9a8..d1cf009 100644
+--- a/src/main/java/stone/mae2/parts/p2p/PatternP2PPartLogic.java
++++ b/src/main/java/stone/mae2/parts/p2p/PatternP2PPartLogic.java
+@@ -9,8 +9,9 @@ import appeng.api.networking.ticking.TickingRequest;
+ import appeng.api.stacks.AEKey;
+ import appeng.api.stacks.GenericStack;
+ import appeng.helpers.patternprovider.PatternProviderTarget;
+-import appeng.helpers.patternprovider.PatternProviderTargetCache;
++import stone.mae2.parts.p2p.NativePatternTargetCache;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.nbt.ListTag;
+ import net.minecraft.nbt.Tag;
+ import net.minecraft.world.item.ItemStack;
+@@ -39,7 +40,7 @@ public class PatternP2PPartLogic implements IGridTickable {
+   public TickingRequest getTickingRequest(IGridNode node) {
+     TickRate rate = MAE2.CONFIG.parts().rates().PatternP2PTunnel();
+     return new TickingRequest(rate.minRate(), rate.maxRate(),
+-      this.sendList.isEmpty(), true);
++      this.sendList.isEmpty());
+   }
+ 
+   @Override
+@@ -49,7 +50,7 @@ public class PatternP2PPartLogic implements IGridTickable {
+       return TickRateModulation.SLEEP;
+     if (!this.part.getMainNode().isActive())
+       return TickRateModulation.IDLE;
+-    PatternProviderTargetCache cache = this.part.getCache();
++    NativePatternTargetCache cache = this.part.getCache();
+     if (cache == null) {
+       return TickRateModulation.IDLE;
+     }
+@@ -109,20 +110,20 @@ public class PatternP2PPartLogic implements IGridTickable {
+     }
+   }
+ 
+-  public void readFromNBT(CompoundTag data) {
++  public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
+     var sendListTag = data.getList(NBT_SEND_LIST, Tag.TAG_COMPOUND);
+     for (int i = 0; i < sendListTag.size(); ++i) {
+-      var stack = GenericStack.readTag(sendListTag.getCompound(i));
++      var stack = GenericStack.readTag(registries, sendListTag.getCompound(i));
+       if (stack != null) {
+         this.addToSendList(stack.what(), stack.amount());
+       }
+     }
+   }
+ 
+-  public void writeToNBT(CompoundTag data) {
++  public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
+     ListTag sendListTag = new ListTag();
+     for (var toSend : sendList) {
+-      sendListTag.add(GenericStack.writeTag(toSend));
++      sendListTag.add(GenericStack.writeTag(registries, toSend));
+     }
+     data.put(NBT_SEND_LIST, sendListTag);
+   }
+diff --git a/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelLogic.java b/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelLogic.java
+index 1627999..344a81f 100644
+--- a/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelLogic.java
++++ b/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelLogic.java
+@@ -1,7 +1,7 @@
+ package stone.mae2.parts.p2p;
+ 
+ import appeng.api.config.Actionable;
+-import appeng.api.config.BlockingMode;
++
+ import appeng.api.crafting.IPatternDetails;
+ import appeng.api.crafting.IPatternDetails.IInput;
+ import appeng.api.implementations.blockentities.ICraftingMachine;
+@@ -17,15 +17,15 @@ import appeng.api.stacks.KeyCounter;
+ import appeng.helpers.patternprovider.PatternProviderLogic;
+ import appeng.helpers.patternprovider.PatternProviderLogicHost;
+ import appeng.helpers.patternprovider.PatternProviderTarget;
+-import appeng.helpers.patternprovider.PatternProviderTargetCache;
++import stone.mae2.parts.p2p.NativePatternTargetCache;
+ import appeng.util.ConfigManager;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+-import net.minecraftforge.common.capabilities.Capability;
+-import net.minecraftforge.common.util.LazyOptional;
+-import org.checkerframework.checker.units.qual.C;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++
++
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.bootstrap.MAE2Items;
+@@ -43,7 +43,7 @@ public class PatternP2PTunnelLogic implements ICraftingMachine {
+   private int lastOutputIndex = 0;
+ 
+   public static boolean isBlocking;
+-  public static BlockingMode blockingMode;
++
+ 
+   public PatternP2PTunnelLogic(PatternP2PTunnel tunnel) {
+     this.tunnel = tunnel;
+@@ -78,8 +78,7 @@ public class PatternP2PTunnelLogic implements ICraftingMachine {
+         if (!output.canAcceptPattern())
+           continue;
+         ICraftingMachine craftingMachine = ICraftingMachine
+-          .of(output.level(), output.pos(), output.side(),
+-            output.level().getBlockEntity(output.pos()));
++          .of(output.level(), output.pos(), output.side());
+         if (craftingMachine != null && craftingMachine.acceptsPlans()) {
+           if (craftingMachine
+             .pushPattern(pattern, ingredients, output.side())) {
+@@ -90,7 +89,7 @@ public class PatternP2PTunnelLogic implements ICraftingMachine {
+         }
+ 
+         if (isExternal) {
+-          PatternProviderTargetCache cache = output.getCache();
++          NativePatternTargetCache cache = output.getCache();
+           if (cache == null)
+             continue;
+           final PatternProviderTarget target = cache.find();
+@@ -128,9 +127,7 @@ public class PatternP2PTunnelLogic implements ICraftingMachine {
+    */
+   public static boolean shouldBlock(boolean isBlocking,
+     PatternProviderTarget target, Set<AEKey> inputs) {
+-    return isBlocking && (LoadedModsHelper.isFork
+-            ? target.containsPatternInput(inputs, blockingMode)
+-            : target.containsPatternInput(inputs));
++    return isBlocking && target.containsPatternInput(inputs);
+   }
+ 
+   public void refreshOutputs() {
+@@ -216,18 +213,8 @@ public class PatternP2PTunnelLogic implements ICraftingMachine {
+      */
+     ServerLevel level();
+ 
+-    default PatternProviderTargetCache getCache() {
+-      if (LoadedModsHelper.isFork) {
+-        var provider = this.getTargetCraftingProvider();
+-        if (provider instanceof PatternProviderLogic ppLogic) {
+-          return new PatternProviderTargetCache(this.level(), this.pos(), this.side(), this.source(), (ConfigManager) ppLogic.getConfigManager());
+-        }
+-      }
+-      // This is valid in both cases, either as a fallback when the input is not a Pattern Provider,
+-      // or when we're not using the fork
+-      // Works fine because the fork has an alternate constructor,
+-      // so we don't need to use reflection, and we AT both those to public
+-      return new PatternProviderTargetCache(this.level(), this.pos(), this.side(), this.source());
++    default NativePatternTargetCache getCache() {
++      return new NativePatternTargetCache(this.level(), this.pos(), this.side(), this.source());
+     }
+ 
+     boolean canAcceptPattern();
+@@ -248,9 +235,8 @@ public class PatternP2PTunnelLogic implements ICraftingMachine {
+ 
+     IActionSource source();
+ 
+-    public default LazyOptional<C> getTargetCapability(Capability<C> cap) {
+-      BlockEntity be = level().getBlockEntity(pos());
+-      return be != null ? be.getCapability(cap, side()) : null;
++    public default <C> C getTargetCapability(BlockCapability<C, Direction> cap) {
++      return level().getCapability(cap, pos(), side());
+     }
+ 
+     public default BlockEntity getTargetBlockEntity() {
+diff --git a/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelPart.java b/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelPart.java
+index 2e0e5de..5f4ad78 100644
+--- a/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelPart.java
++++ b/src/main/java/stone/mae2/parts/p2p/PatternP2PTunnelPart.java
+@@ -10,9 +10,9 @@ import appeng.api.parts.IPartItem;
+ import appeng.api.parts.IPartModel;
+ import appeng.api.stacks.AEItemKey;
+ import appeng.api.stacks.AEKey;
+-import appeng.capabilities.Capabilities;
++import appeng.api.AECapabilities;
+ import appeng.helpers.patternprovider.PatternProviderLogicHost;
+-import appeng.helpers.patternprovider.PatternProviderTargetCache;
++import stone.mae2.parts.p2p.NativePatternTargetCache;
+ import appeng.items.parts.PartModels;
+ import appeng.me.helpers.MachineSource;
+ import appeng.parts.p2p.P2PModels;
+@@ -20,13 +20,15 @@ import appeng.parts.p2p.P2PTunnelPart;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.item.Items;
+ import net.minecraft.world.level.BlockGetter;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+-import net.minecraftforge.common.capabilities.Capability;
+-import net.minecraftforge.common.util.LazyOptional;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++import java.util.function.Supplier;
++import com.google.common.base.Suppliers;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.parts.p2p.PatternP2PPartLogic.PatternP2PPartLogicHost;
+@@ -41,30 +43,30 @@ public class PatternP2PTunnelPart extends P2PTunnelPart<PatternP2PTunnelPart>
+   private static final P2PModels MODELS = new P2PModels(MAE2.toKey("part/p2p/p2p_tunnel_pattern"));
+ 
+   protected final IActionSource source;
+-  protected final LazyOptional<PatternP2PTunnelLogic> logic;
++  protected final Supplier<PatternP2PTunnelLogic> logic;
+ 
+   // Prevents recursive block updates.
+   private boolean inBlockUpdate = false;
+-  private PatternProviderTargetCache targetCache;
++  private NativePatternTargetCache targetCache;
+   private final PatternP2PPartLogic partLogic = new PatternP2PPartLogic(this);
+ 
+   public PatternP2PTunnelPart(IPartItem<?> partItem) {
+     super(partItem);
+     this.source = new MachineSource(this);
+     // isOutput() is false because nbt was not read yet
+-    this.logic = LazyOptional.of(() -> new PatternP2PTunnelLogic(this));
++    this.logic = Suppliers.memoize(() -> new PatternP2PTunnelLogic(this));
+   }
+ 
+   @Override
+-  public void readFromNBT(CompoundTag data) {
+-    super.readFromNBT(data);
+-    this.partLogic.readFromNBT(data);
++  public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
++    super.readFromNBT(data, registries);
++    this.partLogic.readFromNBT(data, registries);
+   }
+ 
+   @Override
+-  public void writeToNBT(CompoundTag data) {
+-    super.writeToNBT(data);
+-    this.partLogic.writeToNBT(data);
++  public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
++    super.writeToNBT(data, registries);
++    this.partLogic.writeToNBT(data, registries);
+   }
+ 
+   @Override
+@@ -74,7 +76,7 @@ public class PatternP2PTunnelPart extends P2PTunnelPart<PatternP2PTunnelPart>
+     if (this.isOutput()) {
+       PatternP2PTunnelPart input = this.getInput();
+       if (input != null) 
+-        input.logic.ifPresent(logic -> logic.refreshOutputs());
++        input.logic.get().refreshOutputs();
+     }
+   }
+ 
+@@ -84,7 +86,7 @@ public class PatternP2PTunnelPart extends P2PTunnelPart<PatternP2PTunnelPart>
+     if (this.isOutput()) {
+       PatternP2PTunnelPart input = this.getInput();
+       if (input != null) 
+-        input.logic.ifPresent(logic -> logic.refreshOutputs());
++        input.logic.get().refreshOutputs();
+     }
+   }
+ 
+@@ -106,7 +108,7 @@ public class PatternP2PTunnelPart extends P2PTunnelPart<PatternP2PTunnelPart>
+   }
+ 
+   @Override
+-  public PatternProviderTargetCache getCache() { return this.targetCache; }
++  public NativePatternTargetCache getCache() { return this.targetCache; }
+ 
+   private boolean isRecursive = false;
+ 
+@@ -140,33 +142,16 @@ public class PatternP2PTunnelPart extends P2PTunnelPart<PatternP2PTunnelPart>
+     return MODELS.getModel(this.isPowered(), this.isActive());
+   }
+ 
+-  @Override
+-  public <T> LazyOptional<T> getCapability(Capability<T> capabilityClass) {
+-    if (this.isActive() && this.getFrequency() != 0) {
+-      if (capabilityClass == Capabilities.CRAFTING_MACHINE && !this.isOutput())
+-        return (LazyOptional<T>) logic;
+-      if (this.isOutput()) {
+-        PatternP2PTunnelPart provider = this.getInput();
+-        if (provider == null)
+-          return LazyOptional.empty();
+-        BlockEntity maybeEntity = this
+-          .getLevel()
+-          .getBlockEntity(provider.pos());
+-        if (maybeEntity != null) {
+-          if (maybeEntity instanceof ICraftingProvider
+-            || maybeEntity instanceof PatternProviderLogicHost) {
+-            return maybeEntity.getCapability(capabilityClass, provider.side());
+-          } else if (maybeEntity instanceof IPartHost host) {
+-            IPart maybePart = host.getPart(provider.side());
+-            if (maybePart != null && (maybePart instanceof ICraftingProvider
+-              || maybePart instanceof PatternProviderLogicHost)) {
+-              return maybePart.getCapability(capabilityClass);
+-            }
+-          }
+-        }
+-      }
++  @SuppressWarnings("unchecked")
++  public <T> T getCapability(BlockCapability<T, Direction> capabilityClass) {
++    if (!this.isActive() || this.getFrequency() == 0) return null;
++    if (capabilityClass == AECapabilities.CRAFTING_MACHINE && !this.isOutput()) return (T) logic.get();
++    if (this.isOutput()) {
++      PatternP2PTunnelPart provider = this.getInput();
++      if (provider != null)
++        return NativePartCapabilities.forwardPatternCapability(provider, capabilityClass);
+     }
+-    return LazyOptional.empty();
++    return null;
+   }
+ 
+   @Override
+diff --git a/src/main/java/stone/mae2/parts/p2p/multi/CapabilityMultiP2PTunnel.java b/src/main/java/stone/mae2/parts/p2p/multi/CapabilityMultiP2PTunnel.java
+index f6332c6..5a81592 100644
+--- a/src/main/java/stone/mae2/parts/p2p/multi/CapabilityMultiP2PTunnel.java
++++ b/src/main/java/stone/mae2/parts/p2p/multi/CapabilityMultiP2PTunnel.java
+@@ -23,8 +23,9 @@ import appeng.api.parts.IPartItem;
+ import appeng.hooks.ticking.TickHandler;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.world.level.BlockGetter;
+-import net.minecraftforge.common.capabilities.Capability;
+-import net.minecraftforge.common.util.LazyOptional;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++import net.minecraft.core.Direction;
++import appeng.parts.PartAdjacentApi;
+ 
+ /**
+  * Base class for simple capability-based p2p tunnels. Don't forget to set the 3
+@@ -32,7 +33,7 @@ import net.minecraftforge.common.util.LazyOptional;
+  */
+ public abstract class CapabilityMultiP2PTunnel<T extends CapabilityMultiP2PTunnel<T, L, P, C>, L extends CapabilityMultiP2PTunnel<T, L, P, C>.Logic, P extends CapabilityMultiP2PTunnel.Part<T, L, P, C>, C>
+   extends MultiP2PTunnel<T, L, P> {
+-  protected abstract Capability<C> getCapability();
++  protected abstract BlockCapability<C, Direction> getCapability();
+ 
+   protected C inputHandler;
+   protected C outputHandler;
+@@ -44,22 +45,26 @@ public abstract class CapabilityMultiP2PTunnel<T extends CapabilityMultiP2PTunne
+ 
+   public class Logic extends MultiP2PTunnel<T, L, P>.Logic {
+     private final CapabilityGuard capabilityGuard = new CapabilityGuard();
++    private final PartAdjacentApi<C> adjacentCapability;
+ 
+     public Logic(P part) {
+       super(part);
++      this.adjacentCapability = new PartAdjacentApi<>(part, CapabilityMultiP2PTunnel.this.getCapability(),
++          this::invalidateEndpoints);
+     }
+ 
+-    public final <A> LazyOptional<A> getCapability(
+-      Capability<A> capabilityClass) {
+-      if (capabilityClass == CapabilityMultiP2PTunnel.this.getCapability()) {
+-        if (this.part.isOutput()) {
+-          return LazyOptional.of(() -> outputHandler).cast();
+-        } else {
+-          return LazyOptional.of(() -> inputHandler).cast();
+-        }
+-      }
+-      return LazyOptional.empty();
++    @SuppressWarnings("unchecked")
++    public final <A> A getCapability(BlockCapability<A, Direction> capabilityClass) {
++      if (capabilityClass != CapabilityMultiP2PTunnel.this.getCapability()) return null;
++      return (A) (this.part.isOutput() ? outputHandler : inputHandler);
++    }
+ 
++    private void invalidateEndpoints() {
++      this.part.getBlockEntity().invalidateCapabilities();
++      for (var input : CapabilityMultiP2PTunnel.this.getInputs())
++        input.part.getBlockEntity().invalidateCapabilities();
++      for (var output : CapabilityMultiP2PTunnel.this.getOutputs())
++        output.part.getBlockEntity().invalidateCapabilities();
+     }
+ 
+     /**
+@@ -86,15 +91,8 @@ public abstract class CapabilityMultiP2PTunnel<T extends CapabilityMultiP2PTunne
+             "get was called after closing the wrapper");
+         } else if (accessDepth == 1) {
+           if (Logic.this.part.isActive()) {
+-            var self = Logic.this.part.getBlockEntity();
+-            var te = self.getLevel().getBlockEntity(getFacingPos());
+-
+-            if (te != null) {
+-              return te
+-                .getCapability(CapabilityMultiP2PTunnel.this.getCapability(),
+-                  Logic.this.part.getSide().getOpposite())
+-                .orElse(emptyHandler);
+-            }
++            C handler = adjacentCapability.find();
++            return handler == null ? emptyHandler : handler;
+           }
+ 
+           return emptyHandler;
+@@ -152,6 +150,7 @@ public abstract class CapabilityMultiP2PTunnel<T extends CapabilityMultiP2PTunne
+ 
+     @Override
+     public void onTunnelNetworkChange() {
++      invalidateEndpoints();
+       // This might be invoked while the network is being unloaded and we don't
+       // want
+       // to send a block update then, so
+@@ -206,15 +205,9 @@ public abstract class CapabilityMultiP2PTunnel<T extends CapabilityMultiP2PTunne
+     @Override
+     protected float getPowerDrainPerTick() { return 2.0f; }
+ 
+-    @Override
+-    public final <A> LazyOptional<A> getCapability(
+-      Capability<A> capabilityClass) {
++    public final <A> A getCapability(BlockCapability<A, Direction> capabilityClass) {
+       var logic = this.getLogic();
+-      if (logic.isPresent()) {
+-        return logic.get().getCapability(capabilityClass);
+-      } else {
+-        return LazyOptional.empty();
+-      }
++      return logic.isPresent() ? logic.get().getCapability(capabilityClass) : null;
+     }
+ 
+     public void onNeighborChanged(BlockGetter level, BlockPos pos,
+diff --git a/src/main/java/stone/mae2/parts/p2p/multi/EUMultiP2PTunnel.java b/src/main/java/stone/mae2/parts/p2p/multi/EUMultiP2PTunnel.java
+index 96507fc..1cb5d5c 100644
+--- a/src/main/java/stone/mae2/parts/p2p/multi/EUMultiP2PTunnel.java
++++ b/src/main/java/stone/mae2/parts/p2p/multi/EUMultiP2PTunnel.java
+@@ -18,7 +18,7 @@
+  */
+ package stone.mae2.parts.p2p.multi;
+ 
+-import appeng.api.config.PowerUnits;
++import appeng.api.config.PowerUnit;
+ import appeng.api.networking.GridFlags;
+ import appeng.api.networking.IGrid;
+ import appeng.api.networking.ticking.TickRateModulation;
+@@ -30,11 +30,11 @@ import appeng.parts.p2p.P2PModels;
+ import com.gregtechceu.gtceu.api.GTValues;
+ import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
+ import com.gregtechceu.gtceu.api.capability.compat.FeCompat;
+-import com.gregtechceu.gtceu.api.capability.forge.GTCapability;
++import com.gregtechceu.gtceu.api.capability.GTCapability;
+ import net.minecraft.core.Direction;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.nbt.Tag;
+-import net.minecraftforge.common.capabilities.Capability;
++import net.neoforged.neoforge.capabilities.BlockCapability;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.api.Tickable;
+@@ -235,7 +235,7 @@ public class EUMultiP2PTunnel extends
+   }
+ 
+   @Override
+-  protected Capability<IEnergyContainer> getCapability() {
++  protected BlockCapability<IEnergyContainer, Direction> getCapability() {
+     return GTCapability.CAPABILITY_ENERGY_CONTAINER;
+   }
+ 
+@@ -285,7 +285,7 @@ public class EUMultiP2PTunnel extends
+       } else
+         this
+           .deductEnergyCost(distributed * maxVoltage * FeCompat.ratio(false),
+-            PowerUnits.FE);
++            PowerUnit.FE);
+       this.maxVoltage = 1;
+     }
+     return didWork ? TickRateModulation.FASTER : TickRateModulation.SLOWER;
+diff --git a/src/main/java/stone/mae2/parts/p2p/multi/FEMultiP2PTunnel.java b/src/main/java/stone/mae2/parts/p2p/multi/FEMultiP2PTunnel.java
+index bcdb1fd..9027e93 100644
+--- a/src/main/java/stone/mae2/parts/p2p/multi/FEMultiP2PTunnel.java
++++ b/src/main/java/stone/mae2/parts/p2p/multi/FEMultiP2PTunnel.java
+@@ -18,7 +18,7 @@
+  */
+ package stone.mae2.parts.p2p.multi;
+ 
+-import appeng.api.config.PowerUnits;
++import appeng.api.config.PowerUnit;
+ import appeng.api.networking.IGrid;
+ import appeng.api.networking.ticking.TickRateModulation;
+ import appeng.api.networking.ticking.TickingRequest;
+@@ -28,9 +28,10 @@ import appeng.items.parts.PartModels;
+ import appeng.parts.p2p.P2PModels;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.nbt.Tag;
+-import net.minecraftforge.common.capabilities.Capability;
+-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+-import net.minecraftforge.energy.IEnergyStorage;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++import net.minecraft.core.Direction;
++import net.neoforged.neoforge.capabilities.Capabilities;
++import net.neoforged.neoforge.energy.IEnergyStorage;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.api.Tickable;
+@@ -242,8 +243,8 @@ public class FEMultiP2PTunnel extends
+   }
+ 
+   @Override
+-  protected Capability<IEnergyStorage> getCapability() {
+-    return ForgeCapabilities.ENERGY;
++  protected BlockCapability<IEnergyStorage, Direction> getCapability() {
++    return Capabilities.EnergyStorage.BLOCK;
+   }
+ 
+   @Override
+@@ -278,7 +279,7 @@ public class FEMultiP2PTunnel extends
+       }
+     }
+     this.isSatisfied = this.buffer / 2 > distributed;
+-    this.deductEnergyCost(distributed, PowerUnits.FE);
++    this.deductEnergyCost(distributed, PowerUnit.FE);
+     return didWork ? TickRateModulation.FASTER : TickRateModulation.SLOWER;
+   }
+ }
+diff --git a/src/main/java/stone/mae2/parts/p2p/multi/FluidMultiP2PTunnel.java b/src/main/java/stone/mae2/parts/p2p/multi/FluidMultiP2PTunnel.java
+index ccb08d2..e3b9c99 100644
+--- a/src/main/java/stone/mae2/parts/p2p/multi/FluidMultiP2PTunnel.java
++++ b/src/main/java/stone/mae2/parts/p2p/multi/FluidMultiP2PTunnel.java
+@@ -27,10 +27,11 @@ import appeng.api.parts.IPartModel;
+ import appeng.api.stacks.AEKeyType;
+ import appeng.items.parts.PartModels;
+ import appeng.parts.p2p.P2PModels;
+-import net.minecraftforge.common.capabilities.Capability;
+-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+-import net.minecraftforge.fluids.FluidStack;
+-import net.minecraftforge.fluids.capability.IFluidHandler;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++import net.minecraft.core.Direction;
++import net.neoforged.neoforge.capabilities.Capabilities;
++import net.neoforged.neoforge.fluids.FluidStack;
++import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+ import stone.mae2.MAE2;
+ 
+ public class FluidMultiP2PTunnel extends CapabilityMultiP2PTunnel<FluidMultiP2PTunnel, FluidMultiP2PTunnel.Logic, FluidMultiP2PTunnel.Part, IFluidHandler> {
+@@ -292,8 +293,8 @@ public class FluidMultiP2PTunnel extends CapabilityMultiP2PTunnel<FluidMultiP2PT
+   }
+ 
+   @Override
+-  protected Capability<IFluidHandler> getCapability() {
+-    return ForgeCapabilities.FLUID_HANDLER;
++  protected BlockCapability<IFluidHandler, Direction> getCapability() {
++    return Capabilities.FluidHandler.BLOCK;
+   }
+ 
+   @Override
+diff --git a/src/main/java/stone/mae2/parts/p2p/multi/ItemMultiP2PTunnel.java b/src/main/java/stone/mae2/parts/p2p/multi/ItemMultiP2PTunnel.java
+index aa6abcb..a0c3204 100644
+--- a/src/main/java/stone/mae2/parts/p2p/multi/ItemMultiP2PTunnel.java
++++ b/src/main/java/stone/mae2/parts/p2p/multi/ItemMultiP2PTunnel.java
+@@ -28,10 +28,11 @@ import appeng.api.stacks.AEKeyType;
+ import appeng.items.parts.PartModels;
+ import appeng.parts.p2p.P2PModels;
+ import net.minecraft.world.item.ItemStack;
+-import net.minecraftforge.common.capabilities.Capability;
+-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+-import net.minecraftforge.items.IItemHandler;
+-import net.minecraftforge.items.ItemHandlerHelper;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++import net.minecraft.core.Direction;
++import net.neoforged.neoforge.capabilities.Capabilities;
++import net.neoforged.neoforge.items.IItemHandler;
++import net.neoforged.neoforge.items.ItemHandlerHelper;
+ import stone.mae2.MAE2;
+ 
+ public class ItemMultiP2PTunnel extends CapabilityMultiP2PTunnel<ItemMultiP2PTunnel, ItemMultiP2PTunnel.Logic, ItemMultiP2PTunnel.Part, IItemHandler> {
+@@ -266,8 +267,8 @@ public class ItemMultiP2PTunnel extends CapabilityMultiP2PTunnel<ItemMultiP2PTun
+   }
+ 
+   @Override
+-  protected Capability<IItemHandler> getCapability() {
+-    return ForgeCapabilities.ITEM_HANDLER;
++  protected BlockCapability<IItemHandler, Direction> getCapability() {
++    return Capabilities.ItemHandler.BLOCK;
+   }
+ 
+   @Override
+diff --git a/src/main/java/stone/mae2/parts/p2p/multi/MultiP2PTunnel.java b/src/main/java/stone/mae2/parts/p2p/multi/MultiP2PTunnel.java
+index ccfcab7..9cdbed2 100644
+--- a/src/main/java/stone/mae2/parts/p2p/multi/MultiP2PTunnel.java
++++ b/src/main/java/stone/mae2/parts/p2p/multi/MultiP2PTunnel.java
+@@ -2,7 +2,7 @@ package stone.mae2.parts.p2p.multi;
+ 
+ import appeng.api.config.Actionable;
+ import appeng.api.config.PowerMultiplier;
+-import appeng.api.config.PowerUnits;
++import appeng.api.config.PowerUnit;
+ import appeng.api.features.P2PTunnelAttunement;
+ import appeng.api.implementations.items.IMemoryCard;
+ import appeng.api.implementations.items.MemoryCardMessages;
+@@ -16,21 +16,27 @@ import appeng.api.util.AECableType;
+ import appeng.client.render.cablebus.P2PTunnelFrequencyModelData;
+ import appeng.core.AEConfig;
+ import appeng.parts.AEBasePart;
+-import appeng.util.CustomNameUtil;
++
+ import appeng.util.Platform;
+ import appeng.util.SettingsFrom;
+ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+ import it.unimi.dsi.fastutil.objects.ReferenceSet;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.component.DataComponentMap;
++import net.minecraft.core.component.DataComponents;
++import appeng.api.ids.AEComponents;
++import appeng.api.implementations.items.MemoryCardColors;
++import appeng.items.tools.MemoryCardItem;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.nbt.Tag;
+-import net.minecraft.network.FriendlyByteBuf;
++import net.minecraft.network.RegistryFriendlyByteBuf;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.resources.ResourceLocation;
+ import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.entity.player.Player;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.phys.Vec3;
+-import net.minecraftforge.client.model.data.ModelData;
++import net.neoforged.neoforge.client.model.data.ModelData;
+ import org.jetbrains.annotations.Nullable;
+ 
+ import stone.mae2.api.features.MultiP2PTunnelAttunement;
+@@ -59,7 +65,7 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+     if (this.customName != null) {
+       CompoundTag data = new CompoundTag();
+       data
+-        .putString("customName", Component.Serializer.toJson(this.customName));
++        .putString("customName", Component.Serializer.toJson(this.customName, part.getLevel().registryAccess()));
+       return data;
+     } else
+       return null;
+@@ -176,14 +182,14 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+   }
+ 
+   protected void deductEnergyCost(double energyTransported,
+-    PowerUnits typeTransported) {
++    PowerUnit typeTransported) {
+     var costFactor = AEConfig.instance().getP2PTunnelEnergyTax();
+     if (costFactor <= 0) {
+       return;
+     }
+ 
+     var tax = typeTransported
+-      .convertTo(PowerUnits.AE, energyTransported * costFactor);
++      .convertTo(PowerUnit.AE, energyTransported * costFactor);
+     this.grid
+       .getEnergyService()
+       .extractAEPower(tax, Actionable.MODULATE, PowerMultiplier.CONFIG);
+@@ -267,21 +273,21 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+     }
+ 
+     @Override
+-    public void readFromNBT(CompoundTag data) {
+-      super.readFromNBT(data);
++    public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
++      super.readFromNBT(data, registries);
+       this.setOutput(data.getBoolean("output"));
+       this.freq = data.getShort("freq");
+     }
+ 
+     @Override
+-    public void writeToNBT(CompoundTag data) {
+-      super.writeToNBT(data);
++    public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
++      super.writeToNBT(data, registries);
+       data.putBoolean("output", this.isOutput());
+       data.putShort("freq", this.getFrequency());
+     }
+ 
+     @Override
+-    public boolean readFromStream(FriendlyByteBuf data) {
++    public boolean readFromStream(RegistryFriendlyByteBuf data) {
+       final boolean c = super.readFromStream(data);
+       final short oldf = this.freq;
+       this.freq = data.readShort();
+@@ -289,7 +295,7 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+     }
+ 
+     @Override
+-    public void writeToStream(FriendlyByteBuf data) {
++    public void writeToStream(RegistryFriendlyByteBuf data) {
+       super.writeToStream(data);
+       data.writeShort(this.getFrequency());
+     }
+@@ -305,7 +311,7 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+     }
+ 
+     @Override
+-    public boolean onPartActivate(Player player, InteractionHand hand,
++    public boolean onUseItemOn(ItemStack heldItem, Player player, InteractionHand hand,
+       Vec3 pos) {
+       if (isClientSide()) {
+         return true;
+@@ -315,6 +321,7 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+         return false;
+       }
+ 
++      if (appeng.util.InteractionUtil.isInAlternateUseMode(player)) return copyFrequency(player, hand, pos);
+       ItemStack is;
+       boolean settingOutput;
+       if (player.getMainHandItem().isEmpty()) {
+@@ -327,13 +334,12 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+ 
+       // Prefer restoring from memory card
+       if (!is.isEmpty() && is.getItem() instanceof IMemoryCard mc) {
+-        var configData = mc.getData(is);
++        var configData = is.getComponents();
+ 
+         // Change the actual tunnel type and import settings when the encoded
+         // type is a
+         // P2P
+-        IPartItem<?> partItem = IPartItem
+-          .byId(new ResourceLocation(configData.getString(CONFIG_NBT_TYPE)));
++        IPartItem<?> partItem = configData.get(AEComponents.EXPORTED_P2P_TYPE) instanceof IPartItem<?> item ? item : null;
+         if (partItem != null && MultiP2PTunnel.Part.class
+           .isAssignableFrom(partItem.getPartClass())) {
+           IPart newBus = this;
+@@ -383,8 +389,7 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+       return false;
+     }
+ 
+-    @Override
+-    public boolean onPartShiftActivate(Player player, InteractionHand hand,
++    private boolean copyFrequency(Player player, InteractionHand hand,
+       Vec3 pos) {
+       final ItemStack is = player.getInventory().getSelected();
+       if (!is.isEmpty() && is.getItem() instanceof IMemoryCard mc) {
+@@ -392,8 +397,7 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+           return true;
+         }
+ 
+-        final CompoundTag data = mc.getData(is);
+-        final short storedFrequency = data.getShort(CONFIG_NBT_FREQ);
++        final short storedFrequency = is.getOrDefault(AEComponents.EXPORTED_P2P_FREQUENCY, (short) 0);
+ 
+         short newFreq = this.getFrequency();
+ 
+@@ -413,9 +417,9 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+ 
+         var type = getPartItem().asItem().getDescriptionId();
+ 
+-        exportSettings(SettingsFrom.MEMORY_CARD, data);
+-
+-        mc.setMemoryCardContents(is, type, data);
++        MemoryCardItem.clearCard(is);
++        is.set(AEComponents.EXPORTED_SETTINGS_SOURCE, getPartItem().asItem().getDescription());
++        is.applyComponents(exportSettings(SettingsFrom.MEMORY_CARD));
+         if (needsNewFrequency) {
+           mc.notifyUser(player, MemoryCardMessages.SETTINGS_RESET);
+         } else {
+@@ -426,15 +430,16 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+       return false;
+     }
+ 
+-    public void importSettings(SettingsFrom mode, CompoundTag input,
++    public void importSettings(SettingsFrom mode, DataComponentMap input,
+       @Nullable Player player, boolean settingOutput) {
+       // lets you name a part and add it to the tunnel to set the name
+       if (this.hasCustomName())
+-        CustomNameUtil.setCustomName(input, this.getCustomName());
++        input = DataComponentMap.builder().addAll(input).set(DataComponents.CUSTOM_NAME, this.getCustomName()).build();
+       super.importSettings(mode, input, player);
+ 
+-      if (input.contains(CONFIG_NBT_FREQ, Tag.TAG_SHORT)) {
+-        short freq = input.getShort(CONFIG_NBT_FREQ);
++      Short frequency = input.get(AEComponents.EXPORTED_P2P_FREQUENCY);
++      if (frequency != null) {
++        short freq = frequency;
+ 
+         // Only make this an output, if it's not already on the frequency.
+         // Otherwise, the tunnel input may be made unusable by accidentally
+@@ -449,23 +454,20 @@ public abstract class MultiP2PTunnel<T extends MultiP2PTunnel<T, L, P>, L extend
+     }
+ 
+     @Override
+-    public void exportSettings(SettingsFrom mode, CompoundTag output) {
+-      super.exportSettings(mode, output);
++    public void importSettings(SettingsFrom mode, DataComponentMap input, @Nullable Player player) {
++      importSettings(mode, input, player, true);
++    }
+ 
+-      // Save the tunnel type
++    @Override
++    public void exportSettings(SettingsFrom mode, DataComponentMap.Builder output) {
++      super.exportSettings(mode, output);
+       if (mode == SettingsFrom.MEMORY_CARD) {
+-        output
+-          .putString(CONFIG_NBT_TYPE,
+-            IPartItem.getId(getPartItem()).toString());
+-
++        output.set(AEComponents.EXPORTED_P2P_TYPE, getPartItem().asItem());
+         if (freq != 0) {
+-          output.putShort(CONFIG_NBT_FREQ, freq);
+-
++          output.set(AEComponents.EXPORTED_P2P_FREQUENCY, freq);
+           var colors = Platform.p2p().toColors(freq);
+-          var colorCode = new int[] { colors[0].ordinal(), colors[0].ordinal(),
+-            colors[1].ordinal(), colors[1].ordinal(), colors[2].ordinal(),
+-            colors[2].ordinal(), colors[3].ordinal(), colors[3].ordinal(), };
+-          output.putIntArray(IMemoryCard.NBT_COLOR_CODE, colorCode);
++          output.set(AEComponents.MEMORY_CARD_COLORS, new MemoryCardColors(
++              colors[0], colors[0], colors[1], colors[1], colors[2], colors[2], colors[3], colors[3]));
+         }
+       }
+     }
+diff --git a/src/main/java/stone/mae2/parts/p2p/multi/PatternMultiP2PTunnel.java b/src/main/java/stone/mae2/parts/p2p/multi/PatternMultiP2PTunnel.java
+index 594ff1f..8f27713 100644
+--- a/src/main/java/stone/mae2/parts/p2p/multi/PatternMultiP2PTunnel.java
++++ b/src/main/java/stone/mae2/parts/p2p/multi/PatternMultiP2PTunnel.java
+@@ -11,9 +11,9 @@ import appeng.api.parts.IPartItem;
+ import appeng.api.parts.IPartModel;
+ import appeng.api.stacks.AEItemKey;
+ import appeng.api.stacks.AEKey;
+-import appeng.capabilities.Capabilities;
++import appeng.api.AECapabilities;
+ import appeng.helpers.patternprovider.PatternProviderLogicHost;
+-import appeng.helpers.patternprovider.PatternProviderTargetCache;
++import stone.mae2.parts.p2p.NativePatternTargetCache;
+ import appeng.hooks.ticking.TickHandler;
+ import appeng.items.parts.PartModels;
+ import appeng.me.helpers.MachineSource;
+@@ -21,13 +21,14 @@ import appeng.parts.p2p.P2PModels;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
+ import net.minecraft.nbt.CompoundTag;
++import net.minecraft.core.HolderLookup;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.item.Items;
+ import net.minecraft.world.level.BlockGetter;
+ import net.minecraft.world.level.block.entity.BlockEntity;
+-import net.minecraftforge.common.capabilities.Capability;
+-import net.minecraftforge.common.util.LazyOptional;
++import net.neoforged.neoforge.capabilities.BlockCapability;
++import stone.mae2.parts.p2p.NativePartCapabilities;
+ 
+ import stone.mae2.MAE2;
+ import stone.mae2.parts.p2p.PatternP2PPartLogic;
+@@ -136,33 +137,15 @@ public class PatternMultiP2PTunnel extends
+       super(part);
+     }
+ 
+-    public <T> LazyOptional<T> getCapability(Capability<T> capabilityClass) {
+-      if (capabilityClass == Capabilities.CRAFTING_MACHINE && !this.part.isOutput())
+-        return (LazyOptional<T>) LazyOptional
+-          .of(() -> PatternMultiP2PTunnel.this.logic);
++    @SuppressWarnings("unchecked")
++    public <T> T getCapability(BlockCapability<T, Direction> capabilityClass) {
++      if (capabilityClass == AECapabilities.CRAFTING_MACHINE && !this.part.isOutput())
++        return (T) PatternMultiP2PTunnel.this.logic;
+       if (this.part.isOutput()) {
+-        List<? extends Target> inputList = PatternMultiP2PTunnel.this
+-          .getPatternTunnelInputs();
+-        if (inputList.isEmpty())
+-          return LazyOptional.empty();
+-        Target provider = inputList.get(0);
+-        if (provider == null)
+-          return LazyOptional.empty();
+-        BlockEntity maybeEntity = provider.getTargetBlockEntity();
+-        if (maybeEntity != null) {
+-          if (maybeEntity instanceof ICraftingProvider
+-            || maybeEntity instanceof PatternProviderLogicHost) {
+-            return maybeEntity.getCapability(capabilityClass, provider.side());
+-          } else if (maybeEntity instanceof IPartHost host) {
+-            IPart maybePart = host.getPart(provider.side());
+-            if (maybePart != null && (maybePart instanceof ICraftingProvider
+-              || maybePart instanceof PatternProviderLogicHost)) {
+-              return maybePart.getCapability(capabilityClass);
+-            }
+-          }
+-        }
++        var inputs = PatternMultiP2PTunnel.this.getPatternTunnelInputs();
++        if (!inputs.isEmpty()) return NativePartCapabilities.forwardPatternCapability(inputs.getFirst(), capabilityClass);
+       }
+-      return LazyOptional.empty();
++      return null;
+     }
+ 
+         /**
+@@ -254,7 +237,7 @@ public class PatternMultiP2PTunnel extends
+     protected final IActionSource source;
+ 
+     private final PatternP2PPartLogic partLogic = new PatternP2PPartLogic(this);
+-    private PatternProviderTargetCache cache;
++    private NativePatternTargetCache cache;
+ 
+     public Part(IPartItem<?> partItem) {
+       super(partItem);
+@@ -266,15 +249,15 @@ public class PatternMultiP2PTunnel extends
+     }
+ 
+     @Override
+-    public void readFromNBT(CompoundTag data) {
+-      super.readFromNBT(data);
+-      this.partLogic.readFromNBT(data);
++    public void readFromNBT(CompoundTag data, HolderLookup.Provider registries) {
++      super.readFromNBT(data, registries);
++      this.partLogic.readFromNBT(data, registries);
+     }
+ 
+     @Override
+-    public void writeToNBT(CompoundTag data) {
+-      super.writeToNBT(data);
+-      this.partLogic.writeToNBT(data);
++    public void writeToNBT(CompoundTag data, HolderLookup.Provider registries) {
++      super.writeToNBT(data, registries);
++      this.partLogic.writeToNBT(data, registries);
+     }
+ 
+     @Override
+@@ -300,12 +283,9 @@ public class PatternMultiP2PTunnel extends
+       return PatternMultiP2PTunnel.class;
+     }
+ 
+-    @Override
+-    public <T> LazyOptional<T> getCapability(Capability<T> capabilityClass) {
+-      Optional<PatternMultiP2PTunnel.Logic> logic = this.getLogic();
+-      if (logic.isPresent())
+-        return logic.get().getCapability(capabilityClass);
+-      return LazyOptional.empty();
++    public <T> T getCapability(BlockCapability<T, Direction> capabilityClass) {
++      var logic = getLogic();
++      return logic.isPresent() ? logic.get().getCapability(capabilityClass) : null;
+     }
+ 
+     @Override
+@@ -349,7 +329,7 @@ public class PatternMultiP2PTunnel extends
+     }
+ 
+     @Override
+-    public PatternProviderTargetCache getCache() { return this.cache; }
++    public NativePatternTargetCache getCache() { return this.cache; }
+   }
+ 
+ }
+diff --git a/src/main/java/stone/mae2/util/LoadedModsHelper.java b/src/main/java/stone/mae2/util/LoadedModsHelper.java
+index b0fb5cc..77f9b80 100644
+--- a/src/main/java/stone/mae2/util/LoadedModsHelper.java
++++ b/src/main/java/stone/mae2/util/LoadedModsHelper.java
+@@ -1,6 +1,6 @@
+ package stone.mae2.util;
+ 
+-import net.minecraftforge.fml.loading.LoadingModList;
++import net.neoforged.fml.loading.LoadingModList;
+ 
+ public class LoadedModsHelper {
+   public static final boolean isFork = LoadingModList.get().getMods().stream()
+diff --git a/src/main/resources/META-INF/accesstransformer.cfg b/src/main/resources/META-INF/accesstransformer.cfg
+index ce54a0e..7bcf3dc 100644
+--- a/src/main/resources/META-INF/accesstransformer.cfg
++++ b/src/main/resources/META-INF/accesstransformer.cfg
+@@ -1,8 +1 @@
+-public appeng.helpers.patternprovider.PatternProviderTargetCache
+-
+-# Fork constructor
+-public appeng.helpers.patternprovider.PatternProviderTargetCache <init>(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lappeng/api/networking/security/IActionSource;Lappeng/util/ConfigManager;)V
+-# Non-fork constructor
+-public appeng.helpers.patternprovider.PatternProviderTargetCache <init>(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lappeng/api/networking/security/IActionSource;)V
+-
+-public appeng.helpers.patternprovider.PatternProviderTargetCache find()Lappeng/helpers/patternprovider/PatternProviderTarget;
+\ No newline at end of file
++# Native MAE2 uses public AE2 APIs and its own cache implementation.
+diff --git a/src/main/resources/META-INF/mods.toml b/src/main/resources/META-INF/neoforge.mods.toml
+similarity index 83%
+rename from src/main/resources/META-INF/mods.toml
+rename to src/main/resources/META-INF/neoforge.mods.toml
+index c9ed962..5061a9e 100644
+--- a/src/main/resources/META-INF/mods.toml
++++ b/src/main/resources/META-INF/neoforge.mods.toml
+@@ -1,5 +1,5 @@
+ modLoader = "javafml"
+-loaderVersion = "[47,)"
++loaderVersion = "[4,)"
+ license = "${mod_license}"
+ 
+ # This is a URL to e.g. your GitHub or CurseForge issues page.
+@@ -21,26 +21,29 @@ license = "${mod_license}"
+     description = '''NAE2 for the modern era!'''
+ 
+     [[dependencies.${mod_id}]]
+-        modId = "forge"
+-        mandatory = true
+-        versionRange = "[${forge_version},)"
++        modId = "neoforge"
++        type = "required"
++        versionRange = "[21.1.248,)"
+         ordering = "NONE"
+         side = "BOTH"
+     [[dependencies.${mod_id}]]
+         modId = "minecraft"
+-        mandatory = true
+-        versionRange = "[${minecraft_version},)"
++        type = "required"
++        versionRange = "[1.21.1,1.21.2)"
+         ordering = "NONE"
+         side = "BOTH"
+     [[dependencies.${mod_id}]]
+         modId = "ae2"
+-        mandatory = true
++        type = "required"
+         versionRange = "[${ae2_version},)"
+         ordering = "AFTER"
+         side = "BOTH"
+     [[dependencies.${mod_id}]]
+         modId = "gtceu"
+-        mandatory = false
++        type = "optional"
+         versionRange = "[${gtceu_version},)"
+         ordering = "AFTER"
+         side = "BOTH"
++
++[[mixins]]
++config = "mixins.mae2.json"
+diff --git a/src/main/resources/assets/mae2/models/item/cloud_chamber.json b/src/main/resources/assets/mae2/models/item/cloud_chamber.json
+index 8bb595f..64eea3e 100644
+--- a/src/main/resources/assets/mae2/models/item/cloud_chamber.json
++++ b/src/main/resources/assets/mae2/models/item/cloud_chamber.json
+@@ -1,6 +1,6 @@
+ {
+   "parent": "block/cube_all",
+   "textures": {
+-    "all": "ae2:item/quartz_glass"
++    "all": "ae2:block/glass/quartz_glass_item"
+   }
+ }
+diff --git a/src/main/resources/data/mae2/loot_tables/blocks/16x_crafting_accelerator.json b/src/main/resources/data/mae2/loot_table/blocks/16x_crafting_accelerator.json
+similarity index 100%
+rename from src/main/resources/data/mae2/loot_tables/blocks/16x_crafting_accelerator.json
+rename to src/main/resources/data/mae2/loot_table/blocks/16x_crafting_accelerator.json
+diff --git a/src/main/resources/data/mae2/loot_tables/blocks/256x_crafting_accelerator.json b/src/main/resources/data/mae2/loot_table/blocks/256x_crafting_accelerator.json
+similarity index 100%
+rename from src/main/resources/data/mae2/loot_tables/blocks/256x_crafting_accelerator.json
+rename to src/main/resources/data/mae2/loot_table/blocks/256x_crafting_accelerator.json
+diff --git a/src/main/resources/data/mae2/loot_tables/blocks/4x_crafting_accelerator.json b/src/main/resources/data/mae2/loot_table/blocks/4x_crafting_accelerator.json
+similarity index 100%
+rename from src/main/resources/data/mae2/loot_tables/blocks/4x_crafting_accelerator.json
+rename to src/main/resources/data/mae2/loot_table/blocks/4x_crafting_accelerator.json
+diff --git a/src/main/resources/data/mae2/loot_tables/blocks/64x_crafting_accelerator.json b/src/main/resources/data/mae2/loot_table/blocks/64x_crafting_accelerator.json
+similarity index 100%
+rename from src/main/resources/data/mae2/loot_tables/blocks/64x_crafting_accelerator.json
+rename to src/main/resources/data/mae2/loot_table/blocks/64x_crafting_accelerator.json
+diff --git a/src/main/resources/data/mae2/loot_tables/blocks/cloud_chamber.json b/src/main/resources/data/mae2/loot_table/blocks/cloud_chamber.json
+similarity index 100%
+rename from src/main/resources/data/mae2/loot_tables/blocks/cloud_chamber.json
+rename to src/main/resources/data/mae2/loot_table/blocks/cloud_chamber.json
+diff --git a/src/main/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_eu.json b/src/main/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_eu.json
+new file mode 100644
+index 0000000..bf0360c
+--- /dev/null
++++ b/src/main/resources/data/mae2/recipe/network/parts/multi_p2p_tunnel_eu.json
+@@ -0,0 +1,21 @@
++{
++  "type": "minecraft:crafting_shapeless",
++  "category": "misc",
++  "ingredients": [
++    {
++      "item": "mae2:eu_p2p_tunnel"
++    },
++    {
++      "item": "ae2:engineering_processor"
++    }
++  ],
++  "result": {
++    "id": "mae2:eu_multi_p2p_tunnel"
++  },
++  "neoforge:conditions": [
++    {
++      "type": "neoforge:mod_loaded",
++      "modid": "gtceu"
++    }
++  ]
++}
+diff --git a/src/main/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_eu.json b/src/main/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_eu.json
+deleted file mode 100644
+index 2de7a04..0000000
+--- a/src/main/resources/data/mae2/recipes/network/parts/multi_p2p_tunnel_eu.json
++++ /dev/null
+@@ -1,28 +0,0 @@
+-{
+-    "type": "forge:conditional",
+-    "recipes": [
+-        {
+-            "conditions": [
+-                {
+-                    "type": "forge:mod_loaded",
+-                    "modid": "gtceu"
+-                }
+-            ],
+-            "recipe": {
+-                "type": "minecraft:crafting_shapeless",
+-                "category": "misc",
+-                "ingredients": [
+-                    {
+-                        "item": "mae2:eu_p2p_tunnel"
+-                    },
+-                    {
+-                        "item": "ae2:engineering_processor"
+-                    }
+-                ],
+-                "result": {
+-                    "item": "mae2:eu_multi_p2p_tunnel"
+-                }
+-            }
+-        }
+-    ]
+-}
+diff --git a/src/main/resources/data/mae2/structures/patternp2p.multi/fullblock/crafting.nbt b/src/main/resources/data/mae2/structure/patternp2p.multi/fullblock/crafting.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/patternp2p.multi/fullblock/crafting.nbt
+rename to src/main/resources/data/mae2/structure/patternp2p.multi/fullblock/crafting.nbt
+diff --git a/src/main/resources/data/mae2/structures/patternp2p.multi/multipart/crafting.nbt b/src/main/resources/data/mae2/structure/patternp2p.multi/multipart/crafting.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/patternp2p.multi/multipart/crafting.nbt
+rename to src/main/resources/data/mae2/structure/patternp2p.multi/multipart/crafting.nbt
+diff --git a/src/main/resources/data/mae2/structures/patternp2p.single/fullblock/crafting.nbt b/src/main/resources/data/mae2/structure/patternp2p.single/fullblock/crafting.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/patternp2p.single/fullblock/crafting.nbt
+rename to src/main/resources/data/mae2/structure/patternp2p.single/fullblock/crafting.nbt
+diff --git a/src/main/resources/data/mae2/structures/patternp2p.single/multipart/blocking/all.nbt b/src/main/resources/data/mae2/structure/patternp2p.single/multipart/blocking/all.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/patternp2p.single/multipart/blocking/all.nbt
+rename to src/main/resources/data/mae2/structure/patternp2p.single/multipart/blocking/all.nbt
+diff --git a/src/main/resources/data/mae2/structures/patternp2p.single/multipart/crafting.nbt b/src/main/resources/data/mae2/structure/patternp2p.single/multipart/crafting.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/patternp2p.single/multipart/crafting.nbt
+rename to src/main/resources/data/mae2/structure/patternp2p.single/multipart/crafting.nbt
+diff --git a/src/main/resources/data/mae2/structures/redstonep2p.multi/shared/simple.nbt b/src/main/resources/data/mae2/structure/redstonep2p.multi/shared/simple.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/redstonep2p.multi/shared/simple.nbt
+rename to src/main/resources/data/mae2/structure/redstonep2p.multi/shared/simple.nbt
+diff --git a/src/main/resources/data/mae2/structures/vanilla.provider/fullblock/crafting.nbt b/src/main/resources/data/mae2/structure/vanilla.provider/fullblock/crafting.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/vanilla.provider/fullblock/crafting.nbt
+rename to src/main/resources/data/mae2/structure/vanilla.provider/fullblock/crafting.nbt
+diff --git a/src/main/resources/data/mae2/structures/vanilla.provider/multipart/crafting.nbt b/src/main/resources/data/mae2/structure/vanilla.provider/multipart/crafting.nbt
+similarity index 100%
+rename from src/main/resources/data/mae2/structures/vanilla.provider/multipart/crafting.nbt
+rename to src/main/resources/data/mae2/structure/vanilla.provider/multipart/crafting.nbt
+diff --git a/src/main/resources/data/mae2/tags/item/p2p_attunements/eu_p2p_tunnel.json b/src/main/resources/data/mae2/tags/item/p2p_attunements/eu_p2p_tunnel.json
+new file mode 100644
+index 0000000..ae8004b
+--- /dev/null
++++ b/src/main/resources/data/mae2/tags/item/p2p_attunements/eu_p2p_tunnel.json
+@@ -0,0 +1,6 @@
++{
++  "replace": false,
++  "values": [
++    "#c:tools/wire_cutters"
++  ]
++}
+diff --git a/src/main/resources/data/mae2/tags/item/p2p_attunements/pattern_p2p_tunnel.json b/src/main/resources/data/mae2/tags/item/p2p_attunements/pattern_p2p_tunnel.json
+new file mode 100644
+index 0000000..c2d9d0e
+--- /dev/null
++++ b/src/main/resources/data/mae2/tags/item/p2p_attunements/pattern_p2p_tunnel.json
+@@ -0,0 +1,8 @@
++{
++  "replace": false,
++  "values": [
++    "ae2:pattern_provider",
++    "ae2:cable_pattern_provider",
++    "ae2:blank_pattern"
++  ]
++}
+diff --git a/src/main/resources/data/mae2/tags/items/p2p_attunements/eu_p2p_tunnel.json b/src/main/resources/data/mae2/tags/items/p2p_attunements/eu_p2p_tunnel.json
+deleted file mode 100644
+index d0bb1ca..0000000
+--- a/src/main/resources/data/mae2/tags/items/p2p_attunements/eu_p2p_tunnel.json
++++ /dev/null
+@@ -1,6 +0,0 @@
+-{
+-    "replace": false,
+-    "values": [
+-        "#forge:tools/wire_cutters"
+-    ]
+-}
+diff --git a/src/main/resources/data/mae2/tags/items/p2p_attunements/pattern_p2p_tunnel.json b/src/main/resources/data/mae2/tags/items/p2p_attunements/pattern_p2p_tunnel.json
+deleted file mode 100644
+index f561e22..0000000
+--- a/src/main/resources/data/mae2/tags/items/p2p_attunements/pattern_p2p_tunnel.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-{
+-    "replace": false,
+-    "values": [
+-        "ae2:pattern_provider",
+-        "ae2:cable_pattern_provider",
+-        "ae2:blank_pattern"
+-    ]
+-}
+diff --git a/src/main/resources/mixins.mae2.json b/src/main/resources/mixins.mae2.json
+index 9b18dd2..172841d 100644
+--- a/src/main/resources/mixins.mae2.json
++++ b/src/main/resources/mixins.mae2.json
+@@ -3,15 +3,16 @@
+   "minVersion": "0.8.3",
+   "package": "stone.mae2.mixins",
+   "plugin": "stone.mae2.mixins.MAE2MixinPlugin",
+-  "refmap": "mixins.mae2.refmap.json",
+-  "compatibilityLevel": "JAVA_11",
++  "compatibilityLevel": "JAVA_21",
+   "mixins": [
+     "CraftingCPUClusterMixin",
+-    "PatternProviderLogicCLMixin",
+     "PatternProviderLogicMixin"
+   ],
+   "client": [
+     "ModelBakeryMixin"
+   ],
+-  "server": []
++  "server": [],
++  "injectors": {
++    "defaultRequire": 1
++  }
+ }
+diff --git a/src/main/resources/pack.mcmeta b/src/main/resources/pack.mcmeta
+index eca79ae..6fd1e05 100644
+--- a/src/main/resources/pack.mcmeta
++++ b/src/main/resources/pack.mcmeta
+@@ -1,8 +1,8 @@
+ {
+   "pack": {
+     "description": {
+-      "text": "${mod_id} resources"
++      "text": "Modern AE2 Additions resources"
+     },
+-    "pack_format": 15
++    "pack_format": 48
+   }
+-}
+\ No newline at end of file
++}

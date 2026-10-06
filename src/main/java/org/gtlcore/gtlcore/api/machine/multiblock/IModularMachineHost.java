@@ -6,8 +6,8 @@ import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import com.google.common.primitives.Ints;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public interface IModularMachineHost<H extends IModularMachineHost<H>> {
 
     // ==================== Implementation From WorkableMachine ====================
 
-    BlockPos getPos();
+    BlockPos getBlockPos();
 
     Level getLevel();
 
@@ -76,6 +76,7 @@ public interface IModularMachineHost<H extends IModularMachineHost<H>> {
         H self = (H) this;
 
         for (BlockPos pos : positions) {
+            if (!level.hasChunkAt(pos)) continue;
             MetaMachine machine = MetaMachine.getMachine(level, pos);
             if (isValidModule(machine)) {
                 @SuppressWarnings("unchecked")

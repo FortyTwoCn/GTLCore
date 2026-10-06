@@ -2,35 +2,30 @@ package org.gtlcore.gtlcore.integration.ae2.wireless;
 
 import org.gtlcore.gtlcore.GTLCore;
 
-import com.gregtechceu.gtceu.api.item.tool.GTToolType;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
-import com.lowdragmc.lowdraglib.syncdata.managed.MultiManagedStorage;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.integration.ae2.utils.SerializableManagedGridNode;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
 
 import appeng.api.networking.GridFlags;
-import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridConnection;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IInWorldGridNodeHost;
-import appeng.api.networking.IManagedGridNode;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.util.AECableType;
 import org.jetbrains.annotations.NotNull;
@@ -38,15 +33,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
-public class WirelessNetworkCoreBlockEntity extends BlockEntity
-                                            implements IActionHost, IInWorldGridNodeHost, IMachineBlockEntity {
+public class WirelessNetworkCoreBlockEntity extends MetaMachine
+                                            implements IActionHost, IInWorldGridNodeHost {
 
     private static final String TAG_FREQUENCY = "frequency";
     private static final String NODE_TAG = "wireless_core";
-    private static final MachineDefinition DEFINITION = createDefinition();
 
     private static final IGridNodeListener<WirelessNetworkCoreBlockEntity> NODE_LISTENER = new IGridNodeListener<>() {
 
@@ -56,25 +49,26 @@ public class WirelessNetworkCoreBlockEntity extends BlockEntity
         }
     };
 
-    private final IManagedGridNode mainNode = GridHelper.createManagedNode(this, NODE_LISTENER)
+    @SaveField
+    private final SerializableManagedGridNode mainNode = (SerializableManagedGridNode) new SerializableManagedGridNode(this, NODE_LISTENER)
             .setFlags(GridFlags.DENSE_CAPACITY)
             .setIdlePowerUsage(0.0D)
             .setInWorldNode(true)
             .setExposedOnSides(getExposedSides())
             .setTagName(NODE_TAG);
 
-    private final MultiManagedStorage rootStorage = new MultiManagedStorage();
-    private final WirelessNetworkCoreMachine metaMachine = new WirelessNetworkCoreMachine(this);
+    @SaveField(nbtKey = TAG_FREQUENCY)
+    @SyncToClient
     private UUID frequency;
 
     public WirelessNetworkCoreBlockEntity(BlockPos pos, BlockState state) {
-        super(GTLWirelessAeContent.WIRELESS_NETWORK_CORE_BE.get(), pos, state);
+        super(new BlockEntityCreationInfo(GTLWirelessAeContent.WIRELESS_NETWORK_CORE_BE.get(), pos, state));
         this.mainNode.setVisualRepresentation(GTLWirelessAeContent.WIRELESS_NETWORK_CORE_ITEM.get());
         refreshExposedSides();
     }
 
     public static MachineDefinition definition() {
-        return DEFINITION;
+        return GTLWirelessAeContent.WIRELESS_NETWORK_CORE_DEFINITION.get();
     }
 
     @Override
@@ -95,12 +89,12 @@ public class WirelessNetworkCoreBlockEntity extends BlockEntity
     }
 
     @Override
-    public void setRemoved() {
-        super.setRemoved();
+    public void onUnload() {
         if (this.frequency != null) {
             WirelessAeNetworkRuntime.disconnectFrequency(this.frequency);
         }
         this.mainNode.destroy();
+        super.onUnload();
     }
 
     @Override
@@ -110,22 +104,6 @@ public class WirelessNetworkCoreBlockEntity extends BlockEntity
             WirelessAeNetworkRuntime.disconnectFrequency(this.frequency);
         }
         this.mainNode.destroy();
-    }
-
-    @Override
-    public void load(@NotNull CompoundTag tag) {
-        super.load(tag);
-        if (tag.hasUUID(TAG_FREQUENCY)) {
-            this.frequency = tag.getUUID(TAG_FREQUENCY);
-        }
-        this.mainNode.loadFromNBT(tag);
-    }
-
-    @Override
-    protected void saveAdditional(@NotNull CompoundTag tag) {
-        super.saveAdditional(tag);
-        tag.putUUID(TAG_FREQUENCY, ensureFrequency());
-        this.mainNode.saveToNBT(tag);
     }
 
     @Override
@@ -145,36 +123,13 @@ public class WirelessNetworkCoreBlockEntity extends BlockEntity
         return isConnectionSide(direction) ? AECableType.SMART : AECableType.NONE;
     }
 
-    @Override
     public MetaMachine getMetaMachine() {
-        return this.metaMachine;
-    }
-
-    @Override
-    public long getOffset() {
-        return this.worldPosition.asLong();
-    }
-
-    @Override
-    public MultiManagedStorage getRootStorage() {
-        return this.rootStorage;
+        return this;
     }
 
     @Override
     public MachineDefinition getDefinition() {
-        return DEFINITION;
-    }
-
-    @Override
-    public boolean shouldRenderGrid(Player player, BlockPos pos, BlockState state, ItemStack heldStack,
-                                    Set<GTToolType> toolTypes) {
-        return this.metaMachine.shouldRenderGrid(player, pos, state, heldStack, toolTypes);
-    }
-
-    @Override
-    public ResourceTexture sideTips(Player player, BlockPos pos, BlockState state,
-                                    Set<GTToolType> toolTypes, Direction side) {
-        return this.metaMachine.sideTips(player, pos, state, toolTypes, side);
+        return definition();
     }
 
     public UUID getFrequency() {
@@ -186,6 +141,7 @@ public class WirelessNetworkCoreBlockEntity extends BlockEntity
     }
 
     public void setOwner(Player player) {
+        setOwnerUUID(player.getUUID());
         this.mainNode.setOwningPlayer(player);
         if (this.level instanceof ServerLevel serverLevel) {
             WirelessAeSavedData.get(serverLevel.getServer()).setNetworkOwner(getFrequency(), player.getUUID());
@@ -244,21 +200,21 @@ public class WirelessNetworkCoreBlockEntity extends BlockEntity
         notifyConnectionNeighbors(oldSide, connectionSide, state);
     }
 
-    private static MachineDefinition createDefinition() {
-        MachineDefinition definition = MachineDefinition.createDefinition(
-                new ResourceLocation(GTLCore.MOD_ID, "wireless_network_core"));
-        definition.setBlockSupplier(GTLWirelessAeContent.WIRELESS_NETWORK_CORE::get);
-        definition.setBlockEntityTypeSupplier(GTLWirelessAeContent.WIRELESS_NETWORK_CORE_BE::get);
-        definition.setMachineSupplier(WirelessNetworkCoreMachine::new);
-        definition.setShape(Shapes.block());
-        definition.setAppearance(() -> GTLWirelessAeContent.WIRELESS_NETWORK_CORE.get().defaultBlockState());
-        definition.setTooltipBuilder((stack, tooltip) -> {});
-        return definition;
+    static MachineDefinition createDefinition() {
+        return new MachineDefinition(ResourceLocation.fromNamespaceAndPath(GTLCore.MOD_ID, "wireless_network_core"),
+                new MachineDefinition.Properties()
+                        .blockHolder(GTLWirelessAeContent.WIRELESS_NETWORK_CORE)
+                        .itemHolder(GTLWirelessAeContent.WIRELESS_NETWORK_CORE_ITEM)
+                        .blockEntityTypeSupplier(GTLWirelessAeContent.WIRELESS_NETWORK_CORE_BE::get)
+                        .rotationState(RotationState.ALL)
+                        .shape(Shapes.block())
+                        .appearance(() -> GTLWirelessAeContent.WIRELESS_NETWORK_CORE.get().defaultBlockState()));
     }
 
     private UUID ensureFrequency() {
         if (this.frequency == null) {
             this.frequency = UUID.randomUUID();
+            getSyncDataHolder().markClientSyncFieldDirty("frequency");
             setChanged();
         }
         return this.frequency;
@@ -326,22 +282,10 @@ public class WirelessNetworkCoreBlockEntity extends BlockEntity
         level.updateNeighborsAt(neighborPos, state.getBlock());
     }
 
-    private static final class WirelessNetworkCoreMachine extends MetaMachine {
-
-        private final WirelessNetworkCoreBlockEntity core;
-
-        private WirelessNetworkCoreMachine(IMachineBlockEntity holder) {
-            super(holder);
-            this.core = holder instanceof WirelessNetworkCoreBlockEntity core ? core : null;
-        }
-
-        @Override
-        public void onRotated(@NotNull Direction oldFacing, @NotNull Direction newFacing) {
-            super.onRotated(oldFacing, newFacing);
-            if (this.core != null) {
-                this.core.refreshConnectionSide(oldFacing, newFacing);
-            }
-        }
+    @Override
+    public void onRotated(@NotNull Direction oldFacing, @NotNull Direction newFacing) {
+        super.onRotated(oldFacing, newFacing);
+        refreshConnectionSide(oldFacing, newFacing);
     }
 
     private static final class LevelUpdate {

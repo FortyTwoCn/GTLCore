@@ -1,60 +1,55 @@
 package org.gtlcore.gtlcore.api.machine.trait;
 
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
-
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
+import java.util.Arrays;
 import java.util.List;
 
+/** Core's shared pattern circuit configuration; excluded from searchable consumable inventory. */
 public class NotifiableCircuitItemStackHandler extends NotifiableItemStackHandler {
-
-    public NotifiableCircuitItemStackHandler(MetaMachine machine) {
-        super(machine, 1, IO.IN, IO.IN);
+    public NotifiableCircuitItemStackHandler() {
+        super(1, IO.IN, IO.IN, slots -> new CustomItemStackHandler(slots) {
+            @Override public int getSlotLimit(int slot) { return 1; }
+        });
+        setFilter(IntCircuitBehaviour::isIntegratedCircuit);
+        shouldSearchContent(false);
     }
 
-    @NotNull
-    @Override
-    public ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate, boolean notifyChange) {
-        if (GTItems.INTEGRATED_CIRCUIT.isIn(stack)) {
-            if (!simulate) {
-                storage.setStackInSlot(slot, stack.copyWithCount(1));
-            }
-            return ItemStack.EMPTY;
-        }
-        return stack;
+    /** Existing Core pattern owners can construct and attach the shared circuit in one call. */
+    public NotifiableCircuitItemStackHandler(MetaMachine owner) {
+        this();
+        owner.attachTrait(this);
     }
 
     @Override
-    public int getSlotLimit(int slot) {
-        return 1;
+    public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+        if (slot != 0) throw new IndexOutOfBoundsException("Circuit slot " + slot);
+        if (!IntCircuitBehaviour.isIntegratedCircuit(stack)) return stack;
+        if (!simulate) storage.setStackInSlot(0, stack.copyWithCount(1));
+        return ItemStack.EMPTY;
     }
 
     @Override
-    public List<Ingredient> handleRecipeInner(IO io, GTRecipe recipe, List<Ingredient> left, @Nullable String slotName, boolean simulate) {
-        if (!simulate) return left;
-
-        for (var it = left.iterator(); it.hasNext();) {
-            var items = it.next().getItems();
-
-            if (items.length == 0 || items[0].isEmpty()) {
-                continue;
-            }
-
-            if (GTItems.INTEGRATED_CIRCUIT.is(items[0].getItem()) && IntCircuitBehaviour.getCircuitConfiguration(items[0]) == IntCircuitBehaviour.getCircuitConfiguration(storage.getStackInSlot(0))) {
-                it.remove();
+    public List<SizedIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<SizedIngredient> left, boolean simulate) {
+        if (!simulate || io != IO.IN) return left;
+        var stored = storage.getStackInSlot(0);
+        if (!IntCircuitBehaviour.isIntegratedCircuit(stored)) return left;
+        for (var iterator = left.iterator(); iterator.hasNext();) {
+            var predicate = LongIngredient.matchingIngredient(iterator.next());
+            if (Arrays.stream(predicate.getItems()).anyMatch(IntCircuitBehaviour::isIntegratedCircuit) &&
+                    predicate.test(stored)) {
+                iterator.remove();
                 break;
             }
         }
-
-        return left.isEmpty() ? null : left;
+        return left;
     }
 }

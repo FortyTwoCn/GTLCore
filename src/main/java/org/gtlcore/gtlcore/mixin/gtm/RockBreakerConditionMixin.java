@@ -1,62 +1,73 @@
 package org.gtlcore.gtlcore.mixin.gtm;
 
 import org.gtlcore.gtlcore.api.recipe.RecipeResult;
-import org.gtlcore.gtlcore.utils.Registries;
-
-import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
-import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.capability.recipe.*;
+import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableFluidTank;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
-import com.gregtechceu.gtceu.common.recipe.condition.RockBreakerCondition;
-import com.gregtechceu.gtceu.utils.GTUtil;
-
+import com.gregtechceu.gtceu.common.recipe.condition.AdjacentFluidCondition;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.*;
+import java.util.function.Supplier;
 
-import org.jetbrains.annotations.NotNull;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
+/** Core multiblocks inspect input tanks; original data-driven single machines inspect horizontal fluids. */
+@Mixin(AdjacentFluidCondition.class)
+public abstract class RockBreakerConditionMixin {
+    @Shadow(remap = false) @Final private List<Supplier<HolderSet<Fluid>>> fluids;
 
-import java.util.Objects;
-
-@Mixin(RockBreakerCondition.class)
-public abstract class RockBreakerConditionMixin extends RecipeCondition {
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public boolean test(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
-        var fluidA = Registries.getFluid(recipe.data.getString("fluidA"));
-        var fluidB = Registries.getFluid(recipe.data.getString("fluidB"));
-        boolean hasFluidA = false, hasFluidB = false;
-        if (recipeLogic.machine instanceof WorkableElectricMultiblockMachine MMachine) {
-            var handlers = MMachine.getCapabilitiesProxy().get(IO.IN, FluidRecipeCapability.CAP);
-            if (handlers == null) return false;
-            for (com.gregtechceu.gtceu.api.capability.recipe.IRecipeHandler<?> handler : handlers) {
-                if (handler instanceof NotifiableFluidTank tank) {
-                    if (tank.getFluidInTank(0).getFluid() == fluidA) hasFluidA = true;
-                    if (tank.getFluidInTank(0).getFluid() == fluidB) hasFluidB = true;
-                    if (hasFluidA && hasFluidB) return true;
-                    else RecipeResult.of(recipeLogic.machine, RecipeResult.FAIL_LACK_FLUID);
+    @Inject(method = "testCondition", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$checkRockFluids(GTRecipe recipe, RecipeLogic logic, CallbackInfoReturnable<Boolean> cir) {
+        var machine = logic.getMachine();
+        boolean legacy = fluids.isEmpty() && (recipe.data.contains("fluidA") || recipe.data.contains("fluidB"));
+        if (!legacy && !(machine instanceof WorkableElectricMultiblockMachine)) return;
+        var required = legacy ? gtlcore$originalRequirements(recipe) : ((AdjacentFluidCondition) (Object) this).getOrInitFluids(recipe);
+        boolean matched = required != null;
+        if (matched) for (var group : required) {
+            boolean present = false;
+            if (machine instanceof WorkableElectricMultiblockMachine holder) {
+                for (var handler : holder.getCapabilitiesFlat(IO.IN, FluidRecipeCapability.CAP)) {
+                    if (!(handler instanceof NotifiableFluidTank tank) || tank.getHandlerIO() != IO.IN) continue;
+                    for (int slot = 0; slot < tank.getTanks(); slot++) {
+                        var stack = tank.getFluidInTank(slot);
+                        if (!stack.isEmpty() && group.contains(stack.getFluid().builtInRegistryHolder())) { present = true; break; }
+                    }
+                    if (present) break;
+                }
+            } else if (machine.getLevel() != null) {
+                for (var side : Direction.Plane.HORIZONTAL) {
+                    var fluid = machine.getLevel().getFluidState(machine.getBlockPos().relative(side)).getType();
+                    if (group.contains(fluid.builtInRegistryHolder())) { present = true; break; }
                 }
             }
-        } else {
-            var level = recipeLogic.machine.self().getLevel();
-            var pos = recipeLogic.machine.self().getPos();
-            for (Direction side : GTUtil.DIRECTIONS) {
-                if (side.getAxis() != Direction.Axis.Y) {
-                    var fluid = Objects.requireNonNull(level).getFluidState(pos.relative(side));
-                    if (fluid.getType() == fluidA) hasFluidA = true;
-                    if (fluid.getType() == fluidB) hasFluidB = true;
-                    if (hasFluidA && hasFluidB) return true;
-                    else RecipeResult.of(recipeLogic.machine, RecipeResult.FAIL_LACK_FLUID);
-                }
-            }
+            if (!present) { matched = false; break; }
         }
-        return false;
+        if (machine instanceof IRecipeLogicMachine holder)
+            RecipeResult.of(holder, matched ? RecipeResult.SUCCESS : RecipeResult.FAIL_LACK_FLUID);
+        cir.setReturnValue(matched);
+    }
+
+    @Unique private static @Nullable List<HolderSet<Fluid>> gtlcore$originalRequirements(GTRecipe recipe) {
+        List<HolderSet<Fluid>> required = new ArrayList<>(2);
+        for (String key : List.of("fluidA", "fluidB")) {
+            if (!recipe.data.contains(key, Tag.TAG_STRING)) return null;
+            var id = ResourceLocation.tryParse(recipe.data.getString(key));
+            var fluid = id == null ? null : BuiltInRegistries.FLUID.getOptional(id).orElse(null);
+            if (fluid == null || fluid == Fluids.EMPTY) return null;
+            required.add(HolderSet.direct(fluid.builtInRegistryHolder()));
+        }
+        return required;
     }
 }

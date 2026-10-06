@@ -1,30 +1,32 @@
 package org.gtlcore.gtlcore.common.machine;
 
-import org.gtlcore.gtlcore.common.data.GTLItems;
 import org.gtlcore.gtlcore.common.item.VirtualIngredientBehavior;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.UITemplate;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IDropSaveMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineModifyDrops;
-import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.integration.ae2.machine.feature.IGridConnectedMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.GridNodeHolder;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
 
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import com.gregtechceu.gtceu.api.machine.feature.IMuiMachine;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import org.gtlcore.gtlcore.integration.ae2.AEGridMachineSettings;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.ItemSlotSyncHandler;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.layout.Grid;
+import brachy.modularui.widgets.slot.ItemSlot;
+import brachy.modularui.widgets.slot.SlotGroup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -53,11 +55,8 @@ import java.util.List;
  * Adapted from GTOCore's {@code VirtualItemProviderMachine} (com.gtocore.common.machine.noenergy).
  */
 public class VirtualIngredientSupplyMachine extends MetaMachine
-                                            implements IUIMachine, IDropSaveMachine, IMachineModifyDrops, MEStorage,
+                                            implements IMuiMachine, MEStorage,
                                             IGridConnectedMachine, IStorageProvider {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            VirtualIngredientSupplyMachine.class, MetaMachine.MANAGED_FIELD_HOLDER);
 
     public static final int SLOT_COUNT = 288;
     private static final int COLS = 9;
@@ -65,13 +64,13 @@ public class VirtualIngredientSupplyMachine extends MetaMachine
     /** Caps how much the crafting planner will pull from here, so anything short of unlimited caps order size. */
     private static final long PUBLISHED_AMOUNT = Long.MAX_VALUE;
 
-    @Persisted
+    @SaveField
     private final NotifiableItemStackHandler inventory;
 
-    @Persisted
+    @SaveField
     private final GridNodeHolder nodeHolder;
 
-    @DescSynced
+    @SyncToClient
     private boolean isOnline;
 
     /** Derived from the inventory, so rebuilt on change rather than persisted. */
@@ -80,17 +79,18 @@ public class VirtualIngredientSupplyMachine extends MetaMachine
     private KeyCounter cachedStacks;
     private boolean dirty = true;
 
-    public VirtualIngredientSupplyMachine(IMachineBlockEntity holder) {
+    public VirtualIngredientSupplyMachine(BlockEntityCreationInfo holder) {
         super(holder);
         // IO.NONE keeps recipe logic from seeing this as machine input or output.
-        this.inventory = new NotifiableItemStackHandler(this, SLOT_COUNT, IO.NONE, IO.BOTH);
-        this.nodeHolder = new GridNodeHolder(this);
+        this.inventory = attachTrait(new NotifiableItemStackHandler(SLOT_COUNT, IO.NONE, IO.BOTH));
+        this.nodeHolder = attachTrait(new GridNodeHolder(this));
         getMainNode().addService(IStorageProvider.class, this);
         this.inventory.addChangedListener(this::rebuildPublishedKeys);
     }
 
     @Override
     public void onLoad() {
+        AEGridMachineSettings.applyExposedSides(this, getFrontFacing());
         super.onLoad();
         inventory.notifyListeners();
         rebuildPublishedKeys();
@@ -103,7 +103,7 @@ public class VirtualIngredientSupplyMachine extends MetaMachine
             if (stack.isEmpty()) continue;
 
             ItemStack wrapper;
-            if (GTLItems.VIRTUAL_INGREDIENT.isIn(stack)) {
+            if (VirtualIngredientBehavior.isVirtualIngredient(stack)) {
                 if (!VirtualIngredientBehavior.isBound(stack)) continue;
                 // Sealed in place: an editable wrapper here would turn one locked copy into unlimited real material.
                 VirtualIngredientBehavior.mark(stack);
@@ -115,6 +115,11 @@ public class VirtualIngredientSupplyMachine extends MetaMachine
         }
         dirty = true;
         if (cachedStacks != null) cachedStacks.clear();
+        markAsChanged();
+        getMainNode().ifPresent((grid, node) -> {
+            IStorageProvider.requestUpdate(getMainNode());
+            grid.getStorageService().invalidateCache();
+        });
     }
 
     // ==================== AE storage ====================
@@ -138,7 +143,7 @@ public class VirtualIngredientSupplyMachine extends MetaMachine
 
     private static boolean isOwnWrapper(AEItemKey itemKey) {
         ItemStack stack = itemKey.getReadOnlyStack();
-        return GTLItems.VIRTUAL_INGREDIENT.isIn(stack) && VirtualIngredientBehavior.isMarked(stack);
+        return VirtualIngredientBehavior.isVirtualIngredient(stack) && VirtualIngredientBehavior.isMarked(stack);
     }
 
     @Override
@@ -194,7 +199,9 @@ public class VirtualIngredientSupplyMachine extends MetaMachine
 
     @Override
     public void setOnline(boolean online) {
+        if (isOnline == online) return;
         this.isOnline = online;
+        syncDataHolder.markClientSyncFieldDirty("isOnline");
     }
 
     // ==================== Persistence ====================
@@ -202,73 +209,44 @@ public class VirtualIngredientSupplyMachine extends MetaMachine
     @Override
     public void onRotated(@NotNull Direction oldFacing, @NotNull Direction newFacing) {
         super.onRotated(oldFacing, newFacing);
-        if (!getHolder().self().getPersistentData().getBoolean("isAllFacing")) {
-            getMainNode().setExposedOnSides(EnumSet.of(newFacing));
-        }
+        AEGridMachineSettings.applyExposedSides(this, newFacing);
+    }
+
+    // Drop the backing material before the machine item is serialized, so it cannot be duplicated on placement.
+    @Override
+    public void modifyDrops(List<ItemStack> drops) {
+        inventory.storage.dropInventoryInWorld(getLevel(), getBlockPos());
     }
 
     @Override
-    public void loadCustomPersistedData(@NotNull CompoundTag tag) {
-        super.loadCustomPersistedData(tag);
-        if (tag.getCompound("ForgeData").getBoolean("isAllFacing")) {
-            getMainNode().setExposedOnSides(EnumSet.allOf(Direction.class));
-        }
-    }
-
-    // Runs before saveToItem, which then stores the emptied inventory, so the material drops once rather than twice.
-    @Override
-    public void onDrops(List<ItemStack> drops) {
-        clearInventory(inventory.storage);
+    protected void applyImplicitComponents(DataComponentInput input) {
+        super.applyImplicitComponents(input);
+        var data = input.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (data.contains("gtlcore_virtual_inventory")) inventory.storage.deserializeNBT(getLevel().registryAccess(), data.getCompound("gtlcore_virtual_inventory"));
+        rebuildPublishedKeys();
     }
 
     @Override
-    public void loadFromItem(CompoundTag tag) {
-        inventory.storage.deserializeNBT(tag.getCompound("inventory"));
+    public void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        // The vanilla container component has a 256-slot limit; this machine owns 288 real slots.
+        var data = components.build().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        data.put("gtlcore_virtual_inventory", inventory.storage.serializeNBT(getLevel().registryAccess()));
+        components.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
     }
 
-    @Override
-    public void saveToItem(CompoundTag tag) {
-        tag.put("inventory", inventory.storage.serializeNBT());
-    }
+    public NotifiableItemStackHandler getInventory() { return inventory; }
 
     @Override
-    @NotNull
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
-
-    // ==================== GUI ====================
-
-    @Override
-    public ModularUI createUI(Player player) {
-        int width = 181;
-        ModularUI ui = new ModularUI(width, 244, this, player)
-                .background(GuiTextures.BACKGROUND)
-                .widget(new LabelWidget(5, 5, () -> Component.translatable(
-                        "block.gtceu.virtual_ingredient_supply_machine").getString()))
-                .widget(UITemplate.bindPlayerInventory(player.getInventory(), GuiTextures.SLOT, 7, 162, true));
-
-        var scroll = new DraggableScrollableWidgetGroup(4, 4, width - 13, 130)
-                .setYBarStyle(GuiTextures.BACKGROUND_INVERSE, GuiTextures.BUTTON)
-                .setYScrollBarWidth(4);
-
-        int x = 0;
-        int y = 0;
-        for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            scroll.addWidget(new SlotWidget(inventory.storage, slot, x * SLOT_SIZE, y * SLOT_SIZE) {
-
-                @Override
-                public boolean isEnabled() {
-                    // Default disables slots scrolled out of view, which makes them silently reject insertion.
-                    return true;
-                }
-            }.setBackgroundTexture(GuiTextures.SLOT));
-            if (++x == COLS) {
-                x = 0;
-                y++;
-            }
-        }
-
-        return ui.widget(new WidgetGroup(3, 17, width - 6, 140).addWidget(scroll));
+    public void buildMainUI(ParentWidget<?> parent, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var group = new SlotGroup("virtualSupplyInventory", COLS, false);
+        sync.registerSlotGroup(group);
+        parent.child(new Grid().size(170, 130).scrollable(new brachy.modularui.widget.scroll.VerticalScrollData())
+                .minElementMargin(0, 0).minColWidth(SLOT_SIZE).minRowHeight(SLOT_SIZE)
+                .gridOfSizeWidth(SLOT_COUNT, COLS, (x, y, slot) -> {
+                    var value = new ItemSlotSyncHandler(SyncHandlers.itemSlot(inventory.storage, slot).slotGroup(group));
+                    sync.syncValue("virtualSupplySlot", slot, value);
+                    return new ItemSlot().syncHandler(value);
+                }));
     }
 }

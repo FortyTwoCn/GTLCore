@@ -4,64 +4,39 @@ import org.gtlcore.gtlcore.api.recipe.IAdvancedContentModifier;
 
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
 
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
+/** Native primitive overloads retain exact fractions used by very large batches. */
 @Mixin(ContentModifier.class)
 public abstract class ContentModifierMixin implements IAdvancedContentModifier {
+    @Unique private long gtlcore$numerator;
+    @Unique private long gtlcore$denominator;
+    @Unique private boolean gtlcore$useFraction;
 
-    @Unique
-    private long numerator = -1;
-
-    @Unique
-    private long denominator = -1;
-
-    @Unique
-    private boolean useFraction;
-
-    @Shadow(remap = false)
-    @Final
-    private double multiplier;
-
-    @Shadow(remap = false)
-    @Final
-    private double addition;
-
-    /**
-     * @author Dragons
-     * @reason QFT空转等问题
-     */
-    @Overwrite(remap = false)
-    public Number apply(Number number) {
-        if (number instanceof Long l) {
-            if (useFraction) return gtlcore$saturatedFraction(l);
-            return number.doubleValue() * this.multiplier + this.addition;
-        } else if (number instanceof BigDecimal decimal) {
-            return decimal.multiply(BigDecimal.valueOf(this.multiplier)).add(BigDecimal.valueOf(this.addition));
-        } else if (number instanceof BigInteger bigInteger) {
-            return bigInteger.multiply(BigInteger.valueOf((long) this.multiplier)).add(BigInteger.valueOf((long) this.addition));
-        } else {
-            return number.doubleValue() * this.multiplier + this.addition;
-        }
+    @Inject(method = "apply(J)J", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$applyLong(long value, CallbackInfoReturnable<Long> cir) {
+        cir.setReturnValue(IAdvancedContentModifier.applyLong((ContentModifier) (Object) this, value));
     }
 
-    @Unique
-    private long gtlcore$saturatedFraction(long value) {
-        BigInteger result = BigInteger.valueOf(value)
-                .multiply(BigInteger.valueOf(numerator))
-                .divide(BigInteger.valueOf(denominator));
-        if (result.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) return Long.MAX_VALUE;
-        if (result.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0) return Long.MIN_VALUE;
-        return result.longValue();
+    @Inject(method = "apply(I)I", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private void gtlcore$applyInt(int value, CallbackInfoReturnable<Integer> cir) {
+        long result = IAdvancedContentModifier.applyLong((ContentModifier) (Object) this, value);
+        cir.setReturnValue((int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, result)));
     }
 
     @Override
-    @Unique
     public void setDivision(long numerator, long denominator) {
-        this.numerator = numerator;
-        this.denominator = denominator;
-        this.useFraction = true;
+        if (denominator == 0) throw new IllegalArgumentException("Recipe quantity denominator cannot be zero");
+        gtlcore$numerator = numerator;
+        gtlcore$denominator = denominator;
+        gtlcore$useFraction = true;
     }
+
+    @Override public boolean gtlcore$hasDivision() { return gtlcore$useFraction; }
+    @Override public long gtlcore$getNumerator() { return gtlcore$numerator; }
+    @Override public long gtlcore$getDenominator() { return gtlcore$denominator; }
 }

@@ -2,7 +2,7 @@ package org.gtlcore.gtlcore.mixin.ae2.gui;
 
 import org.gtlcore.gtlcore.integration.ae2.crafting.ICraftingCpuListEntry;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 
 import appeng.api.config.CpuSelectionMode;
@@ -39,12 +39,12 @@ public class CraftingCpuListEntryMixin implements ICraftingCpuListEntry {
     }
 
     @Inject(method = "writeToPacket", at = @At("TAIL"), remap = false)
-    private void gtlcore$writeCoProcessors(FriendlyByteBuf buffer, CallbackInfo ci) {
+    private void gtlcore$writeCoProcessors(RegistryFriendlyByteBuf buffer, CallbackInfo ci) {
         buffer.writeVarLong(this.gtlcore$coProcessors);
     }
 
     @Inject(method = "readFromPacket", at = @At("TAIL"), cancellable = true, remap = false)
-    private static void gtlcore$readCoProcessors(FriendlyByteBuf buffer,
+    private static void gtlcore$readCoProcessors(RegistryFriendlyByteBuf buffer,
                                                  CallbackInfoReturnable<CraftingStatusMenu.CraftingCpuListEntry> cir) {
         CraftingStatusMenu.CraftingCpuListEntry entry = cir.getReturnValue();
         ((ICraftingCpuListEntry) (Object) entry).gtlcore$setCoProcessors(buffer.readVarLong());

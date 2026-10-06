@@ -5,203 +5,76 @@ import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEFilterIOPartMachine;
 import org.gtlcore.gtlcore.api.machine.trait.MEPart.IMEPatternPartMachine;
 import org.gtlcore.gtlcore.api.recipe.RecipeResult;
 import org.gtlcore.gtlcore.utils.datastructure.FirstFlagRecipePartSet;
-
-import com.gregtechceu.gtceu.api.block.ActiveBlock;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
-import com.gregtechceu.gtceu.api.capability.IParallelHatch;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.*;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.IRecipeHandlerTrait;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeHandlerList;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeHandlerGroup;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeHandlerGroupColor;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
-import com.gregtechceu.gtceu.common.machine.multiblock.part.FluidHatchPartMachine;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.common.machine.multiblock.part.MaintenanceHatchPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEOutputBusPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEOutputHatchPartMachine;
-
-import com.lowdragmc.lowdraglib.syncdata.ISubscription;
-import com.lowdragmc.lowdraglib.syncdata.annotation.DescSynced;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Block;
-
 import com.hepdd.gtmthings.common.block.machine.multiblock.part.appeng.MEOutputPartMachine;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import com.gregtechceu.gtceu.utils.ISubscription;
+import net.minecraft.server.level.ServerLevel;
 import it.unimi.dsi.fastutil.objects.*;
-import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
 import java.util.*;
 
+/** Core input/cache policy over native part handler lists. Native part lifecycle and working callbacks remain active. */
 @SuppressWarnings({ "AddedMixinMembersNamePattern", "MissingUnique" })
 @Mixin(WorkableMultiblockMachine.class)
-public abstract class WorkableMultiblockMachineMixin extends MultiblockControllerMachine implements IRecipeCapabilityMachine, IRecipeLogicMachine {
+public abstract class WorkableMultiblockMachineMixin extends MultiblockControllerMachine
+        implements IRecipeCapabilityMachine, IRecipeLogicMachine {
+    @Shadow(remap = false) @Final public RecipeLogic recipeLogic;
 
-    @Shadow(remap = false)
-    @Final
-    protected List<ISubscription> traitSubscriptions;
-    @Shadow(remap = false)
-    @Final
-    public RecipeLogic recipeLogic;
-    @Shadow(remap = false)
-    protected @Nullable LongSet activeBlocks;
+    public WorkableMultiblockMachineMixin(BlockEntityCreationInfo info) { super(info); }
 
-    public WorkableMultiblockMachineMixin(IMachineBlockEntity holder) {
-        super(holder);
+    @Inject(method = "formStructure", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$formed(String substructure, CallbackInfo ci) {
+        if (getLevel() instanceof ServerLevel) upDate();
     }
-
-    @Inject(method = "onStructureFormed", at = @At("TAIL"), remap = false)
-    public void onStructureFormed(CallbackInfo ci) {
-        if (this.getLevel() instanceof ServerLevel sl) {
-            sl.getServer().execute(this::upDate);
-        }
-    }
-
-    @Inject(method = "onStructureInvalid", at = @At("TAIL"), remap = false)
-    public void onStructureInvalid(CallbackInfo ci) {
-        clear();
+    @Inject(method = "invalidateStructure(Ljava/lang/String;)V", at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$invalidated(String substructure, CallbackInfo ci) {
+        gtlcore$clear();
         RecipeResult.of(this, null);
         RecipeResult.ofWorking(this, null);
     }
+    @Inject(method = { "onPartUnload", "onUnload" }, at = @At("TAIL"), remap = false, require = 1)
+    private void gtlcore$unloaded(CallbackInfo ci) { gtlcore$clear(); }
 
-    @Inject(method = "onPartUnload", at = @At("TAIL"), remap = false)
-    public void onPartUnload(CallbackInfo ci) {
-        clear();
+    @SaveField @SyncToClient private boolean isDistinct;
+    public boolean isDistinct() { return isDistinct; }
+    public void setDistinct(boolean distinct) {
+        if (isDistinct == distinct) return;
+        isDistinct = distinct;
+        getSyncDataHolder().markClientSyncFieldDirty("isDistinct");
     }
-
-    @Inject(method = "setActiveRecipeType", at = @At("TAIL"), remap = false)
-    public void afterSetActiveRecipeType(int activeRecipeType, CallbackInfo ci) {
-        if (!isRemote()) recipeLogic.updateTickSubscription();
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public final @Nullable GTRecipe doModifyRecipe(GTRecipe recipe, @NotNull OCParams params, @NotNull OCResult result) {
-        if (maintenanceMachine != null) recipe = maintenanceMachine.modifyRecipe(recipe);
-        if (recipe != null && mufflerMachine != null) recipe = mufflerMachine.modifyRecipe(recipe);
-        if (recipe != null && dataAccessHatch != null) recipe = dataAccessHatch.modifyRecipe(recipe);
-        return recipe != null ? this.self().getDefinition().getRecipeModifier().apply(this.self(), recipe, params, result) : null;
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public boolean onWorking() {
-        return this.self().getDefinition().getOnWorking().test(this);
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public void onWaiting() {}
-
-    /**
-     * Keep polling only for computation-starved machines. Optical networks do not notify the controller when a
-     * remote provider becomes available again, so unsubscribing here makes the failure permanent until unrelated
-     * inventory state changes.
-     *
-     * @author GTLCore
-     * @reason Retry recipes after remote optical computation becomes available again.
-     */
-    @Overwrite(remap = false)
-    public boolean keepSubscribing() {
-        return recipeLogic instanceof IRecipeStatus status &&
-                RecipeResult.FAIL_NO_ENOUGH_CWU_IN.equals(status.getRecipeStatus());
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public boolean beforeWorking(@Nullable GTRecipe recipe) {
-        return this.self().getDefinition().getBeforeWorking().test(this, recipe);
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
-    @Overwrite(remap = false)
-    public void afterWorking() {
-        if (maintenanceMachine != null) maintenanceMachine.afterWorking((IWorkableMultiController) this);
-        if (mufflerMachine != null) mufflerMachine.afterWorking((IWorkableMultiController) this);
-        this.self().getDefinition().getAfterWorking().accept(this);
-    }
-
-    /**
-     * @author screret
-     * @reason Performance
-     */
-    @Overwrite(remap = false)
-    public void updateActiveBlocks(boolean active) {
-        if (activeBlocks != null) {
-            for (long pos : activeBlocks) {
-                var blockPos = BlockPos.of(pos);
-                var blockState = getLevel().getBlockState(blockPos);
-                if (blockState.getBlock() instanceof ActiveBlock block) {
-                    var newState = block.changeActive(blockState, active);
-                    if (newState != blockState) {
-                        getLevel().setBlock(blockPos, newState, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
-                    }
-                }
-            }
-        }
-    }
-
-    // ========================================
-    // IRecipeCapabilityMachine
-    // ========================================
-
-    @Persisted
-    @DescSynced
-    @Getter
-    @Setter
-    private boolean isDistinct = false;
-    private boolean meOutPutBus = false;
-    private boolean meOutPutHatch = false;
-    private boolean meOutPutDual = false;
-    private boolean meOutPutWithFilter = false;
-    private boolean meItemOutPutWithFilter = false;
-    private boolean meFluidOutPutWithFilter = false;
-    private boolean itemOutPutAlwaysMatch = false;
-    private boolean fluidOutPutAlwaysMatch = false;
-
-    // ==================== Special Hatch ====================
-    private @Nullable IParallelHatch parallelHatch = null;
-    private @Nullable IMaintenanceMachine maintenanceMachine = null;
-    private @Nullable IMufflerMachine mufflerMachine = null;
-    private @Nullable IDataAccessHatch dataAccessHatch = null;
-
-    // ==================== Normal Part ====================
-    private @Nullable RecipeHandlePart sharedInputRecipeHandlePart = null;
-    private final Map<IO, List<RecipeHandlePart>> normalCapabilities = new EnumMap<>(IO.class); // Only Distinct Part
-
-    // ==================== ME Part ====================
+    private boolean meOutPutBus, meOutPutHatch, meOutPutDual, meOutPutWithFilter;
+    private boolean meItemOutPutWithFilter, meFluidOutPutWithFilter, itemOutPutAlwaysMatch, fluidOutPutAlwaysMatch;
+    private @Nullable MaintenanceHatchPartMachine maintenanceMachine;
+    private @Nullable IDataAccessHatch dataAccessHatch;
+    private @Nullable RecipeHandlePart sharedInputRecipeHandlePart;
+    private final Map<IO, List<RecipeHandlePart>> normalCapabilities = new EnumMap<>(IO.class);
     private final ObjectList<MEPatternRecipeHandlePart> mePatternRecipeHandleParts = new ObjectArrayList<>();
     private final ObjectList<MEIORecipeHandlePart<?>> meOutputRecipeHandleParts = new ObjectArrayList<>();
-
-    // ==================== Recipe -> Parts ====================
     private final Object2ObjectMap<GTRecipe, FirstFlagRecipePartSet> recipeHandleMap = new Object2ObjectOpenHashMap<>();
+    // Native GT handler subscriptions and custom LDLib ME-buffer subscriptions have different interface types.
+    @Unique private final List<ISubscription> gtlcore$meSubscriptions = new ArrayList<>();
 
     @Override
     public boolean isRecipeOutputAlwaysMatch(GTRecipe recipe) {
@@ -283,6 +156,19 @@ public abstract class WorkableMultiblockMachineMixin extends MultiblockControlle
         }
     }
 
+    @Unique private final Map<RecipeHandlerList, RecipeHandlerGroup> gtlcore$nativeGroups = new IdentityHashMap<>();
+    @Unique private boolean gtlcore$nativeBusDistinct, gtlcore$nativeColoredRoutes;
+
+    @Override
+    public boolean usesCoreRecipeRouting() {
+        // A native bus can change its distinct/color setting without reforming the structure.
+        if (isFormed() && gtlcore$nativeGroups.entrySet().stream().anyMatch(entry -> !entry.getValue().equals(entry.getKey().getGroup()))) upDate();
+        // Keep native dyed/bypass groups for ordinary GT controllers. Core's global distinct mode
+        // and custom pattern buffers require its own selected-bus/cache policy.
+        return !emptyHandlePart() && (isDistinct || !mePatternRecipeHandleParts.isEmpty() || !meOutputRecipeHandleParts.isEmpty() ||
+                (gtlcore$nativeBusDistinct && !gtlcore$nativeColoredRoutes));
+    }
+
     @Override
     public boolean emptyRecipeHandlePart() {
         return normalCapabilities.isEmpty() && mePatternRecipeHandleParts.isEmpty() && sharedInputRecipeHandlePart == null;
@@ -291,6 +177,13 @@ public abstract class WorkableMultiblockMachineMixin extends MultiblockControlle
     @Override
     public boolean emptyHandlePart() {
         return normalCapabilities.isEmpty() && mePatternRecipeHandleParts.isEmpty() && meOutputRecipeHandleParts.isEmpty() && sharedInputRecipeHandlePart == null;
+    }
+
+    @Override
+    public boolean hasCapabilityProxies() {
+        // Native RecipeHelper checks this before it invokes RecipeRunner. Pattern proxies
+        // have Core's slot-aware handlers rather than native flat inventory handlers.
+        return !getCapabilitiesProxy().isEmpty() || !emptyHandlePart();
     }
 
     @Override
@@ -316,156 +209,111 @@ public abstract class WorkableMultiblockMachineMixin extends MultiblockControlle
 
     @Override
     public void upDate() {
-        if (!this.isFormed) return;
-        rebuildRecipeHandleParts(traitSubscriptions, getParts(), recipeLogic, isDistinct);
-    }
-
-    @Override
-    public @Nullable IParallelHatch getParallelHatch() {
-        return parallelHatch;
-    }
-
-    @Override
-    public @Nullable IMaintenanceMachine getMaintenanceMachine() {
-        return maintenanceMachine;
-    }
-
-    @Override
-    public @Nullable IDataAccessHatch getDataAccessHatch() {
-        return dataAccessHatch;
-    }
-
-    // ========================================
-    // Rebuild
-    // ========================================
-
-    private void rebuildRecipeHandleParts(List<ISubscription> traitSubscriptions, List<IMultiPart> parts, RecipeLogic recipeLogic, boolean isDistinct) {
-        clear();
-
-        final var sharedInputHandlers = new ObjectArrayList<IRecipeHandler<?>>();
-        for (IMultiPart part : parts) {
-            if (part instanceof IMEFilterIOPartMachine mePart) {
-                handleMETraitPart(traitSubscriptions, recipeLogic, mePart);
-            } else if (part instanceof FluidHatchPartMachine || part instanceof IDistinctPart) {
-                handleNormalPart(part, isDistinct, sharedInputHandlers);
-            } else {
-                handleSpecialPart(part);
+        gtlcore$clear();
+        if (!isFormed()) return;
+        var shared = new ObjectArrayList<IRecipeHandler<?>>();
+        for (var part : getParts()) {
+            if (part instanceof MaintenanceHatchPartMachine maintenance) maintenanceMachine = maintenance;
+            if (part instanceof IDataAccessHatch data) dataAccessHatch = data;
+            if (part instanceof IMEFilterIOPartMachine me) gtlcore$handleMEPart(me);
+            else gtlcore$handleNormalPart(part, shared);
+        }
+        // Native controller traits (for example computation or a ghost circuit) also participate in IO.
+        for (var trait : getTraitHolder().getTraitsByInterface(IRecipeHandlerTrait.class)) {
+            if (trait.getHandlerIO().support(IO.IN)) shared.add(trait);
+            if (trait.getHandlerIO().support(IO.OUT)) {
+                normalCapabilities.computeIfAbsent(IO.OUT, $ -> new ObjectArrayList<>()).add(RecipeHandlePart.of(IO.OUT, List.of(trait)));
             }
         }
-
-        if (!isDistinct && !sharedInputHandlers.isEmpty()) {
-            sharedInputRecipeHandlePart = RecipeHandlePart.of(IO.IN, sharedInputHandlers);
-            mergeSharedHandlePart(sharedInputRecipeHandlePart);
+        if (!shared.isEmpty()) {
+            sharedInputRecipeHandlePart = RecipeHandlePart.of(IO.IN, shared);
+            if (isDistinct) {
+                normalCapabilities.computeIfAbsent(IO.IN, $ -> new ObjectArrayList<>()).add(sharedInputRecipeHandlePart);
+            } else {
+                for (var part : getNormalRecipeHandlePart(IO.IN)) {
+                    part.addSharedFluidHandlers(sharedInputRecipeHandlePart.getCapability(FluidRecipeCapability.CAP));
+                }
+            }
         }
         sortMEOutput();
+        recipeLogic.updateTickSubscription();
     }
 
-    private void handleMETraitPart(List<ISubscription> traitSubscriptions, RecipeLogic recipeLogic, IMEFilterIOPartMachine mePart) {
-        var pair = mePart.getMERecipeHandlerTraits();
-        traitSubscriptions.add(pair.left().addBufferChangedListener(recipeLogic::updateTickSubscription));
-        traitSubscriptions.add(pair.right().addBufferChangedListener(recipeLogic::updateTickSubscription));
+    @Override public @Nullable MaintenanceHatchPartMachine getMaintenanceMachine() { return maintenanceMachine; }
+    @Override public @Nullable IDataAccessHatch getDataAccessHatch() { return dataAccessHatch; }
 
-        IO io = mePart.getMETrait().getIO();
-        if (mePart instanceof IMEPatternPartMachine mePatternPart) {
-            var me = MEPatternRecipeHandlePart.of(mePatternPart);
-            me.restoreMachineCache(this::tryAddAndActiveRhp);
-            mePatternRecipeHandleParts.add(me);
-            if (io == IO.BOTH) {
-                meOutputRecipeHandleParts.add(me);
-                setAllMEOutputFlags();
+    @Unique
+    private void gtlcore$handleMEPart(IMEFilterIOPartMachine machine) {
+        var pair = machine.getMERecipeHandlerTraits();
+        gtlcore$meSubscriptions.add(pair.left().addBufferChangedListener(recipeLogic::updateTickSubscription));
+        gtlcore$meSubscriptions.add(pair.right().addBufferChangedListener(recipeLogic::updateTickSubscription));
+        IO io = machine.getMETrait().getIO();
+        if (machine instanceof IMEPatternPartMachine pattern) {
+            var part = MEPatternRecipeHandlePart.of(pattern);
+            part.restoreMachineCache(this::tryAddAndActiveRhp);
+            mePatternRecipeHandleParts.add(part);
+            if (io.support(IO.OUT)) {
+                meOutputRecipeHandleParts.add(part);
+                gtlcore$setAllMEOutputFlags();
             }
-        } else if (io == IO.OUT) {
-            meOutputRecipeHandleParts.add(MEIORecipeHandlePart.of(mePart));
-            setAllMEOutputFlags();
+        } else if (io.support(IO.OUT)) {
+            meOutputRecipeHandleParts.add(MEIORecipeHandlePart.of(machine));
+            gtlcore$setAllMEOutputFlags();
         }
     }
 
-    private void handleNormalPart(IMultiPart part, boolean isDistinct, List<IRecipeHandler<?>> sharedInputHandlers) {
-        if (part instanceof MEOutputPartMachine) {
-            setAllMEOutputFlags();
-        } else if (part instanceof MEOutputBusPartMachine) {
-            meOutPutBus = true;
-        } else if (part instanceof MEOutputHatchPartMachine) {
-            meOutPutHatch = true;
-        }
-
-        List<IRecipeHandler<?>> fluidHandlers = new ObjectArrayList<>();
-        List<IRecipeHandler<?>> isolableHandlers = new ObjectArrayList<>();
-        List<IRecipeHandler<?>> outputHandlers = new ObjectArrayList<>();
-        boolean isOutput = false;
-
-        for (var handler : part.getRecipeHandlers()) {
-            if (handler.isProxy()) continue;
-
-            IO io = handler.getHandlerIO();
-            if (io == IO.IN) {
-                if (handler.getCapability() == FluidRecipeCapability.CAP) fluidHandlers.add(handler);
-                else isolableHandlers.add(handler);
-            } else if (io == IO.OUT) {
-                isOutput = true;
-                outputHandlers.add(handler);
+    @Unique
+    private void gtlcore$handleNormalPart(MultiblockPartMachine part, List<IRecipeHandler<?>> shared) {
+        if (part instanceof MEOutputPartMachine) gtlcore$setAllMEOutputFlags();
+        else if (part instanceof MEOutputBusPartMachine) meOutPutBus = true;
+        else if (part instanceof MEOutputHatchPartMachine) meOutPutHatch = true;
+        var inputs = new ObjectArrayList<IRecipeHandler<?>>();
+        var outputs = new ObjectArrayList<IRecipeHandler<?>>();
+        var fluidInputs = new ObjectArrayList<IRecipeHandler<?>>();
+        boolean distinctPart = false;
+        for (var list : part.getRecipeHandlers()) {
+            gtlcore$nativeGroups.put(list, list.getGroup());
+            if (list.getHandlerIO().support(IO.IN)) {
+                gtlcore$nativeBusDistinct |= list.isDistinct();
+                gtlcore$nativeColoredRoutes |= list.getGroup() instanceof RecipeHandlerGroupColor color && color.color() != -1;
+            }
+            distinctPart |= list.isDistinct();
+            for (var handler : list.getHandlersFlat()) {
+                if (list.getHandlerIO().support(IO.OUT)) outputs.add(handler);
+                if (!list.getHandlerIO().support(IO.IN) || isRecipeInputHandlerExcluded(handler)) continue;
+                if (handler.getCapability() == FluidRecipeCapability.CAP) fluidInputs.add(handler);
+                else inputs.add(handler);
             }
         }
-
-        if (isOutput) {
-            normalCapabilities.computeIfAbsent(IO.OUT, ignore -> new ReferenceArrayList<>()).add(RecipeHandlePart.of(IO.OUT, outputHandlers));
-        } else if (isDistinct) {
-            isolableHandlers.addAll(fluidHandlers);
-            normalCapabilities.computeIfAbsent(IO.IN, ignore -> new ReferenceArrayList<>()).add(RecipeHandlePart.of(IO.IN, isolableHandlers));
-        } else if (part instanceof IDistinctPart distinctPart && distinctPart.isDistinct()) {
-            normalCapabilities.computeIfAbsent(IO.IN, ignore -> new ReferenceArrayList<>()).add(RecipeHandlePart.of(IO.IN, isolableHandlers));
-            sharedInputHandlers.addAll(fluidHandlers);
+        if (!outputs.isEmpty()) {
+            normalCapabilities.computeIfAbsent(IO.OUT, $ -> new ObjectArrayList<>()).add(RecipeHandlePart.of(IO.OUT, outputs));
+        }
+        if (isDistinct) {
+            inputs.addAll(fluidInputs);
+            if (!inputs.isEmpty()) normalCapabilities.computeIfAbsent(IO.IN, $ -> new ObjectArrayList<>()).add(RecipeHandlePart.of(IO.IN, inputs));
+        } else if (distinctPart) {
+            if (!inputs.isEmpty()) normalCapabilities.computeIfAbsent(IO.IN, $ -> new ObjectArrayList<>()).add(RecipeHandlePart.of(IO.IN, inputs));
+            shared.addAll(fluidInputs);
         } else {
-            sharedInputHandlers.addAll(isolableHandlers);
-            sharedInputHandlers.addAll(fluidHandlers);
+            shared.addAll(inputs);
+            shared.addAll(fluidInputs);
         }
     }
 
-    private void handleSpecialPart(IMultiPart part) {
-        if (part instanceof IParallelHatch parallel) {
-            this.parallelHatch = parallel;
-        } else if (part instanceof IMufflerMachine muffler) {
-            this.mufflerMachine = muffler;
-        } else if (part instanceof IMaintenanceMachine maintenance) {
-            this.maintenanceMachine = maintenance;
-        } else if (part instanceof IDataAccessHatch data) {
-            this.dataAccessHatch = data;
-        }
+    @Unique private void gtlcore$setAllMEOutputFlags() {
+        meOutPutBus = meOutPutHatch = meOutPutDual = true;
     }
-
-    private void mergeSharedHandlePart(@NotNull RecipeHandlePart shared) {
-        for (List<RecipeHandlePart> value : normalCapabilities.values()) {
-            for (RecipeHandlePart part : value) {
-                part.addSharedFluidHandlers(shared.getCapability(FluidRecipeCapability.CAP));
-            }
-        }
-    }
-
-    // ========================================
-    // Utils Methods
-    // ========================================
-
-    private void setAllMEOutputFlags() {
-        meOutPutBus = true;
-        meOutPutHatch = true;
-        meOutPutDual = true;
-    }
-
-    private void clear() {
-        meOutPutBus = false;
-        meOutPutHatch = false;
-        meOutPutDual = false;
-        meOutPutWithFilter = false;
-        meItemOutPutWithFilter = false;
-        meFluidOutPutWithFilter = false;
-        itemOutPutAlwaysMatch = false;
-        fluidOutPutAlwaysMatch = false;
-        parallelHatch = null;
-        mufflerMachine = null;
+    @Unique private void gtlcore$clear() {
+        gtlcore$meSubscriptions.forEach(ISubscription::unsubscribe);
+        gtlcore$meSubscriptions.clear();
+        meOutPutBus = meOutPutHatch = meOutPutDual = meOutPutWithFilter = false;
+        meItemOutPutWithFilter = meFluidOutPutWithFilter = itemOutPutAlwaysMatch = fluidOutPutAlwaysMatch = false;
         maintenanceMachine = null;
         dataAccessHatch = null;
         sharedInputRecipeHandlePart = null;
         normalCapabilities.clear();
+        gtlcore$nativeGroups.clear();
+        gtlcore$nativeBusDistinct = gtlcore$nativeColoredRoutes = false;
         mePatternRecipeHandleParts.clear();
         meOutputRecipeHandleParts.clear();
         recipeHandleMap.clear();

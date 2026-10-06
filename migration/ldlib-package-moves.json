@@ -1,0 +1,12 @@
+{
+  "com.lowdragmc.lowdraglib.gui.editor.ColorPattern": "com.lowdragmc.lowdraglib.editor.ColorPattern",
+  "com.lowdragmc.lowdraglib.jei.IngredientIO": "com.lowdragmc.lowdraglib.integration.jei.IngredientIO",
+  "com.lowdragmc.lowdraglib.jei.ModularUIRecipeCategory": "com.lowdragmc.lowdraglib.integration.jei.ModularUIRecipeCategory",
+  "com.lowdragmc.lowdraglib.side.fluid.FluidHelper": "com.lowdragmc.lowdraglib.utils.FluidHelper",
+  "com.lowdragmc.lowdraglib.syncdata.managed.MultiManagedStorage": "com.lowdragmc.lowdraglib.syncdata.storage.MultiManagedStorage",
+  "com.lowdragmc.lowdraglib.utils.BlockInfo": "com.lowdragmc.lowdraglib.utils.data.BlockInfo",
+  "com.lowdragmc.lowdraglib.utils.CycleItemStackHandler": "com.lowdragmc.lowdraglib.misc.CycleItemStackHandler",
+  "com.lowdragmc.lowdraglib.utils.Position": "com.lowdragmc.lowdraglib.math.Position",
+  "com.lowdragmc.lowdraglib.utils.Size": "com.lowdragmc.lowdraglib.math.Size",
+  "com.lowdragmc.lowdraglib.utils.TrackedDummyWorld": "com.lowdragmc.lowdraglib.utils.virtuallevel.TrackedDummyWorld"
+}

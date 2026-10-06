@@ -1,26 +1,13 @@
 package org.gtlcore.gtlcore.mixin.gtm.gui;
 
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AmountSetWidget;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.ConfigWidget;
-
-import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
-
-import org.spongepowered.asm.mixin.Final;
+import org.gtlcore.gtlcore.integration.ae2.gui.NativeAEAmounts;
+import com.gregtechceu.gtceu.integration.ae2.gui.AEGuiHelper;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(AmountSetWidget.class)
+@Mixin(value = AEGuiHelper.class, remap = false)
 public abstract class AmountSetWidgetMixin {
-
-    @Shadow(remap = false)
-    @Final
-    private TextFieldWidget amountText;
-
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void a(int x, int y, ConfigWidget widget, CallbackInfo ci) {
-        amountText.setNumbersOnly(0, Long.MAX_VALUE).setMaxStringLength(19);
-    }
+    @Inject(method = "parseAmount", at = @At("HEAD"), cancellable = true, require = 1)
+    private static void gtlcore$exactLongAmount(String text, CallbackInfoReturnable<Long> cir) { cir.setReturnValue(NativeAEAmounts.parse(text)); }
 }

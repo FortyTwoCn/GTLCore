@@ -1,304 +1,214 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 
-import org.gtlcore.gtlcore.common.data.GTLMaterials;
+import org.gtlcore.gtlcore.api.recipe.RecipeRunnerHelper;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
 import org.gtlcore.gtlcore.common.machine.multiblock.part.TemperatureSensorPartMachine;
+import org.gtlcore.gtlcore.common.machine.trait.AdvancedFluidDrillProduction;
 import org.gtlcore.gtlcore.common.machine.trait.AdvancedInfiniteDrillLogic;
 import org.gtlcore.gtlcore.utils.MachineUtil;
-
-import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.block.ICoilType;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
-import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKeys;
 import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
-import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockDisplayText;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.mui.MachineUIPanelBuilder;
+import com.gregtechceu.gtceu.api.multiblock.error.CoilMatchingError;
+import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.common.block.CoilBlock;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
-
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.ComponentPanelWidget;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
 import net.minecraft.ChatFormatting;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.world.item.Item;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-
-import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
-
+import net.neoforged.neoforge.fluids.FluidStack;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.drawable.GuiTextures;
+import brachy.modularui.drawable.Icon;
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.utils.Alignment;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widget.Widget;
+import brachy.modularui.widgets.ListWidget;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.slot.ItemSlot;
+import brachy.modularui.widgets.slot.SlotGroup;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
-import java.util.Map;
+import java.math.BigInteger;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-/**
- * @author EasterFG on 2024/10/26
- *         <p>
- *         1.2 * heat
- */
-@MethodsReturnNonnullByDefault
-@ParametersAreNonnullByDefault
+/** Original five-by-five infinite drill with native recipe, thermal and menu ownership. */
 public class AdvancedInfiniteDrillMachine extends StorageMachine {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            AdvancedInfiniteDrillMachine.class, StorageMachine.MANAGED_FIELD_HOLDER);
-
+    public static final double RUNNING_HEAT = 2000;
     private static final FluidStack DISTILLED_WATER = GTMaterials.DistilledWater.getFluid(20000);
     private static final FluidStack OXYGEN = GTMaterials.Oxygen.getFluid(FluidStorageKeys.LIQUID, 20000);
     private static final FluidStack HELIUM = GTMaterials.Helium.getFluid(FluidStorageKeys.LIQUID, 20000);
     private static final FluidStack NITROGEN = GTMaterials.Nitrogen.getFluid(20000);
 
-    protected static final Map<Item, Integer> DRILLS = Map.of(
-            ChemicalHelper.get(TagPrefix.toolHeadDrill, GTMaterials.Neutronium).getItem(), 50000,
-            ChemicalHelper.get(TagPrefix.toolHeadDrill, GTLMaterials.Vibranium).getItem(), 100000);
+    @SyncToClient public int maxHeat = -1;
+    @SaveField @SyncToClient protected int currentHeat = 300;
+    @SaveField @SyncToClient protected int process;
+    @SaveField @SyncToClient protected boolean fast;
+    protected final ConditionalSubscriptionHandler heatSubs;
+    private @Nullable TemperatureSensorPartMachine sensorMachines;
 
-    protected static final Map<Material, Integer> TEMPERATURE = Map.of(
-            GTLMaterials.TitanSteel, 0,
-            GTLMaterials.Adamantine, 1,
-            GTLMaterials.NaquadriaticTaranium, 2,
-            GTLMaterials.Starmetal, 3,
-            GTLMaterials.Infinity, 4,
-            GTLMaterials.Hypogen, 6,
-            GTLMaterials.Eternity, 8);
-
-    @Override
-    public @NotNull ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
+    public AdvancedInfiniteDrillMachine(BlockEntityCreationInfo info) {
+        this(info, new AdvancedInfiniteDrillLogic(5));
     }
-
-    public static final double RUNNING_HEAT = 2000;
-
-    public int maxHeat = -1;
-
-    @Persisted
-    @Getter
-    protected int currentHeat = 300;
-
-    @Persisted
-    protected int process = 0;
-
-    @Persisted
-    protected boolean fast;
-
-    protected ConditionalSubscriptionHandler heatSubs;
-
-    private TemperatureSensorPartMachine sensorMachines;
-
-    public AdvancedInfiniteDrillMachine(IMachineBlockEntity holder) {
-        super(holder, 1);
-        this.heatSubs = new ConditionalSubscriptionHandler(this, this::heatUpdate, this::isFormed);
+    public AdvancedInfiniteDrillMachine(BlockEntityCreationInfo info, AdvancedInfiniteDrillLogic logic) {
+        super(info, 1, logic);
+        heatSubs = new ConditionalSubscriptionHandler(this, this::heatUpdate, this::isFormed);
     }
-
-    @Override
-    protected RecipeLogic createRecipeLogic(Object... args) {
-        return new AdvancedInfiniteDrillLogic(this, 5);
+    @Override public AdvancedInfiniteDrillLogic getRecipeLogic() { return (AdvancedInfiniteDrillLogic) super.getRecipeLogic(); }
+    public int getCurrentHeat() { return currentHeat; }
+    public int getMeltingProgress() { return process; }
+    public boolean isFastMode() { return fast; }
+    public void setFastMode(boolean value) {
+        if (fast == value) return;
+        fast = value; getSyncDataHolder().markClientSyncFieldDirty("fast"); markAsChanged();
     }
+    public boolean isEmpty() { return getMachineStorageItem().isEmpty(); }
+    public boolean canRunnable() { return !isEmpty() && currentHeat >= RUNNING_HEAT && maxHeat > RUNNING_HEAT && getRate() > 0; }
+
+    @Override public void formStructure(String name) {
+        super.formStructure(name);
+        if (!getPatternState(name).isFormed()) return;
+        ICoilType matched = null;
+        for (var entry : getPatternState(name).getCache().long2ObjectEntrySet()) {
+            if (!(entry.getValue().getBlockState().getBlock() instanceof CoilBlock coil) || !GTCEuAPI.HEATING_COILS.containsKey(coil.coilType)) continue;
+            if (matched == null) matched = coil.coilType;
+            else if (matched != coil.coilType) {
+                getPatternState(name).setError(new CoilMatchingError(BlockPos.of(entry.getLongKey()), matched, coil.coilType));
+                invalidateStructure(name); return;
+            }
+        }
+        var material = matched == null ? null : matched.getMaterial();
+        maxHeat = AdvancedFluidDrillProduction.maxHeat(material == null ? null : material.getResourceLocation());
+        sensorMachines = getParts().stream().filter(TemperatureSensorPartMachine.class::isInstance)
+                .map(TemperatureSensorPartMachine.class::cast).findFirst().orElse(null);
+        getSyncDataHolder().markClientSyncFieldDirty("maxHeat"); heatSubs.initialize(getLevel());
+    }
+    private void clearThermalParts() {
+        maxHeat = -1; sensorMachines = null; heatSubs.unsubscribe();
+        getSyncDataHolder().markClientSyncFieldDirty("maxHeat");
+    }
+    @Override public void invalidateStructure(String name) { super.invalidateStructure(name); clearThermalParts(); }
+    @Override public void onPartUnload() { super.onPartUnload(); clearThermalParts(); }
+    @Override public void onUnload() { heatSubs.unsubscribe(); sensorMachines = null; super.onUnload(); }
 
     protected void heatUpdate() {
-        if (!fast && getOffsetTimer() % 5 != 0) return;
-        if (isEmpty() || maxHeat == -1) return;
+        if ((!fast && getOffsetTimer() % 5 != 0) || isEmpty() || maxHeat == -1) return;
         int heat = 0;
-
-        if (getRecipeLogic().isWorking()) {
-            if (process <= 0) {
-                heat += (int) Math.floor(Math.abs(currentHeat - RUNNING_HEAT) / 2000D);
-            }
-        }
-
+        if (getRecipeLogic().isWorking() && process <= 0) heat += (int) Math.floor(Math.abs(currentHeat - RUNNING_HEAT) / 2000D);
         if (getRecipeLogic().isWorking() || process > 0) {
-            if (MachineUtil.inputFluid(this, DISTILLED_WATER)) {
-                heat--;
-            } else if (MachineUtil.inputFluid(this, OXYGEN)) {
-                heat -= 2;
-            } else if (MachineUtil.inputFluid(this, HELIUM)) {
-                heat -= 4;
-            } else if (MachineUtil.inputFluid(this, NITROGEN)) {
-                heat -= 8;
-            }
+            if (MachineUtil.inputFluid(this, DISTILLED_WATER)) heat--;
+            else if (MachineUtil.inputFluid(this, OXYGEN)) heat -= 2;
+            else if (MachineUtil.inputFluid(this, HELIUM)) heat -= 4;
+            else if (MachineUtil.inputFluid(this, NITROGEN)) heat -= 8;
         }
-
-        if (inputBlast()) {
-            heat++;
-        }
-
-        this.currentHeat = Math.max(0, currentHeat + heat);
-
+        if (inputBlast()) heat++;
+        int oldHeat = currentHeat, oldProcess = process;
+        currentHeat = (int) Math.max(0, Math.min(Integer.MAX_VALUE, (long) currentHeat + heat));
         if (currentHeat > maxHeat) {
             process += fast ? 1 : 5;
             if (process >= 300) {
-                process = 0;
-                currentHeat = 300;
-                this.machineStorage.setStackInSlot(0, ItemStack.EMPTY);
-                this.getRecipeLogic().interruptRecipe();
+                process = 0; currentHeat = 300; machineStorage.setStackInSlot(0, ItemStack.EMPTY);
+                getRecipeLogic().interruptRecipe();
             }
-        } else if (process > 0) {
-            process--;
-        }
-
-        if (sensorMachines != null) {
-            sensorMachines.update(currentHeat);
-        }
-    }
-
-    @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
-        var type = getMultiblockState().getMatchContext().get("CoilType");
-        if (type instanceof ICoilType coil) {
-            Material material = coil.getMaterial();
-            int rate = TEMPERATURE.getOrDefault(material, -1);
-            if (rate < 0) {
-                maxHeat = -1;
-            } else {
-                maxHeat = 8000 + (1000 * rate);
-            }
-        }
-        List<IMultiPart> parts = getParts();
-        for (IMultiPart part : parts) {
-            if (part instanceof TemperatureSensorPartMachine temperatureSensorPartMachine) {
-                sensorMachines = temperatureSensorPartMachine;
-                break;
-            }
-        }
-        this.heatSubs.initialize(getLevel());
-    }
-
-    @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
-        sensorMachines = null;
-    }
-
-    @Override
-    protected boolean filter(ItemStack itemStack) {
-        return DRILLS.containsKey(itemStack.getItem());
-    }
-
-    public int getRate() {
-        double heat = computeTempEfficiency();
-        double volt = computeVoltageFactor();
-        double overclocking = (maxHeat - 12000) / 1000D * 0.125;
-        return (int) (getDrillHeadRate() * (1 + overclocking) * heat * volt);
-    }
-
-    private double computeTempEfficiency() {
-        double normalizedTemp = (currentHeat - RUNNING_HEAT) / (maxHeat - RUNNING_HEAT);
-        if (normalizedTemp < 0.4) {
-            return 0.3 * Math.sqrt(normalizedTemp / 0.4);
-        } else {
-            double hyperFactor = (normalizedTemp - 0.4) / (1 - 0.4);
-            return 0.3 + 0.7 * Math.pow(hyperFactor, 2.5);
+        } else if (process > 0) process--;
+        if (sensorMachines != null) sensorMachines.update(currentHeat);
+        if (oldHeat != currentHeat || oldProcess != process) {
+            getSyncDataHolder().markClientSyncFieldDirty("currentHeat");
+            getSyncDataHolder().markClientSyncFieldDirty("process"); markAsChanged();
         }
     }
 
-    private double computeVoltageFactor() {
-        double voltage = (GTUtil.getTierByVoltage(getMaxVoltage()) - GTValues.UHV) / 5.0;
-        double clampedVoltage = Math.max(0, Math.min(voltage, 1.0));
-        double tempRatio = (currentHeat - RUNNING_HEAT) / (maxHeat - RUNNING_HEAT);
-        double decayFactor = 1.0 - 0.2 * tempRatio;
-        return Math.pow(clampedVoltage, 0.6 * decayFactor) * (1.0 - 0.05 * (1.0 - tempRatio));
+    private static boolean neutroniumHead(ItemStack stack) {
+        return stack.is(ChemicalHelper.get(TagPrefix.toolHeadDrill, GTMaterials.Neutronium).getItem());
     }
-
-    @Override
-    public AdvancedInfiniteDrillLogic getRecipeLogic() {
-        return (AdvancedInfiniteDrillLogic) super.getRecipeLogic();
+    private static boolean vibraniumHead(ItemStack stack) {
+        var material = GTRegistries.MATERIALS.get(ResourceLocation.fromNamespaceAndPath("gtceu", "vibranium"));
+        if (material == null) throw new IllegalStateException("Required Core gtceu:vibranium material is not registered");
+        return stack.is(ChemicalHelper.get(TagPrefix.toolHeadDrill, material).getItem());
     }
-
-    @Override
-    public void onWaiting() {
-        super.onWaiting();
-        getRecipeLogic().resetRecipeLogic();
-    }
-
-    @Override
-    public void addDisplayText(List<Component> tooltips) {
-        if (isFormed()) {
-            MultiblockDisplayText.builder(tooltips, true)
-                    .setWorkingStatus(isWorkingEnabled(), isActive())
-                    .addIdlingLine(false)
-                    .addEnergyUsageLine(energyContainer);
-            if (isEmpty()) {
-                tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.not_fluid_head")
-                        .withStyle(ChatFormatting.RED));
-            } else {
-                if (maxHeat == -1) {
-                    tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.no_coil")
-                            .withStyle(ChatFormatting.RED));
-                } else {
-                    tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.range",
-                            Component.literal("5x5").withStyle(ChatFormatting.GOLD)));
-                    tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.heat", maxHeat, RUNNING_HEAT));
-                    tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.current_heat", currentHeat));
-                    tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.fast",
-                            ComponentPanelWidget.withButton(Component.translatable(fast ? "gui.gtlcore.status_on" : "gui.gtlcore.status_off"),
-                                    "fast_mode")));
-                    tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.process",
-                            FormattingUtil.formatNumber2Places(process / 300F * 100))
-                            .append("%"));
-                    var fluids = getRecipeLogic().getVeinFluids();
-                    if (!fluids.isEmpty()) {
-                        fluids.forEach((fluid, produced) -> {
-                            Component fluidInfo = fluid.getFluidType().getDescription().copy()
-                                    .withStyle(ChatFormatting.GREEN);
-                            Component amountInfo = Component.literal(FormattingUtil.formatNumbers(
-                                    produced * getRate()) +
-                                    " mB/s").withStyle(ChatFormatting.BLUE);
-                            tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.drilled_fluid",
-                                    fluidInfo, amountInfo));
-                        });
-                    } else {
-                        Component noFluid = Component.translatable("gtceu.multiblock.fluid_rig.no_fluid_in_area")
-                                .withStyle(ChatFormatting.RED);
-                        tooltips.add(Component.translatable("gtceu.multiblock.fluid_rig.drilled_fluid", noFluid)
-                                .withStyle(ChatFormatting.GRAY));
-                    }
-                }
-            }
-        } else {
-            Component tooltip = Component.translatable("gtceu.multiblock.invalid_structure.tooltip")
-                    .withStyle(ChatFormatting.GRAY);
-            tooltips.add(Component.translatable("gtceu.multiblock.invalid_structure")
-                    .withStyle(Style.EMPTY.withColor(ChatFormatting.RED)
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
-        }
-    }
-
-    @Override
-    public void handleDisplayClick(String componentData, ClickData clickData) {
-        if (componentData.equals("fast_mode")) {
-            fast = !fast;
-        }
-    }
-
+    @Override protected boolean filter(ItemStack stack) { return !stack.isEmpty() && (neutroniumHead(stack) || vibraniumHead(stack)); }
     public int getDrillHeadRate() {
-        ItemStack itemStack = getMachineStorageItem();
-        if (!itemStack.isEmpty()) {
-            Item item = itemStack.getItem();
-            return DRILLS.getOrDefault(item, 0);
-        }
-        return 0;
+        var stack = getMachineStorageItem();
+        return stack.isEmpty() ? 0 : neutroniumHead(stack) ? 50000 : vibraniumHead(stack) ? 100000 : 0;
     }
-
+    public int getRate() {
+        return AdvancedFluidDrillProduction.rate(getDrillHeadRate(), currentHeat, maxHeat, GTUtil.getTierByVoltage(getMaxVoltage()));
+    }
+    protected long getFluidConsume() { return (long) Math.pow(currentHeat, 1.3); }
     protected boolean inputBlast() {
-        return MachineUtil.inputFluid(this, GTMaterials.Blaze.getFluid(getFluidConsume()));
+        long amount = getFluidConsume(); if (amount <= 0) return false;
+        var recipe = GTRecipeBuilder.ofRaw().duration(1)
+                .inputFluids(LongFluidIngredient.create(new FluidStack(GTMaterials.Blaze.getFluid(), 1), amount)).build();
+        return RecipeRunnerHelper.matchRecipeInputNocache(this, recipe) && RecipeRunnerHelper.handleRecipeInputNocache(this, recipe);
     }
 
-    protected long getFluidConsume() {
-        return (long) Math.pow(currentHeat, 1.3);
+    public void addDisplayText(List<Component> tooltips) {
+        if (!isFormed()) return;
+        if (isEmpty()) {
+            tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.not_fluid_head").withStyle(ChatFormatting.RED)); return;
+        }
+        if (maxHeat == -1) {
+            tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.no_coil").withStyle(ChatFormatting.RED)); return;
+        }
+        tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.range", Component.literal("5x5").withStyle(ChatFormatting.GOLD)));
+        tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.heat", maxHeat, RUNNING_HEAT));
+        tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.current_heat", currentHeat));
+        tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.fast",
+                Component.translatable(fast ? "gui.gtlcore.status_on" : "gui.gtlcore.status_off")));
+        tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.process", FormattingUtil.formatNumber2Places(process / 300F * 100)).append("%"));
+        var fluids = getRecipeLogic().getVeinFluids();
+        if (fluids.isEmpty()) tooltips.add(Component.translatable("gtceu.multiblock.fluid_rig.drilled_fluid",
+                Component.translatable("gtceu.multiblock.fluid_rig.no_fluid_in_area").withStyle(ChatFormatting.RED)));
+        else fluids.forEach((fluid, produced) -> tooltips.add(Component.translatable("gtceu.machine.advanced_infinite_driller.drilled_fluid",
+                fluid.getFluidType().getDescription().copy().withStyle(ChatFormatting.GREEN),
+                Component.literal(FormattingUtil.formatNumbers(BigInteger.valueOf(produced).multiply(BigInteger.valueOf(getRate()))) + " mB/s").withStyle(ChatFormatting.BLUE))));
+    }
+    @Override public List<IWidget> getWidgetsForDisplay(PanelSyncManager syncManager) {
+        var widgets = super.getWidgetsForDisplay(syncManager);
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("advancedFluidDrill", MULTI_UI_TEXT_PANEL_WIDTH - 6, (machine, lines) ->
+                ((AdvancedInfiniteDrillMachine) machine).addDisplayText(lines)).apply(this, syncManager));
+        return widgets;
+    }
+    @Override public Widget<?> getMainTextPanel(PanelSyncManager syncManager) {
+        int height = 80;
+        var rows = new ListWidget<>().name("advancedFluidRows").width(MULTI_UI_TEXT_PANEL_WIDTH - 6).height(height - 6)
+                .childSeparator(Icon.EMPTY_2PX).crossAxisAlignment(Alignment.CrossAxis.START)
+                .collapseDisabledChildren().posRel(Alignment.CenterLeft);
+        rows.children(getWidgetsForDisplay(syncManager));
+        return new ParentWidget<>().size(MULTI_UI_TEXT_PANEL_WIDTH, height).background(GuiTextures.DISPLAY).child(rows.left(3).top(3));
+    }
+    @Override public MachineUIPanelBuilder getPanelBuilder(PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        var toggle = sync.getOrCreateSyncHandler("advancedFluidFast", BooleanSyncValue.class,
+                () -> new BooleanSyncValue(this::isFastMode, this::setFastMode).allowC2S());
+        return super.getPanelBuilder(data, sync, settings)
+                .leftConfigurators(flow -> flow.child(new ItemSlot().name("advancedFluidHead")
+                        .slot(SyncHandlers.itemSlot(machineStorage.storage, 0)
+                                .slotGroup(new SlotGroup("machine_storage", 1, 0, true)).accessibility(true, true))))
+                .rightConfigurators(flow -> flow.child(new ToggleButton().name("advancedFluidFast")
+                .value(toggle).background(GTGuiTextures.BUTTON_BATCH[0]).background(true, GTGuiTextures.BUTTON_BATCH[1])
+                .tooltipAutoUpdate(true).tooltipDynamic(tooltip -> tooltip.addLine(Component.translatable("gtceu.machine.advanced_infinite_driller.fast",
+                        Component.translatable(toggle.getBoolValue() ? "gui.gtlcore.status_on" : "gui.gtlcore.status_off"))))));
     }
 
-    public boolean canRunnable() {
-        return currentHeat >= RUNNING_HEAT;
+    @Override public void buildMainUI(ParentWidget<?> contents, PosGuiData data, PanelSyncManager sync, UISettings settings) {
+        contents.child(getMainTextPanel(sync).margin(4, 2));
     }
 }

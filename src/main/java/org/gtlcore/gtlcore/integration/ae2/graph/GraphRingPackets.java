@@ -4,17 +4,17 @@ import org.gtlcore.gtlcore.GTLCore;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 import org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.PacketDistributor;
 
-import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.CraftConfirmPlanPacket;
+import appeng.core.network.clientbound.CraftConfirmPlanPacket;
 import appeng.hooks.ticking.TickHandler;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 
@@ -28,31 +28,33 @@ public final class GraphRingPackets {
 
     private GraphRingPackets() {}
 
-    public static void register(SimpleChannel channel, IntSupplier ids) {
-        channel.registerMessage(ids.getAsInt(), Request.class, Request::write, Request::read, Request::handle,
-                Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        channel.registerMessage(ids.getAsInt(), Response.class, Response::write, Response::read, Response::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        channel.registerMessage(ids.getAsInt(), Failure.class, Failure::write, Failure::read, Failure::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+    public static void register(PayloadRegistrar registrar) {
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Request.TYPE, Request::write, Request::read, Request::handle, PacketFlow.SERVERBOUND);
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Response.TYPE, Response::write, Response::read, Response::handle, PacketFlow.CLIENTBOUND);
+        org.gtlcore.gtlcore.integration.ae2.wireless.WirelessAePackets.registerPacket(registrar, Failure.TYPE, Failure::write, Failure::read, Failure::handle, PacketFlow.CLIENTBOUND);
     }
 
-    public record Request(int container, UUID plan, int offset) {
+    public record Request(int container, UUID plan, int offset) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Request> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "graph_ring/request"));
 
-        private void write(FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<Request> type() { return TYPE; }
+
+
+        private void write(RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(container);
             buffer.writeUUID(plan);
             buffer.writeVarInt(offset);
         }
 
-        private static Request read(FriendlyByteBuf buffer) {
+        private static Request read(RegistryFriendlyByteBuf buffer) {
             return new Request(buffer.readVarInt(), buffer.readUUID(), buffer.readVarInt());
         }
 
-        private void handle(Supplier<NetworkEvent.Context> supplier) {
-            var context = supplier.get();
+        private void handle(IPayloadContext context) {
             context.enqueueWork(() -> {
-                var player = context.getSender();
+                var player = (context.player() instanceof ServerPlayer sender ? sender : null);
                 if (player == null || !(player.containerMenu instanceof CraftConfirmMenu menu) || menu.containerId != container || !menu.isValidMenu()) return;
                 if (offset < 0 || offset > GraphRingView.MAX_ROWS) return;
                 long tick = TickHandler.instance().getCurrentTick();
@@ -93,61 +95,69 @@ public final class GraphRingPackets {
                     }
                     if (offset == 0 && ConfigHolder.INSTANCE.ae2GraphDiagnosticLogging)
                         GTLCore.LOGGER.info("[Graph Crafting] view={} rows={} first_page_ms={}", plan, page.total(), (System.nanoTime() - start) / 1_000_000.0);
-                    WirelessAePackets.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Response(container, page));
+                    PacketDistributor.sendToPlayer(player, new Response(container, page));
                 }));
             });
-            context.setPacketHandled(true);
+
         }
 
         private void planChanged(ServerPlayer player, CraftConfirmMenu menu) {
             var current = ((GraphPlanMenu) menu).gtlcore$graphPlan();
             var summary = menu.getPlan();
             if (current != null && summary instanceof GraphPlanSummaryView view && current.id().equals(view.gtlcore$graphPlanId()))
-                NetworkHandler.instance().sendTo(new CraftConfirmPlanPacket(summary), player);
+                PacketDistributor.sendToPlayer(player, new CraftConfirmPlanPacket(summary));
             failure(player, "PLAN_CHANGED");
         }
 
         private void failure(ServerPlayer player, String reason) {
-            WirelessAePackets.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Failure(container, plan, reason));
+            PacketDistributor.sendToPlayer(player, new Failure(container, plan, reason));
         }
     }
 
-    public record Failure(int container, UUID plan, String reason) {
+    public record Failure(int container, UUID plan, String reason) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Failure> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "graph_ring/failure"));
 
-        private void write(FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<Failure> type() { return TYPE; }
+
+
+        private void write(RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(container);
             buffer.writeUUID(plan);
             buffer.writeUtf(reason, 64);
         }
 
-        private static Failure read(FriendlyByteBuf buffer) {
+        private static Failure read(RegistryFriendlyByteBuf buffer) {
             return new Failure(buffer.readVarInt(), buffer.readUUID(), buffer.readUtf(64));
         }
 
-        private void handle(Supplier<NetworkEvent.Context> supplier) {
-            var context = supplier.get();
-            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> () -> org.gtlcore.gtlcore.client.ae2.graph.CraftingRingScreen.fail(this)));
-            context.setPacketHandled(true);
+        private void handle(IPayloadContext context) {
+            context.enqueueWork(() -> org.gtlcore.gtlcore.client.ae2.graph.CraftingRingScreen.fail(this));
+
         }
     }
 
-    public record Response(int container, GraphRingView.Page page) {
+    public record Response(int container, GraphRingView.Page page) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Response> TYPE = new CustomPacketPayload.Type<>(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("gtlcore", "graph_ring/response"));
 
-        private void write(FriendlyByteBuf buffer) {
+        @Override
+        public CustomPacketPayload.Type<Response> type() { return TYPE; }
+
+
+        private void write(RegistryFriendlyByteBuf buffer) {
             buffer.writeVarInt(container);
             GraphRingView.write(page, buffer);
         }
 
-        private static Response read(FriendlyByteBuf buffer) {
+        private static Response read(RegistryFriendlyByteBuf buffer) {
             return new Response(buffer.readVarInt(), GraphRingView.read(buffer));
         }
 
-        private void handle(Supplier<NetworkEvent.Context> supplier) {
-            var context = supplier.get();
-            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> () -> org.gtlcore.gtlcore.client.ae2.graph.CraftingRingScreen.receive(this)));
-            context.setPacketHandled(true);
+        private void handle(IPayloadContext context) {
+            context.enqueueWork(() -> org.gtlcore.gtlcore.client.ae2.graph.CraftingRingScreen.receive(this));
+
         }
     }
 }

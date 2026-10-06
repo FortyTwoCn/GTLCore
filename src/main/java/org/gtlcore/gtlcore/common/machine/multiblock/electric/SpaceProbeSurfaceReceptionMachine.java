@@ -5,7 +5,7 @@ import org.gtlcore.gtlcore.common.data.GTLMaterials;
 
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 
@@ -25,20 +25,26 @@ public class SpaceProbeSurfaceReceptionMachine extends WorkableElectricMultibloc
     @Nullable
     private BlockPos cachedCheckPos;
 
-    public SpaceProbeSurfaceReceptionMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    public SpaceProbeSurfaceReceptionMachine(BlockEntityCreationInfo info) {
+        super(info);
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
-        cachedCheckPos = findTopBlock();
+    public void formStructure(String substructureName) {
+        super.formStructure(substructureName);
+        cachedCheckPos = isFormed() ? findTopBlock() : null;
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String substructureName) {
         cachedCheckPos = null;
+        super.invalidateStructure(substructureName);
+    }
+
+    @Override
+    public void onUnload() {
+        cachedCheckPos = null;
+        super.onUnload();
     }
 
     @Nullable
@@ -46,7 +52,7 @@ public class SpaceProbeSurfaceReceptionMachine extends WorkableElectricMultibloc
         Level level = getLevel();
         if (level == null) return null;
 
-        BlockPos pos = getPos();
+        BlockPos pos = getBlockPos();
         BlockPos[] coordinates = new BlockPos[] {
                 pos.offset(4, 8, 0),
                 pos.offset(-4, 8, 0),
@@ -55,7 +61,7 @@ public class SpaceProbeSurfaceReceptionMachine extends WorkableElectricMultibloc
         };
 
         for (BlockPos checkPos : coordinates) {
-            if (level.getBlockState(checkPos).is(ChemicalHelper.getBlock(TagPrefix.frameGt, GTLMaterials.BlackTitanium))) {
+            if (level.hasChunkAt(checkPos) && level.getBlockState(checkPos).is(ChemicalHelper.getBlock(TagPrefix.frameGt, GTLMaterials.BlackTitanium))) {
                 return checkPos.offset(0, 1, 0);
             }
         }
@@ -64,7 +70,7 @@ public class SpaceProbeSurfaceReceptionMachine extends WorkableElectricMultibloc
 
     @Override
     public boolean beforeWorking(@Nullable GTRecipe recipe) {
-        if (cachedCheckPos == null) return false;
+        if (!isFormed() || cachedCheckPos == null || !Objects.requireNonNull(getLevel()).hasChunkAt(cachedCheckPos)) return false;
         if (!Objects.requireNonNull(getLevel()).canSeeSky(cachedCheckPos)) {
             RecipeResult.of(this, RecipeResult.fail(Component.translatable("gtceu.recipe.fail.block")));
             return false;

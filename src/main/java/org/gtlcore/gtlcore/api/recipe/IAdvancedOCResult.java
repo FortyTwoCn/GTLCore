@@ -1,16 +1,10 @@
 package org.gtlcore.gtlcore.api.recipe;
 
+/** Extra Core headroom information on the immutable native overclock result. */
 public interface IAdvancedOCResult {
-
-    void init(long eut, int duration, int parallel, long parallelEUt, int baseOCLevel, int totalOCLevel, double durationFactor, double voltageFactor);
-
+    void gtlcore$setOverclockInfo(int baseOCLevel, double durationFactor, double voltageFactor, boolean available);
     int getBaseOCLevel();
-
     double getDurationFactor();
-
     double getVoltageFactor();
-
     boolean isSubTickOverclockAvailable();
-
-    void setSubTickOverclockAvailable(boolean available);
 }

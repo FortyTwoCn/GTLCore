@@ -31,8 +31,8 @@ import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.IconButton;
 import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.core.definitions.AEItems;
-import de.mari_023.ae2wtlib.wut.CycleTerminalButton;
-import de.mari_023.ae2wtlib.wut.IUniversalTerminalCapable;
+import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
+import de.mari_023.ae2wtlib.api.terminal.IUniversalTerminalCapable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +72,7 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
                                         ScreenStyle style) {
         super(menu, inventory, title, style);
         if (menu.isUniversalTerminal()) {
-            addToLeftToolbar(new CycleTerminalButton(ignored -> cycleTerminal()));
+            addToLeftToolbar(cycleTerminalButton());
         }
     }
 
@@ -134,6 +134,11 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
     }
 
     @Override
+    public WTMenuHost getHost() {
+        return (WTMenuHost) this.menu.getTarget();
+    }
+
+    @Override
     public void storeState() {
         rememberedSearch = this.searchField.getValue();
     }
@@ -157,9 +162,6 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
     @Override
     public void containerTick() {
         super.containerTick();
-        this.searchField.tick();
-        this.primaryValue.tick();
-        this.secondaryValue.tick();
         updateControls();
         this.scrollOffset = WirelessAeStyle.clampScrollOffset(
                 this.scrollOffset,
@@ -198,7 +200,7 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
             return;
         }
         this.menu.setSelectedAddress(this.selectedAddress);
-        WirelessAePackets.CHANNEL.sendToServer(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                 new WirelessAePackets.SelectEmitterPacket(this.menu.containerId, this.selectedAddress));
     }
 
@@ -555,7 +557,7 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalDelta, double delta) {
         if (isInsideList(mouseX, mouseY)) {
             int direction = delta > 0 ? -1 : 1;
             this.scrollOffset = WirelessAeStyle.clampScrollOffset(
@@ -564,7 +566,7 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
                     EmitterManagerTerminalLayout.VISIBLE_ROWS);
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, horizontalDelta, delta);
     }
 
     private void updateScrollFromMouse(double mouseY) {
@@ -686,7 +688,7 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
             return;
         }
         button.set(value);
-        WirelessAePackets.CHANNEL.sendToServer(new WirelessAePackets.SetEmitterSettingPacket(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(new WirelessAePackets.SetEmitterSettingPacket(
                 this.menu.containerId,
                 entry.address(),
                 button.getSetting().getName(),
@@ -751,7 +753,7 @@ public final class EmitterManagerTerminalScreen extends AEBaseScreen<EmitterMana
 
     private void sendValue(EmitterManagerTerminalMenu.Entry entry, EmitterManagerTerminalMenu.ValueKind kind,
                            long value) {
-        WirelessAePackets.CHANNEL.sendToServer(new WirelessAePackets.SetEmitterValuePacket(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(new WirelessAePackets.SetEmitterValuePacket(
                 this.menu.containerId,
                 entry.address(),
                 kind,

@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.api.machine.trait.AECraft;
 
-import com.lowdragmc.lowdraglib.syncdata.ISubscription;
+import com.gregtechceu.gtceu.utils.ISubscription;
 
 public interface IMolecularAssemblerHandlerTrait extends IMolecularAssemblerHandler {
 

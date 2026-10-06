@@ -1,0 +1,14 @@
+// Supplies the exact native main dependency artifacts for the read-only bytecode preflight.
+gradle.projectsEvaluated {
+    def target = gradle.rootProject
+    target.tasks.register('writeNativeMixinClasspath') {
+        doLast {
+            def entries = new LinkedHashSet<File>()
+            entries.addAll(target.configurations.compileClasspath.files)
+            entries.addAll(target.configurations.runtimeClasspath.files)
+            def output = new File(target.buildDir, 'migration/native-mixin-classpath.txt')
+            output.parentFile.mkdirs()
+            output.text = entries.collect { it.absolutePath }.join('\n') + '\n'
+        }
+    }
+}

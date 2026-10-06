@@ -1,13 +1,15 @@
 package org.gtlcore.gtlcore.client.preview;
 
-import org.gtlcore.gtlcore.mixin.gtm.client.WorldPreviewAccessor;
+import org.gtlcore.gtlcore.api.gui.preview.NativePreviewGeometry;
 
 import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.client.renderer.MultiblockInWorldPreviewRenderer;
+import com.gregtechceu.gtceu.client.renderer.PatternPreviewRenderer;
+import com.gregtechceu.gtceu.client.mui.schema.MutableSchema;
+import brachy.modularui.drawable.schema.RenderFilter;
 
-import com.lowdragmc.lowdraglib.utils.TrackedDummyWorld;
+import com.lowdragmc.lowdraglib.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -32,37 +34,34 @@ public final class WorldPreview {
     private static int remaining = -1;
     private static SparsePreviewShape shape;
     private static TrackedDummyWorld dummy;
+    private static MutableSchema source;
     private static PreviewSnapshot preparing;
     private static PreviewMesh mesh;
     private static PreviewScenes.Key key;
 
     private WorldPreview() {}
 
-    public static boolean show(BlockPos pos, MultiblockControllerMachine controller, int ticks) {
-        if (!PreviewSettings.enabled() || !controller.getDefinition().isRenderWorldPreview()) return false;
-        var shapes = controller.getDefinition().getMatchingShapes();
-        if (shapes.isEmpty() || !PreviewShapeCache.isLarge(shapes.get(0))) return false;
-        var geometry = PreviewShapeCache.sparse(shapes.get(0), controller.getDefinition());
-        if (geometry.controller == null) return false;
-        int newLayer = pos.equals(center) && clientWorld == Minecraft.getInstance().level ? layer + 1 : -1;
-        if (newLayer >= geometry.height) newLayer = -1;
-        MultiblockInWorldPreviewRenderer.cleanPreview();
-        center = pos.immutable();
-        front = controller.getFrontFacing();
-        up = controller.getUpwardsFacing();
-        clientWorld = Minecraft.getInstance().level;
-        layer = newLayer;
-        shape = geometry;
-        duration = ticks;
-        next = 0;
-        key = new PreviewScenes.Key(PreviewScenes.generation(),
-                new Anchor(clientWorld, center, front, up, controller.isFlipped()),
-                controller.getDefinition().getId(), 0, layer, false);
+    public static boolean show(BlockPos origin, MutableSchema schema, RenderFilter filter, int ticks) {
+        if (!PreviewSettings.enabled() || schema.getBlocks().size() < PreviewSettings.minPositions()) return false;
+        var states = new java.util.LinkedHashMap<BlockPos, BlockState>();
+        schema.getBlocks().forEach((packed, state) -> {
+            var pos = BlockPos.of(packed); if (filter.shouldRender(pos, state)) states.put(pos, state);
+        });
+        var machineState = schema.getLevel().getBlockState(schema.getControllerPos());
+        if (!(machineState.getBlock() instanceof MetaMachineBlock block) ||
+                !(block.getDefinition() instanceof com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition definition)) return false;
+        PatternPreviewRenderer.INSTANCE.dispose();
+        if (states.isEmpty()) return true;
+        var geometry = new SparsePreviewShape(NativePreviewGeometry.fromStates(states, schema.getControllerPos()), definition);
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        for (var pos : states.keySet()) { minX = Math.min(minX, pos.getX()); minY = Math.min(minY, pos.getY()); minZ = Math.min(minZ, pos.getZ()); }
+        var minimum = new BlockPos(minX, minY, minZ);
+        center = origin.offset(minimum); clientWorld = Minecraft.getInstance().level; shape = geometry; source = schema;
+        front = Direction.NORTH; up = Direction.UP; duration = ticks; remaining = -1; next = 0; layer = -1;
+        key = new PreviewScenes.Key(PreviewScenes.generation(), new Anchor(clientWorld, center, front, up, false),
+                definition.getId(), states.hashCode(), layer, false);
         mesh = PreviewScenes.take(key);
-        if (mesh == null) {
-            dummy = new TrackedDummyWorld();
-            preparing = new PreviewSnapshot();
-        }
+        if (mesh == null) { dummy = new TrackedDummyWorld(); preparing = new PreviewSnapshot(); }
         return true;
     }
 
@@ -70,7 +69,10 @@ public final class WorldPreview {
         return center != null;
     }
 
-    public static void render(PoseStack pose, Camera camera, float partialTicks) {
+    public static boolean ready() { return mesh != null && mesh.complete(); }
+    public static int positionCount() { return shape == null ? 0 : shape.positions.length; }
+
+    public static void render(PoseStack pose, Camera camera, float partialTicks, org.joml.Matrix4f modelView) {
         if (!active()) return;
         if (clientWorld != Minecraft.getInstance().level) {
             clear();
@@ -82,40 +84,16 @@ public final class WorldPreview {
                     int index = next++;
                     var local = BlockPos.of(shape.positions[index]);
                     if (layer >= 0 && local.getY() != layer) continue;
-                    var offset = local.subtract(shape.controller).rotate(switch (front) {
-                        case SOUTH -> Rotation.CLOCKWISE_180;
-                        case EAST -> Rotation.COUNTERCLOCKWISE_90;
-                        case WEST -> Rotation.CLOCKWISE_90;
-                        default -> Rotation.NONE;
-                    });
-                    var rotation = switch (up) {
-                        case EAST -> Rotation.CLOCKWISE_90;
-                        case SOUTH -> Rotation.CLOCKWISE_180;
-                        case WEST -> Rotation.COUNTERCLOCKWISE_90;
-                        default -> Rotation.NONE;
-                    };
-                    var pos = center.offset(WorldPreviewAccessor.gtlcore$rotate(offset, front, rotation));
+                    var pos = center.offset(local);
                     var info = SparsePreviewShape.copy(shape.blocks[index]);
-                    BlockState state = info.getBlockState();
-                    if (state.getBlock() instanceof MetaMachineBlock machine) {
-                        var rotationState = machine.getRotationState();
-                        if (rotationState != RotationState.NONE) {
-                            Direction face = state.getValue(rotationState.property);
-                            if (face.getAxis() != Direction.Axis.Y) {
-                                face = switch (front) {
-                                    case SOUTH -> face.getOpposite();
-                                    case WEST -> face.getCounterClockWise();
-                                    case EAST -> face.getClockWise();
-                                    default -> front;
-                                };
-                            }
-                            if (rotationState.test(face)) state = state.setValue(rotationState.property, face);
-                        }
+                    var state = info.getBlockState(); dummy.addBlock(pos, info);
+                    var entity = info.hasBlockEntity() ? info.getBlockEntity(dummy.registryAccess(), dummy, pos) : null;
+                    if (entity != null) {
+                        var originalPos = local.subtract(shape.controller).offset(source.getControllerPos());
+                        var original = source.getLevel().getBlockEntity(originalPos);
+                        if (original != null) entity.loadWithComponents(original.saveWithoutMetadata(source.getLevel().registryAccess()), dummy.registryAccess());
+                        dummy.setInnerBlockEntity(entity);
                     }
-                    info.setBlockState(state);
-                    dummy.addBlock(pos, info);
-                    var entity = info.hasBlockEntity() ? info.getBlockEntity(dummy, pos) : null;
-                    if (entity != null) dummy.setInnerBlockEntity(entity);
                     if (!local.equals(shape.controller)) preparing.add(pos, state, entity);
                 }
             }
@@ -140,7 +118,7 @@ public final class WorldPreview {
         float fog = RenderSystem.getShaderFogStart();
         try {
             RenderSystem.setShaderFogStart(Float.MAX_VALUE);
-            mesh.draw(pose.last().pose(), partialTicks, pose);
+            mesh.draw(new org.joml.Matrix4f(modelView).translate((float) -eye.x, (float) -eye.y, (float) -eye.z), partialTicks, pose);
         } finally {
             RenderSystem.setShaderFogStart(fog);
             pose.popPose();
@@ -148,7 +126,7 @@ public final class WorldPreview {
     }
 
     public static void tick() {
-        if (remaining > 0 && --remaining == 0) clear();
+        if (remaining > 0 && --remaining == 0) PatternPreviewRenderer.INSTANCE.dispose();
     }
 
     public static void remove(BlockPos pos) {
@@ -161,6 +139,7 @@ public final class WorldPreview {
         key = null;
         shape = null;
         dummy = null;
+        source = null;
         preparing = null;
         center = null;
         clientWorld = null;

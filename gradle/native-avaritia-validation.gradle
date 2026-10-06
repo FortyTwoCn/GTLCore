@@ -1,0 +1,44 @@
+// Verify the published NeoForge artifact and the exact upstream API used by the port.
+def avaritiaCoreRoot = project.ext.has('nativeAvaritiaCoreRoot') ? project.ext.nativeAvaritiaCoreRoot : projectDir
+tasks.register('verifyNativeAvaritia') {
+    group = 'verification'
+    doLast {
+        def profileFile = new File(avaritiaCoreRoot, 'migration/native-avaritia-api.json')
+        def profile = new groovy.json.JsonSlurper().parse(profileFile)
+        def coreProperties = new Properties()
+        new File(avaritiaCoreRoot, 'gradle.properties').withInputStream { coreProperties.load(it) }
+        if (coreProperties.getProperty('avaritia_revision') != profile.revision)
+            throw new GradleException('Avaritia source property differs from the pinned native API profile')
+        def source = new File(avaritiaCoreRoot, coreProperties.getProperty('avaritia_source'))
+        def git = { List<String> args -> providers.exec {
+            commandLine(['git', '-C', source.absolutePath] + args)
+        }.standardOutput.asText.get() }
+        if (git(['rev-parse', 'HEAD']).trim() != profile.revision ||
+                !git(['diff', 'HEAD', '--binary']).isEmpty() ||
+                !git(['ls-files', '--others', '--exclude-standard']).trim().isEmpty())
+            throw new GradleException('Avaritia checkout differs from the pinned native API source')
+        def obsoleteModel = new File(source, profile.obsolete_mixin.native_source)
+        def modelHash = java.security.MessageDigest.getInstance('SHA-256').digest(obsoleteModel.bytes).encodeHex().toString()
+        if (modelHash != profile.obsolete_mixin.sha256)
+            throw new GradleException('Native armor model differs from the verified quiet renderer')
+        def artifacts = configurations.compileClasspath.incoming.artifacts.artifacts.findAll {
+            it.id.componentIdentifier instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier &&
+                    it.id.componentIdentifier.group == 'maven.modrinth' && it.id.componentIdentifier.module == 're-avaritia'
+        }
+        if (artifacts.size() != 1) throw new GradleException('Expected exactly one pinned Re:Avaritia NeoForge artifact')
+        def artifact = artifacts.first().file
+        def sha512 = java.security.MessageDigest.getInstance('SHA-512').digest(artifact.bytes).encodeHex().toString()
+        if (sha512 != profile.jar_sha512) throw new GradleException('Re:Avaritia artifact differs from the verified native release')
+        new java.util.zip.ZipFile(artifact).withCloseable { archive ->
+            if (archive.getEntry('META-INF/neoforge.mods.toml') == null ||
+                    archive.getEntry('committee/nova/mods/avaritia/client/model/loader/CosmicModelLoader.class') == null ||
+                    archive.getEntry('committee/nova/mods/avaritia/client/model/loader/HaloModelLoader.class') == null)
+                throw new GradleException('Native Avaritia metadata or model loaders are missing')
+            def metadata = archive.getInputStream(archive.getEntry('META-INF/neoforge.mods.toml')).getText('UTF-8')
+            def versionLine = metadata.readLines().find { it.trim().startsWith('version=') || it.trim().startsWith('version =') }
+            if (versionLine == null || versionLine.split('"')[1] != profile.mod_version)
+                throw new GradleException('Native Avaritia mod version differs from the dependency range baseline')
+        }
+    }
+}
+tasks.withType(JavaCompile).configureEach { dependsOn 'verifyNativeAvaritia' }

@@ -1,136 +1,154 @@
 package org.gtlcore.gtlcore.common.data;
 
-import org.gtlcore.gtlcore.common.recipe.RecipeModify;
+import org.gtlcore.gtlcore.common.recipe.GTLRecipeUIModifiers;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 import org.gtlcore.gtlcore.data.recipe.GenerateDisassembly;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.block.ICoilType;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import com.gregtechceu.gtceu.api.recipe.gui.ProgressBarTextureSet;
+import com.gregtechceu.gtceu.api.registry.registrate.entry.GTRecipeTypeEntry;
 import com.gregtechceu.gtceu.api.sound.ExistingSoundEntry;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.common.data.GTSoundEntries;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.utils.CycleItemStackHandler;
 import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.*;
-import static com.lowdragmc.lowdraglib.gui.texture.ProgressTexture.FillDirection.*;
+import static com.gregtechceu.gtceu.common.registry.GTRegistration.REGISTRATE;
+
+import brachy.modularui.drawable.progress.CircularProgressDrawable;
 
 public class GTLRecipeTypes {
+    // Retained from Core's bundled GT 1.4.4; the native GT 8 baseline removed this recipe family.
+    public static final GTRecipeTypeEntry EVAPORATION_RECIPES = REGISTRATE.recipeType("evaporation", GTRecipeTypes.ELECTRIC)
+            .setMaxIOSize(0, 1, 1, 6)
+            .setEUIO(IO.IN)
+            .setSound(GTSoundEntries.MOTOR)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW_MULTIPLE))
+            .register();
 
-    public static final GTRecipeType PRIMITIVE_VOID_ORE_RECIPES = ConfigHolder.INSTANCE.enablePrimitiveVoidOre ?
-            register("primitive_void_ore", MULTIBLOCK)
+    public static final GTRecipeTypeEntry PRIMITIVE_VOID_ORE_RECIPES = ConfigHolder.INSTANCE.enablePrimitiveVoidOre ?
+            REGISTRATE.recipeType("primitive_void_ore", MULTIBLOCK)
                     .setMaxIOSize(0, 0, 1, 0)
-                    .setMaxTooltips(1)
-                    .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT)
-                    .setSound(GTSoundEntries.MINER) :
+                    .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW_MULTIPLE)).register() :
             null;
 
-    public final static GTRecipeType SEMI_FLUID_GENERATOR_FUELS = register("semi_fluid_generator", GENERATOR)
+    public final static GTRecipeTypeEntry SEMI_FLUID_GENERATOR_FUELS = REGISTRATE.recipeType("semi_fluid_generator", GENERATOR)
             .setMaxIOSize(0, 0, 1, 0).setEUIO(IO.OUT)
-            .setSlotOverlay(false, true, true, GuiTextures.FURNACE_OVERLAY_2)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COMBUSTION);
+            .setSound(GTSoundEntries.COMBUSTION)
+            .UI(ui -> ui.setFluidSlotOverlay(IO.IN, 0, GTGuiTextures.FURNACE_OVERLAY_2)
+                    .setProgressBar(GTGuiTextures.PROGRESS_ARROW_MULTIPLE))
+            .register();
 
-    public final static GTRecipeType SUPERCRITICAL_STEAM_TURBINE_FUELS = register(
+    public final static GTRecipeTypeEntry SUPERCRITICAL_STEAM_TURBINE_FUELS = REGISTRATE.recipeType(
             "supercritical_steam_turbine", GENERATOR)
             .setMaxIOSize(0, 0, 1, 1)
             .setEUIO(IO.OUT)
-            .setSlotOverlay(false, true, true, GuiTextures.CENTRIFUGE_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_GAS_COLLECTOR, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.TURBINE);
+            .setSound(GTSoundEntries.TURBINE)
+            .UI(ui -> ui.setFluidSlotOverlay(IO.IN, 0, GTGuiTextures.CENTRIFUGE_OVERLAY)
+                    .setProgressBar(GTGuiTextures.PROGRESS_GAS_COLLECTOR))
+            .register();
 
-    public final static GTRecipeType ROCKET_ENGINE_FUELS = register("rocket_engine", GENERATOR)
+    public final static GTRecipeTypeEntry ROCKET_ENGINE_FUELS = REGISTRATE.recipeType("rocket_engine", GENERATOR)
             .setEUIO(IO.OUT)
             .setMaxIOSize(0, 0, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.JET_ENGINE);
+            .setSound(GTSoundEntries.JET_ENGINE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public final static GTRecipeType NAQUADAH_REACTOR = register("naquadah_reactor", GENERATOR)
+    public final static GTRecipeTypeEntry NAQUADAH_REACTOR = REGISTRATE.recipeType("naquadah_reactor", GENERATOR)
             .setEUIO(IO.OUT)
             .setMaxIOSize(0, 0, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COMBUSTION);
+            .setSound(GTSoundEntries.COMBUSTION)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public final static GTRecipeType ELECTRIC_IMPLOSION_COMPRESSOR_RECIPES = register("electric_implosion_compressor",
+    public final static GTRecipeTypeEntry ELECTRIC_IMPLOSION_COMPRESSOR_RECIPES = REGISTRATE.recipeType("electric_implosion_compressor",
             MULTIBLOCK)
             .setMaxIOSize(2, 1, 0, 0).setEUIO(IO.IN)
             .prepareBuilder(recipeBuilder -> recipeBuilder.duration(1).EUt(GTValues.VA[GTValues.UV]))
-            .setSlotOverlay(false, false, true, GuiTextures.IMPLOSION_OVERLAY_1)
-            .setSlotOverlay(false, false, false, GuiTextures.IMPLOSION_OVERLAY_2)
-            .setSlotOverlay(true, false, true, GuiTextures.DUST_OVERLAY)
-            .setSound(new ExistingSoundEntry(SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS));
+            .setSound(new ExistingSoundEntry(SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS))
+            .UI(ui -> ui.setItemSlotOverlay(IO.IN, 1, GTGuiTextures.IMPLOSION_OVERLAY_1)
+                    .setItemSlotOverlay(IO.IN, 0, GTGuiTextures.IMPLOSION_OVERLAY_2)
+                    .setItemSlotOverlay(IO.OUT, 0, GTGuiTextures.DUST_OVERLAY))
+            .register();
 
-    public static final GTRecipeType DISASSEMBLY_RECIPES = register("disassembly", GTRecipeTypes.MULTIBLOCK)
+    public static final GTRecipeTypeEntry DISASSEMBLY_RECIPES = REGISTRATE.recipeType("disassembly", GTRecipeTypes.MULTIBLOCK)
             .setMaxIOSize(1, 16, 0, 4)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, ProgressTexture.FillDirection.LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ASSEMBLER);
+            .setSound(GTSoundEntries.ASSEMBLER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW_MULTIPLE))
+            .register();
 
-    public static final GTRecipeType NEUTRON_ACTIVATOR_RECIPES = register("neutron_activator", MULTIBLOCK)
+    public static final GTRecipeTypeEntry NEUTRON_ACTIVATOR_RECIPES = REGISTRATE.recipeType("neutron_activator", MULTIBLOCK)
             .setMaxIOSize(6, 3, 1, 1)
             .setSound(GTSoundEntries.COOLING)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.ev_min", data.getInt("ev_min")))
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.ev_max", data.getInt("ev_max")))
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.evt", data.getInt("evt")));
+            .UI(ui -> ui.addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.ev_min", data.getInt("ev_min"))))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.ev_max", data.getInt("ev_max"))))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.evt", data.getInt("evt")))))
+            .register();
 
-    public static final GTRecipeType HEAT_EXCHANGER_RECIPES = register("heat_exchanger", GTRecipeTypes.MULTIBLOCK)
+    public static final GTRecipeTypeEntry HEAT_EXCHANGER_RECIPES = REGISTRATE.recipeType("heat_exchanger", GTRecipeTypes.MULTIBLOCK)
             .setMaxIOSize(0, 0, 2, 2)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_MIXER, ProgressTexture.FillDirection.LEFT_TO_RIGHT)
-            .setMaxTooltips(1)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBarSupplier((layout, value, machine) -> new CircularProgressDrawable()
+                            .emptyTexture(GTGuiTextures.PROGRESS_MIXER[0])
+                            .filledTexture(GTGuiTextures.PROGRESS_MIXER[1])
+                            .clockwise().asWidget().value(value)))
+            .register();
 
-    public static final GTRecipeType ELEMENT_COPYING_RECIPES = register("element_copying", GTRecipeTypes.MULTIBLOCK)
+    public static final GTRecipeTypeEntry ELEMENT_COPYING_RECIPES = REGISTRATE.recipeType("element_copying", GTRecipeTypes.MULTIBLOCK)
             .setMaxIOSize(1, 1, 2, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, ProgressTexture.FillDirection.LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW_MULTIPLE))
+            .register();
 
-    public static final GTRecipeType LIGHTNING_PROCESSOR_RECIPES = register("lightning_processor", GTRecipeTypes.ELECTRIC)
+    public static final GTRecipeTypeEntry LIGHTNING_PROCESSOR_RECIPES = REGISTRATE.recipeType("lightning_processor", GTRecipeTypes.ELECTRIC)
             .setMaxIOSize(6, 1, 6, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW_MULTIPLE))
+            .register();
 
-    public static final GTRecipeType DEHYDRATOR_RECIPES = register("dehydrator", GTRecipeTypes.ELECTRIC)
+    public static final GTRecipeTypeEntry DEHYDRATOR_RECIPES = REGISTRATE.recipeType("dehydrator", GTRecipeTypes.ELECTRIC)
             .setMaxIOSize(2, 6, 2, 2)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_EXTRACT, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_EXTRACT))
+            .register();
 
-    public static final GTRecipeType INTEGRATED_ORE_PROCESSOR = register("integrated_ore_processor", MULTIBLOCK)
+    public static final GTRecipeTypeEntry INTEGRATED_ORE_PROCESSOR = REGISTRATE.recipeType("integrated_ore_processor", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 9, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MACERATOR);
+            .setSound(GTSoundEntries.MACERATOR)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType FISSION_REACTOR_RECIPES = register("fission_reactor", MULTIBLOCK)
+    public static final GTRecipeTypeEntry FISSION_REACTOR_RECIPES = REGISTRATE.recipeType("fission_reactor", MULTIBLOCK)
             .setMaxIOSize(1, 1, 0, 0)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.ARC)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.frheat", FormattingUtil.formatNumbers(data.getInt("FRheat"))));
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.frheat", FormattingUtil.formatNumbers(data.getInt("FRheat"))))))
+            .register();
 
-    public static final GTRecipeType SPACE_ELEVATOR_RECIPES = register("space_elevator", MULTIBLOCK)
+    public static final GTRecipeTypeEntry SPACE_ELEVATOR_RECIPES = REGISTRATE.recipeType("space_elevator", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 0, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT);
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
     public static String getSCTier(int tier) {
         return switch (tier) {
@@ -140,372 +158,415 @@ public class GTLRecipeTypes {
         };
     }
 
-    public static final GTRecipeType STELLAR_FORGE_RECIPES = register("stellar_forge", MULTIBLOCK)
+    public static final GTRecipeTypeEntry STELLAR_FORGE_RECIPES = REGISTRATE.recipeType("stellar_forge", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(3, 2, 9, 2)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARC_FURNACE, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.ARC)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.stellar_containment_tier", getSCTier(data.getInt("SCTier"))));
+            .UI(ui -> ui.setProgressBar(new ProgressBarTextureSet(GTGuiTextures.PROGRESS_BAR_ARC_FURNACE))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.stellar_containment_tier", getSCTier(data.getInt("SCTier"))))))
+            .register();
 
-    public static final GTRecipeType COMPONENT_ASSEMBLY_LINE_RECIPES = register("component_assembly_line", MULTIBLOCK)
+    public static final GTRecipeTypeEntry COMPONENT_ASSEMBLY_LINE_RECIPES = REGISTRATE.recipeType("component_assembly_line", MULTIBLOCK)
             .setMaxIOSize(9, 1, 9, 0)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.ca_tier", GTValues.VN[data.getInt("CATier")]))
-            .setSound(GTSoundEntries.ASSEMBLER);
+            .setSound(GTSoundEntries.ASSEMBLER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.ca_tier", GTValues.VN[data.getInt("CATier")]))))
+            .register();
 
-    public static final GTRecipeType SLAUGHTERHOUSE_RECIPES = register("slaughterhouse", MULTIBLOCK)
+    public static final GTRecipeTypeEntry SLAUGHTERHOUSE_RECIPES = REGISTRATE.recipeType("slaughterhouse", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 0, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MACERATOR);
+            .setSound(GTSoundEntries.MACERATOR)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType GREENHOUSE_RECIPES = register("greenhouse", MULTIBLOCK)
+    public static final GTRecipeTypeEntry GREENHOUSE_RECIPES = REGISTRATE.recipeType("greenhouse", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(3, 3, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_BATH, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBarSupplier((layout, value, machine) -> new CircularProgressDrawable()
+                            .emptyTexture(GTGuiTextures.PROGRESS_BATH[0])
+                            .filledTexture(GTGuiTextures.PROGRESS_BATH[1])
+                            .clockwise().asWidget().value(value)))
+            .register();
 
-    public static final GTRecipeType DIMENSIONALLY_TRANSCENDENT_PLASMA_FORGE_RECIPES = register("dimensionally_transcendent_plasma_forge", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DIMENSIONALLY_TRANSCENDENT_PLASMA_FORGE_RECIPES = REGISTRATE.recipeType("dimensionally_transcendent_plasma_forge", MULTIBLOCK)
             .setMaxIOSize(2, 2, 2, 2)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARC_FURNACE, LEFT_TO_RIGHT)
             .setSound(GTLSoundEntries.DTPF)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatNumbers(data.getInt("ebf_temp"))))
-            .addDataInfo(data -> {
+            .UI(ui -> ui.setProgressBar(new ProgressBarTextureSet(GTGuiTextures.PROGRESS_BAR_ARC_FURNACE))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatNumbers(data.getInt("ebf_temp")))))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
                 return LocalizationUtils.format("gtceu.recipe.coil.tier", (temp > 21600 && temp <= 32000) ? "超级热容" : I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                List<List<ItemStack>> items = new ArrayList<>();
-                int temp = recipe.data.getInt("ebf_temp");
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream().filter(coil -> {
-                    int ctemp = coil.getKey().getCoilTemperature();
-                    if (ctemp == 273) {
-                        return temp <= 32000;
-                    } else {
-                        return ctemp >= temp;
-                    }
-                }).map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(new CycleItemStackHandler(items), 0, widgetGroup.getSize().width - 35, widgetGroup.getSize().height - 32, false, false));
-            });
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.coils(GTLRecipeUIModifiers.PLASMA_COILS)))
+            .register();
 
-    public static final GTRecipeType PLASMA_CONDENSER_RECIPES = register("plasma_condenser", MULTIBLOCK)
+    public static final GTRecipeTypeEntry PLASMA_CONDENSER_RECIPES = REGISTRATE.recipeType("plasma_condenser", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 2, 2, 2)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType RARE_EARTH_CENTRIFUGAL_RECIPES = register("rare_earth_centrifugal", MULTIBLOCK)
+    public static final GTRecipeTypeEntry RARE_EARTH_CENTRIFUGAL_RECIPES = REGISTRATE.recipeType("rare_earth_centrifugal", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 17, 1, 1)
-            .setProgressBar(GuiTextures.CENTRIFUGE_OVERLAY, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.CENTRIFUGE);
+            .setSound(GTSoundEntries.CENTRIFUGE)
+            .UI(ui -> ui.setProgressBar(new ProgressBarTextureSet(GTGuiTextures.CENTRIFUGE_OVERLAY)))
+            .register();
 
-    public static final GTRecipeType MAGIC_MANUFACTURER_RECIPES = register("magic_manufacturer", MULTIBLOCK)
+    public static final GTRecipeTypeEntry MAGIC_MANUFACTURER_RECIPES = REGISTRATE.recipeType("magic_manufacturer", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 0, 0, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_MASS_FAB, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBar(new ProgressBarTextureSet(GTGuiTextures.PROGRESS_BAR_MASS_FAB)))
+            .register();
 
-    public static final GTRecipeType SPS_CRAFTING_RECIPES = register("sps_crafting", MULTIBLOCK)
+    public static final GTRecipeTypeEntry SPS_CRAFTING_RECIPES = REGISTRATE.recipeType("sps_crafting", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(3, 1, 3, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType MATTER_FABRICATOR_RECIPES = register("matter_fabricator", MULTIBLOCK)
+    public static final GTRecipeTypeEntry MATTER_FABRICATOR_RECIPES = REGISTRATE.recipeType("matter_fabricator", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 1, 0, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType VOID_MINER_RECIPES = register("void_miner", MULTIBLOCK)
+    public static final GTRecipeTypeEntry VOID_MINER_RECIPES = REGISTRATE.recipeType("void_miner", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 4, 2, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MINER);
+            .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType LARGE_VOID_MINER_RECIPES = register("large_void_miner", MULTIBLOCK)
+    public static final GTRecipeTypeEntry LARGE_VOID_MINER_RECIPES = REGISTRATE.recipeType("large_void_miner", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 4, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MINER);
+            .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType RANDOM_ORE_RECIPES = register("random_ore", MULTIBLOCK)
+    public static final GTRecipeTypeEntry RANDOM_ORE_RECIPES = REGISTRATE.recipeType("random_ore", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(0, 216, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MINER);
+            .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType VOID_FLUID_DRILLING_RIG_RECIPES = register("void_fluid_drilling_rig", MULTIBLOCK)
+    public static final GTRecipeTypeEntry VOID_FLUID_DRILLING_RIG_RECIPES = REGISTRATE.recipeType("void_fluid_drilling_rig", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 0, 0, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.CHEMICAL);
+            .setSound(GTSoundEntries.CHEMICAL)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType WORLD_DATA_SCANNER_RECIPES = register("world_data_scanner", ELECTRIC)
+    public static final GTRecipeTypeEntry WORLD_DATA_SCANNER_RECIPES = REGISTRATE.recipeType("world_data_scanner", ELECTRIC)
             .setEUIO(IO.IN)
             .setMaxIOSize(3, 1, 2, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType ANNIHILATE_GENERATOR_RECIPES = register("annihilate_generator", MULTIBLOCK)
+    public static final GTRecipeTypeEntry ANNIHILATE_GENERATOR_RECIPES = REGISTRATE.recipeType("annihilate_generator", MULTIBLOCK)
             .setEUIO(IO.OUT)
             .setMaxIOSize(1, 1, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType HYPER_REACTOR_RECIPES = register("hyper_reactor", MULTIBLOCK)
+    public static final GTRecipeTypeEntry HYPER_REACTOR_RECIPES = REGISTRATE.recipeType("hyper_reactor", MULTIBLOCK)
             .setEUIO(IO.OUT)
             .setMaxIOSize(0, 0, 2, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType ADVANCED_HYPER_REACTOR_RECIPES = register("advanced_hyper_reactor", MULTIBLOCK)
+    public static final GTRecipeTypeEntry ADVANCED_HYPER_REACTOR_RECIPES = REGISTRATE.recipeType("advanced_hyper_reactor", MULTIBLOCK)
             .setEUIO(IO.OUT)
             .setMaxIOSize(0, 0, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType LARGE_NAQUADAH_REACTOR_RECIPES = register("large_naquadah_reactor", MULTIBLOCK)
+    public static final GTRecipeTypeEntry LARGE_NAQUADAH_REACTOR_RECIPES = REGISTRATE.recipeType("large_naquadah_reactor", MULTIBLOCK)
             .setEUIO(IO.OUT)
             .setMaxIOSize(0, 0, 2, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COMBUSTION);
+            .setSound(GTSoundEntries.COMBUSTION)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType COSMOS_SIMULATION_RECIPES = register("cosmos_simulation", MULTIBLOCK)
+    public static final GTRecipeTypeEntry COSMOS_SIMULATION_RECIPES = REGISTRATE.recipeType("cosmos_simulation", MULTIBLOCK)
             .setMaxIOSize(1, 120, 1, 18)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType SPACE_PROBE_SURFACE_RECEPTION_RECIPES = register("space_probe_surface_reception", MULTIBLOCK)
+    public static final GTRecipeTypeEntry SPACE_PROBE_SURFACE_RECEPTION_RECIPES = REGISTRATE.recipeType("space_probe_surface_reception", MULTIBLOCK)
             .setEUIO(IO.IN)
-            .setMaxTooltips(4)
             .setMaxIOSize(2, 0, 0, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType SPACE_COSMIC_PROBE_RECEIVERS_RECIPES = register("space_cosmic_probe_receivers", MULTIBLOCK)
+    public static final GTRecipeTypeEntry SPACE_COSMIC_PROBE_RECEIVERS_RECIPES = REGISTRATE.recipeType("space_cosmic_probe_receivers", MULTIBLOCK)
             .setEUIO(IO.IN)
-            .setMaxTooltips(4)
             .setMaxIOSize(2, 0, 0, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DECAY_HASTENER_RECIPES = register("decay_hastener", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DECAY_HASTENER_RECIPES = REGISTRATE.recipeType("decay_hastener", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(0, 1, 1, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType LARGE_RECYCLER_RECIPES = register("large_recycler", MULTIBLOCK)
+    public static final GTRecipeTypeEntry LARGE_RECYCLER_RECIPES = REGISTRATE.recipeType("large_recycler", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 1, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_RECYCLER, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MACERATOR);
+            .setSound(GTSoundEntries.MACERATOR)
+            .UI(ui -> ui.setProgressBar(new ProgressBarTextureSet(GTGuiTextures.PROGRESS_BAR_RECYCLER)))
+            .register();
 
-    public static final GTRecipeType MASS_FABRICATOR_RECIPES = register("mass_fabricator", MULTIBLOCK)
+    public static final GTRecipeTypeEntry MASS_FABRICATOR_RECIPES = REGISTRATE.recipeType("mass_fabricator", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 0, 1, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_REPLICATOR, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(new ProgressBarTextureSet(GTGuiTextures.PROGRESS_BAR_REPLICATOR)))
+            .register();
 
-    public static final GTRecipeType CIRCUIT_ASSEMBLY_LINE_RECIPES = register("circuit_assembly_line", MULTIBLOCK)
+    public static final GTRecipeTypeEntry CIRCUIT_ASSEMBLY_LINE_RECIPES = REGISTRATE.recipeType("circuit_assembly_line", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(16, 1, 4, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.ASSEMBLER)
-            .onRecipeBuild(GenerateDisassembly::generateDisassembly);
+            .onRecipeBuild(GenerateDisassembly::generateDisassembly)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType SUPRACHRONAL_ASSEMBLY_LINE_RECIPES = register("suprachronal_assembly_line", MULTIBLOCK)
+    public static final GTRecipeTypeEntry SUPRACHRONAL_ASSEMBLY_LINE_RECIPES = REGISTRATE.recipeType("suprachronal_assembly_line", MULTIBLOCK)
             .setEUIO(IO.IN)
-            .setMaxTooltips(4)
             .setMaxIOSize(16, 1, 4, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.ASSEMBLER)
             .setHasResearchSlot(true)
             .onRecipeBuild((recipeBuilder, provider) -> {
                 ResearchManager.createDefaultResearchRecipe(recipeBuilder, provider);
                 GenerateDisassembly.generateDisassembly(recipeBuilder, provider);
-            });
+            })
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType PRECISION_ASSEMBLER_RECIPES = register("precision_assembler", MULTIBLOCK)
+    public static final GTRecipeTypeEntry PRECISION_ASSEMBLER_RECIPES = REGISTRATE.recipeType("precision_assembler", MULTIBLOCK)
             .setEUIO(IO.IN)
-            .setMaxTooltips(4)
             .setMaxIOSize(4, 1, 4, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ASSEMBLER)
-            .onRecipeBuild(GenerateDisassembly::generateDisassembly);
-
-    public static final GTRecipeType ASSEMBLER_MODULE_RECIPES = register("assembler_module", MULTIBLOCK)
-            .setEUIO(IO.IN)
-            .setMaxIOSize(16, 1, 4, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.ASSEMBLER)
             .onRecipeBuild(GenerateDisassembly::generateDisassembly)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.sepm_tier", FormattingUtil.formatNumbers(data.getInt("SEPMTier"))));
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType MINER_MODULE_RECIPES = register("miner_module", MULTIBLOCK)
+    public static final GTRecipeTypeEntry ASSEMBLER_MODULE_RECIPES = REGISTRATE.recipeType("assembler_module", MULTIBLOCK)
+            .setEUIO(IO.IN)
+            .setMaxIOSize(16, 1, 4, 0)
+            .setSound(GTSoundEntries.ASSEMBLER)
+            .onRecipeBuild(GenerateDisassembly::generateDisassembly)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.sepm_tier", FormattingUtil.formatNumbers(data.getInt("SEPMTier"))))))
+            .register();
+
+    public static final GTRecipeTypeEntry MINER_MODULE_RECIPES = REGISTRATE.recipeType("miner_module", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 6, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MINER);
+            .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DRILLING_MODULE_RECIPES = register("drilling_module", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DRILLING_MODULE_RECIPES = REGISTRATE.recipeType("drilling_module", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 0, 1, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MINER);
+            .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType FISHING_GROUND_RECIPES = register("fishing_ground", MULTIBLOCK)
+    public static final GTRecipeTypeEntry FISHING_GROUND_RECIPES = REGISTRATE.recipeType("fishing_ground", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 24, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MINER);
+            .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType BLOCK_CONVERSION_RECIPES = register("block_conversion", MULTIBLOCK)
+    public static final GTRecipeTypeEntry BLOCK_CONVERSION_RECIPES = REGISTRATE.recipeType("block_conversion", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 0, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType INCUBATOR_RECIPES = register("incubator", MULTIBLOCK)
+    public static final GTRecipeTypeEntry INCUBATOR_RECIPES = REGISTRATE.recipeType("incubator", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(6, 1, 2, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_BATH, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBarSupplier((layout, value, machine) -> new CircularProgressDrawable()
+                            .emptyTexture(GTGuiTextures.PROGRESS_BATH[0])
+                            .filledTexture(GTGuiTextures.PROGRESS_BATH[1])
+                            .clockwise().asWidget().value(value)))
+            .register();
 
-    public static final GTRecipeType PCB_FACTORY_RECIPES = register("pcb_factory", MULTIBLOCK)
+    public static final GTRecipeTypeEntry PCB_FACTORY_RECIPES = REGISTRATE.recipeType("pcb_factory", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 1, 2, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.CHEMICAL);
+            .setSound(GTSoundEntries.CHEMICAL)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType LAVA_FURNACE_RECIPES = register("lava_furnace", MULTIBLOCK)
+    public static final GTRecipeTypeEntry LAVA_FURNACE_RECIPES = REGISTRATE.recipeType("lava_furnace", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 0, 0, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARC_FURNACE, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.FURNACE);
+            .setSound(GTSoundEntries.FURNACE)
+            .UI(ui -> ui.setProgressBar(new ProgressBarTextureSet(GTGuiTextures.PROGRESS_BAR_ARC_FURNACE)))
+            .register();
 
-    public static final GTRecipeType LARGE_GAS_COLLECTOR_RECIPES = register("large_gas_collector", MULTIBLOCK)
+    public static final GTRecipeTypeEntry LARGE_GAS_COLLECTOR_RECIPES = REGISTRATE.recipeType("large_gas_collector", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 0, 0, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType AGGREGATION_DEVICE_RECIPES = register("aggregation_device", MULTIBLOCK)
+    public static final GTRecipeTypeEntry AGGREGATION_DEVICE_RECIPES = REGISTRATE.recipeType("aggregation_device", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(9, 1, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType SUPER_PARTICLE_COLLIDER_RECIPES = register("super_particle_collider", MULTIBLOCK)
+    public static final GTRecipeTypeEntry SUPER_PARTICLE_COLLIDER_RECIPES = REGISTRATE.recipeType("super_particle_collider", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(0, 0, 2, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTLSoundEntries.FUSIONLOOP);
+            .setSound(GTLSoundEntries.FUSIONLOOP)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DIMENSIONAL_FOCUS_ENGRAVING_ARRAY_RECIPES = register("dimensional_focus_engraving_array", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DIMENSIONAL_FOCUS_ENGRAVING_ARRAY_RECIPES = REGISTRATE.recipeType("dimensional_focus_engraving_array", MULTIBLOCK)
             .setEUIO(IO.IN)
-            .setMaxTooltips(4)
             .setMaxIOSize(2, 1, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.ARC)
-            .onRecipeBuild(ResearchManager::createDefaultResearchRecipe);
+            .onRecipeBuild(ResearchManager::createDefaultResearchRecipe)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType PRECISION_LASER_ENGRAVER_RECIPES = register("precision_laser_engraver", MULTIBLOCK)
+    public static final GTRecipeTypeEntry PRECISION_LASER_ENGRAVER_RECIPES = REGISTRATE.recipeType("precision_laser_engraver", MULTIBLOCK)
             .setEUIO(IO.IN)
-            .setMaxTooltips(4)
             .setMaxIOSize(9, 1, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DIMENSIONALLY_TRANSCENDENT_MIXER_RECIPES = register("dimensionally_transcendent_mixer", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DIMENSIONALLY_TRANSCENDENT_MIXER_RECIPES = REGISTRATE.recipeType("dimensionally_transcendent_mixer", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(9, 1, 6, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_BATH, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MIXER);
+            .setSound(GTSoundEntries.MIXER)
+            .UI(ui -> ui.setProgressBarSupplier((layout, value, machine) -> new CircularProgressDrawable()
+                            .emptyTexture(GTGuiTextures.PROGRESS_BATH[0])
+                            .filledTexture(GTGuiTextures.PROGRESS_BATH[1])
+                            .clockwise().asWidget().value(value)))
+            .register();
 
-    public static final GTRecipeType NEUTRON_COMPRESSOR_RECIPES = register("neutron_compressor", ELECTRIC)
+    public static final GTRecipeTypeEntry NEUTRON_COMPRESSOR_RECIPES = REGISTRATE.recipeType("neutron_compressor", ELECTRIC)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 1, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_COMPRESS, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COMPRESSOR);
+            .setSound(GTSoundEntries.COMPRESSOR)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_COMPRESS))
+            .register();
 
-    public static final GTRecipeType QFT_RECIPES = register("qft", MULTIBLOCK)
+    public static final GTRecipeTypeEntry QFT_RECIPES = REGISTRATE.recipeType("qft", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(18, 1, 3, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DRAGON_EGG_COPIER_RECIPES = register("dragon_egg_copier", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DRAGON_EGG_COPIER_RECIPES = REGISTRATE.recipeType("dragon_egg_copier", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 2, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DOOR_OF_CREATE_RECIPES = register("door_of_create", MULTIBLOCK)
-            .setEUIO(IO.IN)
-            .setMaxTooltips(4)
-            .setMaxIOSize(1, 0, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
-
-    public static final GTRecipeType BEDROCK_DRILLING_RIG_RECIPES = register("bedrock_drilling_rig", MULTIBLOCK)
-            .setEUIO(IO.IN)
-            .setMaxIOSize(2, 1, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MACERATOR);
-
-    public static final GTRecipeType CREATE_AGGREGATION_RECIPES = register("create_aggregation", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DOOR_OF_CREATE_RECIPES = REGISTRATE.recipeType("door_of_create", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 0, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType GRAVITATION_SHOCKBURST_RECIPES = register("gravitation_shockburst", MULTIBLOCK)
+    public static final GTRecipeTypeEntry BEDROCK_DRILLING_RIG_RECIPES = REGISTRATE.recipeType("bedrock_drilling_rig", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 1, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.MACERATOR)
-            .onRecipeBuild(ResearchManager::createDefaultResearchRecipe);
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType ULTIMATE_MATERIAL_FORGE_RECIPES = register("ultimate_material_forge", MULTIBLOCK)
+    public static final GTRecipeTypeEntry CREATE_AGGREGATION_RECIPES = REGISTRATE.recipeType("create_aggregation", MULTIBLOCK)
+            .setEUIO(IO.IN)
+            .setMaxIOSize(1, 0, 0, 0)
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
+
+    public static final GTRecipeTypeEntry GRAVITATION_SHOCKBURST_RECIPES = REGISTRATE.recipeType("gravitation_shockburst", MULTIBLOCK)
+            .setEUIO(IO.IN)
+            .setMaxIOSize(2, 1, 0, 0)
+            .setSound(GTSoundEntries.MACERATOR)
+            .onRecipeBuild(ResearchManager::createDefaultResearchRecipe)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
+
+    public static final GTRecipeTypeEntry ULTIMATE_MATERIAL_FORGE_RECIPES = REGISTRATE.recipeType("ultimate_material_forge", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(2, 2, 2, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MACERATOR);
+            .setSound(GTSoundEntries.MACERATOR)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DYSON_SPHERE_RECIPES = register("dyson_sphere", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DYSON_SPHERE_RECIPES = REGISTRATE.recipeType("dyson_sphere", MULTIBLOCK)
             .setEUIO(IO.BOTH)
-            .setMaxTooltips(4)
             .setMaxIOSize(1, 0, 1, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType PETROCHEMICAL_PLANT_RECIPES = register("petrochemical_plant", MULTIBLOCK)
+    public static final GTRecipeTypeEntry PETROCHEMICAL_PLANT_RECIPES = REGISTRATE.recipeType("petrochemical_plant", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(0, 0, 2, 12)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.COOLING);
+            .setSound(GTSoundEntries.COOLING)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType WEATHER_CONTROL_RECIPES = register("weather_control", MULTIBLOCK)
+    public static final GTRecipeTypeEntry WEATHER_CONTROL_RECIPES = REGISTRATE.recipeType("weather_control", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 0, 0, 0)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DISTORT_RECIPES = register("distort", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DISTORT_RECIPES = REGISTRATE.recipeType("distort", MULTIBLOCK)
             .setMaxIOSize(9, 9, 9, 9)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .addDataInfo(data -> {
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 return LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatNumbers(temp));
-            })
-            .addDataInfo(data -> {
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
@@ -514,35 +575,28 @@ public class GTLRecipeTypes {
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = recipe.data.getInt("ebf_temp");
-                List<List<ItemStack>> items = new ArrayList<>();
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
-                        .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
-                        .map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(new CycleItemStackHandler(items), 0,
-                        widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 40, false, false));
-            })
-            .setMaxTooltips(4)
-            .setSound(GTSoundEntries.ARC);
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.coils(GTLRecipeUIModifiers.STANDARD_COILS)))
+            .register();
 
-    public static final GTRecipeType NANO_FORGE_RECIPES = register("nano_forge", MULTIBLOCK)
+    public static final GTRecipeTypeEntry NANO_FORGE_RECIPES = REGISTRATE.recipeType("nano_forge", MULTIBLOCK)
             .setMaxIOSize(6, 1, 3, 0)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.nano_forge_tier", FormattingUtil.formatNumbers(data.getInt("nano_forge_tier"))))
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.nano_forge_tier", FormattingUtil.formatNumbers(data.getInt("nano_forge_tier"))))))
+            .register();
 
-    public static final GTRecipeType FUEL_REFINING_RECIPES = register("fuel_refining", MULTIBLOCK)
+    public static final GTRecipeTypeEntry FUEL_REFINING_RECIPES = REGISTRATE.recipeType("fuel_refining", MULTIBLOCK)
             .setMaxIOSize(3, 0, 6, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .addDataInfo(data -> {
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 return LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatNumbers(temp));
-            })
-            .addDataInfo(data -> {
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
@@ -551,27 +605,20 @@ public class GTLRecipeTypes {
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = recipe.data.getInt("ebf_temp");
-                List<List<ItemStack>> items = new ArrayList<>();
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
-                        .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
-                        .map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(new CycleItemStackHandler(items), 0,
-                        widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 40, false, false));
-            })
-            .setSound(GTSoundEntries.ARC);
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.coils(GTLRecipeUIModifiers.STANDARD_COILS)))
+            .register();
 
-    public static final GTRecipeType ATOMIC_ENERGY_EXCITATION_RECIPES = register("atomic_energy_excitation", MULTIBLOCK)
+    public static final GTRecipeTypeEntry ATOMIC_ENERGY_EXCITATION_RECIPES = REGISTRATE.recipeType("atomic_energy_excitation", MULTIBLOCK)
             .setMaxIOSize(3, 0, 6, 2)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .addDataInfo(data -> {
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 return LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatNumbers(temp));
-            })
-            .addDataInfo(data -> {
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
@@ -580,17 +627,9 @@ public class GTLRecipeTypes {
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = recipe.data.getInt("ebf_temp");
-                List<List<ItemStack>> items = new ArrayList<>();
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
-                        .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
-                        .map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(new CycleItemStackHandler(items), 0,
-                        widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 40, false, false));
-            })
-            .setSound(GTSoundEntries.ARC);
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.coils(GTLRecipeUIModifiers.STANDARD_COILS)))
+            .register();
 
     private static String getGrindball(int tier) {
         if (tier == 2) {
@@ -599,29 +638,34 @@ public class GTLRecipeTypes {
         return I18n.get("material.gtceu.soapstone");
     }
 
-    public static final GTRecipeType ISA_MILL_RECIPES = register("isa_mill", MULTIBLOCK)
+    public static final GTRecipeTypeEntry ISA_MILL_RECIPES = REGISTRATE.recipeType("isa_mill", MULTIBLOCK)
             .setMaxIOSize(2, 1, 1, 0)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.MACERATOR)
-            .addDataInfo(data -> LocalizationUtils.format("gtceu.recipe.grindball", getGrindball(data.getInt("grindball"))));
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> LocalizationUtils.format("gtceu.recipe.grindball", getGrindball(data.getInt("grindball"))))))
+            .register();
 
-    public static final GTRecipeType FLOTATING_BENEFICIATION_RECIPES = register("flotating_beneficiation", MULTIBLOCK)
+    public static final GTRecipeTypeEntry FLOTATING_BENEFICIATION_RECIPES = REGISTRATE.recipeType("flotating_beneficiation", MULTIBLOCK)
             .setMaxIOSize(2, 0, 1, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_BATH, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.CHEMICAL);
+            .setSound(GTSoundEntries.CHEMICAL)
+            .UI(ui -> ui.setProgressBarSupplier((layout, value, machine) -> new CircularProgressDrawable()
+                            .emptyTexture(GTGuiTextures.PROGRESS_BATH[0])
+                            .filledTexture(GTGuiTextures.PROGRESS_BATH[1])
+                            .clockwise().asWidget().value(value)))
+            .register();
 
-    public static final GTRecipeType VACUUM_DRYING_RECIPES = register("vacuum_drying", MULTIBLOCK)
+    public static final GTRecipeTypeEntry VACUUM_DRYING_RECIPES = REGISTRATE.recipeType("vacuum_drying", MULTIBLOCK)
             .setMaxIOSize(1, 6, 1, 2)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.COOLING)
-            .addDataInfo(data -> {
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 return LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatNumbers(temp));
-            })
-            .addDataInfo(data -> {
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
@@ -630,33 +674,27 @@ public class GTLRecipeTypes {
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = recipe.data.getInt("ebf_temp");
-                List<List<ItemStack>> items = new ArrayList<>();
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
-                        .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
-                        .map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(new CycleItemStackHandler(items), 0,
-                        widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 40, false, false));
-            });
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.coils(GTLRecipeUIModifiers.STANDARD_COILS)))
+            .register();
 
-    public static final GTRecipeType DISSOLUTION_TREATMENT = register("dissolution_treatment", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DISSOLUTION_TREATMENT = REGISTRATE.recipeType("dissolution_treatment", MULTIBLOCK)
             .setMaxIOSize(2, 2, 2, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_EXTRACT, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.ARC);
+            .setSound(GTSoundEntries.ARC)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_EXTRACT))
+            .register();
 
-    public static final GTRecipeType DIGESTION_TREATMENT = register("digestion_treatment", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DIGESTION_TREATMENT = REGISTRATE.recipeType("digestion_treatment", MULTIBLOCK)
             .setMaxIOSize(1, 1, 1, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_EXTRACT, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.ARC)
-            .addDataInfo(data -> {
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_EXTRACT)
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 return LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatNumbers(temp));
-            })
-            .addDataInfo(data -> {
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.dataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
@@ -665,43 +703,38 @@ public class GTLRecipeTypes {
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = recipe.data.getInt("ebf_temp");
-                List<List<ItemStack>> items = new ArrayList<>();
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
-                        .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
-                        .map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(new CycleItemStackHandler(items), 0,
-                        widgetGroup.getSize().width - 50, widgetGroup.getSize().height - 40, false, false));
-            });
+            }))
+                    .addRecipeUIModifier(GTLRecipeUIModifiers.coils(GTLRecipeUIModifiers.STANDARD_COILS)))
+            .register();
 
-    public static final GTRecipeType WOOD_DISTILLATION_RECIPES = register("wood_distillation", MULTIBLOCK)
+    public static final GTRecipeTypeEntry WOOD_DISTILLATION_RECIPES = REGISTRATE.recipeType("wood_distillation", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(1, 1, 1, 16)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.BATH);
+            .setSound(GTSoundEntries.BATH)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType DESULFURIZER_RECIPES = register("desulfurizer", MULTIBLOCK)
+    public static final GTRecipeTypeEntry DESULFURIZER_RECIPES = REGISTRATE.recipeType("desulfurizer", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(0, 1, 1, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MIXER);
+            .setSound(GTSoundEntries.MIXER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType MOLECULAR_ASSEMBLER = register("molecular_assembler", MULTIBLOCK)
+    public static final GTRecipeTypeEntry MOLECULAR_ASSEMBLER = REGISTRATE.recipeType("molecular_assembler", MULTIBLOCK)
             .setMaxIOSize(3, 12, 1, 1)
-            .setMaxTooltips(1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.SCIENCE);
+            .setSound(GTSoundEntries.SCIENCE)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_ARROW))
+            .register();
 
-    public static final GTRecipeType FRAGMENT_WORLD_COLLECTION = register("fragment_world_collection", MULTIBLOCK)
+    public static final GTRecipeTypeEntry FRAGMENT_WORLD_COLLECTION = REGISTRATE.recipeType("fragment_world_collection", MULTIBLOCK)
             .setEUIO(IO.IN)
             .setMaxIOSize(3, 12, 1, 1)
-            .setMaxTooltips(1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_MACERATE, LEFT_TO_RIGHT)
-            .setSound(GTSoundEntries.MINER);
+            .setSound(GTSoundEntries.MINER)
+            .UI(ui -> ui.setProgressBar(GTGuiTextures.PROGRESS_MACERATE))
+            .register();
 
     public static void init() {
-        RecipeModify.init();
+        // Static entries are queued during construction; modifications of bound GT entries run in common setup.
     }
 }

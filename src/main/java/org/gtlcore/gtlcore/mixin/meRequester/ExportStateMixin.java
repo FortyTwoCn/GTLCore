@@ -24,7 +24,7 @@ public abstract class ExportStateMixin {
         // Reading the version must not trigger a sample between insertion and pending accounting.
         accounting.gtlcore$prepareExport(service, ((InventorySnapshotVersion) service).gtlcore$inventorySnapshotVersion(), storage.getKey());
         boolean result = original.call(storage, inserted);
-        accounting.gtlcore$finishExport(host.getRequests().getKey(slot));
+        accounting.gtlcore$finishExport(host.getRequestManager().getKey(slot));
         return result;
     }
 }

@@ -2,7 +2,7 @@ package org.gtlcore.gtlcore.integration.wildcard;
 
 import org.gtlcore.gtlcore.GTLCore;
 
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 /**
  * Compatibility layer for wildcard_pattern mod.

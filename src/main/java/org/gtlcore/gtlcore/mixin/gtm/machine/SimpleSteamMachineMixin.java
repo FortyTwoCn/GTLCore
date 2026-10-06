@@ -2,61 +2,28 @@ package org.gtlcore.gtlcore.mixin.gtm.machine;
 
 import org.gtlcore.gtlcore.api.machine.ISteamMachine;
 import org.gtlcore.gtlcore.api.recipe.RecipeResult;
-
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.steam.SimpleSteamMachine;
-import com.gregtechceu.gtceu.api.machine.steam.SteamMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.common.recipe.condition.VentCondition;
-
-import com.lowdragmc.lowdraglib.side.fluid.FluidHelper;
-
 import net.minecraft.network.chat.Component;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(SimpleSteamMachine.class)
-public abstract class SimpleSteamMachineMixin extends SteamMachine implements ISteamMachine {
-
-    public SimpleSteamMachineMixin(IMachineBlockEntity holder, boolean isHighPressure, Object... args) {
-        super(holder, isHighPressure, args);
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
+public abstract class SimpleSteamMachineMixin implements ISteamMachine {
+    /** @author GTLCore @reason Preserve pressure, venting and failure reporting using native modifier functions. */
     @Overwrite(remap = false)
-    public static @Nullable GTRecipe recipeModifier(MetaMachine machine, @NotNull GTRecipe recipe, @NotNull OCParams params, @NotNull OCResult result) {
-        if (machine instanceof SimpleSteamMachine steamMachine) {
-            if (RecipeHelper.getRecipeEUtTier(recipe) <= 1 && steamMachine.checkVenting()) {
-                GTRecipe modified = recipe.copy();
-                modified.conditions.add(VentCondition.INSTANCE);
-                if (steamMachine.isHighPressure) {
-                    result.init(RecipeHelper.getInputEUt(recipe) * 2L, modified.duration, params.getOcAmount());
-                } else {
-                    result.init(RecipeHelper.getInputEUt(recipe), modified.duration * 2, params.getOcAmount());
-                }
-                return modified;
-            }
-            if (!steamMachine.checkVenting()) {
-                RecipeResult.of(steamMachine, RecipeResult.fail(Component.translatable("gtceu.recipe.fail.no.venting")));
-            } else if (RecipeHelper.getRecipeEUtTier(recipe) > 1) {
-                RecipeResult.of(steamMachine, RecipeResult.FAIL_VOLTAGE_TIER);
-            }
-        }
-        return null;
+    public static ModifierFunction recipeModifier(MetaMachine machine, GTRecipe recipe) {
+        if (!(machine instanceof SimpleSteamMachine steam)) return ModifierFunction.NULL;
+        if (RecipeHelper.getRecipeEUtTier(recipe) > 1) return ModifierFunction.cancel(RecipeResult.FAIL_VOLTAGE_TIER.reason());
+        if (!steam.getExhaustVentTrait().checkVenting()) return ModifierFunction.cancel(Component.translatable("gtceu.recipe.fail.no.venting"));
+        var builder = ModifierFunction.builder().conditions(VentCondition.INSTANCE);
+        // Native high pressure already consumes 2 mB/EU. Doubling EU as well would double the old steam cost.
+        if (!steam.isHighPressure()) builder.durationMultiplier(2);
+        return builder.build();
     }
-
-    @Override
-    public double getConversionRate() {
-        return FluidHelper.getBucket() / 1000.0F;
-    }
+    @Override public double getSteamPerEU() { return ((SimpleSteamMachine) (Object) this).getConversionRate(); }
 }

@@ -3,8 +3,8 @@ package org.gtlcore.gtlcore.client.gtmt;
 import org.gtlcore.gtlcore.client.renderer.BlockHighlightHandler;
 import org.gtlcore.gtlcore.integration.gtmt.WirelessEnergyLocator;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class WirelessEnergyLocatorClient {

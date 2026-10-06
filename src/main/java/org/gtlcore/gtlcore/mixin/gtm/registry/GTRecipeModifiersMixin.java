@@ -1,136 +1,49 @@
 package org.gtlcore.gtlcore.mixin.gtm.registry;
 
-import org.gtlcore.gtlcore.api.machine.trait.IRecipeCapabilityMachine;
-import org.gtlcore.gtlcore.api.recipe.RecipeMultiplierTracker;
-import org.gtlcore.gtlcore.api.recipe.RecipeResult;
-import org.gtlcore.gtlcore.api.recipe.RecipeRunnerHelper;
-import org.gtlcore.gtlcore.utils.NumberUtils;
-
+import org.gtlcore.gtlcore.api.recipe.*;
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.capability.recipe.IRecipeCapabilityHolder;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
 import com.gregtechceu.gtceu.api.machine.multiblock.CoilWorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
-import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
-import com.gregtechceu.gtceu.api.recipe.logic.OCParams;
-import com.gregtechceu.gtceu.api.recipe.logic.OCResult;
-import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
+import com.gregtechceu.gtceu.api.recipe.*;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
-
-import com.mojang.datafixers.util.Pair;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(GTRecipeModifiers.class)
 public abstract class GTRecipeModifiersMixin {
-
-    @Unique
-    private static final String EBF_TEMPERATURE_KEY = "ebf_temp";
-    @Unique
-    private static final int EBF_TEMPERATURE_PER_VOLTAGE_TIER = 100;
-    @Unique
-    private static final double MIN_EBF_DURATION_MULTIPLIER = 0.5;
-
-    /**
-     * @author .
-     * @reason .
-     */
+    /** @author GTLCore @reason Preserve temperature speed-up and apply coil energy discounts after native overclock selection. */
     @Overwrite(remap = false)
-    public static GTRecipe ebfOverclock(MetaMachine machine, @NotNull GTRecipe recipe, @NotNull OCParams params, @NotNull OCResult result) {
-        if (machine instanceof CoilWorkableElectricMultiblockMachine coilMachine) {
-            int blastFurnaceTemperature = coilMachine.getCoilType().getCoilTemperature() +
-                    EBF_TEMPERATURE_PER_VOLTAGE_TIER * Math.max(0, coilMachine.getTier() - GTValues.MV);
-            if (recipe.data.contains(EBF_TEMPERATURE_KEY)) {
-                int requiredTemperature = recipe.data.getInt(EBF_TEMPERATURE_KEY);
-                if (requiredTemperature <= blastFurnaceTemperature) {
-                    if (RecipeHelper.getRecipeEUtTier(recipe) > coilMachine.getTier()) return null;
-
-                    GTRecipe modifiedRecipe = recipe.copy();
-                    double durationMultiplier = Math.max(MIN_EBF_DURATION_MULTIPLIER,
-                            (double) requiredTemperature / blastFurnaceTemperature);
-                    modifiedRecipe.duration = Math.max(1, (int) (recipe.duration * durationMultiplier));
-                    GTRecipe overclockedRecipe = RecipeHelper.applyOverclock(new OverclockingLogic((p, r, maxVoltage) -> OverclockingLogic.heatingCoilOC(
-                            params, result, maxVoltage, blastFurnaceTemperature, requiredTemperature)),
-                            modifiedRecipe, coilMachine.getOverclockVoltage(), params, result);
-                    int energyDiscounts = Math.max(0, (blastFurnaceTemperature - requiredTemperature) /
-                            OverclockingLogic.COIL_EUT_DISCOUNT_TEMPERATURE);
-                    double energyMultiplier = NumberUtils.pow95(energyDiscounts);
-                    result.setEut(gtlcore$applyEnergyMultiplier(result.getEut(), energyMultiplier));
-                    result.setParallelEUt(gtlcore$applyEnergyMultiplier(result.getParallelEUt(), energyMultiplier));
-                    return overclockedRecipe;
-                } else {
-                    RecipeResult.of((IRecipeLogicMachine) machine, RecipeResult.FAIL_NO_ENOUGH_TEMPERATURE);
-                    return null;
-                }
-            } else return null;
-        } else return null;
+    public static ModifierFunction ebfOverclock(MetaMachine machine, GTRecipe recipe) {
+        if (!(machine instanceof CoilWorkableElectricMultiblockMachine coil)) return ModifierFunction.NULL;
+        int temperature = coil.getCoilType().getCoilTemperature() + 100 * Math.max(0, coil.getTier() - GTValues.MV);
+        int required = recipe.data.getInt("ebf_temp");
+        if (!recipe.data.contains("ebf_temp") || required > temperature)
+            return ModifierFunction.cancel(RecipeResult.FAIL_NO_ENOUGH_TEMPERATURE.reason());
+        if (RecipeHelper.getRecipeEUtTier(recipe) > coil.getTier())
+            return ModifierFunction.cancel(Component.translatable("gtceu.recipe_modifier.insufficient_voltage"));
+        double speed = Math.max(.5, (double) required / temperature);
+        double discount = Math.pow(.95, Math.max(0, (temperature - required) / OverclockingLogic.COIL_EUT_DISCOUNT_TEMPERATURE));
+        return input -> {
+            RecipeMultiplierTracker.captureReduction(machine, input, discount, speed);
+            var reduced = ModifierFunction.builder().durationMultiplier(speed).build().apply(input);
+            OverclockingLogic logic = (params, voltage) -> OverclockingLogic.heatingCoilOC(params, voltage, required, temperature);
+            var result = logic.getModifier(machine, reduced, coil.getOverclockVoltage()).apply(reduced);
+            return result == null ? null : ModifierFunction.builder().eutMultiplier(discount).build().apply(result);
+        };
     }
-
-    @Unique
-    private static long gtlcore$applyEnergyMultiplier(long eut, double multiplier) {
-        if (eut > 0) return Math.max(1, (long) (eut * multiplier));
-        if (eut < 0) return Math.min(-1, (long) (eut * multiplier));
-        return 0;
-    }
-
-    @Inject(method = "pyrolyseOvenOverclock", at = @At("HEAD"), remap = false)
-    private static void gtlcore$capturePyrolyseReduction(MetaMachine machine, @NotNull GTRecipe recipe,
-                                                         @NotNull OCParams params, @NotNull OCResult result,
-                                                         CallbackInfoReturnable<GTRecipe> cir) {
-        if (machine instanceof CoilWorkableElectricMultiblockMachine coilMachine) {
-            int coilTier = coilMachine.getCoilTier();
-            double durationMultiplier = coilTier == 0 ? 4.0 / 3.0 : 2.0 / (coilTier + 1.0);
-            RecipeMultiplierTracker.captureReduction(machine, recipe, 1.0, durationMultiplier);
-        }
-    }
-
-    /**
-     * @author .
-     * @reason .
-     */
+    /** @author GTLCore @reason Route parallel hatch limits through the same native Core input selection as execution. */
     @Overwrite(remap = false)
-    public static GTRecipe hatchParallel(MetaMachine machine, @NotNull GTRecipe recipe, boolean modifyDuration,
-                                         @NotNull OCParams params, @NotNull OCResult result) {
-        if (machine instanceof IMultiController controller && controller instanceof IRecipeCapabilityMachine) {
-            if (controller.isFormed()) {
-                var hatch = ((IRecipeCapabilityMachine) controller).getParallelHatch();
-                if (hatch != null) {
-                    long recipeEU = RecipeHelper.getInputEUt(recipe);
-                    var parallelRecipe = ParallelLogic.applyParallel(machine, recipe, hatch.getCurrentParallel(), modifyDuration);
-                    if (parallelRecipe.getSecond() == 0) return null;
-                    result.init(recipeEU, recipe.duration, parallelRecipe.getSecond(), params.getOcAmount());
-                    return parallelRecipe.getFirst();
-                }
-            }
-        }
-        return recipe;
-    }
+    public static ModifierFunction hatchParallel(MetaMachine machine, GTRecipe recipe) { return CoreRecipeModifiers.hatchParallel(machine, recipe); }
 
-    /**
-     * @author Dragons
-     * @reason 适配me增广输出
-     */
-    @Overwrite(remap = false)
-    public static Pair<GTRecipe, Integer> fastParallel(MetaMachine machine, @NotNull GTRecipe recipe, int maxParallel,
-                                                       boolean modifyDuration) {
-        if (machine instanceof IRecipeCapabilityHolder holder) {
-            while (maxParallel > 0) {
-                var copied = recipe.copy(ContentModifier.multiplier(maxParallel), modifyDuration);
-                if (RecipeRunnerHelper.matchRecipe(holder, copied) && copied.matchTickRecipe(holder).isSuccess()) {
-                    return Pair.of(copied, maxParallel);
-                }
-                maxParallel /= 2;
-            }
+    @Inject(method = "pyrolyseOvenOverclock", at = @At("HEAD"), remap = false, require = 1)
+    private static void gtlcore$capturePyrolyseReduction(MetaMachine machine, GTRecipe recipe, CallbackInfoReturnable<ModifierFunction> cir) {
+        if (machine instanceof CoilWorkableElectricMultiblockMachine coil) {
+            int tier = coil.getCoilTier();
+            RecipeMultiplierTracker.captureReduction(machine, recipe, 1, tier == 0 ? 4.0 / 3 : 2.0 / (tier + 1));
         }
-        return Pair.of(recipe, 1);
     }
 }

@@ -1,48 +1,27 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part.maintenance;
 
+import org.gtlcore.gtlcore.api.machine.multiblock.GTLCleanroomType;
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.capability.ICleanroomReceiver;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.ICleanroomProvider;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.AutoMaintenanceHatchPartMachine;
+import com.gregtechceu.gtceu.common.machine.trait.CleanroomProviderTrait;
+import java.util.Set;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
-
-import javax.annotation.ParametersAreNonnullByDefault;
-
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
 public class GTLCleaningMaintenanceHatchPartMachine extends AutoMaintenanceHatchPartMachine {
-
-    ICleanroomProvider cleanroomTypes;
-
-    public GTLCleaningMaintenanceHatchPartMachine(IMachineBlockEntity metaTileEntityId,
-                                                  ICleanroomProvider cleanroomTypes) {
-        super(metaTileEntityId);
-        this.cleanroomTypes = cleanroomTypes;
+    private final CleanroomProviderTrait cleanroomProvider;
+    public GTLCleaningMaintenanceHatchPartMachine(BlockEntityCreationInfo info, Set<CleanroomType> types) {
+        super(info); cleanroomProvider = attachTrait(new CleanroomProviderTrait(types)); cleanroomProvider.setActive(true);
     }
-
-    @Override
-    public void addedToController(IMultiController controller) {
-        super.addedToController(controller);
-        if (controller instanceof ICleanroomReceiver receiver) {
-            receiver.setCleanroom(cleanroomTypes);
-        }
+    @Override public void addedToController(MultiblockControllerMachine controller, String name) {
+        super.addedToController(controller, name); ICleaningRoom.addedToController(controller, cleanroomProvider);
     }
-
-    @Override
-    public void removedFromController(IMultiController controller) {
-        super.removedFromController(controller);
-        if (controller instanceof ICleanroomReceiver receiver && receiver.getCleanroom() == cleanroomTypes) {
-            receiver.setCleanroom(null);
-        }
+    @Override public void removedFromController(MultiblockControllerMachine controller) {
+        ICleaningRoom.removedFromController(controller, cleanroomProvider); super.removedFromController(controller);
     }
-
-    @Override
-    public int getTier() {
-        if (this.cleanroomTypes == ICleaningRoom.STERILE_DUMMY_CLEANROOM) return GTValues.ZPM;
-        if (this.cleanroomTypes == ICleaningRoom.LAW_DUMMY_CLEANROOM) return GTValues.UEV;
-        return GTValues.HV;
+    @Override public int getTier() {
+        var types = cleanroomProvider.getProvidedTypes();
+        return types.contains(GTLCleanroomType.LAW_CLEANROOM) ? GTValues.UEV : types.contains(CleanroomType.STERILE_CLEANROOM) ? GTValues.ZPM : GTValues.HV;
     }
 }

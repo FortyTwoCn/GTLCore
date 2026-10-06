@@ -1,0 +1,30 @@
+{
+  "gtceu_reference_commit": "c72dc16b52795cbb0456b6e15e13cc4a85c0ed1b",
+  "native_maintenance_base": "AutoMaintenanceHatchPartMachine extends MaintenanceHatchPartMachine, discovered by native controllers, maintenance covers and Jade",
+  "production_sources": [
+    "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/AutoConfigurationMaintenanceHatchPartMachine.java",
+    "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/CleaningConfigurationMaintenanceHatchPartMachine.java",
+    "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/GTLCleaningMaintenanceHatchPartMachine.java",
+    "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/GravityCleaningConfigurationMaintenancePartMachine.java",
+    "src/main/java/org/gtlcore/gtlcore/common/machine/multiblock/part/maintenance/ICleaningRoom.java",
+    "src/main/java/org/gtlcore/gtlcore/api/machine/multiblock/GTLCleanroomType.java",
+    "src/main/java/org/gtlcore/gtlcore/common/data/GTLRecipeConditions.java",
+    "src/main/java/org/gtlcore/gtlcore/common/recipe/condition/GravityCondition.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/gtm/api/machine/trait/CleanroomReceiverTraitAccessor.java",
+    "src/main/java/org/gtlcore/gtlcore/mixin/gtm/api/recipe/condition/CleanroomConditionMixin.java"
+  ],
+  "preserved_behavior": [
+    "Full automatic maintenance with no problems or accumulated maintenance time",
+    "0.2–1.2 duration multiplier, floor rounding, original time multiplier and non-mutating recipe copies",
+    "Ctrl/Shift/default native mouse increments and separate gravity-only configuration",
+    "Law cleanroom includes sterile and ordinary types; each part owns its native provider",
+    "Gravity clamped to 0–100 with zero/normal checks, reverse flag, orbit and skyblock altitude rules"
+  ],
+  "native_persistence": [
+    "SaveField/SyncToClient duration and gravity",
+    "RecipeConditionType queued registration, native MapCodec includes height_threshold and reverse",
+    "JSON, NBT and RegistryFriendlyByteBuf round trips"
+  ],
+  "provider_lifecycle": "Formation binds the owned provider; removal clears it only while it remains the receiver current provider. Plain automatic maintenance leaves an external cleanroom provider intact.",
+  "validation_scope": "Selected production parts/conditions/Mixins compiled and loaded with native dependencies; six JUnit and three actual server world tests. Client evidence is tracked separately in the validation manifest. Full production registration and all Core/Additions startup remain unverified."
+}

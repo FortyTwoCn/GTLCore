@@ -1,91 +1,61 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
-import com.gregtechceu.gtceu.api.machine.feature.IMachineModifyDrops;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 
-import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-import com.lowdragmc.lowdraglib.syncdata.annotation.Persisted;
-import com.lowdragmc.lowdraglib.syncdata.field.ManagedFieldHolder;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.world.item.ItemStack;
 
+import brachy.modularui.factory.PosGuiData;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widget.ParentWidget;
+import brachy.modularui.widgets.slot.ItemSlot;
+import brachy.modularui.widgets.slot.SlotGroup;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+/** A recipe controller with an additional, non-recipe storage slot. */
+public class StorageMachine extends WorkableElectricMultiblockMachine {
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
-public class StorageMachine extends WorkableElectricMultiblockMachine implements IMachineModifyDrops {
-
-    protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(
-            StorageMachine.class, WorkableElectricMultiblockMachine.MANAGED_FIELD_HOLDER);
-
-    @Persisted
+    @SaveField
     public final NotifiableItemStackHandler machineStorage;
 
-    public StorageMachine(IMachineBlockEntity holder, int slot) {
-        super(holder);
-        this.machineStorage = createMachineStorage(slot);
+    public StorageMachine(BlockEntityCreationInfo info, int slotLimit) {
+        this(info, slotLimit, new RecipeLogic());
     }
 
-    protected NotifiableItemStackHandler createMachineStorage(int value) {
-        var handler = new NotifiableItemStackHandler(
-                this, 1, IO.NONE, IO.BOTH, slots -> new ItemStackTransfer(1) {
+    public StorageMachine(BlockEntityCreationInfo info, int slotLimit, RecipeLogic recipeLogic) {
+        super(info, recipeLogic);
+        if (slotLimit <= 0) throw new IllegalArgumentException("Storage slot limit must be positive");
+        machineStorage = attachTrait(createMachineStorage(slotLimit));
+    }
 
+    protected NotifiableItemStackHandler createMachineStorage(int slotLimit) {
+        return new NotifiableItemStackHandler(1, IO.NONE, IO.BOTH,
+                slots -> new CustomItemStackHandler(1) {
                     @Override
-                    public int getSlotLimit(int slot) {
-                        return value;
-                    }
-                });
-        handler.setFilter(this::filter);
-        return handler;
+                    public int getSlotLimit(int slot) { return slotLimit; }
+                }).setFilter(this::filter);
     }
+
+    protected boolean filter(@NotNull ItemStack stack) { return true; }
 
     @Override
-    public void onDrops(List<ItemStack> drops) {
-        clearInventory(machineStorage.storage);
+    public void buildMainUI(ParentWidget<?> mainWidget, PosGuiData guiData,
+                            PanelSyncManager syncManager, UISettings settings) {
+        super.buildMainUI(mainWidget, guiData, syncManager, settings);
+        mainWidget.child(new ItemSlot().right(10).bottom(10)
+                .slot(SyncHandlers.itemSlot(machineStorage.storage, 0)
+                        .slotGroup(new SlotGroup("machine_storage", 1, 0, true))
+                        .accessibility(true, true)));
     }
 
-    protected boolean filter(@NotNull ItemStack itemStack) {
-        return true;
-    }
-
-    @Override
-    public @NotNull Widget createUIWidget() {
-        var widget = super.createUIWidget();
-        if (widget instanceof WidgetGroup group) {
-            var size = group.getSize();
-            group.addWidget(
-                    new SlotWidget(machineStorage.storage, 0, size.width - 30, size.height - 30, true, true)
-                            .setBackground(GuiTextures.SLOT));
-        }
-        return widget;
-    }
-
-    public ItemStack getMachineStorageItem() {
-        return machineStorage.getStackInSlot(0);
-    }
-
-    public void setMachineStorageItem(ItemStack item) {
-        machineStorage.storage.setStackInSlot(0, item);
-    }
-
-    public boolean isEmpty() {
-        return machineStorage.isEmpty();
-    }
-
-    @Override
-    public ManagedFieldHolder getFieldHolder() {
-        return MANAGED_FIELD_HOLDER;
-    }
+    public ItemStack getMachineStorageItem() { return machineStorage.getStackInSlot(0); }
+    public void setMachineStorageItem(ItemStack item) { machineStorage.setStackInSlot(0, item); }
+    public boolean isEmpty() { return machineStorage.isEmpty(); }
 }

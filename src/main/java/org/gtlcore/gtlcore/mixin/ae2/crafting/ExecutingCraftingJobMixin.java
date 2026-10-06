@@ -4,6 +4,7 @@ import org.gtlcore.gtlcore.integration.ae2.crafting.CraftingJobSuspensionState;
 import org.gtlcore.gtlcore.integration.ae2.crafting.ICraftingJobSuspension;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 
 import appeng.crafting.execution.CraftingCpuLogic;
 import appeng.crafting.execution.ExecutingCraftingJob;
@@ -21,10 +22,10 @@ public abstract class ExecutingCraftingJobMixin implements ICraftingJobSuspensio
     @Unique
     private boolean gtlcore$suspended;
 
-    @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;Lappeng/crafting/execution/ExecutingCraftingJob$CraftingDifferenceListener;Lappeng/crafting/execution/CraftingCpuLogic;)V",
+    @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;Lappeng/crafting/execution/ExecutingCraftingJob$CraftingDifferenceListener;Lappeng/crafting/execution/CraftingCpuLogic;)V",
             at = @At("RETURN"),
             remap = false)
-    private void gtlcore$readSuspended(CompoundTag data, @Coerce Object listener, CraftingCpuLogic logic, CallbackInfo ci) {
+    private void gtlcore$readSuspended(CompoundTag data, HolderLookup.Provider registries, @Coerce Object listener, CraftingCpuLogic logic, CallbackInfo ci) {
         this.gtlcore$suspended = data.getBoolean(CraftingJobSuspensionState.NBT_SUSPENDED);
     }
 

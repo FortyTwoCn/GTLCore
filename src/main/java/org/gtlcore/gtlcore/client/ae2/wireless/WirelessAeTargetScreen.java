@@ -45,13 +45,13 @@ public class WirelessAeTargetScreen extends AbstractContainerScreen<WirelessAeTa
                 this.leftPos - 28,
                 this.topPos + 8,
                 Component.translatable("tooltip.gtlcore.wireless_target.back"),
-                button -> WirelessAePackets.CHANNEL.sendToServer(
+                button -> net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                         new WirelessAePackets.OpenNormalTargetMenuPacket(this.menu.getOriginPos()))));
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
         this.renderTooltip(graphics, mouseX, mouseY);
     }
@@ -208,12 +208,12 @@ public class WirelessAeTargetScreen extends AbstractContainerScreen<WirelessAeTa
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalDelta, double delta) {
         if (isInsideRect(mouseX, mouseY, getListX(), getListY(), this.imageWidth - CONTENT_X * 2, getScrollbarHeight()) &&
                 scrollBy(delta)) {
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, horizontalDelta, delta);
     }
 
     private boolean handleScrollbarClick(double mouseX, double mouseY) {
@@ -258,7 +258,7 @@ public class WirelessAeTargetScreen extends AbstractContainerScreen<WirelessAeTa
         if (entry.connected()) {
             return;
         }
-        WirelessAePackets.CHANNEL.sendToServer(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                 new WirelessAePackets.ConnectTargetPacket(
                         this.menu.getTargetPos(),
                         this.menu.getTargetSide(),
@@ -269,7 +269,7 @@ public class WirelessAeTargetScreen extends AbstractContainerScreen<WirelessAeTa
     }
 
     private void disconnectEntry(WirelessAeTargetMenu.Entry entry) {
-        WirelessAePackets.CHANNEL.sendToServer(
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
                 new WirelessAePackets.ConnectTargetPacket(
                         this.menu.getTargetPos(),
                         this.menu.getTargetSide(),

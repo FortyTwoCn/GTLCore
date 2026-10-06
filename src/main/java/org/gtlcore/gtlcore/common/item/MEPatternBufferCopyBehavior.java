@@ -2,9 +2,12 @@ package org.gtlcore.gtlcore.common.item;
 
 import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferPartMachine;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.Item;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
-import com.gregtechceu.gtceu.common.item.TooltipBehavior;
+import com.gregtechceu.gtceu.common.item.behavior.TooltipBehavior;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.gregtechceu.gtceu.api.item.tool.ToolHelper.getBehaviorsTag;
 
 public class MEPatternBufferCopyBehavior extends TooltipBehavior implements IInteractionItem {
 
@@ -32,15 +34,16 @@ public class MEPatternBufferCopyBehavior extends TooltipBehavior implements IInt
 
     @Override
     public InteractionResult onItemUseFirst(ItemStack itemStack, UseOnContext context) {
-        if (context.getLevel().getBlockEntity(context.getClickedPos()) instanceof MetaMachineBlockEntity machineBlock) {
-            if (machineBlock.getMetaMachine() instanceof MEPatternBufferPartMachine partMachine) {
+        if (MetaMachine.getMachine(context.getLevel(), context.getClickedPos()) instanceof MEPatternBufferPartMachine partMachine) {
+            {
                 if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                    var tags = getBehaviorsTag(itemStack);
+                    var tags = itemStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
                     if (!serverPlayer.isShiftKeyDown()) {
                         if (tags.isEmpty()) serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.pattern_buffer_not_copied"), true);
                         else partMachine.copyFromTag(tags.getCompound("tag"), serverPlayer);
                     } else {
                         tags = partMachine.copyToTag(tags);
+                        itemStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tags));
                         if (tags.isEmpty()) serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.pattern_buffer_copy_failed"), true);
                         else serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.pattern_buffer_copied"), true);
                     }

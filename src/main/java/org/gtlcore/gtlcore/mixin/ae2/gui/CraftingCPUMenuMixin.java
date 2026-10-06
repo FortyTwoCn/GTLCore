@@ -16,7 +16,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
-import appeng.core.sync.packets.CraftingStatusPacket;
+import appeng.core.network.clientbound.CraftingStatusPacket;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.guisync.GuiSync;
@@ -251,7 +251,7 @@ public abstract class CraftingCPUMenuMixin extends AEBaseMenu implements ICrafti
         if (this.incrementalUpdateHelper.hasChanges()) {
             CraftingStatus status = gtlcore$createStatus(this.incrementalUpdateHelper, logic);
             this.incrementalUpdateHelper.commitChanges();
-            sendPacketToClient(new CraftingStatusPacket(status));
+            sendPacketToClient(new CraftingStatusPacket(containerId, status));
         }
     }
 

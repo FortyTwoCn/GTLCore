@@ -1,8 +1,8 @@
 package org.gtlcore.gtlcore.client.gui;
 
-import org.gtlcore.gtlcore.GTLCore;
+import org.gtlcore.gtlcore.api.GTLConstants;
 
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -45,7 +45,7 @@ public final class PatternModifierClientState {
                 GSON.toJson(json, writer);
             }
         } catch (IOException e) {
-            GTLCore.LOGGER.warn("Failed to save pattern modifier client state", e);
+            GTLConstants.LOGGER.warn("Failed to save pattern modifier client state", e);
         }
     }
 
@@ -63,7 +63,7 @@ public final class PatternModifierClientState {
                 state.insertDelete = json.get("insertDelete").getAsBoolean();
             }
         } catch (Exception e) {
-            GTLCore.LOGGER.warn("Failed to load pattern modifier client state, using defaults", e);
+            GTLConstants.LOGGER.warn("Failed to load pattern modifier client state, using defaults", e);
         }
         return state;
     }

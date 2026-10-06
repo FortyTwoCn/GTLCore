@@ -1,8 +1,9 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.electric;
 
 import org.gtlcore.gtlcore.api.recipe.RecipeResult;
+import org.gtlcore.gtlcore.common.data.GTLMultiblockDisplays;
 
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
@@ -13,10 +14,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import brachy.modularui.api.widget.IWidget;
+import brachy.modularui.value.sync.PanelSyncManager;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -24,15 +27,15 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 public class GreenhouseMachine extends WorkableElectricMultiblockMachine {
 
-    public GreenhouseMachine(IMachineBlockEntity holder, Object... args) {
-        super(holder, args);
+    public GreenhouseMachine(BlockEntityCreationInfo info) {
+        super(info);
     }
 
     private int SkyLight = 15;
 
     private void getGreenhouseLight() {
         Level level = getLevel();
-        BlockPos pos = getPos();
+        BlockPos pos = getBlockPos();
         SkyLight = 15;
         BlockPos[] coordinates = new BlockPos[] {
                 pos.offset(1, 2, 0),
@@ -68,6 +71,7 @@ public class GreenhouseMachine extends WorkableElectricMultiblockMachine {
                 pos.offset(0, 2, -3),
                 pos.offset(1, 2, -3) };
         for (BlockPos i : coordinates) {
+            if (level != null && !level.hasChunkAt(i)) { SkyLight = 0; return; }
             if (level != null && level.getBlockState(i).getBlock() == GTBlocks.CASING_TEMPERED_GLASS.get()) {
                 int l = level.getBrightness(LightLayer.SKY, i.offset(0, 1, 0)) - level.getSkyDarken();
                 if (l < SkyLight) {
@@ -107,12 +111,14 @@ public class GreenhouseMachine extends WorkableElectricMultiblockMachine {
     }
 
     @Override
-    public void addDisplayText(@NotNull List<Component> textList) {
-        super.addDisplayText(textList);
-        if (!this.isFormed) return;
-        if (getOffsetTimer() % 10 == 0) {
-            getGreenhouseLight();
-        }
-        textList.add(Component.translatable("tooltip.gtlcore.current_light_level", SkyLight));
+    public List<IWidget> getWidgetsForDisplay(PanelSyncManager syncManager) {
+        var widgets = new ArrayList<IWidget>(super.getWidgetsForDisplay(syncManager));
+        widgets.addAll(GTLMultiblockDisplays.syncedLines("gtlGreenhouseLight", (controller, lines) -> {
+            if (isFormed()) {
+                getGreenhouseLight();
+                lines.add(Component.translatable("tooltip.gtlcore.current_light_level", SkyLight));
+            }
+        }).apply(this, syncManager));
+        return widgets;
     }
 }

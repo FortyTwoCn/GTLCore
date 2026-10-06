@@ -2,7 +2,7 @@ package org.gtlcore.gtlcore.integration.ae2;
 
 import org.gtlcore.gtlcore.utils.NumberUtils;
 
-import net.minecraftforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.FluidType;
 
 public final class MEFluidUnits {
 

@@ -4,8 +4,8 @@ import org.gtlcore.gtlcore.api.event.SourceTooltipRegistrationEvent;
 import org.gtlcore.gtlcore.common.data.source_tooltip.SpecialComponent;
 
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class SourceTooltipRegister$OreProcessing {
@@ -23,7 +23,7 @@ public class SourceTooltipRegister$OreProcessing {
                 "gtceu:certus_quartz_dust", "gtceu:barite_dust", "gtceu:molybdenum_dust", "gtceu:zeolite_dust", "gtceu:calcium_dust", "gtceu:silicon_dust", "gtceu:lapis_dust", "gtceu:lazurite_gem", "gtceu:lazurite_dust", "gtceu:sodalite_dust", "gtceu:magnesite_dust", "gtceu:cobaltite_dust",
                 "gtceu:talc_dust", "gtceu:clay_dust", "gtceu:carbon_dust", "gtceu:ruby_dust", "gtceu:chromium_dust", "gtceu:grossular_gem", "gtceu:gallium_dust", "gtceu:rutile_dust", "gtceu:electrotine_dust", "minecraft:redstone", "gtceu:electrum_dust", "gtceu:realgar_dust",
                 "gtceu:pyrope_dust", "gtceu:mithril_dust", "gtceu:actinium_dust", "gtceu:technetium_dust", "gtceu:tungsten_dust", "gtceu:lithium_dust", "gtceu:palladium_dust", "gtceu:tin_dust", "gtceu:diamond_dust", "gtceu:diatomite_dust", "gtceu:hematite_dust", "gtceu:sapphire_dust",
-                "gtceu:plutonium_dust", "gtceu:emerald_dust", "gtceu:beryllium_dust", "gtceu:exquisite_sapphire_gem", "gtceu:flawless_sapphire_gem", "gtceu:sapphire_gem", "gtceu:green_sapphire_dust", "gtceu:calorite_dust", "gtceu:spodumene_dust", "gtceu:tartarite_dust", "gtceu:americium_dust", "gtceu:grossular_dust",
+                "gtceu:plutonium_239_dust", "gtceu:emerald_dust", "gtceu:beryllium_dust", "gtceu:exquisite_sapphire_gem", "gtceu:flawless_sapphire_gem", "gtceu:sapphire_gem", "gtceu:green_sapphire_dust", "gtceu:calorite_dust", "gtceu:spodumene_dust", "gtceu:tartarite_dust", "gtceu:americium_dust", "gtceu:grossular_dust",
                 "gtceu:bentonite_dust", "gtceu:uruium_dust", "gtceu:europium_dust", "gtceu:powellite_dust", "gtceu:molybdenite_dust", "gtceu:soapstone_dust", "gtceu:silicon_dioxide_dust", "gtceu:starmetal_dust", "gtceu:polonium_dust", "gtceu:malachite_dust", "gtceu:goethite_dust", "gtceu:zincite_dust",
                 "gtceu:calcite_dust", "gtceu:cooperite_dust", "gtceu:monazite_dust", "gtceu:exquisite_monazite_gem", "gtceu:flawless_monazite_gem", "gtceu:monazite_gem", "gtceu:neodymium_dust", "gtceu:graphite_dust", "gtceu:coal_dust", "minecraft:coal", "gtceu:exquisite_coal_gem", "gtceu:flawless_coal_gem",
                 "minecraft:emerald", "gtceu:rare_earth_metal_dust", "gtceu:rare_earth_dust", "gtceu:nether_quartz_dust", "gtceu:quartzite_gem", "gtceu:exquisite_nether_quartz_gem", "gtceu:flawless_nether_quartz_gem", "minecraft:quartz", "gtceu:lepidolite_dust", "gtceu:asbestos_dust", "gtceu:rock_salt_dust", "gtceu:salt_gem",

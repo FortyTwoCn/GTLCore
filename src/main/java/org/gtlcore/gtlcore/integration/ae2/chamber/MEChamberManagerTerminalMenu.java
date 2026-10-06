@@ -15,13 +15,14 @@ import org.gtlcore.gtlcore.mixin.gtmt.MEOutputPartMachineAccessor;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDistinctPart;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.DualHatchPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.FluidHatchPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.ItemBusPartMachine;
+import com.gregtechceu.gtceu.common.machine.trait.ProgrammableCircuitSlotTrait;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEBusPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEHatchPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEOutputBusPartMachine;
@@ -36,7 +37,9 @@ import com.gregtechceu.gtceu.integration.ae2.utils.KeyStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -46,7 +49,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkHooks;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -57,12 +59,12 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
-import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.MenuHostLocator;
 import appeng.menu.locator.MenuLocators;
 import appeng.util.Platform;
 import com.hepdd.gtmthings.common.block.machine.multiblock.part.appeng.MEOutputPartMachine;
-import de.mari_023.ae2wtlib.terminal.WTMenuHost;
-import de.mari_023.ae2wtlib.wut.ItemWUT;
+import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
+import de.mari_023.ae2wtlib.api.terminal.ItemWUT;
 import io.netty.buffer.Unpooled;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,20 +103,21 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
     private Address sentAddress;
     private List<SlotContent> sentContents;
     private ChamberDetails sentDetails;
-    private final ChamberSnapshotTransfer.Receiver entryReceiver = new ChamberSnapshotTransfer.Receiver();
-    private final ChamberSnapshotTransfer.Receiver contentReceiver = new ChamberSnapshotTransfer.Receiver();
+    private final ChamberSnapshotCodec.Receiver entryReceiver = new ChamberSnapshotCodec.Receiver();
+    private final ChamberSnapshotCodec.Receiver contentReceiver = new ChamberSnapshotCodec.Receiver();
+
+    private record SelectedSnapshot(@Nullable Address address, List<SlotContent> slots, ChamberDetails details) {}
 
     public void receiveSnapshot(boolean contents, long revision, int total, int offset, byte[] data) {
-        (contents ? contentReceiver : entryReceiver).accept(revision, total, offset, data, buffer -> {
-            if (contents) {
-                Address address = buffer.readBoolean() ? Address.read(buffer) : null;
-                List<SlotContent> slots = readContents(buffer);
-                ChamberDetails details = readDetails(buffer);
-                setSelectedContents(address, slots, details);
-            } else {
-                setEntries(readEntries(buffer));
-            }
-        });
+        if (contents) {
+            contentReceiver.accept(menuPlayer.registryAccess(), revision, total, offset, data,
+                    buffer -> new SelectedSnapshot(buffer.readBoolean() ? Address.read(buffer) : null,
+                            readContents(buffer), readDetails(buffer)),
+                    snapshot -> setSelectedContents(snapshot.address(), snapshot.slots(), snapshot.details()));
+        } else {
+            entryReceiver.accept(menuPlayer.registryAccess(), revision, total, offset, data,
+                    MEChamberManagerTerminalMenu::readEntries, this::setEntries);
+        }
     }
 
     public static MEChamberManagerTerminalMenu createWiredClientMenu(int containerId, Inventory inventory,
@@ -131,7 +134,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
 
     public static MEChamberManagerTerminalMenu createWirelessClientMenu(int containerId, Inventory inventory,
                                                                         FriendlyByteBuf data) {
-        MenuLocator locator = MenuLocators.readFromPacket(data);
+        MenuHostLocator locator = MenuLocators.readFromPacket(data);
         boolean returningFromSubmenu = data.readBoolean();
         WTMenuHost host = locator.locate(inventory.player, WTMenuHost.class);
         return new MEChamberManagerTerminalMenu(
@@ -146,7 +149,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
 
     private MEChamberManagerTerminalMenu(MenuType<?> menuType, int containerId, Inventory inventory,
                                          @Nullable MEChamberManagerTerminalPart terminal,
-                                         @Nullable WTMenuHost wirelessHost, @Nullable MenuLocator locator,
+                                         @Nullable WTMenuHost wirelessHost, @Nullable MenuHostLocator locator,
                                          boolean returningFromSubmenu) {
         super(menuType, containerId, inventory, terminal == null ? wirelessHost : terminal);
         this.terminal = terminal;
@@ -161,7 +164,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
     }
 
     public static void open(ServerPlayer player, MEChamberManagerTerminalPart terminal) {
-        NetworkHooks.openScreen(player, new MenuProvider() {
+        player.openMenu(new MenuProvider() {
 
             @Override
             public @NotNull Component getDisplayName() {
@@ -183,19 +186,17 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
         }, buffer -> {});
     }
 
-    public static boolean openWireless(Player player, MenuLocator locator, boolean returningFromSubmenu) {
+    public static boolean openWireless(Player player, MenuHostLocator locator, boolean returningFromSubmenu) {
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return false;
         }
 
         WTMenuHost host = locator.locate(player, WTMenuHost.class);
-        if (host == null || !host.rangeCheck()) {
+        if (host == null || !host.isValid() || !host.getLinkStatus().connected()) {
             return false;
         }
 
-        NetworkHooks.openScreen(
-                serverPlayer,
-                new MenuProvider() {
+        serverPlayer.openMenu(new MenuProvider() {
 
                     @Override
                     public @NotNull Component getDisplayName() {
@@ -476,7 +477,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
     }
 
     private void updateSelectedChamber(ServerPlayer player, Address address, MetaMachine chamber) {
-        chamber.markDirty();
+        chamber.markAsChanged();
         chamber.notifyBlockUpdate();
         selectedAddress = address;
         selectedContents = collectContents(chamber);
@@ -546,7 +547,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
     private boolean hasEditPermission(MetaMachine machine, Player player) {
         if (terminal != null && !Platform.hasPermissions(terminal.getHost().getLocation(), player)) return false;
         return machine.getLevel() instanceof net.minecraft.server.level.ServerLevel targetLevel &&
-                targetLevel.mayInteract(player, machine.getPos());
+                targetLevel.mayInteract(player, machine.getBlockPos());
     }
 
     private static boolean isMEChamber(MetaMachine machine) {
@@ -570,11 +571,11 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
             return ControllerInfo.NONE;
         }
         return part.getControllers().stream()
-                .filter(IMultiController::isFormed)
+                .filter(MultiblockControllerMachine::isFormed)
                 .findFirst()
                 .map(controller -> new ControllerInfo(
-                        Component.translatable(controller.self().getDefinition().getDescriptionId()),
-                        controller.self().getPos()))
+                        Component.translatable(controller.getDefinition().getDescriptionId()),
+                        controller.getBlockPos()))
                 .orElse(ControllerInfo.NONE);
     }
 
@@ -675,9 +676,9 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
         boolean circuitSupported = isInputChamber(machine) &&
                 (machine instanceof ItemBusPartMachine || machine instanceof FluidHatchPartMachine);
         ItemStack circuitStack = machine instanceof ItemBusPartMachine bus ?
-                bus.getCircuitInventory().getStackInSlot(0) :
+                bus.getCircuitSlot().storage.getStackInSlot(0) :
                 machine instanceof FluidHatchPartMachine hatch ?
-                        hatch.getCircuitInventory().getStackInSlot(0) :
+                        hatch.getTraitOrThrow(ProgrammableCircuitSlotTrait.class).storage.getStackInSlot(0) :
                         ItemStack.EMPTY;
         int circuitConfiguration = circuitSupported ? IntCircuitBehaviour.getCircuitConfiguration(circuitStack) : 0;
         boolean tagFilterSupported = machine instanceof TagFilterMEStockBusPartMachine ||
@@ -689,7 +690,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
         String tagBlack = machine instanceof TagFilterMEStockBusPartMachine tagBus ? tagBus.getTagBlack() :
                 machine instanceof TagFilterMEStockHatchPartMachine tagHatch ? tagHatch.getTagBlack() : "";
         boolean syncOffsetSupported = machine instanceof IModifiableSyncOffset && isInputChamber(machine);
-        int syncOffset = syncOffsetSupported ? ((IModifiableSyncOffset) machine).getOffset() : 0;
+        int syncOffset = syncOffsetSupported ? ((IModifiableSyncOffset) machine).getMEUpdateInterval() : 0;
         MEOutputFilterHandler outputFilter = machine instanceof MEExtendedOutputPartMachine extendedOutput ?
                 extendedOutput.getFilterHandler() : null;
         boolean extendedOutput = machine instanceof MEExtendedOutputPartMachineBase;
@@ -809,9 +810,9 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
 
     private static void addFluidBufferContents(
                                                List<SlotContent> contents,
-                                               com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank tank) {
+                                               com.gregtechceu.gtceu.api.machine.trait.notifiable.NotifiableFluidTank tank) {
         for (int slot = 0; slot < tank.getTanks(); slot++) {
-            com.lowdragmc.lowdraglib.side.fluid.FluidStack fluid = tank.getFluidInTank(slot);
+            net.neoforged.neoforge.fluids.FluidStack fluid = tank.getFluidInTank(slot);
             contents.add(new SlotContent(
                     slot,
                     StorageKind.FLUID,
@@ -889,22 +890,22 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
         }
     }
 
-    public static void writeEntries(FriendlyByteBuf buffer, List<Entry> entries) {
+    public static void writeEntries(RegistryFriendlyByteBuf buffer, List<Entry> entries) {
         if (entries.size() > MAX_SYNC_ENTRIES) throw new IllegalArgumentException("Too many chamber entries");
         buffer.writeVarInt(entries.size());
         for (Entry entry : entries) {
             entry.address().write(buffer);
-            buffer.writeItem(entry.icon());
-            buffer.writeComponent(entry.name());
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, entry.icon());
+            ComponentSerialization.STREAM_CODEC.encode(buffer, entry.name());
             buffer.writeBoolean(entry.controllerName() != null);
             if (entry.controllerName() != null) {
-                buffer.writeComponent(entry.controllerName());
+                ComponentSerialization.STREAM_CODEC.encode(buffer, entry.controllerName());
                 buffer.writeBlockPos(entry.controllerPos());
             }
         }
     }
 
-    public static List<Entry> readEntries(FriendlyByteBuf buffer) {
+    public static List<Entry> readEntries(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
         if (size < 0 || size > MAX_SYNC_ENTRIES) {
             throw new IllegalArgumentException("Invalid ME chamber entry count: " + size);
@@ -912,16 +913,16 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
         List<Entry> entries = new ArrayList<>(size);
         for (int index = 0; index < size; index++) {
             Address address = Address.read(buffer);
-            ItemStack icon = buffer.readItem();
-            Component name = buffer.readComponent();
-            Component controllerName = buffer.readBoolean() ? buffer.readComponent() : null;
+            ItemStack icon = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
+            Component name = ComponentSerialization.STREAM_CODEC.decode(buffer);
+            Component controllerName = buffer.readBoolean() ? ComponentSerialization.STREAM_CODEC.decode(buffer) : null;
             BlockPos controllerPos = controllerName == null ? null : buffer.readBlockPos();
             entries.add(new Entry(address, icon, name, controllerName, controllerPos));
         }
         return List.copyOf(entries);
     }
 
-    public static void writeContents(FriendlyByteBuf buffer, List<SlotContent> contents) {
+    public static void writeContents(RegistryFriendlyByteBuf buffer, List<SlotContent> contents) {
         if (contents.size() > MAX_SYNC_SLOT_COUNT) throw new IllegalArgumentException("Too many chamber slots");
         buffer.writeVarInt(contents.size());
         for (SlotContent content : contents) {
@@ -933,7 +934,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
         }
     }
 
-    public static List<SlotContent> readContents(FriendlyByteBuf buffer) {
+    public static List<SlotContent> readContents(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
         if (size < 0 || size > MAX_SYNC_SLOT_COUNT) {
             throw new IllegalArgumentException("Invalid ME chamber slot count: " + size);
@@ -1014,7 +1015,7 @@ public final class MEChamberManagerTerminalMenu extends AEBaseMenu {
     public record Address(ResourceLocation dimension, BlockPos pos, Direction side) {
 
         public static Address of(MetaMachine machine) {
-            return new Address(machine.getLevel().dimension().location(), machine.getPos(), machine.getFrontFacing());
+            return new Address(machine.getLevel().dimension().location(), machine.getBlockPos(), machine.getFrontFacing());
         }
 
         public void write(FriendlyByteBuf buffer) {

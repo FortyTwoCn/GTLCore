@@ -2,10 +2,11 @@ package org.gtlcore.gtlcore.integration.jade.provider;
 
 import org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferPartMachineBase;
 import org.gtlcore.gtlcore.integration.ae2.MEFluidUnits;
-import org.gtlcore.gtlcore.utils.Registries;
 
-import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import org.gtlcore.gtlcore.api.GTLConstants;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.gregtechceu.gtceu.integration.jade.GTElementHelper;
 
 import net.minecraft.ChatFormatting;
@@ -35,24 +36,24 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
 
     @Override
     public void appendTooltip(ITooltip iTooltip, BlockAccessor blockAccessor, IPluginConfig iPluginConfig) {
-        if (blockAccessor.getBlockEntity() instanceof IMachineBlockEntity blockEntity) {
-            if (blockEntity.getMetaMachine() instanceof MEPatternBufferPartMachineBase) {
+        if (blockAccessor.getBlockEntity() instanceof MetaMachine blockEntity) {
+            if (blockEntity instanceof MEPatternBufferPartMachineBase) {
                 CompoundTag serverData = blockAccessor.getServerData();
-                readBufferContents(iTooltip, serverData);
+                readBufferContents(iTooltip, serverData, blockAccessor.getLevel().registryAccess());
             }
         }
     }
 
     @Override
     public void appendServerData(CompoundTag compoundTag, BlockAccessor blockAccessor) {
-        if (blockAccessor.getBlockEntity() instanceof IMachineBlockEntity blockEntity) {
-            if (blockEntity.getMetaMachine() instanceof MEPatternBufferPartMachineBase buffer) {
+        if (blockAccessor.getBlockEntity() instanceof MetaMachine blockEntity) {
+            if (blockEntity instanceof MEPatternBufferPartMachineBase buffer) {
                 putTag(compoundTag, buffer);
             }
         }
     }
 
-    public static void readBufferContents(ITooltip iTooltip, CompoundTag serverData) {
+    public static void readBufferContents(ITooltip iTooltip, CompoundTag serverData, HolderLookup.Provider registries) {
         if (serverData.contains("proxies", Tag.TAG_INT)) {
             iTooltip.add(Component.translatable("gtceu.top.proxies_bound", serverData.getInt("proxies"))
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
@@ -63,11 +64,11 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
 
         for (Tag t : itemTags) {
             if (!(t instanceof CompoundTag itemTag)) continue;
-            Item item = Registries.getItem(itemTag.getString("item"));
+            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemTag.getString("item")));
             var count = itemTag.getLong("real");
             if (item != null && count > 0) {
                 var stack = new ItemStack(item);
-                iTooltip.add(iTooltip.getElementHelper().smallItem(new ItemStack(item)));
+                iTooltip.add(snownee.jade.api.ui.IElementHelper.get().smallItem(new ItemStack(item)));
                 Component text = Component.literal(" ")
                         .append(Component.literal(String.valueOf(count)).withStyle(ChatFormatting.DARK_PURPLE))
                         .append(Component.literal(" × ").withStyle(ChatFormatting.WHITE))
@@ -77,7 +78,7 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
         }
         for (Tag t : fluidTags) {
             if (!(t instanceof CompoundTag fluidTag)) continue;
-            Fluid fluid = Registries.getFluid(fluidTag.getString("fluid"));
+            Fluid fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(fluidTag.getString("fluid")));
             var amount = fluidTag.getLong("real");
             if (fluid != null && amount > 0) {
                 iTooltip.add(GTElementHelper.smallFluid(JadeFluidObject.of(fluid)));
@@ -97,25 +98,25 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             for (var tag : pending) {
                 if (!(tag instanceof CompoundTag keyTag) || keyTag.isEmpty()) continue;
-                var key = AEKey.fromTagGeneric((CompoundTag) keyTag.get("key"));
+                var key = AEKey.fromTagGeneric(registries, keyTag.getCompound("key"));
                 if (key instanceof AEItemKey itemKey) {
                     var stack = itemKey.toStack();
                     long count = keyTag.getLong("count");
-                    iTooltip.add(iTooltip.getElementHelper().smallItem(stack));
+                    iTooltip.add(snownee.jade.api.ui.IElementHelper.get().smallItem(stack));
                     Component text = Component.literal(" ")
                             .append(String.valueOf(count))
                             .append(" × ")
-                            .append(wrapInSquareBrackets(stack.getItem().getDescription()).withStyle(ChatFormatting.WHITE))
+                            .append(wrapInSquareBrackets(stack.getHoverName()).withStyle(ChatFormatting.WHITE))
                             .withStyle(ChatFormatting.WHITE);
                     iTooltip.append(text);
                 } else if (key instanceof AEFluidKey fluidKey) {
                     long count = keyTag.getLong("count");
                     var fluid = fluidKey.toStack(Ints.saturatedCast(count));
-                    iTooltip.add(GTElementHelper.smallFluid(JadeFluidObject.of(fluid.getFluid(), count)));
+                    iTooltip.add(GTElementHelper.smallFluid(JadeFluidObject.of(fluid.getFluid(), count, fluid.getComponentsPatch())));
                     Component text = Component.literal(" ")
                             .append(MEFluidUnits.formatDisplayAmount(count))
                             .append(" ")
-                            .append(wrapInSquareBrackets(fluid.getDisplayName()).withStyle(ChatFormatting.WHITE))
+                            .append(wrapInSquareBrackets(fluidKey.getDisplayName()).withStyle(ChatFormatting.WHITE))
                             .withStyle(ChatFormatting.WHITE);
                     iTooltip.append(text);
                 }
@@ -133,7 +134,7 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
         for (var it = items.object2LongEntrySet().fastIterator(); it.hasNext();) {
             var entry = it.next();
             Item item = entry.getKey();
-            ResourceLocation key = Registries.getResourceKey(item);
+            ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
             if (key != null) {
                 CompoundTag itemTag = new CompoundTag();
                 itemTag.putString("item", key.toString());
@@ -147,7 +148,7 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
         for (var it = fluids.object2LongEntrySet().fastIterator(); it.hasNext();) {
             var entry = it.next();
             Fluid fluid = entry.getKey();
-            ResourceLocation key = Registries.getResourceKey(fluid);
+            ResourceLocation key = BuiltInRegistries.FLUID.getKey(fluid);
             if (key != null) {
                 CompoundTag fluidTag = new CompoundTag();
                 fluidTag.putString("fluid", key.toString());
@@ -159,12 +160,11 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
 
         // Add pending refund data
         ListTag listTag = new ListTag();
-        for (var it = buffer.getBuffer().object2LongEntrySet().fastIterator(); it.hasNext();) {
-            var entry = it.next();
+        for (var entry : it.unimi.dsi.fastutil.objects.Object2LongMaps.fastIterable(buffer.getBuffer())) {
             var count = entry.getLongValue();
             if (count > 0) {
                 CompoundTag itemTag = new CompoundTag();
-                itemTag.put("key", entry.getKey().toTagGeneric());
+                itemTag.put("key", entry.getKey().toTagGeneric(buffer.getLevel().registryAccess()));
                 itemTag.putLong("count", count);
                 listTag.add(itemTag);
             }
@@ -174,6 +174,6 @@ public class MEPatternBufferProvider implements IBlockComponentProvider, IServer
 
     @Override
     public ResourceLocation getUid() {
-        return GTCEu.id("me_pattern_buffer");
+        return GTLConstants.id("me_pattern_buffer");
     }
 }

@@ -1,6 +1,6 @@
 package org.gtlcore.gtlcore.api.pattern;
 
-import com.gregtechceu.gtceu.api.pattern.MultiblockState;
+import com.gregtechceu.gtceu.api.multiblock.pattern.PatternState;
 
 import net.minecraft.server.level.ServerLevel;
 
@@ -12,7 +12,7 @@ public final class WorldPatternMatcher {
     private WorldPatternMatcher() {}
 
     /** The caller must also verify that every aisle has an exact, valid repetition count. */
-    public static boolean useFixedLayout(MultiblockState state) {
-        return FIXED_ENABLED && state.world instanceof ServerLevel;
+    public static boolean useFixedLayout(PatternState state) {
+        return FIXED_ENABLED && state.getContext().getCurrentBlockInfo().getLevel() instanceof ServerLevel;
     }
 }

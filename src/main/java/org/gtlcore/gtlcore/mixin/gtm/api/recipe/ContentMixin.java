@@ -1,86 +1,74 @@
 package org.gtlcore.gtlcore.mixin.gtm.api.recipe;
 
 import org.gtlcore.gtlcore.api.recipe.IRecipeChanceDisplay;
-
-import com.gregtechceu.gtceu.api.recipe.chance.boost.ChanceBoostFunction;
-import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
+import org.gtlcore.gtlcore.api.recipe.NativeContentState;
+import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-import com.gregtechceu.gtceu.utils.FormattingUtil;
-
-import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
+import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
+import com.mojang.serialization.Codec;
+import brachy.modularui.screen.RichTooltip;
+import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
+import org.gtlcore.gtlcore.integration.jei.RecipeChanceTooltip;
+import net.minecraft.network.chat.Component;
+import java.util.ArrayList;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Content.class)
-public abstract class ContentMixin implements IRecipeChanceDisplay {
-
-    @Shadow(remap = false)
-    public int chance;
-    @Shadow(remap = false)
-    public int maxChance;
-    @Shadow(remap = false)
-    public int tierChanceBoost;
-    @Unique
-    private boolean gtlcore$hasChanceDisplayTiers;
-    @Unique
-    private int gtlcore$recipeTier;
-    @Unique
-    private int gtlcore$selectedTier;
-
-    @Override
-    public void gtlcore$setChanceDisplayTiers(int recipeTier, int selectedTier) {
-        gtlcore$hasChanceDisplayTiers = true;
-        gtlcore$recipeTier = recipeTier;
-        gtlcore$selectedTier = selectedTier;
+public abstract class ContentMixin implements NativeContentState, IRecipeChanceDisplay {
+    @Unique private int gtlcore$tierChanceBoost;
+    @Unique private IO gtlcore$tooltipIO = IO.OUT;
+    @Override public IO gtlcore$getTooltipIO() { return gtlcore$tooltipIO; }
+    @Override public void gtlcore$setTooltipIO(IO io) { gtlcore$tooltipIO = io; }
+    @Unique private @Nullable String gtlcore$slotName;
+    @Unique private @Nullable String gtlcore$uiName;
+    @Unique private boolean gtlcore$hasDisplayTiers;
+    @Unique private int gtlcore$recipeTier;
+    @Unique private int gtlcore$selectedTier;
+    @Override public int gtlcore$getTierChanceBoost() { return gtlcore$tierChanceBoost; }
+    @Override public void gtlcore$setTierChanceBoost(int boost) { gtlcore$tierChanceBoost = boost; }
+    @Override public String gtlcore$getSlotName() { return gtlcore$slotName; }
+    @Override public void gtlcore$setSlotName(String name) { gtlcore$slotName = name == null || name.isEmpty() ? null : name; }
+    @Override public String gtlcore$getUiName() { return gtlcore$uiName; }
+    @Override public void gtlcore$setUiName(String name) { gtlcore$uiName = name == null || name.isEmpty() ? null : name; }
+    @Override public void gtlcore$setChanceDisplayTiers(int recipeTier, int selectedTier) {
+        gtlcore$hasDisplayTiers = true; gtlcore$recipeTier = recipeTier; gtlcore$selectedTier = selectedTier;
     }
-
-    @Override
-    public int gtlcore$getDisplayChance() {
-        return Math.max(0, gtlcore$getUnclampedDisplayChance());
+    @Override public int gtlcore$getDisplayChance() { return Math.max(0, gtlcore$getUnclampedDisplayChance()); }
+    @Override public int gtlcore$getUnclampedDisplayChance() {
+        var content = (Content) (Object) this;
+        return gtlcore$hasDisplayTiers ? NativeContentState.boostedChance(content, gtlcore$recipeTier, gtlcore$selectedTier) : content.chance();
     }
-
-    @Override
-    public int gtlcore$getUnclampedDisplayChance() {
-        if (!gtlcore$hasChanceDisplayTiers) return chance;
-        return ChanceBoostFunction.OVERCLOCK.getBoostedChance((Content) (Object) this, gtlcore$recipeTier,
-                gtlcore$selectedTier);
+    @Override public int gtlcore$getChanceBoostTierCount() {
+        if (!gtlcore$hasDisplayTiers || gtlcore$tierChanceBoost == 0) return 0;
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(0L, (long) gtlcore$selectedTier - gtlcore$recipeTier - (gtlcore$recipeTier == 0 ? 1L : 0L)));
     }
-
-    @Override
-    public int gtlcore$getChanceBoostTierCount() {
-        if (tierChanceBoost == 0) return 0;
-        return Math.max(0, (gtlcore$getUnclampedDisplayChance() - chance) / tierChanceBoost);
+    @Inject(method = "addChanceTooltips", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
+    private static void gtlcore$boostedChanceTooltip(RichTooltip tooltip, Content content, ChanceLogic logic, CallbackInfo ci) {
+        if (NativeContentState.of(content).gtlcore$getTierChanceBoost() == 0) return;
+        var lines = new ArrayList<Component>();
+        RecipeChanceTooltip.add(content, logic, lines, NativeContentState.of(content).gtlcore$getTooltipIO());
+        lines.forEach(tooltip::addLine);
+        ci.cancel();
     }
-
-    /**
-     * @author .
-     * @reason 修改显示不消耗字符位置
-     */
-    @OnlyIn(Dist.CLIENT)
-    @Overwrite(remap = false)
-    public void drawChance(GuiGraphics graphics, float x, float y, int width, int height) {
-        if (this.chance != ChanceLogic.getMaxChancedValue() || this.tierChanceBoost != 0) {
-            graphics.pose().pushPose();
-            graphics.pose().translate(0.0F, 0.0F, 400.0F);
-            graphics.pose().scale(0.5F, 0.5F, 1.0F);
-            float chance = 100.0F * (float) gtlcore$getDisplayChance() / (float) this.maxChance;
-            String percent = FormattingUtil.formatPercent(chance);
-            String s = chance == 0.0F ? LocalizationUtils.format("gtceu.gui.content.chance_0_short") : percent + "%";
-            int color = chance == 0.0F ? 16711680 : 16776960;
-            Font fontRenderer = Minecraft.getInstance().font;
-            int xDraw = (int) ((x + (float) width / 3.0F) * 2.0F - (float) fontRenderer.width(s) + 23.0F) - (chance == 0.0F ? 10 : 0);
-            int yDraw = (int) ((y + (float) height / 3.0F + 6.0F) * 2.0F - (float) height) - (chance == 0.0F ? 3 : 0);
-            graphics.drawString(fontRenderer, s, xDraw, yDraw, color, true);
-            graphics.pose().popPose();
-        }
+    @Inject(method = "codec", at = @At("RETURN"), cancellable = true, remap = false, require = 1)
+    private static <T> void gtlcore$metadataCodec(RecipeCapability<T> capability, CallbackInfoReturnable<Codec<Content>> cir) {
+        cir.setReturnValue(NativeContentState.codec(capability));
+    }
+    @Inject(method = "copy(Lcom/gregtechceu/gtceu/api/capability/recipe/RecipeCapability;)Lcom/gregtechceu/gtceu/api/recipe/content/Content;",
+            at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$copyMetadata(RecipeCapability<?> cap, CallbackInfoReturnable<Content> cir) {
+        NativeContentState.copy((Content) (Object) this, cir.getReturnValue());
+    }
+    @Inject(method = {"copy(Lcom/gregtechceu/gtceu/api/capability/recipe/RecipeCapability;Lcom/gregtechceu/gtceu/api/recipe/content/ContentModifier;)Lcom/gregtechceu/gtceu/api/recipe/content/Content;",
+            "copyChanced"}, at = @At("RETURN"), remap = false, require = 1)
+    private void gtlcore$copyModifiedMetadata(RecipeCapability<?> cap, ContentModifier modifier, CallbackInfoReturnable<Content> cir) {
+        NativeContentState.copy((Content) (Object) this, cir.getReturnValue());
     }
 }

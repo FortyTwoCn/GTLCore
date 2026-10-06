@@ -1,316 +1,189 @@
 package org.gtlcore.gtlcore.common.machine.multiblock.part.ae;
 
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-
-import com.lowdragmc.lowdraglib.gui.widget.PhantomFluidWidget;
-import com.lowdragmc.lowdraglib.gui.widget.PhantomSlotWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.misc.FluidStorage;
-import com.lowdragmc.lowdraglib.misc.ItemStackTransfer;
-import com.lowdragmc.lowdraglib.side.fluid.FluidHelper;
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
-import com.lowdragmc.lowdraglib.syncdata.ITagSerializable;
-import com.lowdragmc.lowdraglib.utils.Position;
-
+import org.gtlcore.gtlcore.integration.ae2.AEOutputIngredients;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-
-import appeng.api.stacks.AEFluidKey;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEFluidKey;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.value.sync.BooleanSyncValue;
+import brachy.modularui.value.sync.StringSyncValue;
+import brachy.modularui.value.sync.PanelSyncManager;
+import brachy.modularui.value.sync.FluidSlotSyncHandler;
+import brachy.modularui.value.sync.SyncHandlers;
+import brachy.modularui.widgets.ToggleButton;
+import brachy.modularui.widgets.slot.PhantomItemSlot;
+import brachy.modularui.widgets.slot.FluidSlot;
+import brachy.modularui.widgets.layout.Flow;
+import brachy.modularui.widgets.layout.Grid;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 import java.util.List;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.lowdragmc.lowdraglib.LDLib.isRemote;
-import static org.gtlcore.gtlcore.integration.ae2.AEUtils.createListTag;
-import static org.gtlcore.gtlcore.integration.ae2.AEUtils.loadInventory;
-
-public class MEOutputFilterHandler implements ITagSerializable<CompoundTag> {
-
+/** Native ghost configuration. Runtime matching uses the same component-aware keys as AE storage. */
+public class MEOutputFilterHandler implements INBTSerializable<CompoundTag> {
     private final ObjectOpenHashSet<AEItemKey> itemFilterHashSet = new ObjectOpenHashSet<>();
     private final ObjectOpenHashSet<AEFluidKey> fluidFilterHashSet = new ObjectOpenHashSet<>();
-    private final Runnable markDirty;
-    private final Runnable updatePriority;
+    private final Runnable markDirty, updatePriority;
     private final Supplier<Integer> prioritySupplier;
     private final Consumer<Integer> onPriorityChanged;
+    private final int row, col;
+    private final ItemStackHandler filterSlots;
+    private final FluidTank[] filterTanks;
+    private boolean loading;
+    @Getter protected boolean isItemBlackList, isFluidBlackList;
+    @Getter protected boolean ignoreItemNbt = true, ignoreFluidNbt = true;
+    @Getter private boolean hasItemFilter, hasFluidFilter;
 
-    @Getter
-    @Setter
-    protected boolean isItemBlackList;
-    @Getter
-    @Setter
-    protected boolean ignoreItemNbt = true;
-    @Getter
-    @Setter
-    protected boolean isFluidBlackList;
-    @Getter
-    @Setter
-    protected boolean ignoreFluidNbt = true;
-
-    private boolean hasItemFilterChange;
-    private boolean hasFluidFilterChange;
-    @Getter
-    private boolean hasItemFilter;
-    @Getter
-    private boolean hasFluidFilter;
-    private final int row;
-    private final int col;
-
-    private final FluidStorage[] filterTanks;
-    private final ItemStackTransfer filterSlots;
-
-    public MEOutputFilterHandler(int row, int col, Runnable markDirty, Runnable updatePriority, Supplier<Integer> prioritySupplier, Consumer<Integer> onPriorityChanged) {
-        this.row = row;
-        this.col = col;
-        this.markDirty = markDirty;
-        this.updatePriority = updatePriority;
-        this.prioritySupplier = prioritySupplier;
-        this.onPriorityChanged = onPriorityChanged;
-        filterTanks = new FluidStorage[row * col];
-        filterSlots = new ItemStackTransfer(row * col);
-        Arrays.setAll(filterTanks, i -> new FluidStorage(FluidHelper.getBucket()));
+    public MEOutputFilterHandler(int row, int col, Runnable markDirty, Runnable updatePriority,
+                                 Supplier<Integer> prioritySupplier, Consumer<Integer> onPriorityChanged) {
+        if (row <= 0 || col <= 0 || Math.multiplyExact(row, col) > 256) throw new IllegalArgumentException("Invalid filter dimensions");
+        this.row = row; this.col = col; this.markDirty = markDirty; this.updatePriority = updatePriority;
+        this.prioritySupplier = prioritySupplier; this.onPriorityChanged = onPriorityChanged;
+        filterSlots = new ItemStackHandler(row * col) {
+            @Override public int getSlotLimit(int slot) { return 1; }
+            @Override protected void onContentsChanged(int slot) { changed(); }
+        };
+        filterTanks = new FluidTank[row * col];
+        Arrays.setAll(filterTanks, i -> new FluidTank(1000) {
+            @Override protected void onContentsChanged() { changed(); }
+        });
     }
 
-    public WidgetGroup createMainWidgetGroup() {
-        final var itemFilter = openItemFilterConfigurator(20, 5, this.row, this.col);
-        int height = itemFilter.getSizeHeight() + 5;
-        final var fluidFilter = openFluidFilterConfigurator(20, height + 5, this.row, this.col);
-        height += fluidFilter.getSizeHeight() + 10;
-        final var priorityWidget = new IntInputWidget(new Position(20, height), prioritySupplier, onPriorityChanged)
-                .setMin(10)
-                .setMax(100000);
-        height += priorityWidget.getSizeHeight();
-        WidgetGroup widgetGroup = new WidgetGroup(0, 0, itemFilter.getSizeWidth() + 6, height);
-        widgetGroup.addWidget(itemFilter);
-        widgetGroup.addWidget(fluidFilter);
-        widgetGroup.addWidget(priorityWidget);
-        return widgetGroup;
-    }
-
-    public int getFilterSlotCount() {
-        return row * col;
-    }
-
+    public int getFilterSlotCount() { return row * col; }
     public @Nullable AEItemKey getItemFilter(int slot) {
-        if (slot < 0 || slot >= filterSlots.getSlots()) return null;
-        ItemStack stack = filterSlots.getStackInSlot(slot);
-        return stack.isEmpty() ? null : AEItemKey.of(stack);
+        return slot < 0 || slot >= getFilterSlotCount() ? null : AEItemKey.of(filterSlots.getStackInSlot(slot));
     }
-
     public @Nullable AEFluidKey getFluidFilter(int slot) {
-        if (slot < 0 || slot >= filterTanks.length) return null;
-        FluidStack stack = filterTanks[slot].getFluid();
-        return stack.isEmpty() ? null : AEFluidKey.of(stack.getFluid(), stack.getTag());
+        return slot < 0 || slot >= getFilterSlotCount() ? null : AEFluidKey.of(filterTanks[slot].getFluid());
     }
-
     public void setItemFilter(int slot, @Nullable AEItemKey key) {
-        if (slot < 0 || slot >= filterSlots.getSlots()) return;
+        if (slot < 0 || slot >= getFilterSlotCount()) return;
         filterSlots.setStackInSlot(slot, key == null ? ItemStack.EMPTY : key.toStack(1));
-        hasItemFilterChange = true;
-        onUIClosed();
     }
-
     public void setFluidFilter(int slot, @Nullable AEFluidKey key) {
-        if (slot < 0 || slot >= filterTanks.length) return;
-        filterTanks[slot].setFluid(key == null ? FluidStack.empty() :
-                FluidStack.create(key.getFluid(), FluidHelper.getBucket(), key.getTag()));
-        hasFluidFilterChange = true;
-        onUIClosed();
+        if (slot < 0 || slot >= getFilterSlotCount()) return;
+        filterTanks[slot].setFluid(key == null ? FluidStack.EMPTY : key.toStack(1000));
+        changed();
     }
-
+    public void setItemBlackList(boolean value) { updateItemFilterSettings(value, ignoreItemNbt); }
+    public void setFluidBlackList(boolean value) { updateFluidFilterSettings(value, ignoreFluidNbt); }
+    public void setIgnoreItemNbt(boolean value) { updateItemFilterSettings(isItemBlackList, value); }
+    public void setIgnoreFluidNbt(boolean value) { updateFluidFilterSettings(isFluidBlackList, value); }
     public void updateItemFilterSettings(boolean blackList, boolean ignoreNbt) {
-        isItemBlackList = blackList;
-        ignoreItemNbt = ignoreNbt;
-        hasItemFilterChange = true;
-        onUIClosed();
+        isItemBlackList = blackList; ignoreItemNbt = ignoreNbt; changed();
     }
-
     public void updateFluidFilterSettings(boolean blackList, boolean ignoreNbt) {
-        isFluidBlackList = blackList;
-        ignoreFluidNbt = ignoreNbt;
-        hasFluidFilterChange = true;
-        onUIClosed();
+        isFluidBlackList = blackList; ignoreFluidNbt = ignoreNbt; changed();
     }
-
-    protected WidgetGroup openItemFilterConfigurator(int x, int y, int row, int col) {
-        WidgetGroup group = new WidgetGroup(x, y, 18 * col + 25, 18 * row);
-        for (int i = 0; i < row; i++) {
-            for (int j = 0; j < col; j++) {
-                final int index = i * col + j;
-
-                var slot = new PhantomSlotWidget(filterSlots, index, j * 18, i * 18) {
-
-                    @Override
-                    public void updateScreen() {
-                        super.updateScreen();
-                        setMaxStackSize(1);
-                    }
-
-                    @Override
-                    public void detectAndSendChanges() {
-                        super.detectAndSendChanges();
-                        setMaxStackSize(1);
-                    }
-                }
-                        .setChangeListener(() -> hasItemFilterChange = true)
-                        .setBackground(GuiTextures.SLOT);
-
-                group.addWidget(slot);
-            }
+    private void changed() {
+        if (loading) return;
+        rebuild(); markDirty.run(); updatePriority.run();
+    }
+    private void rebuild() {
+        itemFilterHashSet.clear(); fluidFilterHashSet.clear();
+        for (int i = 0; i < getFilterSlotCount(); i++) {
+            var item = getItemFilter(i); var fluid = getFluidFilter(i);
+            if (item != null) itemFilterHashSet.add(ignoreItemNbt ? AEItemKey.of(item.getItem()) : item);
+            if (fluid != null) fluidFilterHashSet.add(ignoreFluidNbt ? AEFluidKey.of(fluid.getFluid()) : fluid);
         }
-        group.addWidget(new ToggleButtonWidget(18 * col + 17, 9, 18, 18,
-                GuiTextures.BUTTON_BLACKLIST, this::isItemBlackList, this::setItemBlackList));
-        group.addWidget(new ToggleButtonWidget(18 * col + 17, (18) + 9, 18, 18,
-                GuiTextures.BUTTON_FILTER_NBT, this::isIgnoreItemNbt, this::setIgnoreItemNbt));
-        return group;
+        hasItemFilter = !itemFilterHashSet.isEmpty(); hasFluidFilter = !fluidFilterHashSet.isEmpty();
     }
-
-    protected WidgetGroup openFluidFilterConfigurator(int x, int y, int row, int col) {
-        WidgetGroup group = new WidgetGroup(x, y, 18 * col + 25, 18 * row);
-        for (int i = 0; i < row; i++) {
-            for (int j = 0; j < col; j++) {
-                final int index = i * col + j;
-
-                var slot = new PhantomFluidWidget(filterTanks[index], 0, j * 18, i * 18, 18, 18,
-                        () -> filterTanks[index].getFluid(),
-                        fluidStack -> filterTanks[index].setFluid(fluidStack)) {
-
-                    @Override
-                    public void updateScreen() {
-                        super.updateScreen();
-                        setShowAmount(false);
-                    }
-
-                    @Override
-                    public void detectAndSendChanges() {
-                        super.detectAndSendChanges();
-                        setShowAmount(false);
-                    }
-                }
-                        .setChangeListener(() -> hasFluidFilterChange = true)
-                        .setBackground(GuiTextures.SLOT);
-
-                group.addWidget(slot);
-            }
-        }
-        group.addWidget(new ToggleButtonWidget(18 * col + 17, 9, 18, 18,
-                GuiTextures.BUTTON_BLACKLIST, this::isFluidBlackList, this::setFluidBlackList));
-        group.addWidget(new ToggleButtonWidget(18 * col + 17, (18) + 9, 18, 18,
-                GuiTextures.BUTTON_FILTER_NBT, this::isIgnoreFluidNbt, this::setIgnoreFluidNbt));
-        return group;
+    public void onUIClosed() { updatePriority.run(); }
+    public boolean test(ItemStack stack) {
+        return !hasItemFilter || isItemBlackList != itemFilterHashSet.contains(ignoreItemNbt ? AEItemKey.of(stack.getItem()) : AEItemKey.of(stack));
     }
-
-    protected void onUIClosed() {
-        if (isRemote()) return;
-        if (hasItemFilterChange || hasFluidFilterChange) {
-            if (hasItemFilterChange) {
-                itemFilterHashSet.clear();
-                for (int i = 0; i < filterSlots.getSlots(); i++) {
-                    var itemStack = filterSlots.getStackInSlot(i);
-                    if (!itemStack.isEmpty()) {
-                        itemFilterHashSet.add(ignoreItemNbt ? AEItemKey.of(itemStack.getItem()) : AEItemKey.of(itemStack));
-                    }
-                }
-                hasItemFilter = !itemFilterHashSet.isEmpty();
-                hasItemFilterChange = false;
-            }
-            if (hasFluidFilterChange) {
-                fluidFilterHashSet.clear();
-                for (FluidStorage filterTank : filterTanks) {
-                    var fluidStack = filterTank.getFluid();
-                    if (!fluidStack.isEmpty()) {
-                        fluidFilterHashSet.add(ignoreFluidNbt ? AEFluidKey.of(fluidStack.getFluid()) : AEFluidKey.of(fluidStack.getFluid(), fluidStack.getTag()));
-                    }
-                }
-                hasFluidFilter = !fluidFilterHashSet.isEmpty();
-                hasFluidFilterChange = false;
-            }
-            this.markDirty.run();
-        }
-        this.updatePriority.run();
+    public boolean test(FluidStack stack) {
+        return !hasFluidFilter || isFluidBlackList != fluidFilterHashSet.contains(ignoreFluidNbt ? AEFluidKey.of(stack.getFluid()) : AEFluidKey.of(stack));
     }
-
-    public List<Ingredient> testIngredient(List<Ingredient> left) {
-        if (!hasItemFilter) return List.of();
-        left.removeIf(ingredient -> {
-            var items = ingredient.getItems();
-            if (items.length == 0) return false;
-            return test(items[0]);
-        });
+    public List<SizedIngredient> testIngredient(List<SizedIngredient> left) {
+        left.removeIf(ingredient -> { var output = AEOutputIngredients.item(ingredient, true);
+            return output != null && test(((AEItemKey) output.what()).toStack(1)); });
+        return left;
+    }
+    public List<SizedFluidIngredient> testFluidIngredient(List<SizedFluidIngredient> left) {
+        left.removeIf(ingredient -> { var output = AEOutputIngredients.fluid(ingredient, true);
+            return output != null && test(((AEFluidKey) output.what()).toStack(1)); });
         return left;
     }
 
-    public List<FluidIngredient> testFluidIngredient(List<FluidIngredient> left) {
-        if (!hasFluidFilter) return List.of();
-        left.removeIf(ingredient -> {
-            var fluids = ingredient.getStacks();
-            if (fluids.length == 0) return false;
-            return test(fluids[0]);
-        });
-        return left;
+    public Flow createMainWidgetGroup(PanelSyncManager manager) {
+        var itemBlacklist = new BooleanSyncValue(this::isItemBlackList, this::setItemBlackList).allowC2S();
+        var itemComponents = new BooleanSyncValue(this::isIgnoreItemNbt, this::setIgnoreItemNbt).allowC2S();
+        var fluidBlacklist = new BooleanSyncValue(this::isFluidBlackList, this::setFluidBlackList).allowC2S();
+        var fluidComponents = new BooleanSyncValue(this::isIgnoreFluidNbt, this::setIgnoreFluidNbt).allowC2S();
+        var priority = new StringSyncValue(() -> prioritySupplier.get().toString(), value -> {
+            try { onPriorityChanged.accept(Integer.parseInt(value)); } catch (NumberFormatException ignored) {}
+        }).allowC2S();
+        manager.syncValue("itemBlacklist", itemBlacklist); manager.syncValue("itemIgnoreComponents", itemComponents);
+        manager.syncValue("fluidBlacklist", fluidBlacklist); manager.syncValue("fluidIgnoreComponents", fluidComponents);
+        manager.syncValue("filterPriority", priority);
+        return Flow.col().coverChildren().margin(4)
+                .child(Flow.row().coverChildren()
+                        .child(new Grid().size(col * 18, row * 18).gridOfSizeWidth(getFilterSlotCount(), col,
+                                (x, y, index) -> itemFilterSlot(manager, index)))
+                        .child(Flow.col().coverChildren()
+                                .child(new ToggleButton().size(18).value(itemBlacklist).overlay(GTGuiTextures.BUTTON_BLACKLIST).tooltipDynamic(t -> t.addLine(net.minecraft.network.chat.Component.translatable("tooltip.gtlcore.me_chamber_manager_terminal.item_blacklist"))))
+                                .child(new ToggleButton().size(18).value(itemComponents).overlay(GTGuiTextures.BUTTON_IGNORE_NBT).tooltipDynamic(t -> t.addLine(net.minecraft.network.chat.Component.translatable("tooltip.gtlcore.me_chamber_manager_terminal.item_nbt"))))))
+                .child(Flow.row().coverChildren().marginTop(6)
+                        .child(new Grid().size(col * 18, row * 18).gridOfSizeWidth(getFilterSlotCount(), col,
+                                (x, y, index) -> fluidFilterSlot(manager, index)))
+                        .child(Flow.col().coverChildren()
+                                .child(new ToggleButton().size(18).value(fluidBlacklist).overlay(GTGuiTextures.BUTTON_BLACKLIST).tooltipDynamic(t -> t.addLine(net.minecraft.network.chat.Component.translatable("tooltip.gtlcore.me_chamber_manager_terminal.fluid_blacklist"))))
+                                .child(new ToggleButton().size(18).value(fluidComponents).overlay(GTGuiTextures.BUTTON_IGNORE_NBT).tooltipDynamic(t -> t.addLine(net.minecraft.network.chat.Component.translatable("tooltip.gtlcore.me_chamber_manager_terminal.fluid_nbt"))))))
+                .child(Flow.row().coverChildren().marginTop(6)
+                        .child(Text.lang("field.gtlcore.me_chamber_manager_terminal.priority").asWidget().width(65).height(18))
+                        .child(new TextFieldWidget().size(100, 18).value(priority).setNumbers(i -> Math.max(10, Math.min(100_000, i)))));
     }
 
-    protected boolean test(ItemStack itemStack) {
-        if (!hasItemFilter) return true;
-        final var key = ignoreItemNbt ? AEItemKey.of(itemStack.getItem()) : AEItemKey.of(itemStack);
-        return isItemBlackList != itemFilterHashSet.contains(key);
+    private PhantomItemSlot itemFilterSlot(PanelSyncManager manager, int index) {
+        var handler = new brachy.modularui.value.sync.PhantomItemSlotSyncHandler(SyncHandlers.itemSlot(filterSlots, index));
+        manager.syncValue("outputItemFilter", index, handler);
+        return new PhantomItemSlot().syncHandler(handler);
+    }
+    private FluidSlot fluidFilterSlot(PanelSyncManager manager, int index) {
+        var handler = new FluidSlotSyncHandler(filterTanks[index]).phantom(true).controlsAmount(false);
+        manager.syncValue("outputFluidFilter", index, handler);
+        return new FluidSlot().syncHandler(handler).alwaysShowFull(true);
     }
 
-    protected boolean test(FluidStack fluidStack) {
-        if (!hasFluidFilter) return true;
-        final var key = ignoreFluidNbt ? AEFluidKey.of(fluidStack.getFluid()) : AEFluidKey.of(fluidStack.getFluid(), fluidStack.getTag());
-        return isFluidBlackList != fluidFilterHashSet.contains(key);
-    }
-
-    @Override
-    public CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-
-        ListTag itemsTag = createListTag(AEItemKey::toTag, itemFilterHashSet);
-        if (!itemsTag.isEmpty()) tag.put("items", itemsTag);
-        ListTag fluidsTag = createListTag(AEFluidKey::toTag, fluidFilterHashSet);
-        if (!fluidsTag.isEmpty()) tag.put("fluids", fluidsTag);
-
-        tag.putBoolean("isItemBlackList", isItemBlackList);
-        tag.putBoolean("ignoreItemNbt", ignoreItemNbt);
-        tag.putBoolean("isFluidBlackList", isFluidBlackList);
-        tag.putBoolean("ignoreFluidNbt", ignoreFluidNbt);
-        tag.put("filterSlots", filterSlots.serializeNBT());
-
-        var list = new ListTag();
-        Arrays.stream(filterTanks).map(FluidStorage::serializeNBT).forEach(list::add);
-        tag.put("filterTanks", list);
-
+    @Override public CompoundTag serializeNBT(HolderLookup.Provider registries) {
+        var tag = new CompoundTag(); var items = new ListTag(); var fluids = new ListTag();
+        for (int i = 0; i < getFilterSlotCount(); i++) {
+            var item = getItemFilter(i); var fluid = getFluidFilter(i);
+            items.add(item == null ? new CompoundTag() : item.toTag(registries));
+            fluids.add(fluid == null ? new CompoundTag() : fluid.toTag(registries));
+        }
+        tag.put("items", items); tag.put("fluids", fluids);
+        tag.putBoolean("isItemBlackList", isItemBlackList); tag.putBoolean("ignoreItemNbt", ignoreItemNbt);
+        tag.putBoolean("isFluidBlackList", isFluidBlackList); tag.putBoolean("ignoreFluidNbt", ignoreFluidNbt);
         return tag;
     }
-
-    @Override
-    public void deserializeNBT(CompoundTag tag) {
-        loadInventory(tag.getList("items", Tag.TAG_COMPOUND), AEItemKey::fromTag, itemFilterHashSet);
-        loadInventory(tag.getList("fluids", Tag.TAG_COMPOUND), AEFluidKey::fromTag, fluidFilterHashSet);
-
-        isItemBlackList = tag.getBoolean("isItemBlackList");
-        isFluidBlackList = tag.getBoolean("isFluidBlackList");
-        ignoreItemNbt = tag.getBoolean("ignoreItemNbt");
-        ignoreFluidNbt = tag.getBoolean("ignoreFluidNbt");
-        filterSlots.deserializeNBT(tag.getCompound("filterSlots"));
-
-        var list = tag.getList("filterTanks", Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) filterTanks[i].deserializeNBT(list.getCompound(i));
-
-        hasItemFilter = !itemFilterHashSet.isEmpty();
-        hasFluidFilter = !fluidFilterHashSet.isEmpty();
+    @Override public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag) {
+        var itemTags = tag.getList("items", 10); var fluidTags = tag.getList("fluids", 10);
+        loading = true;
+        try {
+            for (int i = 0; i < getFilterSlotCount(); i++) {
+                setItemFilter(i, i < itemTags.size() && !itemTags.getCompound(i).isEmpty() ? AEItemKey.fromTag(registries, itemTags.getCompound(i)) : null);
+                setFluidFilter(i, i < fluidTags.size() && !fluidTags.getCompound(i).isEmpty() ? AEFluidKey.fromTag(registries, fluidTags.getCompound(i)) : null);
+            }
+            isItemBlackList = tag.getBoolean("isItemBlackList"); isFluidBlackList = tag.getBoolean("isFluidBlackList");
+            ignoreItemNbt = !tag.contains("ignoreItemNbt") || tag.getBoolean("ignoreItemNbt");
+            ignoreFluidNbt = !tag.contains("ignoreFluidNbt") || tag.getBoolean("ignoreFluidNbt");
+        } finally { loading = false; rebuild(); }
     }
 }

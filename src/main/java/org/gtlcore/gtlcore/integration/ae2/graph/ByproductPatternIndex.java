@@ -49,7 +49,7 @@ final class ByproductPatternIndex {
                 if (seen.size() > 100_000) throw new PlanningBudget.Exhausted(PlanningBudget.Limit.GRAPH_LIMIT, "byproduct_index_patterns");
                 budget.reserve(64);
                 var values = pattern.getOutputs();
-                if (values.length > 256) throw new PlanningBudget.Exhausted(PlanningBudget.Limit.GRAPH_LIMIT, "byproduct_index_outputs");
+                if (values.size() > 256) throw new PlanningBudget.Exhausted(PlanningBudget.Limit.GRAPH_LIMIT, "byproduct_index_outputs");
                 Set<AEKey> keys = new HashSet<>();
                 var primary = pattern.getPrimaryOutput().what();
                 for (var output : values) {

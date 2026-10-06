@@ -4,34 +4,26 @@ import org.gtlcore.gtlcore.api.recipe.ingredient.CacheHashStrategies;
 import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
 import org.gtlcore.gtlcore.config.AE2CalculationMode;
 import org.gtlcore.gtlcore.config.ConfigHolder;
-import org.gtlcore.gtlcore.utils.NumberUtils;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
 
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
 
 import net.minecraft.nbt.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
-import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.*;
-import appeng.api.storage.MEStorage;
-import appeng.api.storage.StorageHelper;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
-import appeng.crafting.execution.CraftingCpuHelper;
 import appeng.crafting.inv.ICraftingInventory;
-import appeng.crafting.pattern.*;
 import it.unimi.dsi.fastutil.objects.*;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,67 +35,16 @@ import static appeng.crafting.execution.CraftingCpuHelper.*;
 
 public class AEUtils {
 
-    private static final int BATCH_SIZE = 64;
-    private static final int MAX_FAILED_ATTEMPTS = 5;
-
-    public static <T extends AEKey> boolean reFunds(Object2LongMap<T> buffer, @Nullable IGrid network, IActionSource actionSource) {
-        if (buffer.isEmpty()) return false;
-
-        if (network == null) return false;
-
-        final MEStorage networkInv = network.getStorageService().getInventory();
-        final var energy = network.getEnergyService();
-        int operationsBatched = 0, consecutiveFailures = 0;
-        boolean didWork = false;
-
-        for (var it = Object2LongMaps.fastIterator(buffer); it.hasNext() && operationsBatched < BATCH_SIZE;) {
-            var entry = it.next();
-            long amount = entry.getLongValue();
-
-            if (amount <= 0) {
-                it.remove();
-                continue;
-            }
-
-            long inserted = StorageHelper.poweredInsert(energy, networkInv, entry.getKey(), amount, actionSource);
-            operationsBatched++;
-
-            if (inserted > 0) {
-                didWork = true;
-                consecutiveFailures = 0;
-                long left = amount - inserted;
-                if (left <= 0) {
-                    it.remove();
-                } else {
-                    entry.setValue(left);
-                }
-            } else {
-                consecutiveFailures++;
-                if (consecutiveFailures >= MAX_FAILED_ATTEMPTS) {
-                    break;
-                }
-            }
-        }
-        return didWork;
+    public static <T extends AEKey> boolean reFunds(Object2LongMap<T> buffer, @Nullable IGrid network, IActionSource source) {
+        return AEBufferedOutput.flush(buffer, network, source);
     }
 
     // ========================================
     // Recipe
     // ========================================
 
-    public static boolean testFluidIngredient(FluidIngredient fluidIngredient, AEFluidKey fluidKey) {
-        if (fluidIngredient.isEmpty()) {
-            return false;
-        } else if (fluidIngredient.getNbt() != null && !fluidIngredient.getNbt().equals(fluidKey.getTag())) {
-            return false;
-        } else {
-            for (FluidStack fluidStack : fluidIngredient.getStacks()) {
-                if (fluidStack.getFluid() == fluidKey.getFluid()) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    public static boolean testFluidIngredient(SizedFluidIngredient ingredient, AEFluidKey key) {
+        return key != null && LongFluidIngredient.matchingIngredient(ingredient).test(key.toStack(1));
     }
 
     // ========================================
@@ -114,6 +55,7 @@ public class AEUtils {
         ListTag tag = new ListTag();
         for (var it = Object2LongMaps.fastIterator(map); it.hasNext();) {
             var entry = it.next();
+            if (entry.getLongValue() <= 0) continue;
             var ct = keySerializer.apply(entry.getKey());
             ct.putLong("real", entry.getLongValue());
             tag.add(ct);
@@ -122,14 +64,22 @@ public class AEUtils {
     }
 
     public static <K> void loadInventory(ListTag tag, Function<CompoundTag, K> keyExtractor, Object2LongMap<K> targetMap) {
+        var decoded = decodeInventory(tag, keyExtractor);
+        targetMap.clear();
+        targetMap.putAll(decoded);
+    }
+
+    private static <K> Object2LongMap<K> decodeInventory(ListTag tag, Function<CompoundTag, K> keyExtractor) {
+        var decoded = new Object2LongOpenHashMap<K>();
         for (Tag t : tag) {
             if (!(t instanceof CompoundTag ct)) continue;
             K key = keyExtractor.apply(ct);
             long value = ct.getLong("real");
             if (key != null && value > 0) {
-                targetMap.put(key, value);
+                decoded.put(key, Math.addExact(decoded.getLong(key), value));
             }
         }
+        return decoded;
     }
 
     public static <T> ListTag createListTag(Function<T, CompoundTag> keySerializer, ObjectSet<T> map) {
@@ -153,111 +103,58 @@ public class AEUtils {
 
     public static <K> void appendPersistedInventory(ListTag tag, Function<CompoundTag, K> keyExtractor,
                                                     Object2LongOpenHashMap<K> targetMap) {
-        for (Tag t : tag) {
-            if (!(t instanceof CompoundTag ct)) continue;
-
-            K key = keyExtractor.apply(ct);
-            long amount = ct.getLong("real");
-            if (key != null && amount > 0) {
-                targetMap.addTo(key, amount);
-            }
-        }
+        var decoded = decodeInventory(tag, keyExtractor);
+        for (var entry : Object2LongMaps.fastIterable(decoded)) Math.addExact(targetMap.getLong(entry.getKey()), entry.getLongValue());
+        for (var entry : Object2LongMaps.fastIterable(decoded)) targetMap.put(entry.getKey(), Math.addExact(targetMap.getLong(entry.getKey()), entry.getLongValue()));
     }
 
     // ========================================
     // ME IO Machine Utils
     // ========================================
 
-    public static Object2LongMap<Ingredient> ingredientsMapWithOutCircuit(List<Ingredient> ingredients, Consumer<Integer> consumer) {
-        var result = new Object2LongOpenCustomHashMap<>(CacheHashStrategies.IngredientHashStrategy.INSTANCE);
-        for (Ingredient ingredient : ingredients) {
-            var items = ingredient.getItems();
-            if (items.length == 0 || items[0].isEmpty()) {
+    public static Object2LongMap<SizedIngredient> ingredientsMapWithOutCircuit(List<SizedIngredient> ingredients, Consumer<Integer> consumer) {
+        return itemIngredientsMap(ingredients, consumer);
+    }
+
+    public static Object2LongMap<SizedIngredient> ingredientsMap(List<SizedIngredient> ingredients) {
+        return itemIngredientsMap(ingredients, null);
+    }
+
+    private static Object2LongMap<SizedIngredient> itemIngredientsMap(List<SizedIngredient> ingredients, @Nullable Consumer<Integer> circuit) {
+        var result = new Object2LongOpenCustomHashMap<>(CacheHashStrategies.SizedIngredientHashStrategy.INSTANCE);
+        for (var ingredient : ingredients) {
+            var items = LongIngredient.matchingIngredient(ingredient).getItems();
+            if (items.length == 0 || items[0].isEmpty()) continue;
+            if (circuit != null && IntCircuitBehaviour.isIntegratedCircuit(items[0])) {
+                circuit.accept(IntCircuitBehaviour.getCircuitConfiguration(items[0]));
                 continue;
             }
-            if (GTItems.INTEGRATED_CIRCUIT.is(items[0].getItem())) {
-                consumer.accept(IntCircuitBehaviour.getCircuitConfiguration(items[0]));
-                continue;
-            }
-            result.addTo(ingredient, ingredient instanceof LongIngredient longIngredient ? longIngredient.getActualAmount() : items[0].getCount());
+            long amount = LongIngredient.amount(ingredient);
+            if (amount < 0) throw new IllegalArgumentException("Negative ME item requirement");
+            if (amount != 0) result.put(ingredient, Math.addExact(result.getLong(ingredient), amount));
         }
         return result;
     }
 
-    public static Object2LongMap<Ingredient> ingredientsMap(List<Ingredient> ingredients) {
-        var result = new Object2LongOpenCustomHashMap<>(CacheHashStrategies.IngredientHashStrategy.INSTANCE);
-        for (Ingredient ingredient : ingredients) {
-            var items = ingredient.getItems();
-            if (items.length == 0 || items[0].isEmpty()) {
-                continue;
-            }
-            result.addTo(ingredient, ingredient instanceof LongIngredient longIngredient ? longIngredient.getActualAmount() : items[0].getCount());
+    public static Object2LongMap<SizedFluidIngredient> fluidIngredientsMap(List<SizedFluidIngredient> ingredients) {
+        var result = new Object2LongOpenCustomHashMap<>(CacheHashStrategies.SizedFluidIngredientHashStrategy.INSTANCE);
+        for (var ingredient : ingredients) {
+            if (LongFluidIngredient.matchingIngredient(ingredient).hasNoFluids()) continue;
+            long amount = LongFluidIngredient.amount(ingredient);
+            if (amount < 0) throw new IllegalArgumentException("Negative ME fluid requirement");
+            if (amount != 0) result.put(ingredient, Math.addExact(result.getLong(ingredient), amount));
         }
         return result;
     }
 
-    public static Object2LongMap<FluidIngredient> fluidIngredientsMap(List<FluidIngredient> ingredients) {
-        var result = new Object2LongOpenCustomHashMap<>(CacheHashStrategies.FluidIngredientHashStrategy.INSTANCE);
-        for (FluidIngredient ingredient : ingredients) {
-            if (ingredient.isEmpty()) continue;
-            result.addTo(ingredient, ingredient.getAmount());
-        }
-        return result;
-    }
-
-    public static Function<ItemStack, Boolean> PROCESS_FILTER = stack -> stack.getItem() instanceof ProcessingPatternItem;
+    public static Function<ItemStack, Boolean> PROCESS_FILTER = appeng.core.definitions.AEItems.PROCESSING_PATTERN::is;
 
     public static boolean molecularFilter(ItemStack stack, Level level) {
-        final var item = stack.getItem();
-        if (item instanceof CraftingPatternItem craftingPatternItem) {
-            var pattern = craftingPatternItem.decode(stack, level, false);
-            if (pattern != null) {
-                return !hasContainerItems(pattern);
-            }
-        } else {
-            return item instanceof SmithingTablePatternItem || item instanceof StonecuttingPatternItem;
-        }
-        return false;
+        return MolecularAssemblerPatternHelper.molecularFilter(stack, level);
     }
 
-    private static boolean hasContainerItems(AECraftingPattern pattern) {
-        IPatternDetails.IInput[] inputs = pattern.getInputs();
-
-        for (IPatternDetails.IInput input : inputs) {
-            AEKey key = input.getPossibleInputs()[0].what();
-            AEKey remainingKey = input.getRemainingKey(key);
-            if (remainingKey != null) {
-                if (!(remainingKey instanceof AEItemKey itemKey) || itemKey.toStack().isDamageableItem()) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    public static Pair<IPatternDetails, @Nullable ObjectSet<Item>> createProcessingFromCraftPattern(IMolecularAssemblerSupportedPattern molecularAssemblerSupportedPattern, Level level) {
-        IPatternDetails.IInput[] inputs = molecularAssemblerSupportedPattern.getInputs();
-
-        ObjectArrayList<GenericStack> normalInputs = new ObjectArrayList<>();
-        ObjectSet<Item> remainingInputs = new ObjectArraySet<>();
-        for (IPatternDetails.IInput input : inputs) {
-            final var stack = input.getPossibleInputs()[0];
-            final var remaining = input.getRemainingKey(stack.what());
-            if (remaining != null) {
-                assert remaining instanceof AEItemKey;
-                if (((AEItemKey) remaining).toStack().isDamageableItem()) {
-                    return ImmutablePair.of(null, null);
-
-                } else remainingInputs.add(((AEItemKey) remaining).getItem());
-            } else {
-                normalInputs.add(new GenericStack(stack.what(), stack.amount() * input.getMultiplier()));
-            }
-        }
-
-        ItemStack pattern = PatternDetailsHelper.encodeProcessingPattern(normalInputs.toArray(new GenericStack[0]), molecularAssemblerSupportedPattern.getOutputs());
-
-        return ImmutablePair.of(PatternDetailsHelper.decodePattern(pattern, level), remainingInputs);
+    public static Pair<IPatternDetails, @Nullable ObjectSet<Item>> createProcessingFromCraftPattern(IMolecularAssemblerSupportedPattern pattern, Level level) {
+        return MolecularAssemblerPatternHelper.createProcessingFromCraftPattern(pattern, level);
     }
 
     // ========================================
@@ -269,7 +166,7 @@ public class AEUtils {
     }
 
     public static boolean isIntegratedCircuit(AEKey key) {
-        return key instanceof AEItemKey itemKey && GTItems.INTEGRATED_CIRCUIT.is(itemKey.getItem());
+        return key instanceof AEItemKey itemKey && IntCircuitBehaviour.isIntegratedCircuit(itemKey.toStack());
     }
 
     public static void pushInputsToMEPatternBufferInventory(KeyCounter[] inputHolder, IPatternDetails.PatternInputSink inputSink) {
@@ -290,33 +187,44 @@ public class AEUtils {
                                                            ICraftingInventory sourceInv,
                                                            KeyCounter expectedOutputs,
                                                            long multiplier) {
-        IPatternDetails.IInput[] inputs = originDetail.getInputs();
-        KeyCounter[] inputHolder = new KeyCounter[inputs.length];
-        boolean found = true;
-
-        for (int x = 0; x < inputs.length; x++) {
-            var list = inputHolder[x] = new KeyCounter();
-            AEKey key = inputs[x].getPossibleInputs()[0].what();
-            // Programmed circuits only reconfigure the target circuit slot,
-            // so always push exactly one operation's worth regardless of the multiplier.
-            long effectiveMultiplier = isIntegratedCircuit(key) ? 1 : multiplier;
-            long amount = NumberUtils.saturatedMultiply(inputs[x].getMultiplier(), effectiveMultiplier);
-            long extracted = AEUtils.extractTemplates(sourceInv, key, amount);
-            list.add(key, extracted);
-            if (extracted < amount) {
-                found = false;
-                break;
+        if (multiplier <= 0) return null;
+        var inputs = originDetail.getInputs();
+        var amounts = new long[inputs.length];
+        var delta = new KeyCounter();
+        try {
+            for (int i = 0; i < inputs.length; i++) {
+                var choices = inputs[i].getPossibleInputs();
+                if (choices.length == 0 || inputs[i].getMultiplier() <= 0 || choices[0].amount() <= 0) return null;
+                long runs = isIntegratedCircuit(choices[0].what()) ? 1 : multiplier;
+                amounts[i] = Math.multiplyExact(Math.multiplyExact(choices[0].amount(), inputs[i].getMultiplier()), runs);
+            }
+            for (var output : originDetail.getOutputs()) addExact(delta, output.what(), Math.multiplyExact(output.amount(), multiplier));
+            checkMerge(expectedOutputs, delta);
+        } catch (ArithmeticException | IllegalArgumentException invalid) { return null; }
+        var holders = new KeyCounter[inputs.length];
+        for (int i = 0; i < inputs.length; i++) {
+            var holder = holders[i] = new KeyCounter();
+            var key = inputs[i].getPossibleInputs()[0].what();
+            long extracted = extractTemplates(sourceInv, key, amounts[i]);
+            holder.add(key, extracted);
+            if (extracted != amounts[i]) {
+                reinjectPatternInputs(sourceInv, holders);
+                return null;
             }
         }
+        expectedOutputs.addAll(delta);
+        return holders;
+    }
 
-        if (!found) {
-            reinjectPatternInputs(sourceInv, inputHolder);
-            return null;
-        } else {
-            for (GenericStack output : originDetail.getOutputs()) {
-                expectedOutputs.add(output.what(), NumberUtils.saturatedMultiply(output.amount(), multiplier));
-            }
-            return inputHolder;
+    private static void addExact(KeyCounter counter, AEKey key, long amount) {
+        if (key == null || amount < 0 || counter.get(key) < 0) throw new IllegalArgumentException("Invalid ME quantity");
+        counter.set(key, Math.addExact(counter.get(key), amount));
+    }
+
+    private static void checkMerge(KeyCounter target, KeyCounter delta) {
+        for (var entry : delta) {
+            if (target.get(entry.getKey()) < 0) throw new IllegalArgumentException("Negative expected ME output");
+            Math.addExact(target.get(entry.getKey()), entry.getLongValue());
         }
     }
 
@@ -337,41 +245,45 @@ public class AEUtils {
                                                       KeyCounter expectedOutputs,
                                                       KeyCounter expectedContainerItems) {
         var inputs = details.getInputs();
-        KeyCounter[] inputHolder = new KeyCounter[inputs.length];
-        boolean found = true;
-
-        for (int x = 0; x < inputs.length; x++) {
-            var list = inputHolder[x] = new KeyCounter();
-            long remainingMultiplier = inputs[x].getMultiplier();
-            for (var template : getValidItemTemplates(sourceInv, inputs[x], level)) {
-                long extracted = CraftingCpuHelper.extractTemplates(sourceInv, template, remainingMultiplier);
-                list.add(template.key(), extracted * template.amount());
-
-                var containerItem = inputs[x].getRemainingKey(template.key());
-                if (containerItem != null) {
-                    expectedContainerItems.add(containerItem, extracted);
+        var holders = new KeyCounter[inputs.length];
+        var outputs = new KeyCounter();
+        var containers = new KeyCounter();
+        try {
+            for (var output : details.getOutputs()) addExact(outputs, output.what(), output.amount());
+            checkMerge(expectedOutputs, outputs);
+            for (int i = 0; i < inputs.length; i++) {
+                var holder = holders[i] = new KeyCounter();
+                long remaining = inputs[i].getMultiplier();
+                if (remaining <= 0) throw new IllegalArgumentException("Invalid crafting multiplier");
+                for (var template : getValidItemTemplates(sourceInv, inputs[i], level)) {
+                    if (template.amount() <= 0) throw new IllegalArgumentException("Invalid crafting template");
+                    long wanted = Math.multiplyExact(template.amount(), remaining);
+                    long available = sourceInv.extract(template.key(), wanted, Actionable.SIMULATE);
+                    long runs = available / template.amount();
+                    long amount = Math.multiplyExact(template.amount(), runs);
+                    if (amount == 0) continue;
+                    var remainder = inputs[i].getRemainingKey(template.key());
+                    if (remainder != null) {
+                        addExact(containers, remainder, runs);
+                        checkMerge(expectedContainerItems, containers);
+                    }
+                    long extracted = sourceInv.extract(template.key(), amount, Actionable.MODULATE);
+                    holder.add(template.key(), extracted);
+                    if (extracted != amount) throw new IllegalStateException("Crafting simulation changed during extraction");
+                    remaining -= runs;
+                    if (remaining == 0) break;
                 }
-
-                remainingMultiplier -= extracted;
-                if (remainingMultiplier == 0)
-                    break;
+                if (remaining != 0) {
+                    reinjectPatternInputs(sourceInv, holders);
+                    return null;
+                }
             }
-
-            if (remainingMultiplier > 0) {
-                found = false;
-                break;
-            }
-        }
-
-        if (!found) {
-            reinjectPatternInputs(sourceInv, inputHolder);
+        } catch (ArithmeticException | IllegalArgumentException invalid) {
+            reinjectPatternInputs(sourceInv, holders);
             return null;
         }
-
-        for (GenericStack output : details.getOutputs()) {
-            expectedOutputs.add(output.what(), output.amount());
-        }
-
-        return inputHolder;
+        expectedOutputs.addAll(outputs);
+        expectedContainerItems.addAll(containers);
+        return holders;
     }
 }

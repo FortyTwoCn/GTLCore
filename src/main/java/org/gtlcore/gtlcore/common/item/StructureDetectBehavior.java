@@ -1,177 +1,175 @@
 package org.gtlcore.gtlcore.common.item;
 
+import org.gtlcore.gtlcore.mixin.gtm.api.pattern.BasicSliceGroupAccessor;
+import org.gtlcore.gtlcore.mixin.gtm.api.pattern.BasicSliceStrategyAccessor;
 import org.gtlcore.gtlcore.network.GTLNetworkHandler;
 import org.gtlcore.gtlcore.network.packet.SStructureDetectHighlight;
 
-import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
-import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
-import com.gregtechceu.gtceu.api.item.tool.behavior.IToolBehavior;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiController;
-import com.gregtechceu.gtceu.api.pattern.*;
-import com.gregtechceu.gtceu.api.pattern.error.*;
-import com.gregtechceu.gtceu.api.pattern.predicates.SimplePredicate;
-import com.gregtechceu.gtceu.common.item.TooltipBehavior;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.error.*;
+import com.gregtechceu.gtceu.api.multiblock.pattern.*;
+import com.gregtechceu.gtceu.api.multiblock.util.BlockInfo;
+import com.gregtechceu.gtceu.common.item.behavior.TooltipBehavior;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.Level;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.jetbrains.annotations.NotNull;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-/**
- * @author EasterFG on 2024/10/25
- */
-public class StructureDetectBehavior extends TooltipBehavior implements IToolBehavior, IInteractionItem {
-
+/** The standalone detection item checks native structures without replacing a machine's live PatternState. */
+public class StructureDetectBehavior extends TooltipBehavior implements IInteractionItem {
     private static final ReentrantLock LOCK = new ReentrantLock();
-
+    private static final String MIRRORED = "isFlipped";
     public static final StructureDetectBehavior INSTANCE = new StructureDetectBehavior(lines -> {
         lines.add(Component.translatable("item.gtlcore.structure_detect.tooltip.0"));
         lines.add(Component.translatable("item.gtlcore.structure_detect.tooltip.1"));
     });
 
-    /**
-     * @param tooltips a consumer adding translated tooltips to the tooltip list
-     */
-    public StructureDetectBehavior(@NotNull Consumer<List<Component>> tooltips) {
-        super(tooltips);
+    public StructureDetectBehavior(Consumer<List<Component>> tooltips) { super(tooltips); }
+
+    public static boolean isMirrored(ItemStack stack) {
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean(MIRRORED);
     }
 
     @Override
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
-        Player player = context.getPlayer();
-        var tag = stack.getTag();
-        if (tag == null) {
-            tag = new CompoundTag();
-            tag.putBoolean("isFlipped", false);
-            stack.setTag(tag);
+        if (!(context.getPlayer() instanceof ServerPlayer player) || !(context.getLevel() instanceof ServerLevel level))
+            return InteractionResult.PASS;
+        var pos = context.getClickedPos();
+        if (MetaMachine.getMachine(level, pos) instanceof MultiblockControllerMachine controller) {
+            if (controller.isFormed() && controller.getDefinition().getStructurePatterns().keySet().stream()
+                    .allMatch(name -> controller.getPatternState(name).isFormed())) {
+                player.sendSystemMessage(Component.translatable("message.gtlcore.structure_formed").withStyle(ChatFormatting.GREEN));
+            } else {
+                boolean mirrored = isMirrored(stack);
+                level.getServer().execute(() -> {
+                    if (controller.isRemoved() || level.getBlockEntity(pos) != controller) return;
+                    if (!LOCK.tryLock()) {
+                        player.sendSystemMessage(Component.translatable("message.gtlcore.structure_detection_running"));
+                        return;
+                    }
+                    try {
+                        for (var error : detect(controller, mirrored)) showError(player, error, mirrored);
+                    } finally { LOCK.unlock(); }
+                });
+            }
+            return InteractionResult.SUCCESS;
         }
-        if (player != null) {
-            Level level = context.getLevel();
-            if (level.isClientSide) return InteractionResult.PASS;
-            BlockPos blockPos = context.getClickedPos();
-            if (MetaMachine.getMachine(level, blockPos) instanceof IMultiController controller) {
-                if (controller.isFormed()) {
-                    player.sendSystemMessage(Component.translatable("message.gtlcore.structure_formed").withStyle(ChatFormatting.GREEN));
-                } else {
-                    boolean isFlipped = !tag.isEmpty() && tag.getBoolean("isFlipped");
-                    ((ServerLevel) level).getServer().execute(() -> {
-                        var pattern = controller.getPattern();
-                        if (!LOCK.tryLock()) {
-                            player.sendSystemMessage(Component.translatable("message.gtlcore.structure_detection_running"));
-                            return;
+        boolean mirrored = !isMirrored(stack);
+        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.putBoolean(MIRRORED, mirrored));
+        player.displayClientMessage(Component.translatable(mirrored ? "message.gtlcore.detection_mode_mirrored" :
+                "message.gtlcore.detection_mode_normal"), true);
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Fresh contexts for all substructures; preserve accepted repetitions in the shared native pattern. */
+    public List<DetectionError> detect(MultiblockControllerMachine controller, boolean mirrored) {
+        if (!(controller.getLevel() instanceof ServerLevel level) || !level.getServer().isSameThread())
+            throw new IllegalStateException("Structure detection must run on the server thread");
+        LOCK.lock();
+        try {
+            var errors = new ArrayList<DetectionError>();
+            for (var entry : controller.getDefinition().getStructurePatterns().entrySet()) {
+                var pattern = controller.getSubstructurePattern(entry.getKey());
+                if (pattern == null) pattern = entry.getValue().get();
+                var state = new PatternState();
+                state.setController(controller, controller.getBlockPos());
+                int[] repeats = pattern instanceof BlockPattern block ?
+                        Arrays.stream(block.getSlices()).mapToInt(PatternSlice::getActualRepeats).toArray() : new int[0];
+                List<?> groups = pattern instanceof BlockPattern block && block.getSliceStrategy() instanceof BasicSliceStrategy strategy ?
+                        ((BasicSliceStrategyAccessor) strategy).gtlcore$getGroups() : List.of();
+                int[] groupRepeats = new int[groups.size()];
+                if (pattern instanceof BlockPattern block && block.getSliceStrategy() instanceof BasicSliceStrategy strategy)
+                    for (int i = 0; i < groups.size(); i++) groupRepeats[i] = strategy.getMultiSliceRepeats(i);
+                try {
+                    boolean valid = pattern.checkPatternAt(level, state, controller.getBlockPos(), controller.getFrontFacing(),
+                            controller.getUpwardsFacing(), mirrored);
+                    if (!valid) {
+                        for (var error : state.getErrors()) {
+                            var errorPos = error instanceof SinglePredicateError ? state.getContext().pos() : error.getPos();
+                            errors.add(new DetectionError(entry.getKey(), error, errorPos));
                         }
-                        try {
-                            var result = check(controller, pattern, isFlipped);
-                            for (var detectionError : result) {
-                                showError(player, detectionError, isFlipped);
-                            }
-                        } finally {
-                            LOCK.unlock();
-                        }
-                    });
-                    return InteractionResult.SUCCESS;
+                        if (!state.hasErrors()) errors.add(new DetectionError(entry.getKey(),
+                                PatternStringError.translatable("gtceu.multiblock.invalid_structure"), controller.getBlockPos()));
+                    }
+                } finally {
+                    if (pattern instanceof BlockPattern block) {
+                        for (int i = 0; i < repeats.length; i++) block.getSlices()[i].setActualRepeats(repeats[i]);
+                        for (int i = 0; i < groups.size(); i++) ((BasicSliceGroupAccessor) groups.get(i)).gtlcore$setActual(groupRepeats[i]);
+                    }
                 }
-            } else if (player instanceof ServerPlayer serverPlayer) {
-                tag.putBoolean("isFlipped", !tag.getBoolean("isFlipped"));
-                serverPlayer.displayClientMessage(Component.translatable(!tag.getBoolean("isFlipped") ? "message.gtlcore.detection_mode_normal" : "message.gtlcore.detection_mode_mirrored"), true);
             }
-        }
-        return InteractionResult.PASS;
+            return List.copyOf(errors);
+        } finally { LOCK.unlock(); }
     }
 
-    private List<DetectionError> check(IMultiController controller, BlockPattern pattern, boolean isFlipped) {
-        var errors = new ObjectArrayList<DetectionError>();
-        if (controller == null) {
-            errors.add(new DetectionError(new PatternStringError("no controller found"), null));
-            return errors;
+    public List<Component> describe(DetectionError detection, boolean mirrored) {
+        var error = detection.error();
+        if (error instanceof PatternStringError message) return List.of(message.getComponent());
+        var pos = detection.pos();
+        var location = Component.translatable("item.gtlcore.structure_detect.error.2", pos.getX(), pos.getY(), pos.getZ(),
+                Component.translatable(mirrored ? "item.gtlcore.structure_detect.error.3" : "item.gtlcore.structure_detect.error.4")
+                        .withStyle(mirrored ? ChatFormatting.GREEN : ChatFormatting.YELLOW));
+        var lines = new ArrayList<Component>();
+        lines.add(Component.translatable(error instanceof SinglePredicateError ? "item.gtlcore.structure_detect.error.1" :
+                "item.gtlcore.structure_detect.error.0", location));
+        candidateNames(error).forEach(name -> lines.add(Component.literal(" - ").append(name)));
+        if (error instanceof SinglePredicateError limit) {
+            int expected = switch (limit.type) {
+                case MIN_COUNT -> limit.predMinCount;
+                case MAX_COUNT -> limit.predMaxCount;
+                case MIN_LAYER_COUNT -> limit.predMinLayerCount;
+                case MAX_LAYER_COUNT -> limit.predMaxLayerCount;
+            };
+            lines.add(Component.translatable("gtceu.multiblock.pattern.error.limited." + limit.type.getSerializedName(), expected, limit.actualCount));
+        } else if (error instanceof MismatchError<?> mismatch) {
+            lines.add(mismatch.lang());
         }
-        var centerPos = controller.self().getPos();
-        var frontFacing = controller.self().getFrontFacing();
-        var facings = controller.hasFrontFacing() ? new Direction[] { frontFacing } :
-                new Direction[] { Direction.SOUTH, Direction.NORTH, Direction.EAST, Direction.WEST };
-        if (controller.self().getBlockState().getBlock() instanceof MetaMachineBlock machineBlock) {
-            if (machineBlock.rotationState == RotationState.NONE) facings = new Direction[] { frontFacing };
-        }
-        var upwardsFacing = controller.self().getUpwardsFacing();
-        for (var direction : facings) {
-            var worldState = new MultiblockState(controller.self().getLevel(), controller.self().getPos());
-            pattern.checkPatternAt(worldState, centerPos, direction, upwardsFacing, isFlipped, false);
-            if (worldState.hasError()) errors.add(new DetectionError(worldState.error, worldState.predicate));
-        }
-        return errors;
+        return List.copyOf(lines);
     }
 
-    private void showError(Player player, DetectionError detectionError, boolean flip) {
-        var error = detectionError.error();
-        var show = new ObjectArrayList<Component>();
-        if (error instanceof PatternStringError pe) {
-            player.sendSystemMessage(pe.getErrorInfo());
-            return;
+    private void showError(ServerPlayer player, DetectionError detection, boolean mirrored) {
+        describe(detection, mirrored).forEach(player::sendSystemMessage);
+        if (!(detection.error() instanceof PatternStringError))
+            GTLNetworkHandler.INSTANCE.sendTo(new SStructureDetectHighlight(detection.pos(), player.level().dimension(),
+                    System.currentTimeMillis() + 15000), player);
+    }
+
+    private List<Component> candidateNames(PatternError error) {
+        if (error instanceof BlockMatchingError blocks) return blocks.getBlocks().stream().map(block -> (Component) block.getName()).toList();
+        if (error instanceof PartAbilityError part) {
+            var ability = PartAbility.VALUES.get(part.getPartAbilityName());
+            return ability == null ? List.of() : ability.getAllBlocks().stream().map(block -> (Component) block.getName()).toList();
         }
-        var pos = error.getPos();
-        var posComponent = Component.translatable("item.gtlcore.structure_detect.error.2", pos.getX(), pos.getY(), pos.getZ(), flip ?
-                Component.translatable("item.gtlcore.structure_detect.error.3").withStyle(ChatFormatting.GREEN) :
-                Component.translatable("item.gtlcore.structure_detect.error.4").withStyle(ChatFormatting.YELLOW));
-        var candidates = getCandidateNames(detectionError.predicate());
-        if (error instanceof SinglePredicateError singlePredicateError) {
-            var roots = getCandidateNames(singlePredicateError.predicate);
-            show.add(Component.translatable("item.gtlcore.structure_detect.error.1", posComponent));
-            var detail = Component.literal(" - ");
-            if (!roots.isEmpty()) detail.append(roots.get(0));
-            show.add(detail.append(error.getErrorInfo()));
-        } else {
-            show.add(Component.translatable("item.gtlcore.structure_detect.error.0", posComponent));
-            for (var candidate : candidates) {
-                if (!candidate.isEmpty()) show.add(Component.literal(" - ").append(candidate.get(0)));
-            }
-        }
-        show.forEach(player::sendSystemMessage);
-        GTLNetworkHandler.INSTANCE.sendTo(new SStructureDetectHighlight(error.getPos(), error.getWorld().dimension(),
-                System.currentTimeMillis() + 15000), (ServerPlayer) player);
+        if (error instanceof SinglePredicateError limit) return limit.candidates.stream().map(this::candidateName).filter(java.util.Objects::nonNull).toList();
+        if (error instanceof SimplePatternError simple) return simple.getCandidates().stream().filter(list -> !list.isEmpty())
+                .map(list -> candidateName(list.getFirst())).filter(java.util.Objects::nonNull).toList();
+        return List.of();
     }
 
-    private List<List<Component>> getCandidateNames(TraceabilityPredicate predicate) {
-        if (predicate == null) return List.of();
-        return java.util.stream.Stream.concat(predicate.common.stream(), predicate.limited.stream())
-                .map(this::getCandidateNames)
-                .filter(candidates -> !candidates.isEmpty())
-                .toList();
+    private Component candidateName(BlockInfo candidate) {
+        var fluid = candidate.getBlockState().getFluidState();
+        if (!fluid.isEmpty()) return fluid.getType().getFluidType().getDescription();
+        var item = candidate.getItemStackForm();
+        return item.isEmpty() ? null : item.getHoverName();
     }
 
-    private List<Component> getCandidateNames(SimplePredicate predicate) {
-        if (predicate.candidates == null) return List.of();
-        return Arrays.stream(predicate.candidates.get())
-                .map(this::getCandidateName)
-                .filter(component -> component != null)
-                .toList();
+    public record DetectionError(String structure, PatternError error, BlockPos pos) {
+        public DetectionError { pos = pos.immutable(); }
     }
-
-    private Component getCandidateName(BlockInfo candidate) {
-        var fluidState = candidate.getBlockState().getFluidState();
-        if (!fluidState.isEmpty()) return fluidState.getType().getFluidType().getDescription();
-        var itemStack = candidate.getItemStackForm();
-        return itemStack.isEmpty() ? null : itemStack.getHoverName();
-    }
-
-    private record DetectionError(PatternError error, TraceabilityPredicate predicate) {}
 }

@@ -1,26 +1,26 @@
 package org.gtlcore.gtlcore.integration.ae2.pattern;
 
-import org.gtlcore.gtlcore.GTLCore;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 import org.gtlcore.gtlcore.api.recipe.ingredient.LongIngredient;
+import org.gtlcore.gtlcore.api.recipe.ingredient.LongFluidIngredient;
+import org.gtlcore.gtlcore.api.item.tool.ae2.patternTool.RecipeStackHelper;
 
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-import com.gregtechceu.gtceu.api.recipe.ingredient.FluidIngredient;
-import com.gregtechceu.gtceu.api.recipe.ingredient.SizedIngredient;
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 
-import com.lowdragmc.lowdraglib.side.fluid.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 
@@ -31,9 +31,9 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
 import appeng.crafting.pattern.AEProcessingPattern;
-import appeng.crafting.pattern.CraftingPatternItem;
-import appeng.crafting.pattern.SmithingTablePatternItem;
-import appeng.crafting.pattern.StonecuttingPatternItem;
+import appeng.crafting.pattern.AECraftingPattern;
+import appeng.crafting.pattern.AESmithingTablePattern;
+import appeng.crafting.pattern.AEStonecuttingPattern;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMaps;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -44,6 +44,7 @@ import java.util.Set;
 
 public final class PatternQuickUploadRecipeTypeResolver {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final String LOG_PREFIX = "[PatternQuickUpload]";
 
     private PatternQuickUploadRecipeTypeResolver() {}
@@ -55,7 +56,7 @@ public final class PatternQuickUploadRecipeTypeResolver {
             return Set.of(molecularRecipeTypeId);
         }
         if (!(pattern instanceof AEProcessingPattern processingPattern)) {
-            GTLCore.LOGGER.debug("{} resolver rejected unsupported pattern {}", LOG_PREFIX, patternStack.getHoverName().getString());
+            LOGGER.debug("{} resolver rejected unsupported pattern {}", LOG_PREFIX, patternStack.getHoverName().getString());
             return Set.of();
         }
         return findRecipeTypeIds(player.server.getRecipeManager(), processingPattern);
@@ -73,13 +74,13 @@ public final class PatternQuickUploadRecipeTypeResolver {
             return Set.of();
         }
         Set<ResourceLocation> recipeTypeIds = new LinkedHashSet<>();
-        for (GTRecipeType gtRecipeType : GTRegistries.RECIPE_TYPES.values()) {
-            if (gtRecipeType.registryName == null) {
+        for (GTRecipeType gtRecipeType : nativeRecipeTypes()) {
+            if (gtRecipeType.id == null) {
                 continue;
             }
             for (RecipeType<?> proxiedType : gtRecipeType.getProxyRecipes().keySet()) {
                 if (recipeTypeId.equals(recipeTypeId(proxiedType))) {
-                    recipeTypeIds.add(gtRecipeType.registryName);
+                    recipeTypeIds.add(gtRecipeType.id);
                 }
             }
         }
@@ -100,13 +101,13 @@ public final class PatternQuickUploadRecipeTypeResolver {
         if (!(pattern instanceof IMolecularAssemblerSupportedPattern)) {
             return null;
         }
-        if (patternStack.getItem() instanceof CraftingPatternItem) {
+        if (pattern instanceof AECraftingPattern) {
             return recipeTypeId(RecipeType.CRAFTING);
         }
-        if (patternStack.getItem() instanceof SmithingTablePatternItem) {
+        if (pattern instanceof AESmithingTablePattern) {
             return recipeTypeId(RecipeType.SMITHING);
         }
-        if (patternStack.getItem() instanceof StonecuttingPatternItem) {
+        if (pattern instanceof AEStonecuttingPattern) {
             return recipeTypeId(RecipeType.STONECUTTING);
         }
         return null;
@@ -117,53 +118,64 @@ public final class PatternQuickUploadRecipeTypeResolver {
     }
 
     static Set<ResourceLocation> findRecipeTypeIds(RecipeManager recipeManager, AEProcessingPattern pattern) {
-        PatternSignature patternSignature = PatternSignature.fromPattern(pattern);
+        PatternSignature patternSignature;
+        try {
+            patternSignature = PatternSignature.fromPattern(pattern);
+        } catch (ArithmeticException invalid) {
+            LOGGER.debug("{} resolver rejected overflowing pattern quantities", LOG_PREFIX);
+            return Set.of();
+        }
         if (patternSignature.isEmpty()) {
-            GTLCore.LOGGER.debug("{} resolver rejected empty pattern signature", LOG_PREFIX);
+            LOGGER.debug("{} resolver rejected empty pattern signature", LOG_PREFIX);
             return Set.of();
         }
 
         Set<ResourceLocation> recipeTypeIds = new LinkedHashSet<>();
         int checkedRecipes = 0;
         int matchedRecipes = 0;
-        for (Recipe<?> recipe : recipeManager.getRecipes()) {
-            if (!(recipe instanceof GTRecipe gtRecipe) || gtRecipe.recipeType == null ||
-                    gtRecipe.recipeType == GTRecipeTypes.DUMMY_RECIPES ||
-                    gtRecipe.recipeType.registryName == null) {
+        for (RecipeHolder<?> holder : recipeManager.getRecipes()) {
+            if (!(holder.value() instanceof GTRecipe gtRecipe) || gtRecipe.recipeType == null ||
+                    gtRecipe.recipeType == GTRecipeTypes.DUMMY_RECIPES.value() ||
+                    gtRecipe.recipeType.id == null) {
                 continue;
             }
             checkedRecipes++;
-            PatternSignature recipeSignature = PatternSignature.fromRecipe(gtRecipe);
+            PatternSignature recipeSignature;
+            try { recipeSignature = PatternSignature.fromRecipe(gtRecipe); }
+            catch (ArithmeticException invalid) { continue; }
             if (!recipeSignature.isEmpty() && patternSignature.matchesScaled(recipeSignature)) {
                 matchedRecipes++;
-                recipeTypeIds.add(gtRecipe.recipeType.registryName);
+                recipeTypeIds.add(gtRecipe.recipeType.id);
             }
         }
         // Proxied vanilla recipes are converted on datapack reload and only ever live in their recipe type,
         // never in the recipe manager, so the loop above cannot see them.
-        for (GTRecipeType gtRecipeType : GTRegistries.RECIPE_TYPES.values()) {
-            if (gtRecipeType.registryName == null || gtRecipeType == GTRecipeTypes.DUMMY_RECIPES) {
+        for (GTRecipeType gtRecipeType : nativeRecipeTypes()) {
+            if (gtRecipeType.id == null || gtRecipeType == GTRecipeTypes.DUMMY_RECIPES.value()) {
                 continue;
             }
-            for (List<GTRecipe> proxiedRecipes : gtRecipeType.getProxyRecipes().values()) {
-                for (GTRecipe proxiedRecipe : proxiedRecipes) {
+            for (List<RecipeHolder<GTRecipe>> proxiedRecipes : gtRecipeType.getProxyRecipes().values()) {
+                for (RecipeHolder<GTRecipe> holder : proxiedRecipes) {
+                    GTRecipe proxiedRecipe = holder.value();
                     checkedRecipes++;
-                    PatternSignature recipeSignature = PatternSignature.fromRecipe(proxiedRecipe);
+                    PatternSignature recipeSignature;
+                    try { recipeSignature = PatternSignature.fromRecipe(proxiedRecipe); }
+                    catch (ArithmeticException invalid) { continue; }
                     if (!recipeSignature.isEmpty() && patternSignature.matchesScaled(recipeSignature)) {
                         matchedRecipes++;
-                        recipeTypeIds.add(gtRecipeType.registryName);
+                        recipeTypeIds.add(gtRecipeType.id);
                     }
                 }
             }
         }
-        GTLCore.LOGGER.debug("{} resolver checkedRecipes={} matchedRecipes={} recipeTypes={}",
+        LOGGER.debug("{} resolver checkedRecipes={} matchedRecipes={} recipeTypes={}",
                 LOG_PREFIX,
                 checkedRecipes,
                 matchedRecipes,
                 recipeTypeIds);
         collapseSmallLargePairs(recipeTypeIds);
         if (recipeTypeIds.size() > 1) {
-            GTLCore.LOGGER.debug("{} resolver rejected ambiguous GT recipe types {}", LOG_PREFIX, recipeTypeIds);
+            LOGGER.debug("{} resolver rejected ambiguous GT recipe types {}", LOG_PREFIX, recipeTypeIds);
             return Set.of();
         }
         return recipeTypeIds;
@@ -172,12 +184,12 @@ public final class PatternQuickUploadRecipeTypeResolver {
     /**
      * Large variants (e.g. {@code gtceu:large_chemical_reactor}) auto-copy every recipe of their small map, so a
      * matching pattern always reports both. The pair names the same recipe set: keep the small id and let target
-     * matching fall back through {@code getSmallRecipeMap}.
+     * matching use the native builder copy relation.
      */
     private static void collapseSmallLargePairs(Set<ResourceLocation> recipeTypeIds) {
         Set<ResourceLocation> redundantIds = new LinkedHashSet<>();
         for (ResourceLocation id : recipeTypeIds) {
-            GTRecipeType smallType = GTRegistries.RECIPE_TYPES.get(id);
+            GTRecipeType smallType = BuiltInRegistries.RECIPE_TYPE.get(id) instanceof GTRecipeType type ? type : null;
             if (smallType == null) {
                 continue;
             }
@@ -185,16 +197,21 @@ public final class PatternQuickUploadRecipeTypeResolver {
                 if (otherId.equals(id)) {
                     continue;
                 }
-                GTRecipeType otherType = GTRegistries.RECIPE_TYPES.get(otherId);
-                if (otherType != null && otherType.getSmallRecipeMap() == smallType) {
+                GTRecipeType otherType = BuiltInRegistries.RECIPE_TYPE.get(otherId) instanceof GTRecipeType type ? type : null;
+                if (otherType != null && NativeCopiedRecipeTypes.smallType(otherType) == smallType) {
                     redundantIds.add(otherId);
                 }
             }
         }
         if (!redundantIds.isEmpty()) {
-            GTLCore.LOGGER.debug("{} resolver collapsed small/large recipe type pairs, dropped {}", LOG_PREFIX, redundantIds);
+            LOGGER.debug("{} resolver collapsed small/large recipe type pairs, dropped {}", LOG_PREFIX, redundantIds);
             recipeTypeIds.removeAll(redundantIds);
         }
+    }
+
+    private static List<GTRecipeType> nativeRecipeTypes() {
+        return BuiltInRegistries.RECIPE_TYPE.stream().filter(GTRecipeType.class::isInstance)
+                .map(GTRecipeType.class::cast).toList();
     }
 
     private record PatternSignature(Object2LongOpenHashMap<AEItemKey> inputItems,
@@ -263,60 +280,32 @@ public final class PatternQuickUploadRecipeTypeResolver {
                 return;
             }
             if (stack.what() instanceof AEItemKey itemKey) {
-                items.addTo(itemKey, stack.amount());
+                addAmount(items, itemKey, stack.amount());
             } else if (stack.what() instanceof AEFluidKey fluidKey) {
-                fluids.addTo(fluidKey, stack.amount());
+                addAmount(fluids, fluidKey, stack.amount());
             }
         }
 
         private void addItemContent(Object2LongOpenHashMap<AEItemKey> items, Content content) {
-            if (content == null || content.getContent() == null) {
+            if (content == null || content.content() == null) {
                 return;
             }
-            Ingredient ingredient = ItemRecipeCapability.CAP.of(content.getContent());
-            ItemStack stack = firstItem(ingredient);
-            long amount = itemAmount(ingredient, stack);
-            if (!stack.isEmpty() && amount > 0) {
-                items.addTo(AEItemKey.of(stack), amount);
-            }
+            SizedIngredient ingredient = ItemRecipeCapability.CAP.of(content.content());
+            ItemStack stack = RecipeStackHelper.itemStack(content);
+            long amount = LongIngredient.amount(ingredient);
+            if (!stack.isEmpty() && amount > 0) addAmount(items, AEItemKey.of(stack), amount);
         }
 
         private void addFluidContent(Object2LongOpenHashMap<AEFluidKey> fluids, Content content) {
-            if (content == null || content.getContent() == null) {
-                return;
-            }
-            FluidIngredient ingredient = FluidRecipeCapability.CAP.of(content.getContent());
-            FluidStack stack = firstFluid(ingredient);
-            long amount = ingredient.getAmount();
-            if (!stack.isEmpty() && amount > 0) {
-                fluids.addTo(AEFluidKey.of(stack.getFluid()), amount);
-            }
+            if (content == null || content.content() == null) return;
+            var ingredient = FluidRecipeCapability.CAP.of(content.content());
+            FluidStack stack = RecipeStackHelper.fluidStack(content);
+            long amount = LongFluidIngredient.amount(ingredient);
+            if (!stack.isEmpty() && amount > 0) addAmount(fluids, AEFluidKey.of(stack), amount);
         }
 
-        private static ItemStack firstItem(Ingredient ingredient) {
-            if (ingredient == null || ingredient.isEmpty()) {
-                return ItemStack.EMPTY;
-            }
-            ItemStack[] items = ingredient.getItems();
-            return items.length == 0 ? ItemStack.EMPTY : items[0];
-        }
-
-        private static long itemAmount(Ingredient ingredient, ItemStack stack) {
-            if (ingredient instanceof LongIngredient longIngredient) {
-                return longIngredient.getActualAmount();
-            }
-            if (ingredient instanceof SizedIngredient sizedIngredient) {
-                return sizedIngredient.getAmount();
-            }
-            return stack.isEmpty() ? 0 : stack.getCount();
-        }
-
-        private static FluidStack firstFluid(FluidIngredient ingredient) {
-            if (ingredient == null || ingredient.isEmpty()) {
-                return FluidStack.empty();
-            }
-            FluidStack[] fluids = ingredient.getStacks();
-            return fluids.length == 0 ? FluidStack.empty() : fluids[0];
+        private static <T> void addAmount(Object2LongOpenHashMap<T> quantities, T key, long amount) {
+            quantities.put(key, Math.addExact(quantities.getLong(key), amount));
         }
 
         private static <T> boolean matchesPatternEntries(Object2LongMap<T> pattern, Object2LongMap<T> recipe,

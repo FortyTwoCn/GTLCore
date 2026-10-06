@@ -1,208 +1,178 @@
 package org.gtlcore.gtlcore.common.item;
 
-import org.gtlcore.gtlcore.GTLCore;
-import org.gtlcore.gtlcore.api.item.tool.ae2.patternTool.Ae2GtmProcessingPattern;
-import org.gtlcore.gtlcore.api.item.tool.ae2.patternTool.ConflictAnalysisManager;
-import org.gtlcore.gtlcore.api.item.tool.ae2.patternTool.ConflictAnalysisResult;
-import org.gtlcore.gtlcore.api.item.tool.ae2.patternTool.GTRecipeManager;
-
+import org.gtlcore.gtlcore.api.item.tool.ae2.patternTool.*;
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
+import com.gregtechceu.gtceu.api.mui.IItemUIHolder;
+import com.gregtechceu.gtceu.common.mui.GTGuiTextures;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
-import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
-
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.server.ServerLifecycleHooks;
-
-import lombok.Setter;
-
-import java.util.HashSet;
+import brachy.modularui.api.drawable.Text;
+import brachy.modularui.factory.PlayerInventoryGuiData;
+import brachy.modularui.screen.ModularPanel;
+import brachy.modularui.screen.UISettings;
+import brachy.modularui.value.sync.*;
+import brachy.modularui.widgets.ButtonWidget;
+import brachy.modularui.widgets.textfield.TextFieldWidget;
+import org.slf4j.LoggerFactory;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Consumer;
 
-@Setter
-public class PatternTestBehavior implements IItemUIFactory {
-
+/** Each physical tool owns its settings; generation and analysis execute only on the server. */
+public class PatternTestBehavior implements IItemUIHolder {
     public static final PatternTestBehavior INSTANCE = new PatternTestBehavior();
+    private static final String DATA = "gtlcore_pattern_test";
+    private static final String[] KEYS = {"analysisType", "analysisCircuit", "generatorType", "generatorCircuit", "scale",
+            "inputWhite", "inputBlack", "outputWhite", "outputBlack"};
+    private static final String[] LABELS = {"set_recipe_type", "set_programmed_circuit", "set_recipe_type", "set_programmed_circuit",
+            "set_pattern_multiplier", "input_whitelist_keywords", "input_blacklist_keywords",
+            "output_whitelist_keywords", "output_blacklist_keywords"};
 
-    private String ConflictAnalysisType = "";
-    private int ConflictAnalysisCircuit = 0;
-
-    private String Ae2PatternGeneratorType = "";
-    private int Ae2PatternGeneratorCircuit = 0;
-    private int Ae2PatternGeneratorScale = 1;
-
-    private String Ae2PatternGeneratorInputsBlackKey = "";
-    private String Ae2PatternGeneratorInputsWhiteKey = "";
-
-    private String Ae2PatternGeneratorOutputsBlackKey = "";
-    private String Ae2PatternGeneratorOutputsWhiteKey = "";
-
-    @Override
-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder heldItemHolder, Player player) {
-        var containerPatternAnalysis = new WidgetGroup(8, 8, 160, 50)
-                .addWidget(new ImageWidget(4, 4, 152, 42, GuiTextures.DISPLAY))
-                .addWidget(new LabelWidget(6, 6, Component.translatable("gtlcore.gui.recipe_conflict_analysis").getString()))
-                .addWidget(new AETextInputButtonWidget(82, 6, 72, 12)
-                        .setText(ConflictAnalysisType)
-                        .setOnConfirm(this::setConflictAnalysisType)
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.set_recipe_type")))
-                .addWidget(new AETextInputButtonWidget(82, 20, 72, 12)
-                        .setText(String.valueOf(ConflictAnalysisCircuit))
-                        .setOnConfirm(s -> setConflictAnalysisCircuit(Integer.parseInt(s)))
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.set_programmed_circuit")))
-                .addWidget(new ButtonWidget(6, 24, 64, 20,
-                        new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture(Component.translatable("gtlcore.gui.start_analysis").getString())),
-                        clickData -> useAnalysisRecipesBaby(heldItemHolder))
-                        .setHoverTooltips(Component.translatable("tooltip.gtlcore.current_recipe_type")
-                                .append(Component.translatable("gtceu." + ConflictAnalysisType)).append(Component.translatable("gtlcore.tooltip.current_recipe_type_circuit", ConflictAnalysisCircuit))));
-
-        var containerPatternGenerator = new WidgetGroup(8, 58, 160, 50)
-                .addWidget(new ImageWidget(4, 4, 152, 42, GuiTextures.DISPLAY))
-                .addWidget(new LabelWidget(6, 6, Component.translatable("gtlcore.gui.pattern_debug").getString()))
-                .addWidget(new ButtonWidget(6, 24, 64, 20,
-                        new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture(Component.translatable("gtlcore.gui.get_pattern").getString())),
-                        clickData -> useAe2PatternGenerator(heldItemHolder))
-                        .setHoverTooltips(Component.translatable("tooltip.gtlcore.current_recipe_type")
-                                .append(Component.translatable("gtceu." + Ae2PatternGeneratorType))
-                                .append(Component.translatable("gtlcore.tooltip.current_recipe_type_circuit", Ae2PatternGeneratorCircuit))
-                                .append(Component.translatable("gtlcore.tooltip.current_recipe_type_scale", Ae2PatternGeneratorScale))))
-                .addWidget(new AETextInputButtonWidget(82, 6, 72, 12)
-                        .setText(Ae2PatternGeneratorType)
-                        .setOnConfirm(this::setAe2PatternGeneratorType)
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.set_recipe_type")))
-                .addWidget(new AETextInputButtonWidget(82, 20, 72, 12)
-                        .setText(String.valueOf(Ae2PatternGeneratorCircuit))
-                        .setOnConfirm(s -> setAe2PatternGeneratorCircuit(Integer.parseInt(s)))
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.set_programmed_circuit")))
-                .addWidget(new AETextInputButtonWidget(82, 34, 72, 12)
-                        .setText(String.valueOf(Ae2PatternGeneratorScale))
-                        .setOnConfirm(this::setAe2PatternGeneratorScale)
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.set_pattern_multiplier")))
-                .addWidget(new AETextInputButtonWidget(82, 48, 72, 12)
-                        .setText(String.valueOf(Ae2PatternGeneratorInputsWhiteKey))
-                        .setOnConfirm(this::setAe2PatternGeneratorInputsWhiteKey)
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.input_whitelist_keywords")))
-                .addWidget(new AETextInputButtonWidget(82, 62, 72, 12)
-                        .setText(String.valueOf(Ae2PatternGeneratorInputsBlackKey))
-                        .setOnConfirm(this::setAe2PatternGeneratorInputsBlackKey)
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.input_blacklist_keywords")))
-                .addWidget(new AETextInputButtonWidget(82, 76, 72, 12)
-                        .setText(String.valueOf(Ae2PatternGeneratorOutputsWhiteKey))
-                        .setOnConfirm(this::setAe2PatternGeneratorOutputsWhiteKey)
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.output_whitelist_keywords")))
-                .addWidget(new AETextInputButtonWidget(82, 90, 72, 12)
-                        .setText(String.valueOf(Ae2PatternGeneratorOutputsBlackKey))
-                        .setOnConfirm(this::setAe2PatternGeneratorOutputsBlackKey)
-                        .setButtonTooltips(Component.translatable("tooltip.gtlcore.output_blacklist_keywords")));
-
-        return new ModularUI(176, 124, heldItemHolder, player)
-                .widget(containerPatternAnalysis)
-                .widget(containerPatternGenerator)
-                .background(GuiTextures.BACKGROUND);
+    public record Settings(String analysisType, int analysisCircuit, String generatorType, int generatorCircuit,
+                           int scale, String inputWhite, String inputBlack, String outputWhite, String outputBlack) {}
+    private static CompoundTag settings(ItemStack item) {
+        return item.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getCompound(DATA);
     }
-
-    private void setAe2PatternGeneratorScale(String s) {
-        Ae2PatternGeneratorScale = Math.min(Integer.MAX_VALUE, Integer.parseInt(s));
+    private static boolean numeric(int index) { return index == 1 || index == 3 || index == 4; }
+    private static long clamp(int index, long number) {
+        return Math.clamp(number, index == 4 ? 1 : 0, index == 4 ? Integer.MAX_VALUE : 32);
     }
-
-    public void useAe2PatternGenerator(HeldItemUIFactory.HeldItemHolder playerInventoryHolder) {
-        if (playerInventoryHolder.getPlayer() instanceof ServerPlayer serverPlayer) {
-            /*
-             * 获取样板 入口
-             */
-            GTRecipeType recipeType = GTRecipeTypes.get("gtceu:" + Ae2PatternGeneratorType);
-            GTRecipeManager gtRecipeManager = new GTRecipeManager();
-            gtRecipeManager.filterRecipesByType(recipeType);
-            gtRecipeManager.filterRecipesByCircuit(Ae2PatternGeneratorCircuit);
-            if (!Ae2PatternGeneratorInputsWhiteKey.isEmpty()) gtRecipeManager.filterRecipesByInputsIdArray(Ae2PatternGeneratorInputsWhiteKey.split(" "), true);
-            if (!Ae2PatternGeneratorInputsBlackKey.isEmpty()) gtRecipeManager.filterRecipesByInputsIdArray(Ae2PatternGeneratorInputsBlackKey.split(" "), false);
-            if (!Ae2PatternGeneratorOutputsWhiteKey.isEmpty()) gtRecipeManager.filterRecipesByOutputsIdArray(Ae2PatternGeneratorOutputsWhiteKey.split(" "), true);
-            if (!Ae2PatternGeneratorOutputsBlackKey.isEmpty()) gtRecipeManager.filterRecipesByOutputsIdArray(Ae2PatternGeneratorOutputsBlackKey.split(" "), false);
-            List<GTRecipe> recipes = gtRecipeManager.getRecipes();
-            for (GTRecipe recipe : recipes) {
-                long inputEUt = RecipeHelper.getInputEUt(recipe);
-                int recipeEUtTier = RecipeHelper.getRecipeEUtTier(recipe);
-                String recipeTier = GTValues.VN[recipeEUtTier];
-
-                Ae2GtmProcessingPattern ae2GtmProcessingPattern = Ae2GtmProcessingPattern.of(recipe, serverPlayer);
-                ae2GtmProcessingPattern.setScale(Ae2PatternGeneratorScale, false);
-                ae2GtmProcessingPattern.setDefaultFilter();
-                ae2GtmProcessingPattern.setLore(Component.translatable("gui.gtlcore.machine_colon").append(Component.translatable("gtceu." + Ae2PatternGeneratorType).append(Component.translatable("gui.gtlcore.circuit_format", Ae2PatternGeneratorCircuit))));
-                ae2GtmProcessingPattern.setLore(Component.translatable("gui.gtlcore.voltage_colon", recipeTier, inputEUt));
-                ItemStack patternItemStack = ae2GtmProcessingPattern.getPatternItemStack();
-                serverPlayer.kjs$give(patternItemStack);
+    private static String getSetting(ItemStack item, int index) {
+        var settings = settings(item);
+        return numeric(index) ? Long.toString(clamp(index, settings.contains(KEYS[index]) ? settings.getInt(KEYS[index]) : index == 4 ? 1 : 0)) :
+                settings.getString(KEYS[index]);
+    }
+    public static Settings getSettings(ItemStack item) {
+        return new Settings(getSetting(item, 0), Integer.parseInt(getSetting(item, 1)), getSetting(item, 2),
+                Integer.parseInt(getSetting(item, 3)), Integer.parseInt(getSetting(item, 4)),
+                getSetting(item, 5), getSetting(item, 6), getSetting(item, 7), getSetting(item, 8));
+    }
+    public static void setSetting(ItemStack item, String key, String value) {
+        int index = Arrays.asList(KEYS).indexOf(key);
+        if (index < 0) throw new IllegalArgumentException("Unknown pattern test setting: " + key);
+        var tag = item.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        var settings = tag.getCompound(DATA);
+        if (numeric(index)) {
+            try { settings.putInt(key, (int) clamp(index, Long.parseLong(value))); }
+            catch (NumberFormatException ignored) { return; }
+        } else {
+            int limit = index == 0 || index == 2 ? 256 : 1024;
+            settings.putString(key, value.substring(0, Math.min(limit, value.length())).trim());
+        }
+        tag.put(DATA, settings);
+        item.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+    @Override public ModularPanel<?> buildUI(PlayerInventoryGuiData<?> data, PanelSyncManager sync, UISettings uiSettings) {
+        var panel = ModularPanel.defaultPanel("patternTest", 416, 240).background(GTGuiTextures.BACKGROUND)
+                .child(Text.lang("gtlcore.gui.recipe_conflict_analysis").asWidget().pos(8, 7))
+                .child(Text.lang("gtlcore.gui.pattern_debug").asWidget().pos(8, 79));
+        for (int i = 0; i < KEYS.length; i++) {
+            int index = i;
+            int y = i < 2 ? 23 + 18 * i : 92 + 18 * (i - 2);
+            var value = SyncHandlers.string(() -> getSetting(data.getUsedItemStack(), index), text -> {
+                var item = data.getUsedItemStack();
+                setSetting(item, KEYS[index], text);
+                data.setUsedItemStack(item);
+            }).allowC2S();
+            sync.syncValue("patternTest_" + KEYS[i], value);
+            String label = i < 5 ? "tooltip.gtlcore." + LABELS[i] : "gui.gtlcore.pattern_test." + KEYS[i];
+            panel.child(Text.lang(label).asWidget().pos(8, y + 4).width(158).height(12)
+                    .tooltip(tooltip -> tooltip.addLine(Component.translatable("tooltip.gtlcore." + LABELS[index]))));
+            var field = new TextFieldWidget().value(value).size(238, 16).pos(170, y);
+            if (numeric(i)) field.setNumbersLong(number -> clamp(index, number));
+            panel.child(field);
+        }
+        action(panel, sync, "analyze", "gtlcore.gui.start_analysis", 59, data, item -> useAnalysisRecipesBaby((ServerPlayer) data.getPlayer(), item));
+        action(panel, sync, "generate", "gtlcore.gui.get_pattern", 220, data, item -> useAe2PatternGenerator((ServerPlayer) data.getPlayer(), item));
+        return panel;
+    }
+    private static void action(ModularPanel<?> panel, PanelSyncManager sync, String name, String label, int y,
+                               PlayerInventoryGuiData<?> data, Consumer<ItemStack> action) {
+        var handler = new InteractionSyncHandler().setOnMousePressed(mouse -> {
+            if (mouse.isLeftMouseButton() && data.getPlayer() instanceof ServerPlayer) action.accept(data.getUsedItemStack());
+        });
+        sync.syncValue("patternTest_" + name, handler);
+        panel.child(new ButtonWidget<>().name("patternTest_" + name).background(GTGuiTextures.BUTTON).syncHandler(handler).overlay(Text.lang(label)).pos(170, y).size(238, 16));
+    }
+    private static GTRecipeType recipeType(ServerPlayer player, String name) {
+        var id = name.isBlank() ? null : ResourceLocation.tryParse(name.contains(":") ? name : "gtceu:" + name);
+        var type = id == null ? null : BuiltInRegistries.RECIPE_TYPE.getOptional(id).orElse(null);
+        if (type instanceof GTRecipeType gtType) return gtType;
+        player.sendSystemMessage(Component.translatable("message.gtlcore.pattern_test.invalid_type", name));
+        return null;
+    }
+    private static void filter(String keywords, Consumer<String[]> filter) {
+        if (!keywords.isBlank()) filter.accept(keywords.trim().split("\\s+"));
+    }
+    public void useAe2PatternGenerator(ServerPlayer player, ItemStack item) {
+        var settings = getSettings(item);
+        var type = recipeType(player, settings.generatorType());
+        if (type == null) return;
+        var recipes = new GTRecipeManager(player.server.getRecipeManager().getRecipes());
+        recipes.filterRecipesByType(type);
+        recipes.filterRecipesByCircuit(settings.generatorCircuit());
+        filter(settings.inputWhite(), words -> recipes.filterRecipesByInputsIdArray(words, true));
+        filter(settings.inputBlack(), words -> recipes.filterRecipesByInputsIdArray(words, false));
+        filter(settings.outputWhite(), words -> recipes.filterRecipesByOutputsIdArray(words, true));
+        filter(settings.outputBlack(), words -> recipes.filterRecipesByOutputsIdArray(words, false));
+        int generated = 0, skipped = 0;
+        for (var recipe : recipes.getRecipes()) {
+            try {
+                var pattern = createPattern(recipe, player, settings.scale());
+                // Inventory.placeItemBackInInventory returns overflow to the world without losing patterns.
+                player.getInventory().placeItemBackInInventory(pattern);
+                generated++;
+            } catch (IllegalArgumentException | ArithmeticException exception) {
+                skipped++;
+                LoggerFactory.getLogger("gtlcore.pattern_tool").warn("Cannot generate AE pattern for {}: {}", recipe.id, exception.getMessage());
             }
         }
+        player.sendSystemMessage(Component.translatable("message.gtlcore.pattern_test.generated", generated, skipped));
     }
-
-    public void useAnalysisRecipesBaby(HeldItemUIFactory.HeldItemHolder playerInventoryHolder) {
-        if (playerInventoryHolder.getPlayer() instanceof ServerPlayer) {
-            /*
-             * 分析配方冲突 入口
-             */
-            analysisRecipesBaby(GTRecipeTypes.get("gtceu:" + ConflictAnalysisType), ConflictAnalysisCircuit);
-        }
+    public static ItemStack createPattern(GTRecipe recipe, ServerPlayer player, int scale) {
+        var pattern = Ae2GtmProcessingPattern.of(recipe, player);
+        pattern.setDefaultFilter();
+        var decoded = Ae2BaseProcessingPatternHelper.decodeToAEProcessingPattern(pattern.patternStack, player);
+        var scaled = decoded == null ? null : Ae2BaseProcessingPatternHelper.multiplyScale(scale, false, decoded, Long.MAX_VALUE, Long.MAX_VALUE);
+        if (scaled == null) throw new IllegalArgumentException("Invalid or overflowing pattern multiplier");
+        int tier = Math.clamp(RecipeHelper.getRecipeEUtTier(recipe), 0, GTValues.VN.length - 1);
+        scaled.set(DataComponents.LORE, new ItemLore(List.of(
+                Component.translatable("gui.gtlcore.machine_colon").append(Component.translatable("gtceu." + recipe.recipeType.id.getPath()))
+                        .append(Component.translatable("gui.gtlcore.circuit_format", Integer.toString(GTRecipeManager.circuit(recipe)))),
+                Component.translatable("gui.gtlcore.voltage_colon", GTValues.VN[tier], Long.toString(recipe.getInputEUt().getTotalEU())))));
+        return scaled;
     }
-
-    public void analysisRecipesBaby(GTRecipeType recipeType, int CIRCUIT) {
-        // 筛选出指定机器的配方
-        MinecraftServer currentServer = ServerLifecycleHooks.getCurrentServer();
-        RecipeManager recipeManager = currentServer.getRecipeManager();
-        Set<GTRecipe> recipes = new HashSet<>();
-        for (Recipe<?> recipe : recipeManager.getRecipes()) {
-            if (recipe instanceof GTRecipe && recipe.getType().equals(recipeType)) {
-                recipes.add((GTRecipe) recipe);
-            }
-        }
-        // 构造输入，调用类，对符合指定电路的配方分析
-        ConflictAnalysisManager conflictAnalysisManager = new ConflictAnalysisManager(recipes.stream().toList());
-        List<ConflictAnalysisResult> conflictAnalysisResults = conflictAnalysisManager.useFindConflictForAll(CIRCUIT);
-
-        // 对获得的冲突样板集 遍历输出
-        conflictAnalysisResults.forEach(ConflictAnalysisResult::exportToPrint);
-        GTLCore.LOGGER.info("可能被错误合成配方数量{} / 所有此电路配方数{}", conflictAnalysisResults.toArray().length, recipes.toArray().length);
+    public void useAnalysisRecipesBaby(ServerPlayer player, ItemStack item) {
+        var settings = getSettings(item);
+        var type = recipeType(player, settings.analysisType());
+        if (type == null) return;
+        var recipes = new GTRecipeManager(player.server.getRecipeManager().getRecipes());
+        recipes.filterRecipesByType(type);
+        var results = new ConflictAnalysisManager(recipes.getRecipes()).useFindConflictForAll(settings.analysisCircuit());
+        results.forEach(ConflictAnalysisResult::exportToPrint);
+        LoggerFactory.getLogger("gtlcore.pattern_tool").info("Potential recipe conflicts: {} / {} ({}, circuit {})",
+                results.size(), recipes.getRecipes().size(), type.id, settings.analysisCircuit());
+        player.sendSystemMessage(Component.translatable("message.gtlcore.pattern_test.analyzed", results.size(), recipes.getRecipes().size()));
     }
-
-    @Override
-    public InteractionResultHolder<ItemStack> use(Item item, Level level, Player player, InteractionHand usedHand) {
-        ItemStack stack = player.getItemInHand(usedHand);
-        if (player instanceof ServerPlayer serverPlayer) {
-            HeldItemUIFactory.INSTANCE.openUI(serverPlayer, usedHand);
-        }
-        return new InteractionResultHolder<>(InteractionResult.SUCCESS, stack);
+    /** Retained entry point for callers that request an analysis without a held GUI. */
+    public void analysisRecipesBaby(GTRecipeType type, int circuit) {
+        var recipes = new GTRecipeManager(); recipes.filterRecipesByType(type);
+        new ConflictAnalysisManager(recipes.getRecipes()).useFindConflictForAll(circuit).forEach(ConflictAnalysisResult::exportToPrint);
     }
-
-    @Override
-    public InteractionResult useOn(UseOnContext context) {
-        if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-            serverPlayer.displayClientMessage(Component.translatable("message.gtlcore.right_click_air_gui"), true);
-        }
-        return InteractionResult.SUCCESS;
+    @Override public InteractionResult useOn(UseOnContext context) {
+        if (context.getPlayer() instanceof ServerPlayer player) player.displayClientMessage(Component.translatable("message.gtlcore.right_click_air_gui"), true);
+        return InteractionResult.sidedSuccess(context.getLevel().isClientSide);
     }
 }

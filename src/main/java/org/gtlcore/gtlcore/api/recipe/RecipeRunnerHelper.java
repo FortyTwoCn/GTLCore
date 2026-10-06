@@ -3,13 +3,9 @@ package org.gtlcore.gtlcore.api.recipe;
 import org.gtlcore.gtlcore.api.machine.trait.IRecipeCapabilityMachine;
 
 import com.gregtechceu.gtceu.api.capability.recipe.*;
-import com.gregtechceu.gtceu.api.machine.WorkableTieredMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.steam.SteamWorkableMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-import com.gregtechceu.gtceu.common.machine.multiblock.electric.research.ResearchStationMachine;
-import com.gregtechceu.gtceu.common.machine.multiblock.primitive.PrimitiveWorkableMachine;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
@@ -36,11 +32,11 @@ public class RecipeRunnerHelper {
     }
 
     public static boolean handleRecipeInput(IRecipeLogicMachine holder, GTRecipe recipe) {
-        return handleRecipe(IO.IN, holder, recipe.inputs, holder.getRecipeLogic().getChanceCaches(), true, recipe, false).isSuccess();
+        return handleRecipe(IO.IN, holder, recipe.inputs, holder.getRecipeLogic().getChanceCaches(), false, recipe, false).isSuccess();
     }
 
     public static boolean handleRecipeOutput(IRecipeLogicMachine holder, GTRecipe recipe) {
-        return handleRecipe(IO.OUT, holder, recipe.outputs, holder.getRecipeLogic().getChanceCaches(), true, recipe, false).isSuccess();
+        return handleRecipe(IO.OUT, holder, recipe.outputs, holder.getRecipeLogic().getChanceCaches(), false, recipe, false).isSuccess();
     }
 
     public static RecipeResult handleRecipe(IO io, IRecipeCapabilityHolder holder, Map<RecipeCapability<?>, List<Content>> contents,
@@ -50,21 +46,23 @@ public class RecipeRunnerHelper {
 
     public static RecipeResult handleRecipe(IO io, IRecipeCapabilityHolder holder, Map<RecipeCapability<?>, List<Content>> contents,
                                             Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches, boolean isTick, GTRecipe recipe, boolean isSimulate, RecipeCacheStrategy cacheStrategy) {
-        if (holder instanceof PrimitiveWorkableMachine || holder instanceof SteamWorkableMachine ||
-                holder instanceof WorkableTieredMachine || holder instanceof ResearchStationMachine) {
-            if (isSimulate) {
-                var result = recipe.matchRecipeContents(io, holder, io == IO.IN ? recipe.inputs : recipe.outputs, isTick);
-                if (result.isSuccess()) {
-                    RecipeResult.of((IRecipeLogicMachine) holder, RecipeResult.SUCCESS);
-                    return RecipeResult.SUCCESS;
-                } else RecipeResult.of((IRecipeLogicMachine) holder, io == IO.IN ? RecipeResult.FAIL_INPUT : RecipeResult.FAIL_OUTPUT);
-            } else if (recipe.handleRecipe(io, holder, isTick, contents, chanceCaches)) return RecipeResult.SUCCESS;
+        RecipeResult result;
+        if (usesCoreRoutes(holder, contents, isTick)) {
+            result = RecipeRunner.handle(recipe, io, holder, contents, chanceCaches, isTick, isSimulate, cacheStrategy);
         } else {
-            var result = RecipeRunner.handle(recipe, io, holder, contents, chanceCaches, isSimulate, cacheStrategy);
-            RecipeResult.of((IRecipeLogicMachine) holder, result);
-            return result;
+            var nativeResult = new com.gregtechceu.gtceu.api.recipe.RecipeRunner(recipe, io, isTick,
+                    holder, chanceCaches, isSimulate).handle(contents);
+            result = nativeResult.isSuccess() ? RecipeResult.SUCCESS : RecipeResult.fail(nativeResult.reason());
         }
-        return RecipeResult.fail(null);
+        if (holder instanceof IRecipeLogicMachine machine) RecipeResult.of(machine, result);
+        return result;
+    }
+
+    public static boolean usesCoreRoutes(IRecipeCapabilityHolder holder, Map<RecipeCapability<?>, List<Content>> contents, boolean isTick) {
+        if (!(holder instanceof IRecipeCapabilityMachine machine) || !machine.usesCoreRecipeRouting()) return false;
+        // Pure EU/CWU ticks keep native bypass groups and failure capabilities (including power-fail suspension).
+        // They must not replace the selected item bus in the recipe cache every tick.
+        return !isTick || contents.keySet().stream().anyMatch(cap -> cap == ItemRecipeCapability.CAP || cap == FluidRecipeCapability.CAP);
     }
 
     // ============================================
@@ -82,6 +80,6 @@ public class RecipeRunnerHelper {
     }
 
     public static boolean handleRecipeInputNocache(IRecipeLogicMachine holder, GTRecipe recipe) {
-        return handleRecipe(IO.IN, holder, recipe.inputs, holder.getRecipeLogic().getChanceCaches(), true, recipe, false, RecipeCacheStrategy.NO_CACHE).isSuccess();
+        return handleRecipe(IO.IN, holder, recipe.inputs, holder.getRecipeLogic().getChanceCaches(), false, recipe, false, RecipeCacheStrategy.NO_CACHE).isSuccess();
     }
 }

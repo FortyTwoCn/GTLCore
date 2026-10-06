@@ -13,6 +13,9 @@ import com.lowdragmc.lowdraglib.Platform;
 import committee.nova.mods.avaritia.init.registry.ModBlocks;
 import committee.nova.mods.avaritia.init.registry.ModItems;
 
+import net.minecraft.world.level.ItemLike;
+import java.util.function.Supplier;
+
 import static com.gregtechceu.gtceu.common.data.GTMaterials.*;
 import static com.gregtechceu.gtceu.common.data.GTMaterials.Bastnasite;
 
@@ -836,9 +839,9 @@ public class GTLMaterials {
         oreProp.setOreByProducts(Thorium, Neodymium, Bastnasite);
 
         if (!Platform.isDevEnv()) {
-            TagPrefix.ingot.setIgnored(Infinity, ModItems.infinity_ingot);
-            TagPrefix.nugget.setIgnored(Infinity, ModItems.infinity_nugget);
-            TagPrefix.block.setIgnored(Infinity, ModBlocks.infinity);
+            TagPrefix.ingot.setIgnored(Infinity, (Supplier<? extends ItemLike>) ModItems.infinity_ingot);
+            TagPrefix.nugget.setIgnored(Infinity, (Supplier<? extends ItemLike>) ModItems.infinity_nugget);
+            TagPrefix.block.setIgnored(Infinity, (Supplier<? extends ItemLike>) ModBlocks.infinity);
         }
     }
 }

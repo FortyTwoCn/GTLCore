@@ -3,7 +3,7 @@ package org.gtlcore.gtlcore.integration.ae2.handler;
 import org.gtlcore.gtlcore.api.machine.trait.NotifiableCircuitItemStackHandler;
 
 import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.common.item.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -15,7 +15,7 @@ import appeng.api.stacks.GenericStack;
 import appeng.crafting.pattern.AEProcessingPattern;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -69,7 +69,7 @@ public class MEBufferPatternHelper {
      * @return 电路ItemStack，可能为空
      */
     public ItemStack getCircuitForRecipe(ItemStack storedCircuit) {
-        if (storedCircuit == ItemStack.EMPTY || storedCircuit == null) {
+        if (storedCircuit == null || storedCircuit.isEmpty()) {
             if (haveSharedPatternCircuit()) {
                 return mePatternCircuitInventory.storage.getStackInSlot(0); // 返回配置的电路
             } else {
@@ -109,9 +109,9 @@ public class MEBufferPatternHelper {
         var filteredInputs = new ObjectArrayList<GenericStack>();
         boolean hasCircuit = false;
 
-        for (var input : Arrays.stream(processingPattern.getSparseInputs()).filter(Objects::nonNull).toList()) {
+        for (var input : processingPattern.getSparseInputs().stream().filter(Objects::nonNull).toList()) {
             boolean isCircuit = input.what() instanceof AEItemKey itemKey &&
-                    itemKey.getItem() == GTItems.INTEGRATED_CIRCUIT.asItem();
+                    itemKey.getItem() == GTItems.PROGRAMMED_CIRCUIT.asItem();
 
             if (isCircuit) {
                 hasCircuit = true;
@@ -131,7 +131,7 @@ public class MEBufferPatternHelper {
         }
 
         return PatternDetailsHelper.encodeProcessingPattern(
-                filteredInputs.toArray(new GenericStack[0]), processingPattern.getSparseOutputs());
+                filteredInputs, processingPattern.getSparseOutputs());
     }
 
     /**
@@ -141,7 +141,7 @@ public class MEBufferPatternHelper {
      * @return 提取的电路，如果没有则返回-1
      */
     private int extractCircuitFromPattern(AEProcessingPattern processingPattern) {
-        for (var input : Arrays.stream(processingPattern.getSparseInputs()).filter(Objects::nonNull).toList()) {
+        for (var input : processingPattern.getSparseInputs().stream().filter(Objects::nonNull).toList()) {
             if (input.what() instanceof AEItemKey itemKey) {
                 ItemStack itemStack = itemKey.toStack();
                 if (IntCircuitBehaviour.isIntegratedCircuit(itemStack)) {
@@ -162,25 +162,25 @@ public class MEBufferPatternHelper {
         var originalInputs = pattern.getSparseInputs();
         var originalOutputs = pattern.getSparseOutputs();
         var filteredInputs = new ObjectArrayList<GenericStack>();
-        GenericStack[] filteredOutputs = originalOutputs;
+        List<GenericStack> filteredOutputs = originalOutputs;
 
-        for (var input : Arrays.stream(originalInputs).filter(Objects::nonNull).toList()) {
+        for (var input : originalInputs.stream().filter(Objects::nonNull).toList()) {
             if (input.what() instanceof AEItemKey itemKey) {
-                if (itemKey.getItem() == GTItems.INTEGRATED_CIRCUIT.asItem()) {
+                if (itemKey.getItem() == GTItems.PROGRAMMED_CIRCUIT.asItem()) {
                     continue; // 跳过电路
                 }
             }
             filteredInputs.add(input);
         }
         if (filteredInputs.isEmpty()) {
-            filteredInputs.addAll(Arrays.stream(originalInputs).filter(Objects::nonNull).toList());
+            filteredInputs.addAll(originalInputs.stream().filter(Objects::nonNull).toList());
         }
 
         if (!keepByProduct) {
-            var primary = Arrays.stream(originalOutputs).filter(Objects::nonNull).findFirst();
-            if (primary.isPresent()) filteredOutputs = new GenericStack[] { primary.get() };
+            var primary = originalOutputs.stream().filter(Objects::nonNull).findFirst();
+            if (primary.isPresent()) filteredOutputs = List.of(primary.get());
         }
 
-        return PatternDetailsHelper.decodePattern(PatternDetailsHelper.encodeProcessingPattern(filteredInputs.toArray(new GenericStack[0]), filteredOutputs), level);
+        return PatternDetailsHelper.decodePattern(PatternDetailsHelper.encodeProcessingPattern(filteredInputs, filteredOutputs), level);
     }
 }

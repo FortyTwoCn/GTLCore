@@ -1,0 +1,18 @@
+{
+  "block.gtlcore_recipe_test.native_batch": "原生批处理测试机器",
+  "block.gtlcore_recipe_test.native_core_steam": "原生蒸汽测试机器",
+  "block.gtlcore_recipe_test.native_ae_pattern_buffer": "ME 样板仓",
+  "block.gtlcore_recipe_test.native_ae_large_pattern_buffer": "扩展 ME 样板仓",
+  "block.gtlcore_recipe_test.native_performance_monitor": "性能监视器",
+  "block.gtlcore_recipe_test.native_tick_probe": "计时机器",
+  "block.gtlcore_recipe_test.native_critical_tick_probe": "关键计时机器",
+  "block.gtlcore_recipe_test.native_wildcard_pattern_buffer": "通配符ME样板总成",
+  "block.gtlcore_recipe_test.native_stocking_wildcard_pattern_buffer": "库存通配符ME样板总成",
+  "block.gtlcore_recipe_test.native_super_pattern_buffer": "ME Super Pattern Buffer",
+  "block.gtlcore_recipe_test.native_wide_super_pattern_buffer": "Wide Super Pattern Buffer",
+  "block.gtlcore_recipe_test.native_tiny_super_pattern_buffer": "Small Super Pattern Buffer",
+  "block.gtlcore_recipe_test.native_infinite_fluid_rig": "无尽流体钻机",
+  "block.gtlcore_recipe_test.native_infinite_fluid_overclock": "无尽流体钻机",
+  "block.gtlcore_recipe_test.native_infinite_fluid_long": "无尽流体钻机",
+  "block.gtlcore_recipe_test.native_advanced_fluid_rig": "进阶无尽钻机"
+}

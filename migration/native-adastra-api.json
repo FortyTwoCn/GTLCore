@@ -1,0 +1,31 @@
+{
+  "minecraft": "1.21.1",
+  "neoforge": "21.1.248",
+  "ad_astra": {
+    "coordinate": "maven.modrinth:ad-astra:9pnKHdCG",
+    "sha256": "b8d1441e284db2e1e8ce5ffe739452633c90725312e476db8d8a0a4b64126856"
+  },
+  "common_storage": {
+    "coordinate": "maven.modrinth:common-storage-lib:SCkdlli6",
+    "sha256": "921bd8d255a65b5e21a5c74aa661d1ea4ed034febcfbb5939da054ce08f9d109",
+    "bundled_apis": {
+      "META-INF/jars/common-storage-lib-data-neoforge-1.21.1-0.0.10.jar": "3d2c2ddada08ed68ffdef3a77c386d7151b3c17226123579b5f7611b6c808d42",
+      "META-INF/jars/common-storage-lib-resources-neoforge-1.21.1-0.0.10.jar": "f8912dc82f149d29ef5f0c178d7641a968bc668ef8559a0b1df362e1f6186cff",
+      "META-INF/jars/common-storage-lib-lookup-neoforge-1.21.1-0.0.10.jar": "e47e9ab127d6a15e53210b78affa045c1e24f39ca128f6e09794d669c440e801"
+    }
+  },
+  "verified_native_signatures": [
+    "SimpleFluidStorage.filter(int, Predicate<FluidResource>)",
+    "FluidResource.isOf(Fluid)",
+    "FluidAmounts.toPlatformAmount(long)",
+    "Rocket.consumeFuel(boolean): boolean"
+  ],
+  "preserved_rules": "Seven original tier fuel assignments; 16000 mB tank and launch cost on NeoForge; simulation still owned by native Rocket.consumeFuel",
+  "runtime_status": "Complete production Core materials, Ad Astra and the fixed-source native Rocketed port are loaded together. Seven real tiers passed native world fuel capacity/filter, component/NBT reload, launch-pad placement and exact 16000 mB consumption tests; physical planet travel and client renderer validation remain pending.",
+  "production_validation": {
+    "date": "2026-10-05",
+    "test_source": "GTLAdditions/migration/production-tests/src/main/java/com/gtladd/gtladditions/migration/NativeProductionRocketGameTests.java",
+    "last_pass_log": "gtl-dual-production-machines-03.log",
+    "scope": "Actual registered rocket items/entities and material fluids; not a completed planet journey"
+  }
+}

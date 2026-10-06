@@ -7,9 +7,9 @@ import org.gtlcore.gtlcore.config.ConfigHolder;
 import org.gtlcore.gtlcore.integration.ae2.graph.core.*;
 
 import net.minecraft.world.level.Level;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.CalculationStrategy;
@@ -26,7 +26,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-@Mod.EventBusSubscriber(modid = GTLCore.MOD_ID)
+@EventBusSubscriber(modid = GTLCore.MOD_ID)
 public final class CraftingEngineRouter {
 
     private CraftingEngineRouter() {}
@@ -146,7 +146,7 @@ public final class CraftingEngineRouter {
         GraphPlanningRequest result = new GraphPlanningRequest(budget);
         if (ConfigHolder.INSTANCE.ae2GraphDiagnosticLogging) budget.enableMetrics();
         CompletableFuture<GtlPatternCatalog.Snapshot> snapshot = new CompletableFuture<>();
-        var work = new RequestWork(grid, snapshot, target, amount, strategy, budget, checkpoint, preserve, result);
+        var work = new RequestWork(level.registryAccess(), grid, snapshot, target, amount, strategy, budget, checkpoint, preserve, result);
         // Admit before collecting world data; rejected/cancelled requests never collect a snapshot.
         var worker = scheduler().submit(work, budget);
         result.attach(worker);
@@ -218,9 +218,12 @@ public final class CraftingEngineRouter {
         private AeGraphPlan result;
         private CatalystPolicy catalysts = CatalystPolicy.MINIMAL;
 
-        private RequestWork(IGrid grid, CompletableFuture<GtlPatternCatalog.Snapshot> capture, AEKey target, long amount,
+        private final net.minecraft.core.RegistryAccess registries;
+
+        private RequestWork(net.minecraft.core.RegistryAccess registries, IGrid grid, CompletableFuture<GtlPatternCatalog.Snapshot> capture, AEKey target, long amount,
                             CalculationStrategy strategy, PlanningBudget budget,
                             GraphJobRuntime.ReplanCheckpoint<AEKey> checkpoint, boolean preserve, GraphPlanningRequest request) {
+            this.registries = registries;
             this.grid = grid;
             this.capture = capture;
             this.target = target;
@@ -359,7 +362,7 @@ public final class CraftingEngineRouter {
             Map<AEKey, Long> extractionStock = new LinkedHashMap<>(available);
             if (directEmission && checkpoint == null) extractionStock.remove(target);
             long assemblyStarted = System.nanoTime();
-            result = new AeGraphPlan(selected, prepared.bindings(), snapshot.emitable(), extractionStock, fallbackMode);
+            result = new AeGraphPlan(selected, prepared.bindings(), snapshot.emitable(), extractionStock, fallbackMode, registries);
             long assemblyNanos = System.nanoTime() - assemblyStarted;
             long skipped = ConfigHolder.INSTANCE.ae2GraphDiagnosticLogging ? logAllowance(grid,
                     new PlanLogKey(target, amount, strategy, selected.result(), snapshot.epoch(), selected.missingExact().hashCode())) : -1;
