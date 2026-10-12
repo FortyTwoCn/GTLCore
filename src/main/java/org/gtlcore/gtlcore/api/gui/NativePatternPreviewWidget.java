@@ -11,6 +11,8 @@ import brachy.modularui.integration.recipeviewer.entry.EntryList;
 import brachy.modularui.integration.recipeviewer.entry.item.ItemStackList;
 import brachy.modularui.integration.recipeviewer.RecipeSlotRole;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.Minecraft;
+import java.util.Optional;
 import org.gtlcore.gtlcore.client.preview.PreviewMaterialHighlights;
 
 /** Embeds the production LDLib 1.21 scene and controls in GT's native ModularUI recipe-viewer API. */
@@ -42,7 +44,20 @@ public final class NativePatternPreviewWidget extends Widget<NativePatternPrevie
         wrapper.draw(context.getGraphics(), context.getMouseX(), context.getMouseY(), context.getRenderPartialTicks());
     }
     @Override public void drawForeground(ModularGuiContext context) {
-        preview.drawInForeground(context.getGraphics(), context.getMouseX(), context.getMouseY(), context.getRenderPartialTicks());
+        // LDLib queues hover text while drawing the embedded scene. Its JEI wrapper
+        // leaves tooltip rendering to the host, so draw that queue in MUI's foreground.
+        if (wrapper.tooltipTexts == null || wrapper.tooltipTexts.isEmpty()) return;
+        var graphics = context.getGraphics();
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().translate(context.getMouseX() - context.getAbsMouseX(),
+                    context.getMouseY() - context.getAbsMouseY(), 0);
+            graphics.renderTooltip(wrapper.tooltipFont == null ? Minecraft.getInstance().font : wrapper.tooltipFont,
+                    wrapper.tooltipTexts, Optional.ofNullable(wrapper.tooltipComponent),
+                    context.getAbsMouseX(), context.getAbsMouseY());
+        } finally {
+            graphics.pose().popPose();
+        }
     }
     @Override public Result onMousePressed(int button) {
         return preview.mouseClicked(getContext().getMouseX(), getContext().getMouseY(), button) ? Result.SUCCESS : Result.IGNORE;

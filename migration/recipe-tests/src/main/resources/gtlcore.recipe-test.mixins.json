@@ -4,6 +4,7 @@
   "package": "org.gtlcore.gtlcore.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "modularui.MenuCloseMixin",
     "mc.LevelChunkMixin",
     "gtm.gui.MachineModeFancyConfiguratorMixin",
     "gtm.gui.FancyMachineUIWidgetMixin",

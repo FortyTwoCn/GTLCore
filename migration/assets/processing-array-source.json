@@ -1,0 +1,24 @@
+{
+  "source_repository": "https://github.com/GregTechCEu/GregTech",
+  "revision": "52c04cd7bf03e5749a653580c12ef5856cc12e31",
+  "license": "LGPL-3.0",
+  "purpose": "Restore the original processing-array front overlays used by the generator array; the native GTCEu JAR no longer supplies them.",
+  "files": {
+    "overlay_front.png": {
+      "source": "https://raw.githubusercontent.com/GregTechCEu/GregTech/52c04cd7bf03e5749a653580c12ef5856cc12e31/src/main/resources/assets/gregtech/textures/blocks/multiblock/processing_array/overlay_front.png",
+      "sha256": "42713cc07f8c416f4a3ad9cb8432cf1dc8a9b2a05f1cda3af49170c5285faf28"
+    },
+    "overlay_front_emissive.png": {
+      "source": "https://raw.githubusercontent.com/GregTechCEu/GregTech/52c04cd7bf03e5749a653580c12ef5856cc12e31/src/main/resources/assets/gregtech/textures/blocks/multiblock/processing_array/overlay_front_emissive.png",
+      "sha256": "3b9462acc64cc686f8ada862aa23365768fb7474ba99fb36905413c988567867"
+    },
+    "overlay_front_active.png": {
+      "source": "https://raw.githubusercontent.com/GregTechCEu/GregTech/52c04cd7bf03e5749a653580c12ef5856cc12e31/src/main/resources/assets/gregtech/textures/blocks/multiblock/processing_array/overlay_front_active.png",
+      "sha256": "51a7618d5fb3b6e9919c4b215cc8402be551927a55adbb706973aff24a7bca5f"
+    },
+    "overlay_front_active_emissive.png": {
+      "source": "https://raw.githubusercontent.com/GregTechCEu/GregTech/52c04cd7bf03e5749a653580c12ef5856cc12e31/src/main/resources/assets/gregtech/textures/blocks/multiblock/processing_array/overlay_front_active_emissive.png",
+      "sha256": "ce3c72017ae81d528e29dceab8d882c5db3079b3e40bf38e7ed742784d634d61"
+    }
+  }
+}

@@ -3,6 +3,7 @@ package org.gtlcore.gtlcore.api.pattern;
 import org.gtlcore.gtlcore.common.item.UltimateTerminalBehavior.AutoBuildSetting;
 import org.gtlcore.gtlcore.integration.ae2.WirelessTerminalGridResolver;
 import org.gtlcore.gtlcore.integration.terminal.TerminalMaterials;
+import org.gtlcore.gtlcore.api.gui.preview.NativePreviewBlockMap;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.multiblock.MultiPredicate;
 import com.gregtechceu.gtceu.api.multiblock.PredicateContext;
@@ -63,10 +64,17 @@ public final class AdvancedBlockPattern {
         throw new IllegalArgumentException("Unsupported native pattern implementation: " + pattern.getClass().getName());
     }
     private void preferences(AbstractStructureHelper helper, MultiPredicate predicate, AutoBuildSetting settings) {
+        boolean hasCasing = bases(predicate).stream().flatMap(base -> base.getCandidates().stream())
+                .anyMatch(info -> info.nonAir() && !AutoBuildSetting.isHatch(info.getBlockState().getBlock()));
+        preferences(helper, predicate, settings, hasCasing);
+    }
+    private void preferences(AbstractStructureHelper helper, MultiPredicate predicate, AutoBuildSetting settings, boolean hasCasing) {
         for (var base : predicate.predicates()) {
             var candidates = base.getCandidates();
             if (settings.isNoHatchMode() && !candidates.isEmpty() && candidates.stream().allMatch(info -> AutoBuildSetting.isHatch(info.getBlockState().getBlock()))) {
-                helper.getBlockPreferences().put(predicate, base, BlockInfo.EMPTY); continue;
+                if (hasCasing) helper.getMinMaxPreferences().put(predicate, base, IntIntPair.of(0, 0));
+                else helper.getBlockPreferences().put(predicate, base, BlockInfo.EMPTY);
+                continue;
             }
             for (var candidate : candidates) {
                 var selected = settings.selectedReplacement(candidate.getBlockState().getBlock());
@@ -75,13 +83,13 @@ public final class AdvancedBlockPattern {
                 if (replacement.isPresent()) helper.getBlockPreferences().put(predicate, base, replacement.get());
             }
         }
-        for (var child : predicate.children()) preferences(helper, child, settings);
+        for (var child : predicate.children()) preferences(helper, child, settings, hasCasing);
     }
     public Map<BlockPos, BlockInfo> plan(BlockPos center, Direction front, Direction up, AutoBuildSetting settings) {
         return plan(center, front, up, settings, null);
     }
     private Map<BlockPos, BlockInfo> plan(BlockPos center, Direction front, Direction up, AutoBuildSetting settings, @Nullable Level level) {
-        var helper = helper(settings); var schema = new LinkedHashMap<BlockPos, BlockInfo>();
+        var helper = helper(settings); var schema = new NativePreviewBlockMap();
         if (pattern instanceof BlockPattern block) {
             for (var predicate : block.getPredicates().values()) preferences(helper, predicate, settings);
         } else {
@@ -213,7 +221,7 @@ public final class AdvancedBlockPattern {
     }
     private static boolean matches(Level level, BlockPos pos, MultiPredicate predicate) {
         var context = new PredicateContext(null); context.updateLevel(level); context.updatePos(pos);
-        predicate.resetLogic(); return predicate.getPredicateAtPos(context) != null;
+        predicate.resetLogic(); return NativePredicateMatch.test(predicate, context);
     }
     private static int scoreSlice(Level level, BlockPattern block, BlockPos center, Direction front, Direction up,
                                   boolean flipped, int sliceIndex, int offset) {
