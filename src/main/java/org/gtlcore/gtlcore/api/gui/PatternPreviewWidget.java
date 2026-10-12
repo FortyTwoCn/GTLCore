@@ -170,6 +170,7 @@ public class PatternPreviewWidget extends WidgetGroup {
                 }
             }
                     .setOnSelected(this::onPosSelected)
+                    .setHoverTips(true)
                     .setRenderFacing(false)
                     .setRenderFacing(false));
 
@@ -486,7 +487,7 @@ public class PatternPreviewWidget extends WidgetGroup {
     private boolean hiddenWhenFormed(BlockPos pos, @Nullable MultiPredicate predicate) {
         if (predicate == null) return false;
         var context = new PredicateContext(null); context.updateLevel(LEVEL); context.updatePos(pos);
-        predicate.resetLogic(); var actual = predicate.getPredicateAtPos(context);
+        predicate.resetLogic(); var actual = org.gtlcore.gtlcore.api.pattern.NativePredicateMatch.atPosition(predicate, context);
         return actual != null && actual.isDisableRenderFormed();
     }
 

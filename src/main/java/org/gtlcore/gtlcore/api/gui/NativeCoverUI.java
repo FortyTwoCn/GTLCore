@@ -44,7 +44,13 @@ public final class NativeCoverUI {
                             .syncHandler(new InteractionSyncHandler().setOnMousePressed(mouse -> {
                                 if (mouse.isClient() || !(manager.getPlayer() instanceof ServerPlayer player)) return;
                                 var cover = covers.getCoverAtSide(side);
-                                if (cover instanceof IMuiCover uiCover && !uiCover.isRemoved()) CoverUIFactory.INSTANCE.open(player, uiCover);
+                                if (cover instanceof IMuiCover uiCover && !uiCover.isRemoved()) {
+                                    // A vanilla close packet makes MUI close every screen, including
+                                    // the cover GUI that is about to open. Complete server cleanup
+                                    // without that intermediate client transition.
+                                    player.doCloseContainer();
+                                    CoverUIFactory.INSTANCE.open(player, uiCover);
+                                }
                             }))));
         }
         return new Dialog<>("gtlcoreCoverSettings").size(145, 160).draggable(true).closeOnOutOfBoundsClick(true)

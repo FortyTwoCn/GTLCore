@@ -16,6 +16,38 @@ import net.neoforged.neoforge.gametest.*;
 @PrefixGameTestTemplate(false)
 public final class NativeConfiguratorLayoutGameTests {
     @GameTest(template = "empty", batch = "gtl_native_multiblocks", timeoutTicks = 100)
+    public static void closingAnOldNativeMenuPreservesItsReplacementAndStillClosesTheCurrentMenu(GameTestHelper helper) {
+        var player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        var previous = nativeMenu(player, 97, "previousMenu");
+        var replacement = nativeMenu(player, 98, "replacementMenu");
+        var network = brachy.modularui.network.ModularNetwork.SERVER;
+        int previousId = network.activate(player, previous.getSyncManager());
+        int replacementId = network.activate(player, replacement.getSyncManager());
+        player.containerMenu = replacement;
+        network.closeContainer(previousId, true, player, false);
+        helper.assertTrue(player.containerMenu == replacement && previous.getSyncManager().isDisposed(),
+                "Closing a previous GUI closed its replacement or retained the previous sync manager");
+        network.closeContainer(Integer.MAX_VALUE, false, player, false);
+        helper.assertTrue(player.containerMenu == replacement, "An unknown GUI close notification closed the active menu");
+        network.closeContainer(replacementId, true, player, false);
+        helper.assertTrue(player.containerMenu == player.inventoryMenu && replacement.getSyncManager().isDisposed(),
+                "A matching close notification failed to close and dispose the current menu");
+        helper.succeed();
+    }
+
+    private static ModularContainerMenu nativeMenu(net.minecraft.server.level.ServerPlayer player, int id, String name) {
+        var sync = new ModularSyncManager(false);
+        var manager = new PanelSyncManager(sync, true);
+        var panel = new brachy.modularui.screen.ModularPanel<>(name).size(32, 32);
+        WidgetTree.collectSyncValues(manager, panel);
+        var menu = new ModularContainerMenu(id);
+        menu.construct(player, sync, new UISettings(brachy.modularui.api.RecipeViewerSettings.DUMMY), name,
+                new PosGuiData(player, player.blockPosition()));
+        sync.onOpen();
+        return menu;
+    }
+
+    @GameTest(template = "empty", batch = "gtl_native_multiblocks", timeoutTicks = 100)
     public static void actualPatternCacheFlagsSyncThroughNativeDataHolderWithoutLosingTheFollowingField(GameTestHelper helper) {
         var pos = new BlockPos(4, 3, 4); helper.setBlock(pos, NativeAePatternFixtures.LARGE_BUFFER.getBlock());
         var host = (org.gtlcore.gtlcore.common.machine.multiblock.part.ae.MEPatternBufferPartMachine) helper.getBlockEntity(pos);

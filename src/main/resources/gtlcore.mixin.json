@@ -334,6 +334,7 @@
     "gtm.api.recipe.NativeModifierFunctionMixin",
     "gtm.registry.GTMachineUtilsMixin",
     "modularui.HeldItemMenuMixin",
+    "modularui.MenuCloseMixin",
     "gtm.api.machine.trait.CleanroomReceiverTraitAccessor",
     "gtm.machine.HPCAComponentTraitMixin",
     "gtm.api.machine.NativeMultiblockLifecycleMixin",

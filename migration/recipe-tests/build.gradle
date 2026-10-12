@@ -425,6 +425,8 @@ sourceSets.main.java {
     include 'org/gtlcore/gtlcore/common/block/BlockMap.java'
     include 'org/gtlcore/gtlcore/api/gui/BlockMapSelectorWidget.java'
     include 'org/gtlcore/gtlcore/api/pattern/AdvancedBlockPattern.java'
+    include 'org/gtlcore/gtlcore/api/pattern/NativePredicateMatch.java'
+    include 'org/gtlcore/gtlcore/mixin/modularui/MenuCloseMixin.java'
     include 'org/gtlcore/gtlcore/api/pattern/FixedPatternLayout.java'
     include 'org/gtlcore/gtlcore/api/pattern/PatternLayoutSearch.java'
     include 'org/gtlcore/gtlcore/api/pattern/WorldPatternMatcher.java'
