@@ -626,7 +626,7 @@
   "tooltip.gtlcore.supports_dimensions": "Supports Overworld, Nether, End",
   "tooltip.gtlcore.this_module": "This module",
   "tooltip.gtlcore.turbine_rotor_only": "Only turbine rotors can be placed",
-  "ftbultimine.shape.area": "Shapeless (Area)",
+  "ftbultimine.shape.gtlcore.area": "Shapeless (Area)",
   "gtlcore.ae.craft.create_times": "Create Times: %d",
   "gtlcore.ae.craft.used_percent": "Used: %s",
   "gtlcore.ae.craft.stock_taken": "Stock consumed by other jobs, now missing",

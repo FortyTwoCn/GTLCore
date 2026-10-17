@@ -1,5 +1,7 @@
 # GTLCore / GTLAdditions 原生 NeoForge 迁移
 
+2026-10-17 前置更新：当前版本使用 AE2 19.2.17 / AE2WTLib 19.5.1，Travel Anchors 联动已迁移到可选的 Ender IO。当前依赖用途、原生版本和安装要求见 [前置更新说明](dependency-update-20261017.md)。下文的历史验收数据保留其原始版本，不能视为本次制品的验收结果。
+
 状态：完整主源码已原生移植、构建并完成本文列出的本地验收。最终生产 JAR 在普通 NeoForge 安装器服务器中启动、保存 24 个维度并从磁盘重载；物理客户端完成菜单、指南公式、资源重载和无线终端检查。完整世界、148 个原始结构、独立 TCP 交互及关键付费加工另有明确证据。已知 JVM 崩溃的根因仍未确认，覆盖边界与诊断参数须一并阅读；这些记录不证明所有配方、并发玩家或长期负载均已验证。
 
 最终证据：[独立构建](validation/fresh-build-final/evidence.json)、[完整世界及可选集成](validation/full-production-world/final-optional-integrations/evidence.json)、[独立联机与实际重启](validation/full-production-dedicated/wireless-rocket-elevator-bloom/evidence.json)、[普通安装器服务器](validation/packaged-server/packaged-server-evidence.json)、[普通安装器客户端](validation/packaged-client/evidence.json)。运行闭包共 35 个顶层 JAR，生产构建不包含测试模组。最后两处显示文本修正后，2,470 个生产类的字节码与完整运行验收版本逐项相同。

@@ -31,7 +31,8 @@ neoForge {
 dependencies {
     implementation(forge.ae2)
     compileOnly(forge.bundles.jei)
-    compileOnly('maven.modrinth:applied-energistics-2-wireless-terminals:6feJ9h09')
+    compileOnly('maven.modrinth:applied-energistics-2-wireless-terminals:CxSEpEnO')
+    compileOnly('de.mari_023:ae2wtlib_api:19.5.1') { transitive = false }
 }
 tasks.register('verifyNativeSource') {
     doLast {

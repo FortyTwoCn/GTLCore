@@ -21,18 +21,3 @@ includeBuild('../dependencies/gtmthings') {
         substitute module('com.hepdd.gtmthings:gtmthings') using project(':')
     }
 }
-
-includeBuild('../dependencies/ae2wtlib') {
-    name = 'ae2wtlib-native'
-    dependencySubstitution {
-        substitute module('maven.modrinth:applied-energistics-2-wireless-terminals') using project(':')
-        substitute module('de.mari_023:ae2wtlib_api') using project(':ae2wtlib_api')
-    }
-}
-
-includeBuild('../dependencies/ftbultimine') {
-    name = 'ftbultimine-native'
-    dependencySubstitution {
-        substitute module('dev.ftb.mods:ftb-ultimine-neoforge') using project(':')
-    }
-}

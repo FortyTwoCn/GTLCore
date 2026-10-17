@@ -3,6 +3,8 @@ package org.gtlcore.gtlcore.migration;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 import dev.ftb.mods.ftbultimine.FTBUltiminePlayerData;
 import dev.ftb.mods.ftbultimine.shape.*;
+import dev.ftb.mods.ftbultimine.api.shape.Shape;
+import dev.ftb.mods.ftbultimine.api.shape.ShapeContext;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.level.block.Blocks;
@@ -23,8 +25,8 @@ public final class NativeUltimineGameTests {
         int previousRange = ConfigHolder.INSTANCE.ftbUltimineRange;
         try {
             Shape area = null;
-            for (int i = 0; i < ShapeRegistry.shapeCount(); i++) {
-                if (ShapeRegistry.getShape(i).getName().equals("area")) area = ShapeRegistry.getShape(i);
+            for (int i = 0; i < ShapeRegistry.INSTANCE.shapeCount(); i++) {
+                if (ShapeRegistry.INSTANCE.getShape(i).getName().equals(net.minecraft.resources.ResourceLocation.parse("gtlcore:area"))) area = ShapeRegistry.INSTANCE.getShape(i);
             }
             helper.assertTrue(area instanceof org.gtlcore.gtlcore.integration.ftbu.AreaShape,
                     "Production area shape was not registered in the native Ultimine registry");
@@ -33,7 +35,7 @@ public final class NativeUltimineGameTests {
             helper.setBlock(center.offset(0, 0, 2), Blocks.DIRT);
             var absolute = helper.absolutePos(center); var far = helper.absolutePos(other);
             var context = new ShapeContext(player(helper), absolute, Direction.UP,
-                    Blocks.STONE.defaultBlockState(), BlockMatcher.MATCH, 8);
+                    Blocks.STONE.defaultBlockState(), BlockMatchers.MATCH_BY_BLOCK, 8);
             ConfigHolder.INSTANCE.ftbUltimineRange = 1;
             helper.assertTrue(area.getBlocks(context).equals(List.of(absolute)),
                     "Area traversal crossed a gap larger than the configured native range");
@@ -42,7 +44,7 @@ public final class NativeUltimineGameTests {
             helper.assertTrue(expanded.equals(List.of(absolute, far)),
                     "Changing the range did not refresh native area traversal, distance ordering or block matching");
             var limited = new ShapeContext(context.player(), absolute, Direction.UP,
-                    context.original(), context.matcher(), 1);
+                    context.origState(), context.matcher(), 1);
             helper.assertTrue(area.getBlocks(limited).equals(List.of(absolute)),
                     "Production area ignored the native maximum-block limit");
             helper.succeed();

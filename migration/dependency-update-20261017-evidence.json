@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-17",
+  "minecraft": "1.21.1",
+  "neoforge": "21.1.248",
+  "java": 21,
+  "ae2": "19.2.17",
+  "ae2wtlib": "19.5.1",
+  "ftbultimine": "2101.1.7",
+  "enderio_optional": "8.2.12-beta",
+  "unit_tests": {
+    "core_preview": 2,
+    "core_native_migration": 14,
+    "failures": 0,
+    "actually_executed": true
+  },
+  "physical_client": {
+    "production_jars": [
+      "GregTech-Modern",
+      "GTMThings",
+      "GTLCore",
+      "GTLAdditions"
+    ],
+    "travelanchors_installed": false,
+    "without_enderio": [
+      "AE2 19.2.17 / WTLib 19.5.1: GTL terminal registration, installed components and 0/4 upgrade-slot counts",
+      "Ultimine 2101.1.7: area registration, configured gap traversal, max-block limit and wildcard blacklist",
+      "All four production mods entered world with Ender IO and Travel Anchors absent",
+      "COMPLETE"
+    ],
+    "with_enderio": [
+      "AE2 19.2.17 / WTLib 19.5.1: GTL terminal registration, installed components and 0/4 upgrade-slot counts",
+      "Ultimine 2101.1.7: area registration, configured gap traversal, max-block limit and wildcard blacklist",
+      "Ender IO real blink: player teleported; configured cooldown expires at exactly 2 and 9 ticks",
+      "Ender IO real travel anchor: registered target, successful teleport and exact 7-tick cooldown",
+      "COMPLETE"
+    ],
+    "harness": "Separate temporary DevLaunch probe, excluded from production jars",
+    "profile": "GregTech Leisure registration/resource slice, existing 1.21.1 compatibility world",
+    "coverage": [
+      "GTL terminal registration and actual WTLib upgrade inventory",
+      "Ultimine range refresh, maximum blocks, wildcard blacklist in real player data",
+      "Ender IO blink with exact 2/9-tick cooldown expiry",
+      "Real Ender IO travel anchor registration, teleport and exact 7-tick cooldown expiry"
+    ]
+  },
+  "limits": [
+    "Ender IO remote-interaction cooldown call is covered by the same strict 3-call injection; its interaction feature was not exercised.",
+    "Full modpack scripts, long-running worlds and dedicated multiplayer were not revalidated.",
+    "The previously recorded required startup-budget GameTest failure was not addressed or rerun by this dependency update."
+  ],
+  "logs_sha256": {
+    "dependency-refresh-core-check.log": "4a451134ae01f0121b651332a9d7488f723cb2e6631e0480ac2c4344a25bd4cd",
+    "dependency-refresh-additions-check.log": "b812f5b1c5972ffbf605717d42a57eb70d414d6681fe64ef436282d62e5a6a73",
+    "dependency-refresh-client-absent.log": "7d52d5b9c4a3901a5f8e9723b1a8ca343217d9716fb4787e38ede1bc2f3005f0",
+    "dependency-refresh-client-enderio.log": "414dc6ddeb5b85326af32ee1f7be7d5fd8f97fc1ded5b7269a9fa20b6808514b"
+  },
+  "native_recipe_test_sources_compile": "PASS (classes task, GameTests not rerun)",
+  "final_production_class_comparison": {
+    "GTLCore": 1893,
+    "GTLAdditions": 579,
+    "all_identical_to_tested_classes": true
+  }
+}

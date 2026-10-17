@@ -3,12 +3,12 @@ package org.gtlcore.gtlcore.integration.ftbu;
 import org.gtlcore.gtlcore.config.ConfigHolder;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 
-import dev.ftb.mods.ftbultimine.EntityDistanceComparator;
-import dev.ftb.mods.ftbultimine.shape.BlockMatcher;
-import dev.ftb.mods.ftbultimine.shape.Shape;
-import dev.ftb.mods.ftbultimine.shape.ShapeContext;
-import dev.ftb.mods.ftbultimine.shape.ShapeRegistry;
+import dev.ftb.mods.ftbultimine.api.shape.RegisterShapeEvent;
+import dev.ftb.mods.ftbultimine.api.shape.Shape;
+import dev.ftb.mods.ftbultimine.api.shape.ShapeContext;
+import dev.ftb.mods.ftbultimine.utils.EntityDistanceComparator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.antlr.v4.runtime.misc.OrderedHashSet;
 
@@ -17,7 +17,7 @@ import java.util.*;
 public class AreaShape implements Shape {
 
     public static void register() {
-        ShapeRegistry.register(new AreaShape());
+        RegisterShapeEvent.REGISTER.register(registry -> registry.register(new AreaShape()));
     }
 
     private static final class Neighbor {
@@ -49,8 +49,8 @@ public class AreaShape implements Shape {
     private static final AreaShape.Neighbor NEIGHBOR_POSITIONS = new AreaShape.Neighbor(0);
 
     @Override
-    public String getName() {
-        return "area";
+    public ResourceLocation getName() {
+        return ResourceLocation.fromNamespaceAndPath("gtlcore", "area");
     }
 
     @Override
@@ -63,7 +63,7 @@ public class AreaShape implements Shape {
         walk(context, known);
 
         List<BlockPos> list = new ArrayList<>(known);
-        list.sort(new EntityDistanceComparator(context.pos()));
+        list.sort(new EntityDistanceComparator(context.origPos()));
 
         if (list.size() > context.maxBlocks()) {
             list.subList(context.maxBlocks(), list.size()).clear();
@@ -75,8 +75,8 @@ public class AreaShape implements Shape {
     private static void walk(ShapeContext context, Set<BlockPos> known) {
         LongOpenHashSet traversed = new LongOpenHashSet();
         Deque<BlockPos> openSet = new ArrayDeque<>();
-        openSet.add(context.pos());
-        traversed.add(context.pos().asLong());
+        openSet.add(context.origPos());
+        traversed.add(context.origPos().asLong());
 
         while (!openSet.isEmpty()) {
             BlockPos ptr = openSet.pop();
@@ -98,7 +98,7 @@ public class AreaShape implements Shape {
     }
 
     @Override
-    public BlockMatcher getTagMatcher() {
-        return BlockMatcher.TAGS_MATCH_SHAPELESS;
+    public boolean isIndeterminateShape() {
+        return true;
     }
 }

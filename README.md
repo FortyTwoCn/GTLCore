@@ -1,13 +1,15 @@
 # GTLCore — Minecraft 1.21.1 NeoForge
 
-本分支是 GTLCore skyblock **1.2.3.2-fix3** 的原生 NeoForge 移植，配套
+本分支是 GTLCore skyblock **1.2.3.2-fix4** 的原生 NeoForge 移植，配套
 [GTLAdditions 1.21.1](https://github.com/FortyTwoCn/GTLAdditions/tree/1.21.1)。
 机器、配方、菜单、物品组件、网络、AE2/GTCEu 集成及多方块均使用 1.21.1 原生 API。
 
 ## 安装
 
 使用 **Minecraft 1.21.1、NeoForge 21.1.248 和 Java 21**。
-在 [本次预发布](https://github.com/FortyTwoCn/GTLCore/releases/tag/neoforge-1.21.1-1.2.3.2-fix3-preview.1) 下载：
+当前模组下载：[GTLCore fix4](https://github.com/FortyTwoCn/GTLCore/releases/tag/neoforge-1.21.1-1.2.3.2-fix4-deps.20261017)、[GTLAdditions fix3](https://github.com/FortyTwoCn/GTLAdditions/releases/tag/neoforge-1.21.1-3.2.8Custom-fix3-deps.20261017)。AE2 至少 19.2.17、AE2WTLib 19.5.1、FTB Ultimine 至少 2101.1.7；旅行法杖冷却改为可选 Ender IO 8.2.12-beta 联动。完整说明见 [前置用途与升级步骤](migration/dependency-update-20261017.md)。
+
+以下历史预览包提供其余固定依赖和注册脚本。运行包内的旧 Core、Additions、AE2、AE2WTLib 及 Ultimine 需要按上述说明替换，删除旧 Travel Anchors 和顶层 AE2WTLib API JAR：
 
 1. [native-runtime-mods.zip](https://github.com/FortyTwoCn/GTLCore/releases/download/neoforge-1.21.1-1.2.3.2-fix3-preview.1/native-runtime-mods.zip)：解压到游戏目录，包含两个模组与固定依赖，共 35 个顶层运行 JAR。
 2. [required-kubejs-profile.zip](https://github.com/FortyTwoCn/GTLCore/releases/download/neoforge-1.21.1-1.2.3.2-fix3-preview.1/required-kubejs-profile.zip)：解压到同一目录，保留其中的 `kubejs/` 与 `config/`。

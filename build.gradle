@@ -75,12 +75,12 @@ dependencies {
     implementation('maven.modrinth:resourceful-config:lSbyRD6v')
     implementation('maven.modrinth:common-storage-lib:SCkdlli6')
     implementation('maven.modrinth:extended-ae:bC302UUP')
-    implementation('maven.modrinth:applied-energistics-2-wireless-terminals:6feJ9h09')
+    implementation('maven.modrinth:applied-energistics-2-wireless-terminals:CxSEpEnO')
     // The implementation bundles this API for runtime; expose its published artifact to javac.
-    compileOnly('de.mari_023:ae2wtlib_api:19.2.0') { transitive = false }
+    compileOnly('de.mari_023:ae2wtlib_api:19.5.1') { transitive = false }
     implementation('maven.modrinth:glodium:pfbmdJ3b')
     implementation('maven.modrinth:guideme:hFpGwC6q')
-    // 1.2.0 is the newest native release compatible with the reference AE2 19.2.8 API.
+    // Keep ME Requester on its compatible 1.2.0 API while updating AE2/WTLib.
     implementation('maven.modrinth:merequester:E46AplqZ')
     implementation('maven.modrinth:re-avaritia:uY1x1LTC')
     compileOnly(forge.bundles.kjs)
@@ -97,8 +97,11 @@ dependencies {
     compileOnly(forge.ftblibrary)
     compileOnly(forge.ftbteams)
     compileOnly(forge.ftbchunks)
-    implementation('dev.ftb.mods:ftb-ultimine-neoforge:2101.1.1')
-    implementation('org.gtlcore.dependencies:travelanchors-neoforge:6.0.0-gtl.1')
+    implementation('curse.maven:ftb-ultimine-forge-386134:6846404') // NeoForge 2101.1.7
+    implementation('dev.architectury:architectury-neoforge:13.0.6')
+    runtimeOnly(forge.ftblibrary)
+    // Optional Ender IO travel-staff cooldown integration; no Travel Anchors port is needed.
+    compileOnly('maven.modrinth:enderio:2bHl1dCW')
     implementation('org.gtlcore.dependencies:mae2-neoforge:2.1.0-gtl.1')
     implementation('org.gtlcore.dependencies:wildcard-pattern-neoforge:0.1.2-gtl.1')
     runtimeOnly(forge.bundles.kjs)

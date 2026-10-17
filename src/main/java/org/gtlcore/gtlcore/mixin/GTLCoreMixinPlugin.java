@@ -32,6 +32,7 @@ public final class GTLCoreMixinPlugin implements IMixinConfigPlugin {
         // PredicateResult-based GT versions perform the count checks through their native
         // result chain. The older BasePredicate callback cannot intercept that return type.
         if (mixin.endsWith(".TraceabilityPredicateMixin")) return legacyPredicateApi(target);
+        if (mixin.startsWith("org.gtlcore.gtlcore.mixin.enderio.")) return loaded("enderio");
         if (target.startsWith("dev.emi.")) return loaded("emi");
         if (target.startsWith("com.neuvillette.ae2ct.")) return loaded("ae2ct");
         if (target.startsWith("dev.ftb.mods.ftbchunks.")

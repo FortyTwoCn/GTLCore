@@ -871,7 +871,7 @@ dependencies {
     additionalRuntimeClasspath 'com.github.ben-manes.caffeine:caffeine:3.1.8'
     implementation(forge.ftbchunks)
     implementation(forge.ftbteams)
-    implementation('dev.ftb.mods:ftb-ultimine-neoforge:2101.1.1')
+    implementation('curse.maven:ftb-ultimine-forge-386134:6846404')
     implementation('maven.modrinth:re-avaritia:uY1x1LTC')
     implementation('com.gregtechceu.gtceu:gtceu-1.21.1:8.0.0')
     implementation('com.hepdd.gtmthings:gtmthings:1.6.0')
@@ -885,7 +885,8 @@ dependencies {
     implementation('maven.modrinth:guideme:hFpGwC6q')
     implementation('maven.modrinth:glodium:pfbmdJ3b')
     implementation('maven.modrinth:extended-ae:bC302UUP')
-    implementation('maven.modrinth:applied-energistics-2-wireless-terminals:6feJ9h09')
+    implementation('maven.modrinth:applied-energistics-2-wireless-terminals:CxSEpEnO')
+    compileOnly('de.mari_023:ae2wtlib_api:19.5.1') { transitive = false }
     compileOnly('top.theillusivec4.curios:curios-neoforge:9.4.2+1.21.1:api')
     implementation('maven.modrinth:jade:15.10.0+neoforge')
     implementation('thedarkcolour:kotlinforforge-neoforge:5.7.0')

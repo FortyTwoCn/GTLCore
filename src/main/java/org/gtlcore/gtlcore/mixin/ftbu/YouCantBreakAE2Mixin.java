@@ -5,7 +5,7 @@ import org.gtlcore.gtlcore.utils.Registries;
 import org.gtlcore.gtlcore.utils.TextUtil;
 
 import dev.ftb.mods.ftbultimine.FTBUltiminePlayerData;
-import dev.ftb.mods.ftbultimine.shape.BlockMatcher;
+import dev.ftb.mods.ftbultimine.api.shape.ShapeContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -17,9 +17,9 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 public abstract class YouCantBreakAE2Mixin {
 
     @ModifyArg(method = "updateBlocks", at = @At(value = "INVOKE",
-            target = "Ldev/ftb/mods/ftbultimine/shape/ShapeContext;<init>(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/block/state/BlockState;Ldev/ftb/mods/ftbultimine/shape/BlockMatcher;I)V"),
+            target = "Ldev/ftb/mods/ftbultimine/api/shape/ShapeContext;<init>(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/block/state/BlockState;Ldev/ftb/mods/ftbultimine/api/shape/ShapeContext$Matcher;I)V"),
             index = 4, remap = false, require = 1)
-    public BlockMatcher modifyBlockMatcher(BlockMatcher matcher) {
+    public ShapeContext.Matcher modifyBlockMatcher(ShapeContext.Matcher matcher) {
         if (ConfigHolder.INSTANCE.blackBlockList == null || ConfigHolder.INSTANCE.blackBlockList.length < 1) {
             return matcher;
         }

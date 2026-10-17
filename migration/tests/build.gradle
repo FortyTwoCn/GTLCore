@@ -40,7 +40,7 @@ neoForge {
     }
 }
 dependencies {
-    implementation('org.appliedenergistics:appliedenergistics2:19.2.8') {
+    implementation('org.appliedenergistics:appliedenergistics2:19.2.17') {
         exclude group: 'org.appliedenergistics', module: 'guideme'
     }
     implementation('maven.modrinth:guideme:hFpGwC6q')

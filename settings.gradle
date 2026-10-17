@@ -34,20 +34,7 @@ includeBuild('migration/dependencies/gtmthings') {
     }
 }
 
-includeBuild('migration/dependencies/ae2wtlib') {
-    name = 'ae2wtlib-native'
-    dependencySubstitution {
-        substitute module('maven.modrinth:applied-energistics-2-wireless-terminals') using project(':')
-        substitute module('de.mari_023:ae2wtlib_api') using project(':ae2wtlib_api')
-    }
-}
 
-includeBuild('migration/dependencies/ftbultimine') {
-    name = 'ftbultimine-native'
-    dependencySubstitution {
-        substitute module('dev.ftb.mods:ftb-ultimine-neoforge') using project(':')
-    }
-}
 
 includeBuild('migration/dependencies/ae2jei') {
     name = 'ae2jei-native'
@@ -56,12 +43,6 @@ includeBuild('migration/dependencies/ae2jei') {
     }
 }
 
-includeBuild('migration/dependencies/travelanchors') {
-    name = 'travelanchors-native'
-    dependencySubstitution {
-        substitute module('org.gtlcore.dependencies:travelanchors-neoforge') using project(':')
-    }
-}
 
 includeBuild('migration/dependencies/mae2') {
     name = 'mae2-native'

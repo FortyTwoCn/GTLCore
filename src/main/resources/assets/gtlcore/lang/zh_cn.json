@@ -623,7 +623,7 @@
   "tooltip.gtlcore.supports_dimensions": "支持主世界,下界,末地",
   "tooltip.gtlcore.this_module": "该模块",
   "tooltip.gtlcore.turbine_rotor_only": "只能放入涡轮转子",
-  "ftbultimine.shape.area": "不定形 (不连续)",
+  "ftbultimine.shape.gtlcore.area": "不定形 (不连续)",
   "gtlcore.ae.craft.create_times": "合成轮数：%d",
   "gtlcore.ae.craft.used_percent": "库存使用：%s",
   "gtlcore.ae.craft.stock_taken": "库存已被其他任务消耗，实际缺失",

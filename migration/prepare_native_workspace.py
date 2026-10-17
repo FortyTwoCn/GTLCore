@@ -108,12 +108,7 @@ def main():
         path = pinned(name, url, values[name + "_revision"])
         clean_source(path)
 
-    wt_manifest = dependencies / "ae2wtlib/patch-manifest.json"
-    wt = json.loads(wt_manifest.read_text())
-    wt_path = pinned("ae2wtlib", wt["source_url"], wt["revision"])
-    recorded_patch(wt_path, wt_manifest, dependencies / "ae2wtlib/client-registration.patch", prepare)
-
-    for name in ("mae2", "travelanchors", "adastrarocketed", "wildcardpattern"):
+    for name in ("mae2", "adastrarocketed", "wildcardpattern"):
         manifest_path = dependencies / name / "patch-manifest.json"
         manifest = json.loads(manifest_path.read_text())
         key = manifest["source_property"].removesuffix("_source")
